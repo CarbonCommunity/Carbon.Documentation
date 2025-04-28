@@ -5,7 +5,7 @@ slug: creating-hooks
 type: page
 ---
 
-# Hooks
+# <CarbonIcons icon="braces" /> Hooks
 Here's a brief overview on how to create and add new hooks in Carbon, as well as adding hooks that are only processed by your plugin &/or module.
 
 ## Introduction
@@ -14,7 +14,7 @@ Carbon hooks are only applied at runtime whenever a plugin needs them, meaning t
 ## Guidelines
 There are a few things that need to be met for the hooks to be considered valid and ready to be released to the public, please follow the guide on how to do so.
 
-## 🌟 Community Hooks
+## <CarbonIcons icon="star" /> Community Hooks
 How to get started with submitting community-driven hook changes, requests and additions.
 
 ### Metadata
@@ -87,7 +87,7 @@ HookCaller.CallStaticHook(499798872, /*params*/);
 :::
 
 
-## 🌟 Plugin Patches / Hooks
+## <CarbonIcons icon="star" /> Plugin Patches / Hooks
 Hooks that only get patched & unpatched inside plugins.
 
 ### Automatic Way
