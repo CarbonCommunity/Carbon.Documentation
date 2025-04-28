@@ -80,9 +80,8 @@
 }
 
 .dark {
-  --rarity-none: #6b7280;
-  --rarity-common: #059669;
-  --rarity-uncommon: #2563eb;
+  --rarity-common: #40af8ca4;
+  --rarity-uncommon: #265bccb4;
   --rarity-rare: #7c3aed;
   --rarity-veryrare: #d97706;
 

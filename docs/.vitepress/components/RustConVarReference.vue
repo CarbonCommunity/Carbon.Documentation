@@ -3,7 +3,7 @@ import { ref, onMounted, computed, watch, onUnmounted } from 'vue'
 import { Copy, Database, CheckCircle2, Tag, Loader2, Search, ExternalLink, Image, Clock, Wrench, Scissors, Lock, Unlock, X } from 'lucide-vue-next'
 import { 
   getGameData,
-  COMMANDS_API_URL,
+  RUST_CONVARS_API_URL,
   getSpawnTypeText,
   SpawnType,
   CACHE_VERSION_API_URL
@@ -11,7 +11,7 @@ import {
 import { VPBadge } from 'vitepress/theme'
 import '../theme/style.css'
 
-const commands = ref([])
+const convars = ref([])
 const copiedId = ref(null)
 const isLoading = ref(true)
 const searchQuery = ref('')
@@ -22,20 +22,20 @@ const loadingMore = ref(false)
 const hasMore = ref(true)
 const error = ref(null)
 
-const LINK_API = COMMANDS_API_URL
+const LINK_API = RUST_CONVARS_API_URL
 
-const filteredCommands = computed(() => {
-  if (!commands.value?.length) return []
+const filteredConvars = computed(() => {
+  if (!convars.value?.length) return []
   
-  let filtered = commands.value.filter(command => command && command.Name)
+  let filtered = convars.value.filter(convar => convar && convar.Name)
 
   if (debouncedSearchQuery.value) {
     const searchLower = debouncedSearchQuery.value.toLowerCase()
-    filtered = filtered.filter(command => {
-      if (!command) return false
+    filtered = filtered.filter(convar => {
+      if (!convar) return false
       return (
-        (command.Name && command.Name.toLowerCase().includes(searchLower)) ||
-        (command.Help && command.Help.toLowerCase().includes(searchLower))
+        (convar.Name && convar.Name.toLowerCase().includes(searchLower)) ||
+        (convar.Help && convar.Help.toLowerCase().includes(searchLower))
       )
     })
   }
@@ -43,10 +43,10 @@ const filteredCommands = computed(() => {
   return filtered
 })
 
-const paginatedCommands = computed(() => {
+const paginatedConvars = computed(() => {
   const start = 0
   const end = currentPage.value * pageSize
-  return filteredCommands.value.slice(start, end)
+  return filteredConvars.value.slice(start, end)
 })
 
 let debounceTimeout
@@ -68,15 +68,15 @@ const copyToClipboard = async (text, id = null) => {
   }
 }
 
-const loadCommands = async () => {
+const loadConvars = async () => {
   try {
     isLoading.value = true
     error.value = null
     const data = await getGameData(LINK_API)
-    commands.value = data
+    convars.value = data
   } catch (err) {
-    console.error('Failed to load commands:', err)
-    error.value = 'Failed to load commands. Please try again later.'
+    console.error('Failed to load convar:', err)
+    error.value = 'Failed to load convar. Please try again later.'
   } finally {
     isLoading.value = false
   }
@@ -87,7 +87,7 @@ const loadMore = async () => {
   
   loadingMore.value = true
   currentPage.value++
-  hasMore.value = currentPage.value * pageSize < filteredCommands.value.length
+  hasMore.value = currentPage.value * pageSize < filteredConvars.value.length
   loadingMore.value = false
 }
 
@@ -98,7 +98,7 @@ const handleScroll = () => {
 }
 
 onMounted(async () => {
-  await loadCommands()
+  await loadConvars()
   window.addEventListener('scroll', handleScroll)
 })
 
@@ -118,7 +118,7 @@ onMounted(() => {
       
       if (cachedVersion !== version) {
         // Reload data if version changed
-        await loadCommands()
+        await loadConvars()
       }
     } catch (error) {
       console.warn('Error checking version:', error)
@@ -135,14 +135,14 @@ onUnmounted(() => {
 
 <template>
   <div class="max-w-screen-lg mx-auto px-4 py-8">
-    <h1 class="text-2xl font-bold mb-4">Carbon Command Reference</h1>
-    <p class="mb-8">Here's a full list of all currently available Carbon commands you can use.</p>
+    <h1 class="text-2xl font-bold mb-4">Rust ConVar Reference</h1>
+    <p class="mb-8">All available Rust console variables.</p>
 
     <div class="mb-4">
       <div class="flex items-center gap-2">
         <a :href="LINK_API" target="_blank" class="vp-button medium brand flex items-center gap-2">
           <Database size="16"/>
-          Command API
+          Rust ConVar API
           <ExternalLink size="14" class="opacity-80"/>
         </a>
       </div>
@@ -150,7 +150,7 @@ onUnmounted(() => {
 
     <div v-if="isLoading" class="flex items-center justify-center py-8">
       <Loader2 class="animate-spin" size="24"/>
-      <span class="ml-2">Loading commands...</span>
+      <span class="ml-2">Loading convars...</span>
     </div>
 
     <div v-else>
@@ -162,34 +162,36 @@ onUnmounted(() => {
               type="text" 
               v-model="searchQuery" 
               @input="updateDebouncedSearch($event.target.value)"
-              placeholder="Search commands..." 
+              placeholder="Search convars..." 
               class="w-[400px] px-4 py-2"
             >
           </div>
         </div>
       </div>
 
-      <div v-if="paginatedCommands && paginatedCommands.length">
+      <div v-if="paginatedConvars && paginatedConvars.length">
         
         <div class="fixed bottom-4 right-4 z-50">
           <div class="text-sm text-gray-500 dark:text-gray-400 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm px-4 py-2">
-            Showing {{ paginatedCommands.length }} of {{ filteredCommands.length }} commands
+            Showing {{ paginatedConvars.length }} of {{ filteredConvars.length }} convars
           </div>
         </div>
-
 
         <div class="overflow-x-auto">
           <div class="inline-block min-w-full  ">
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <tbody >
-                <tr v-for="command in paginatedCommands" :key="command.Name" :id="command.Name" class="items-table-row">
+                <tr v-for="convar in paginatedConvars" :key="convar.Name" :id="convar.Name" class="items-table-row">
                   <td class="whitespace-normal pb-4">
-                    <div class="flex flex-col ">
-                      <h1 class="font-mono">{{ command.Name }} <VPBadge :type="`${(command.AuthLevel <= 0 ? 'info' : command.AuthLevel == 1 ? 'info' : 'danger')}`" :text="`${(command.AuthLevel <= 0 ? 'User' : command.AuthLevel == 1 ? 'Moderator' : 'Admin')}`"/></h1> 
-                      <p v-if="command.Help" class="text-sm text-gray-600 dark:text-gray-400 mt-3">
-                          {{ command.Help }}
-                        </p>
-                    </div>
+                    <span class="font-mono flex items-center gap-2"><VPBadge type="info" :text="convar.Type" /> {{ convar.Name }}
+                      <button @click="copyToClipboard(convar.Name, convar.Name)" class="flex items-center py-1.5 text-sm">
+                        <component :is="copiedId === convar.Name ? CheckCircle2 : Copy" size="14" />
+                      </button>
+                      <div class="opacity-75">{{ convar.DefaultValue }}</div> <VPBadge v-if="convar.Saved" type="tip" :text="`Saved`"/>
+                    </span>
+                    <p v-if="convar.Help" class="text-sm text-gray-600 dark:text-gray-400 mt-3">
+                        {{ convar.Help }}
+                    </p>
                   </td>
                 </tr>
               </tbody>
@@ -202,9 +204,9 @@ onUnmounted(() => {
         </div>
       </div>
       <div v-else class="text-center py-8 text-gray-500">
-        <p>No commands found matching your search</p>
-        <p v-if="commands.value && commands.value.length === 0" class="mt-2 text-sm">
-          Debug: No commands loaded. Check console for errors.
+        <p>No convars found matching your search</p>
+        <p v-if="convars.value && convars.value.length === 0" class="mt-2 text-sm">
+          Debug: No convars loaded. Check console for errors.
         </p>
         <p v-else-if="debouncedSearchQuery" class="mt-2 text-sm">
           Debug: Search query "{{ debouncedSearchQuery }}" returned no results.

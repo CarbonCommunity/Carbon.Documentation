@@ -335,7 +335,7 @@ const fetchDlcData = async (appId) => {
                             <div class="flex items-center justify-between mb-2">
                               <h5 class="text-lg font-medium">
                                 <a :href="`/Carbon.Documentation/references/blueprints/details?id=${bp.Item.Id}`" 
-                                   class="hover:text-primary inline-flex items-center gap-2">
+                                  class="hover:text-primary inline-flex items-center gap-2">
                                   {{ bp.Item.DisplayName }}
                                   <ExternalLink size="14" class="opacity-60"/>
                                 </a>
@@ -356,11 +356,11 @@ const fetchDlcData = async (appId) => {
 
                             <!-- Badges -->
                             <div class="flex flex-wrap gap-2 mt-2">
-                              <VPBadge :text="getItemCategoryText(bp.Item.Category)"
+                              <VPBadge :text="getItemCategoryText(bp.Item.Category)" class="opacity-75"
                                       :style="{ backgroundColor: CATEGORY_COLORS[bp.Item.Category], color: '#fff' }"/>
-                              <VPBadge :text="getItemRarityText(bp.Item.Rarity)"
+                              <VPBadge v-if="getItemRarityText(bp.Item.Rarity)" class="opacity-75" :text="getItemRarityText(bp.Item.Rarity)"
                                       :style="{ backgroundColor: RARITY_COLORS[bp.Item.Rarity], color: '#fff' }"/>
-                              <VPBadge v-if="bp.UserCraftable" type="success" :text="'Craftable'"/>
+                              <VPBadge v-if="bp.UserCraftable" type="danger" :text="'Craftable'"/>
                               <VPBadge v-if="bp.WorkbenchLevelRequired >= 0" type="warning" :text="`Tier ${bp.WorkbenchLevelRequired}`"/>
                               <VPBadge v-if="bp.ScrapRequired > 0" type="info" :text="`${bp.ScrapRequired} Scrap`"/>
                               <VPBadge v-if="bp.NeedsSteamItem" type="danger" :text="'Steam Item Required'"/>

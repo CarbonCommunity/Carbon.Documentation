@@ -23,7 +23,9 @@ const references = [
       { text: 'Blueprints', link: '/references/blueprints/' },
       { text: 'Items', link: '/references/items/' },
       { text: 'Entities', link: '/references/entities/' },
-      { text: 'Prefabs', link: '/references/prefabs/' }
+      { text: 'Prefabs', link: '/references/prefabs/' },
+      { text: 'ConVars', link: '/references/rust-convars/' },
+      { text: 'Commands', link: '/references/rust-commands/' }
     ]
   }
 ];
@@ -38,7 +40,6 @@ async function fetchItems() {
     return [];
   }
 } 
-
 
 export default defineConfig({
   title: "Carbon Documentation",

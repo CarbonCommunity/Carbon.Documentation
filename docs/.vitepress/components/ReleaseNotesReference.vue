@@ -221,7 +221,7 @@ const getChangeType = (val) => {
                     <summary style="font-size: 15px; ">
                       <span style="display: inline-flex; align-items: center; gap: 5px;">
                         {{ releaseNote.Version }}
-                        <a v-if="releaseNote.CommitUrl" :href="releaseNote.CommitUrl" target="_blank"><ExternalLink style="width: 15px; height: 15px;" /></a>
+                        <a v-if="releaseNote.CommitUrl" :href="releaseNote.CommitUrl" target="_blank"><ExternalLink class="opacity-60" style="width: 15px; height: 15px;" /></a>
                         <CarbonBadge v-if="releaseNote.Date" variant="date" :text="releaseNote.Date"/>
                       </span>
                       

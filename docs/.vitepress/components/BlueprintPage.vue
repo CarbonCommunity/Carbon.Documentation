@@ -208,12 +208,12 @@ watch(blueprint, (newBlueprint) => {
         <div class="flex-1 space-y-4">
           <!-- Badges -->
           <div class="flex flex-wrap gap-2">
-            <VPBadge :text="getItemCategoryText(blueprint.Item.Category)"
+            <VPBadge :text="getItemCategoryText(blueprint.Item.Category)" class="opacity-75"
                     :style="{ backgroundColor: CATEGORY_COLORS[blueprint.Item.Category], color: '#fff' }"/>
-            <VPBadge :text="getItemRarityText(blueprint.Item.Rarity)"
+            <VPBadge :text="getItemRarityText(blueprint.Item.Rarity)" class="opacity-75"
                     :style="{ backgroundColor: RARITY_COLORS[blueprint.Item.Rarity], color: '#fff' }"/>
-            <VPBadge v-if="blueprint.UserCraftable" type="success" :text="'Craftable'"/>
-            <VPBadge v-if="blueprint.WorkbenchLevelRequired >= 0" type="warning" :text="`Tier ${blueprint.WorkbenchLevelRequired}`"/>
+            <VPBadge v-if="blueprint.UserCraftable" type="danger" :text="'Craftable'"/>
+            <VPBadge v-if="blueprint.WorkbenchLevelRequired >= 0" class="opacity-75" type="warning" :text="`Tier ${blueprint.WorkbenchLevelRequired}`"/>
             <VPBadge v-if="blueprint.ScrapRequired > 0" type="info" :text="`${blueprint.ScrapRequired} Scrap`"/>
             <VPBadge v-if="blueprint.NeedsSteamItem" type="danger" :text="'Steam Item Required'"/>
             <VPBadge v-if="blueprint.NeedsSteamDLC" type="danger" :text="'Steam DLC Required'"/>

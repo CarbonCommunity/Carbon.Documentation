@@ -3,7 +3,7 @@ import { ref, onMounted, computed, watch, onUnmounted } from 'vue'
 import { Copy, Database, CheckCircle2, Tag, Loader2, Search, ExternalLink, Image, Clock, Wrench, Scissors, Lock, Unlock, X } from 'lucide-vue-next'
 import { 
   getGameData,
-  COMMANDS_API_URL,
+  RUST_COMMANDS_API_URL,
   getSpawnTypeText,
   SpawnType,
   CACHE_VERSION_API_URL
@@ -22,7 +22,7 @@ const loadingMore = ref(false)
 const hasMore = ref(true)
 const error = ref(null)
 
-const LINK_API = COMMANDS_API_URL
+const LINK_API = RUST_COMMANDS_API_URL
 
 const filteredCommands = computed(() => {
   if (!commands.value?.length) return []
@@ -135,14 +135,14 @@ onUnmounted(() => {
 
 <template>
   <div class="max-w-screen-lg mx-auto px-4 py-8">
-    <h1 class="text-2xl font-bold mb-4">Carbon Command Reference</h1>
-    <p class="mb-8">Here's a full list of all currently available Carbon commands you can use.</p>
+    <h1 class="text-2xl font-bold mb-4">Rust Command Reference</h1>
+    <p class="mb-8">Up to date list of all pre-built-in Rust commands.</p>
 
     <div class="mb-4">
       <div class="flex items-center gap-2">
         <a :href="LINK_API" target="_blank" class="vp-button medium brand flex items-center gap-2">
           <Database size="16"/>
-          Command API
+          Rust Command API
           <ExternalLink size="14" class="opacity-80"/>
         </a>
       </div>
@@ -183,12 +183,12 @@ onUnmounted(() => {
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <tbody >
                 <tr v-for="command in paginatedCommands" :key="command.Name" :id="command.Name" class="items-table-row">
-                  <td class="whitespace-normal pb-4">
+                  <td class="whitespace-normal pb-3">
                     <div class="flex flex-col ">
-                      <h1 class="font-mono">{{ command.Name }} <VPBadge :type="`${(command.AuthLevel <= 0 ? 'info' : command.AuthLevel == 1 ? 'info' : 'danger')}`" :text="`${(command.AuthLevel <= 0 ? 'User' : command.AuthLevel == 1 ? 'Moderator' : 'Admin')}`"/></h1> 
+                      <h1 class="font-mono">{{ command.Name }} <VPBadge v-if="command.ServerUser" type="info" :text="`Server User`"/> <VPBadge v-if="command.Client" type="danger" :text="`Client`"/></h1> 
                       <p v-if="command.Help" class="text-sm text-gray-600 dark:text-gray-400 mt-3">
                           {{ command.Help }}
-                        </p>
+                      </p>
                     </div>
                   </td>
                 </tr>

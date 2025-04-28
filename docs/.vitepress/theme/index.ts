@@ -23,6 +23,8 @@ import CommandReference from '../components/CommandReference.vue'
 import ConVarReference from '../components/ConVarReference.vue'
 import SwitchesReference from '../components/SwitchesReference.vue'
 import ReleaseNotesReference from '../components/ReleaseNotesReference.vue'
+import RustConVarReference from '../components/RustConVarReference.vue'
+import RustCommandReference from '../components/RustCommandReference.vue'
 
 export default {
   extends: DefaultTheme,
@@ -52,6 +54,8 @@ export default {
     app.component('ConVarReference', ConVarReference)
     app.component('SwitchesReference', SwitchesReference)
     app.component('ReleaseNotesReference', ReleaseNotesReference)
+    app.component('RustConVarReference', RustConVarReference)
+    app.component('RustCommandReference', RustCommandReference)
     enhanceAppWithTabs(app)
 
   }

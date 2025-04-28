@@ -9,6 +9,8 @@ export const COMMANDS_API_URL = 'https://carbonmod.gg/redist/metadata/carbon/com
 export const RELEASE_NOTES_API_URL = 'https://carbonmod.gg/redist/metadata/carbon/changelogs.json'
 export const SWITCHES_API_URL = 'https://carbonmod.gg/redist/metadata/carbon/switches.json'
 export const CONVARS_API_URL = 'https://carbonmod.gg/redist/metadata/carbon/convars.json'
+export const RUST_CONVARS_API_URL = 'https://carbonmod.gg/redist/metadata/rust/convars.json'
+export const RUST_COMMANDS_API_URL = 'https://carbonmod.gg/redist/metadata/rust/commands.json'
 export const ITEM_IMAGE_SERVER = 'https://carbonmod.gg/assets/media/items'
 export const MISSING_IMAGE_URL = 'https://carbonmod.gg/assets/media/missing.jpg'
 export const CACHE_VERSION_API_URL = 'https://carbonmod.gg/version/?id=docs'

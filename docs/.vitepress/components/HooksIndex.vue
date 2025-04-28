@@ -314,7 +314,7 @@ watch(() => window.location.hash, (newHash) => {
                         </h5>
                       </div>
                       <div v-for="param in hook.descriptions" :key="param.name" class="text-sm">
-                        <span class="text-gray-500">{{ param }}</span>
+                        <span class="text-gray-500"><strong>{{ param }}</strong></span>
                       </div>                    
                       <span class="text-sm text-gray-500" v-if="hook.returnTypeName != 'void'">Returning a non-null value cancels default behavior.</span>
                       <span class="text-sm text-gray-500" v-if="hook.returnTypeName == 'void'">No return behavior.</span>
