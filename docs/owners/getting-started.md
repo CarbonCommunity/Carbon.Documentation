@@ -38,4 +38,8 @@ More detailed instructions can be found in the [Installing Carbon](./installing-
 
 ## Downloads
 
-<CarbonBuildsDownloads />
+<script lang="ts" setup>
+    import CarbonBuildsDownloads from '@/components/CarbonBuildsDownloads.vue'
+</script>
+
+<CarbonBuildsDownloads></CarbonBuildsDownloads>

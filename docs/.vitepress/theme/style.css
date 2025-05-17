@@ -199,7 +199,8 @@ html:not(.dark) .dark-only {
   --vp-code-color: var(--c-carbon-1);
 }
 
-.VPBadge{
+.VPBadge {
+  user-select: none;
   border-radius: 0%;
 }
 

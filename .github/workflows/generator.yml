@@ -14,7 +14,7 @@ jobs:
         id: step1
         shell: bash
         run: |
-          echo "version=$(curl -s -L 'https://carbonmod.gg/version?id=docs&token=${{secrets.VERSIONS_TOKEN}}')" >> $GITHUB_OUTPUT
+          echo "version=$(curl -s -L 'https://api.carbonmod.gg/version?id=docs&token=${{secrets.VERSIONS_TOKEN}}')" >> $GITHUB_OUTPUT
           
       - name: Process
         shell: cmd
@@ -32,98 +32,98 @@ jobs:
       - name: FTP Upload (rust/blueprints.json)
         uses: tomasbkk/action-ftp-upload@v1.0
         with:
-          user: redist@carbonmod.gg
+          user: api@carbonmod.gg
           password: ${{ secrets.FTP_PWD }}
           host: ${{ secrets.FTP_IP }}
           src: "tools/Server/carbon/results/blueprints.json"
-          dest: "metadata/rust/blueprints.json"
+          dest: "meta/rust/blueprints.json"
 
       - name: FTP Upload (rust/entities.json)
         uses: tomasbkk/action-ftp-upload@v1.0
         with:
-          user: redist@carbonmod.gg
+          user: api@carbonmod.gg
           password: ${{ secrets.FTP_PWD }}
           host: ${{ secrets.FTP_IP }}
           src: "tools/Server/carbon/results/entities.json"
-          dest: "metadata/rust/entities.json"
+          dest: "meta/rust/entities.json"
 
       - name: FTP Upload (rust/items.json)
         uses: tomasbkk/action-ftp-upload@v1.0
         with:
-          user: redist@carbonmod.gg
+          user: api@carbonmod.gg
           password: ${{ secrets.FTP_PWD }}
           host: ${{ secrets.FTP_IP }}
           src: "tools/Server/carbon/results/items.json"
-          dest: "metadata/rust/items.json"
+          dest: "meta/rust/items.json"
 
       - name: FTP Upload (rust/loot-tables.json)
         uses: tomasbkk/action-ftp-upload@v1.0
         with:
-          user: redist@carbonmod.gg
+          user: api@carbonmod.gg
           password: ${{ secrets.FTP_PWD }}
           host: ${{ secrets.FTP_IP }}
           src: "tools/Server/carbon/results/loot-tables.json"
-          dest: "metadata/rust/loot-tables.json"
+          dest: "meta/rust/loot-tables.json"
 
       - name: FTP Upload (rust/prefabs.json)
         uses: tomasbkk/action-ftp-upload@v1.0
         with:
-          user: redist@carbonmod.gg
+          user: api@carbonmod.gg
           password: ${{ secrets.FTP_PWD }}
           host: ${{ secrets.FTP_IP }}
           src: "tools/Server/carbon/results/prefabs.json"
-          dest: "metadata/rust/prefabs.json"
+          dest: "meta/rust/prefabs.json"
 
       - name: FTP Upload (rust/convars.json)
         uses: tomasbkk/action-ftp-upload@v1.0
         with:
-          user: redist@carbonmod.gg
+          user: api@carbonmod.gg
           password: ${{ secrets.FTP_PWD }}
           host: ${{ secrets.FTP_IP }}
           src: "tools/Server/carbon/results/rust_convars.json"
-          dest: "metadata/rust/convars.json"
+          dest: "meta/rust/convars.json"
 
       - name: FTP Upload (rust/commands.json)
         uses: tomasbkk/action-ftp-upload@v1.0
         with:
-          user: redist@carbonmod.gg
+          user: api@carbonmod.gg
           password: ${{ secrets.FTP_PWD }}
           host: ${{ secrets.FTP_IP }}
           src: "tools/Server/carbon/results/rust_commands.json"
-          dest: "metadata/rust/commands.json"
+          dest: "meta/rust/commands.json"
 
       - name: FTP Upload (carbon/hooks.json)
         uses: tomasbkk/action-ftp-upload@v1.0
         with:
-          user: redist@carbonmod.gg
+          user: api@carbonmod.gg
           password: ${{ secrets.FTP_PWD }}
           host: ${{ secrets.FTP_IP }}
           src: "tools/Server/carbon/results/hooks.json"
-          dest: "metadata/carbon/hooks.json"
+          dest: "meta/carbon/hooks.json"
 
       - name: FTP Upload (carbon/commands.json)
         uses: tomasbkk/action-ftp-upload@v1.0
         with:
-          user: redist@carbonmod.gg
+          user: api@carbonmod.gg
           password: ${{ secrets.FTP_PWD }}
           host: ${{ secrets.FTP_IP }}
           src: "tools/Server/carbon/results/commands.json"
-          dest: "metadata/carbon/commands.json"
+          dest: "meta/carbon/commands.json"
 
       - name: FTP Upload (carbon/convars.json)
         uses: tomasbkk/action-ftp-upload@v1.0
         with:
-          user: redist@carbonmod.gg
+          user: api@carbonmod.gg
           password: ${{ secrets.FTP_PWD }}
           host: ${{ secrets.FTP_IP }}
           src: "tools/Server/carbon/results/convars.json"
-          dest: "metadata/carbon/convars.json"
+          dest: "meta/carbon/convars.json"
 
       - name: FTP Upload (carbon/switches.json)
         uses: tomasbkk/action-ftp-upload@v1.0
         with:
-          user: redist@carbonmod.gg
+          user: api@carbonmod.gg
           password: ${{ secrets.FTP_PWD }}
           host: ${{ secrets.FTP_IP }}
           src: "tools/Server/carbon/results/switches.json"
-          dest: "metadata/carbon/switches.json"
+          dest: "meta/carbon/switches.json"

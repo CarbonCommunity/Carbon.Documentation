@@ -90,3 +90,10 @@ Displays custom text and/or icon using CUI. Position, color, and anchors are ful
 
 The Vanish Module is ideal for admins needing to monitor players stealthily, moderate without interference, or perform
 cinematic recordings.
+
+
+## API
+The vanish module comes with a few API hook calls:
+
+- `void OnCarbonVanished(BasePlayer player)` when players vanish
+- `void OnCarbonUnvanished(BasePlayer player)` when players unvanish

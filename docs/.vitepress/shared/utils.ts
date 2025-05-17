@@ -1,4 +1,4 @@
-const VERSION_CHECK_URL = 'https://carbonmod.gg/version/?id=docs'
+const VERSION_CHECK_URL = 'https://api.carbonmod.gg/version/?id=docs'
 const VERSION_CACHE_KEY = 'carbon_data_version'
 
 export async function checkDataVersion(): Promise<boolean> {

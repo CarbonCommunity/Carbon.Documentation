@@ -53,6 +53,7 @@ class Cache {
       try {
         const resp = await fetch(URL_VERSION_DOCS, {
           cache: 'no-cache',
+          signal: AbortSignal.timeout(3000),
         })
 
         if (!resp.ok) {

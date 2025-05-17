@@ -4,9 +4,11 @@ import { useData } from 'vitepress'
 import { ArrowLeft, CheckCircle2, Copy, Loader2 } from 'lucide-vue-next'
 import { VPBadge } from 'vitepress/theme'
 import { getSingletonHighlighter } from 'shiki'
-import { getGameData, getHookFlagsText, HOOKS_API_URL } from '../shared/constants'
-import { fetchHooks, Hook } from '../api/metadata/rust/hooks'
+import { getHookFlagsText } from '../shared/constants'
+import { fetchHooks } from '@/api/metadata/carbon/hooks'
+import type { Hook } from '@/api/metadata/carbon/hooks'
 import type { Highlighter } from 'shiki'
+
 const data = useData()
 
 const hook: Ref<Hook | null> = ref(null)
@@ -31,7 +33,6 @@ const loadHookDetails = async () => {
       throw new Error('No hook name provided')
     }
 
-    // const data = await getGameData(HOOKS_API_URL)
     const data = await fetchHooks()
 
     if (!data) {
@@ -41,21 +42,9 @@ const loadHookDetails = async () => {
     let foundHook = null
     let foundCategory = null
 
-    /*     for (const category in data) {
-      if (Array.isArray(data[category])) {
-        const hook = data[category].find(h => {
-          return h.name === hookName || h.fullName === hookName
-        })
-        if (hook) {
-          foundHook = hook
-          foundCategory = category
-          break
-        }
-      }
-    } */
     loop1: for (const [category, hooks] of data) {
       for (const hook of hooks) {
-        if (hook.name === hookName) {
+        if (hook.Name == hookName || hook.FullName == hookName) {
           foundHook = hook
           foundCategory = category
           break loop1
@@ -144,12 +133,12 @@ const exampleCodeRaw = computed(() => {
   if (!hook.value) {
     return ''
   }
-  const code = `private ${hook.value.returnTypeName} ${hook.value.name}(${hook.value.parametersText})
+  const code = `private ${hook.value.ReturnTypeName} ${hook.value.Name}(${hook.value.ParametersText})
 {
-    Puts("${hook.value.name} has been called!");${
-    hook.value.returnTypeName !== 'void'
+    Puts("${hook.value.Name} has been called!");${
+    hook.value.ReturnTypeName !== 'void'
       ? `
-    return (${hook.value.returnTypeName})default;`
+    return (${hook.value.ReturnTypeName})default;`
       : ''
   }
 }`
@@ -159,12 +148,12 @@ const exampleCode = computed(() => {
   if (!hook.value) {
     return ''
   }
-  const code = `private ${hook.value.returnTypeName} ${hook.value.name}(${hook.value.parametersText})
+  const code = `private ${hook.value.ReturnTypeName} ${hook.value.Name}(${hook.value.ParametersText})
 {
-    Puts("${hook.value.name} has been called!");${
-    hook.value.returnTypeName !== 'void'
+    Puts("${hook.value.Name} has been called!");${
+    hook.value.ReturnTypeName !== 'void'
       ? `
-    return (${hook.value.returnTypeName})default;`
+    return (${hook.value.ReturnTypeName})default;`
       : ''
   }
 }`
@@ -172,10 +161,10 @@ const exampleCode = computed(() => {
 })
 
 const sourceCode = computed(() => {
-  if (!hook.value?.methodSource) {
+  if (!hook.value?.MethodSource) {
     return ''
   }
-  return highlightCode(hook.value.methodSource, data.isDark.value)
+  return highlightCode(hook.value.MethodSource, data.isDark.value)
 })
 
 // Update page title when hook is loaded
@@ -183,7 +172,7 @@ watch(
   hook,
   (newHook) => {
     if (newHook) {
-      document.title = `${newHook.name} - Carbon Documentation`
+      document.title = `${newHook.Name} - Carbon Documentation`
     }
   },
   { immediate: true }
@@ -215,37 +204,37 @@ watch(
       <div class="flex items-start justify-left mb-6">
         <div>
           <div class="flex">
-            <h1 class="text-3xl font-bold mb-2">{{ hook.name }}</h1>
+            <h1 class="text-3xl font-bold mb-2">{{ hook.Name }}</h1>
             <button
-              @click="copyToClipboard(hook.id.toString(), 'id')"
+              @click="copyToClipboard(hook.Id.toString(), 'id')"
               class="flex items-center px-3 py-1.5 text-sm rounded-md bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
             >
-              <span class="font-mono">{{ hook.id }}</span>
+              <span class="font-mono">{{ hook.Id }}</span>
               <component :is="copiedId === 'id' ? CheckCircle2 : Copy" class="ml-2" :size="14" />
             </button>
           </div>
 
           <div class="flex flex-wrap gap-1">
-            <VPBadge v-if="hook.category" type="info" :text="hook.category" />
-            <div v-for="flag in getHookFlagsText(hook.flags)" class="text-sm">
-              <VPBadge v-if="hook.flags" type="info" :text="`${flag}`" />
+            <VPBadge v-if="hook.Category" type="info" :text="hook.Category" />
+            <div v-for="flag in getHookFlagsText(hook.Flags)" class="text-sm">
+              <VPBadge v-if="hook.Flags" type="info" :text="`${flag}`" />
             </div>
-            <VPBadge v-if="hook.oxideCompatible" type="tip" text="Oxide Compatible" />
+            <VPBadge v-if="hook.OxideCompatible" type="tip" text="Oxide Compatible" />
           </div>
         </div>
       </div>
 
-      <div v-if="hook.descriptions && hook.descriptions.length" class="mb-6">
+      <div v-if="hook.Descriptions && hook.Descriptions.length" class="mb-6">
         <h2 class="text-xl font-semibold mb-2">Description</h2>
         <div class="prose dark:prose-invert max-w-none">
-          <p v-for="(desc, index) in hook.descriptions" :key="index">{{ desc }}</p>
+          <p v-for="(desc, index) in hook.Descriptions" :key="index">{{ desc }}</p>
         </div>
       </div>
 
-      <div v-if="hook.returnTypeName" class="mb-6">
+      <div v-if="hook.ReturnTypeName" class="mb-6">
         <h2 class="text-xl font-semibold mb-2">Return Type</h2>
-        <p v-if="hook.returnTypeName != 'void'">Returning a non-null value cancels default behavior.</p>
-        <p v-if="hook.returnTypeName == 'void'">This hook has no return behavior.</p>
+        <p v-if="hook.ReturnTypeName != 'void'">Returning a non-null value cancels default behavior.</p>
+        <p v-if="hook.ReturnTypeName == 'void'">This hook has no return behavior.</p>
       </div>
 
       <div class="mb-6">
@@ -265,10 +254,10 @@ watch(
         </div>
       </div>
 
-      <div v-if="hook.methodSource" class="mb-6">
+      <div v-if="hook.MethodSource" class="mb-6">
         <h2 class="text-xl font-semibold mb-2">Source Code</h2>
-        <VPBadge type="info" :text="hook.assemblyName" />
-        <VPBadge type="danger" :text="hook.targetName" />
+        <VPBadge type="info" :text="hook.AssemblyName" />
+        <VPBadge type="danger" :text="hook.TargetName" />
         <div
           v-if="isHighlighterReady"
           v-html="sourceCode"

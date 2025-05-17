@@ -6,7 +6,7 @@ description: A self-managing bridge system dedicated to allow server owners and 
 # Bridge
 A self-managing bridge system dedicated to allow server owners and plugin developers communicate between the server network, directly. It uses Rust's network reading/writing with the only difference being, this allows you to communicate with one or multiple servers at once.
 
-<CarbonButton href="https://github.com/CarbonCommunity/Carbon.Common/blob/develop/src/Carbon/Components/Bridge.cs" text="Source Code" external/>
+<CarbonButton href="https://github.com/CarbonCommunity/Carbon.Common/blob/develop/src/Carbon/Components/Bridge.cs" icon="code" text="Source Code" external/>
 
 ## Server
 At its core, it uses `Fleck` (AKA Facepunch `RCon`'s listener). It's entirely independent to Rust's `RCon` system, it just uses the core components at base (connection and memory management, etc.).

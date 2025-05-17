@@ -1,12 +1,14 @@
-<script setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+<script setup lang="ts">
+import { computed, onMounted, onUnmounted, Ref, ref } from 'vue'
 import { CheckCircle2, Copy, Database, ExternalLink, Loader2, Search } from 'lucide-vue-next'
-import { CACHE_VERSION_API_URL, getGameData, RUST_CONVARS_API_URL } from '../shared/constants'
 import { VPBadge } from 'vitepress/theme'
 import '../theme/style.css'
+import { fetchConVarsRust } from '@/api/metadata/rust/convars'
+import type { ConVarRust } from '@/api/metadata/rust/convars'
+import { URL_METDAT_RUST_CONVARS } from '@/api/constants'
 
-const convars = ref([])
-const copiedId = ref(null)
+const convars: Ref<ConVarRust[]> = ref([])
+const copiedId = ref<string | null>(null)
 const isLoading = ref(true)
 const searchQuery = ref('')
 const debouncedSearchQuery = ref('')
@@ -14,18 +16,16 @@ const pageSize = 50
 const currentPage = ref(1)
 const loadingMore = ref(false)
 const hasMore = ref(true)
-const error = ref(null)
-
-const LINK_API = RUST_CONVARS_API_URL
+const error = ref<string | null>(null)
 
 const filteredConvars = computed(() => {
   if (!convars.value?.length) return []
 
-  let filtered = convars.value.filter(convar => convar && convar.Name)
+  let filtered = convars.value.filter((convar) => convar && convar.Name)
 
   if (debouncedSearchQuery.value) {
     const searchLower = debouncedSearchQuery.value.toLowerCase()
-    filtered = filtered.filter(convar => {
+    filtered = filtered.filter((convar) => {
       if (!convar) return false
       return (
         (convar.Name && convar.Name.toLowerCase().includes(searchLower)) ||
@@ -43,8 +43,8 @@ const paginatedConvars = computed(() => {
   return filteredConvars.value.slice(start, end)
 })
 
-let debounceTimeout
-const updateDebouncedSearch = (value) => {
+let debounceTimeout: NodeJS.Timeout
+const updateDebouncedSearch = (value: string) => {
   clearTimeout(debounceTimeout)
   debounceTimeout = setTimeout(() => {
     debouncedSearchQuery.value = value
@@ -52,11 +52,11 @@ const updateDebouncedSearch = (value) => {
   }, 300)
 }
 
-const copyToClipboard = async (text, id = null) => {
+const copyToClipboard = async (text: string) => {
   try {
     await navigator.clipboard.writeText(text)
-    copiedId.value = id
-    setTimeout(() => copiedId.value = null, 2000)
+    copiedId.value = text
+    setTimeout(() => (copiedId.value = null), 2000)
   } catch (err) {
     console.error('Failed to copy:', err)
   }
@@ -66,7 +66,7 @@ const loadConvars = async () => {
   try {
     isLoading.value = true
     error.value = null
-    const data = await getGameData(LINK_API)
+    const data = await fetchConVarsRust()
     convars.value = data
   } catch (err) {
     console.error('Failed to load convar:', err)
@@ -99,32 +99,6 @@ onMounted(async () => {
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll)
 })
-
-// Watch for version changes
-let versionCheckInterval
-onMounted(() => {
-  versionCheckInterval = setInterval(async () => {
-    try {
-      const response = await fetch(CACHE_VERSION_API_URL)
-      if (!response.ok) return
-      const version = await response.text()
-      const cachedVersion = localStorage.getItem('carbon_docs_cache_version')
-
-      if (cachedVersion !== version) {
-        // Reload data if version changed
-        await loadConvars()
-      }
-    } catch (error) {
-      console.warn('Error checking version:', error)
-    }
-  }, 60000) // Check every minute
-})
-
-onUnmounted(() => {
-  if (versionCheckInterval) {
-    clearInterval(versionCheckInterval)
-  }
-})
 </script>
 
 <template>
@@ -134,16 +108,20 @@ onUnmounted(() => {
 
     <div class="mb-4">
       <div class="flex items-center gap-2">
-        <a :href="LINK_API" target="_blank" class="vp-button medium brand flex items-center gap-2">
-          <Database size="16" />
+        <a
+          :href="URL_METDAT_RUST_CONVARS"
+          target="_blank"
+          class="vp-button medium brand flex items-center gap-2"
+        >
+          <Database :size="16" />
           Rust ConVar API
-          <ExternalLink size="14" class="opacity-80" />
+          <ExternalLink :size="14" class="opacity-80" />
         </a>
       </div>
     </div>
 
     <div v-if="isLoading" class="flex items-center justify-center py-8">
-      <Loader2 class="animate-spin" size="24" />
+      <Loader2 class="animate-spin" :size="24" />
       <span class="ml-2">Loading convars...</span>
     </div>
 
@@ -151,59 +129,63 @@ onUnmounted(() => {
       <div class="filters mb-4">
         <div class="flex items-center gap-4">
           <div class="flex items-center flex-1">
-            <Search class="text-gray-400" size="20" />
+            <Search class="text-gray-400" :size="20" />
             <input
               type="text"
               v-model="searchQuery"
-              @input="updateDebouncedSearch($event.target.value)"
+              @input="event => updateDebouncedSearch((event.target as HTMLInputElement).value)"
               placeholder="Search convars..."
               class="w-[400px] px-4 py-2"
-            >
+            />
           </div>
         </div>
       </div>
 
       <div v-if="paginatedConvars && paginatedConvars.length">
-
         <div class="fixed bottom-4 right-4 z-50">
           <div
-            class="text-sm text-gray-500 dark:text-gray-400 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm px-4 py-2">
+            class="text-sm text-gray-500 dark:text-gray-400 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm px-4 py-2"
+          >
             Showing {{ paginatedConvars.length }} of {{ filteredConvars.length }} convars
           </div>
         </div>
 
         <div class="overflow-x-auto">
-          <div class="inline-block min-w-full  ">
+          <div class="inline-block min-w-full">
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <tbody>
-              <tr v-for="convar in paginatedConvars" :key="convar.Name" :id="convar.Name" class="items-table-row">
-                <td class="whitespace-normal pb-4">
-                    <span class="font-mono flex items-center gap-2"><VPBadge type="info"
-                                                                             :text="convar.Type" /> {{ convar.Name }}
-                      <button @click="copyToClipboard(convar.Name, convar.Name)"
-                              class="flex items-center py-1.5 text-sm">
-                        <component :is="copiedId === convar.Name ? CheckCircle2 : Copy" size="14" />
+                <tr
+                  v-for="convar in paginatedConvars"
+                  :key="convar.Name"
+                  :id="convar.Name"
+                  class="items-table-row"
+                >
+                  <td class="whitespace-normal pb-4">
+                    <span class="font-mono flex items-center gap-2"
+                      ><VPBadge type="info" :text="convar.Type" /> {{ convar.Name }}
+                      <button @click="copyToClipboard(convar.Name)" class="flex items-center py-1.5 text-sm">
+                        <component :is="copiedId === convar.Name ? CheckCircle2 : Copy" :size="14" />
                       </button>
-                      <div class="opacity-75">{{ convar.DefaultValue }}</div> <VPBadge v-if="convar.Saved" type="tip"
-                                                                                       :text="`Saved`" />
+                      <div class="opacity-75">{{ convar.DefaultValue }}</div>
+                      <VPBadge v-if="convar.Saved" type="tip" :text="`Saved`" />
                     </span>
-                  <p v-if="convar.Help" class="text-sm text-gray-600 dark:text-gray-400 mt-3">
-                    {{ convar.Help }}
-                  </p>
-                </td>
-              </tr>
+                    <p v-if="convar.Help" class="text-sm text-gray-600 dark:text-gray-400 mt-3">
+                      {{ convar.Help }}
+                    </p>
+                  </td>
+                </tr>
               </tbody>
             </table>
           </div>
         </div>
 
         <div v-if="loadingMore" class="flex justify-center py-4">
-          <Loader2 class="animate-spin" size="24" />
+          <Loader2 class="animate-spin" :size="24" />
         </div>
       </div>
       <div v-else class="text-center py-8 text-gray-500">
         <p>No convars found matching your search</p>
-        <p v-if="convars.value && convars.value.length === 0" class="mt-2 text-sm">
+        <p v-if="convars && convars.length === 0" class="mt-2 text-sm">
           Debug: No convars loaded. Check console for errors.
         </p>
         <p v-else-if="debouncedSearchQuery" class="mt-2 text-sm">
@@ -226,4 +208,4 @@ onUnmounted(() => {
 .dark .items-table-row:hover {
   background-color: #1f2937;
 }
-</style> 
+</style>

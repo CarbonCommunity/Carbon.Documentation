@@ -95,8 +95,8 @@ const expandedReleases: Ref<boolean[]> = ref(sections.flatMap(x => x.releaseBuil
             v-show="expandedReleases[releaseBuild._id]"
             class="collapsible-content px-6 py-3 flex flex-col"
           >
-            <span>
-              <p v-if="releaseBuild.displayDesc != ''">{{ releaseBuild.displayDesc }}</p>
+            <span class="mt-1" v-if="releaseBuild.displayDesc != ''">{{ releaseBuild.displayDesc }}</span>
+            <span class="mt-2">
               Based on the
               <code>
                 <a

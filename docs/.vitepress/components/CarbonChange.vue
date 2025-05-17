@@ -1,6 +1,6 @@
 <template>
   <div class="carbon-change">
-    <CarbonBadge :variant="variant">{{ variant.toUpperCase() }}</CarbonBadge>
+    <CarbonBadge style="user-select: none;" :variant="variant">{{ variant.toUpperCase() }}</CarbonBadge>
     <div class="carbon-change-text" v-html="renderedText"></div>
   </div>
 </template>
@@ -43,4 +43,23 @@ const renderedText = md.renderInline(props.text)
   max-width: 90%;
   font-size: 15px;
 }
+
+::v-deep(.carbon-change-text a) {
+  font-family: monospace;
+  transition-duration: 100ms;
+}
+
+::v-deep(.carbon-change-text a:hover) {
+  background-color: rgba(139, 233, 253, 0.1);
+  box-shadow: 0 0 0 2px rgba(139, 233, 253, 0.4);
+  font-weight: 900;
+  color: var(--c-carbon-1)
+}
+
+::v-deep(.carbon-change-text a::after) {
+  content: "↗";
+  font-weight: initial;
+  color: var(--c-carbon-1)
+}
+
 </style>

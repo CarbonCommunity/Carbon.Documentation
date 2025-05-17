@@ -2,8 +2,7 @@ import { defineConfig } from 'vitepress'
 import tailwindcss from 'tailwindcss'
 import autoprefixer from 'autoprefixer'
 import { tabsMarkdownPlugin } from 'vitepress-plugin-tabs'
-import { BLUEPRINTS_API_URL, HOOKS_API_URL, ITEMS_API_URL } from './shared/constants'
-import path from 'path'
+import { URL_METDAT_CARB_HOOKS, URL_METDAT_RUST_BLUEPRINTS, URL_METDAT_RUST_ITEMS } from './api/constants'
 
 const references = [
   {
@@ -32,7 +31,7 @@ const references = [
 
 async function fetchItems() {
   try {
-    const response = await fetch(ITEMS_API_URL)
+    const response = await fetch(URL_METDAT_RUST_ITEMS)
     const items = await response.json()
     return items
   } catch (error) {
@@ -180,7 +179,7 @@ export default defineConfig({
         },
         {
           text: 'References', items: references,
-        },
+        }
       ],
     },
 
@@ -231,7 +230,7 @@ ${item.Description || ''}`).join('\n\n---\n\n')
 
           if (env.relativePath === 'references/hooks/index.md') {
             try {
-              const response = await fetch(HOOKS_API_URL)
+              const response = await fetch(URL_METDAT_CARB_HOOKS)
               const data = await response.json()
               const hookContent = Object.entries(data as Record<string, any[]>)
                 .flatMap(([category, hooks]) =>
@@ -246,7 +245,7 @@ ${item.Description || ''}`).join('\n\n---\n\n')
 
           if (env.relativePath === 'references/blueprints/index.md') {
             try {
-              const response = await fetch(BLUEPRINTS_API_URL)
+              const response = await fetch(URL_METDAT_RUST_BLUEPRINTS)
               const blueprints = await response.json()
               const blueprintContent = blueprints.map((blueprint: any) => `# [*Blueprint*] ${blueprint.Item.DisplayName || ''} {#${blueprint.Item.ShortName}}
 
@@ -272,7 +271,7 @@ ${blueprint.Item.Description || ''}`).join('\n\n---\n\n')
   vite: {
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, '/.vitepress'), // should reflect whats in `tsconfig.json`
+        '@': '/.vitepress'
       },
     },
     css: {

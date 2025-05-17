@@ -95,7 +95,7 @@ identifiers as they're way faster to process.
 
 > The hook IDs are generated the same way Rust uses with `StringPool` to get numeric identifiers out of string values.
 
-You can generate your own hook identifier, [using our API](https://carbonmod.gg/mdhash/?hook=MyHookName).
+You can generate your own hook identifier, [using our API](https://api.carbonmod.gg/mdhash/?hook=MyHookName).
 It should look something like this: `499798872`, which then used in the HookCaller, you use it like this:
 
 ```csharp
