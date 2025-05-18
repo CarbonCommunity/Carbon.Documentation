@@ -151,6 +151,7 @@ export default defineConfig({
                 { text: 'Async Shutdown', link: '/devs/features/async-shutdown' },
                 { text: 'Bridge', link: '/devs/features/bridge' },
                 { text: 'Client Entities', link: '/devs/features/client-entities' },
+                { text: 'Entity Serializer',link:'/devs/features/entity-serializer'},
                 { text: 'Commands', link: '/devs/features/commands' },
                 { text: 'Conditionals', link: '/devs/features/conditionals' },
                 { text: 'Extensions', link: '/devs/features/extensions' },
