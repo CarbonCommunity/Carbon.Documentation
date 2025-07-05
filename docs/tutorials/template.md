@@ -14,6 +14,7 @@ fmContentType: blogpost
 category: tutorials
 published: false
 author: someone
+hidden: true
 ---
 
 <NewsSectionTitle text="Hello world?" author="discombobulated"/>

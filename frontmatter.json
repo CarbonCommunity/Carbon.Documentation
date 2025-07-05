@@ -43,12 +43,12 @@
         {
           "title": "header",
           "name": "header",
-          "type": "string"
+          "type": "image"
         },
         {
           "title": "logo",
           "name": "logo",
-          "type": "string"
+          "type": "image"
         },
         {
           "title": "author",
@@ -71,98 +71,24 @@
           "type": "boolean"
         },
         {
-          "title": "draft",
-          "name": "draft",
-          "type": "draft"
-        }
-      ]
-    },
-    {
-      "name": "blogpost",
-      "pageBundle": false,
-      "fields": [
-        {
-          "title": "Title",
-          "description": "The title of the blog post. Make it super short and flashy.",
-          "name": "title",
+          "title": "fmContentType",
+          "name": "fmContentType",
           "type": "string"
         },
         {
-          "title": "Description",
-          "description": "Here's a brief summary of the blog post people are gonna read. This is used for SEO and embeds too.",
-          "name": "description",
-          "type": "string"
-        },
-        {
-          "title": "Category",
-          "description": "The cateogry this blog post should show up in. It's our way to split unrelated blog post sections apart.",
+          "title": "category",
           "name": "category",
-          "type": "choice",
-          "multiple": false,
-          "choices": [
-            "news",
-            "tutorials"
-          ]
+          "type": "categories"
         },
         {
-          "title": "Published?",
-          "description": "Is this blog post publicly available?",
+          "title": "published",
           "name": "published",
           "type": "boolean"
         },
         {
-          "title": "Header",
-          "description": "The background header image of the blog post. Recommended a higher resolution image, and make it WEBP.",
-          "name": "header",
-          "type": "image"
-        },
-        {
-          "title": "Logo",
-          "description": "An optional cool looking logo to make your blog post pop more.",
-          "name": "logo",
-          "type": "image"
-        },
-        {
-          "title": "Author",
-          "description": "The author of this blog post. Of course.",
-          "name": "author",
-          "type": "string"
-        },
-        {
-          "title": "Date",
-          "description": "The date and time(?) of when this blog post was posted.",
-          "name": "date",
-          "type": "datetime"
-        },
-        {
-          "title": "Tags",
-          "description": "One or multiple tags and keywords increasing chance to make it show up.",
-          "name": "tags",
-          "type": "tags"
-        },
-        {
-          "title": "Layout",
-          "description": "Blog post layout.",
-          "name": "layout",
-          "type": "string",
-          "default": "news-layout",
-          "hidden": true
-        },
-        {
-          "title": "Sidebar?",
-          "description": "Should the sidebar be displayed?",
-          "name": "sidebar",
-          "type": "boolean",
-          "default": false,
-          "hidden": true
-        },
-        {
-          "title": "ContentType",
-          "description": "The content type preset.",
-          "name": "fmContentType",
-          "type": "string",
-          "default": "blogpost",
-          "hidden": true
+          "title": "hidden",
+          "name": "hidden",
+          "type": "boolean"
         }
       ]
     }

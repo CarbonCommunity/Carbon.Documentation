@@ -8,6 +8,7 @@ date: 2025-07-03T23:52:07.701Z
 tags:
     - docs
     - news
+    - server owners
 layout: news-layout
 category: news
 sidebar: false
@@ -128,9 +129,4 @@ Manage permissions for plugins and modues straight from the control panel!
 <NewsImage src="/news/controlp-6-showcase.png"/>
 <NewsSection>
 Preview and interact with people chatting on your server, all within the Control Panel! (Clicking on player names opens up their Steam profile)
-</NewsSection>
-
-<NewsSectionTitle text="Join us!"/>
-<NewsSection>
-Feel free to join us on our <a href="https://discord.gg/carbonmod" target="_blank">official Discord server</a> or explore Carbon plugins over <a href="https://codefling.com/carbon" target="_blank">on Codefling</a>
 </NewsSection>

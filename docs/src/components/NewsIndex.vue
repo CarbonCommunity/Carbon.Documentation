@@ -14,7 +14,7 @@ const news = shallowRef<NewsPost[]>(initialData)
 const searchInput = shallowRef<string>('')
 const searchResults = computed(() => {
   const categoryNews = news.value?.filter((post: NewsPost) => {
-      return (import.meta.env.MODE == 'development' || post.frontmatter.published) && post.frontmatter.category == props.category
+      return !post.frontmatter.hidden && (import.meta.env.MODE == 'development' || post.frontmatter.published) && post.frontmatter.category == props.category
     })
   const input = searchInput.value?.toLowerCase() ?? ''
   if(!input) { 
@@ -44,15 +44,15 @@ const firstPost = shallowRef<NewsPost | null>(searchResults.value?.[0] ?? null)
         <div class="mx-auto mt-72 flex max-w-screen-lg md:flex-row flex-col">
           <div class="flex flex-col items-center">
             <img class="w-[100%] transform justify-self-center transition-transform duration-200 hover:scale-105" :src="firstPost.frontmatter.logo" />
-            <div class="my-3 block uppercase">
-              <VPBadge type="info">{{ firstPost.date.string }}</VPBadge><VPBadge v-if="firstPost.frontmatter.author" type="info">by {{ firstPost.frontmatter.author }}</VPBadge>
-              <VPBadge v-for="tag in firstPost.frontmatter.tags" :key="tag" type="tip">{{ tag }}</VPBadge>
-            </div>
+            <VPBadge class="mb-2" type="danger">LATEST POST</VPBadge><br>
           </div>
           <div>
             <div class="mb-5 text-left text-5xl font-black uppercase">
-              <VPBadge class="mb-2" type="danger">LATEST POST</VPBadge><br />
               {{ firstPost.frontmatter.title }}
+            </div>
+            <div class="my-3 block uppercase">
+              <VPBadge type="info">{{ firstPost.date.string }}</VPBadge><VPBadge v-if="firstPost.frontmatter.author" type="info">by {{ firstPost.frontmatter.author }}</VPBadge>
+              <VPBadge v-for="tag in firstPost.frontmatter.tags" :key="tag" type="tip">{{ tag }}</VPBadge>
             </div>
             <div class="mb-48 text-left text-2xl font-normal text-slate-400">
               {{ firstPost.frontmatter.description }}
@@ -82,9 +82,8 @@ const firstPost = shallowRef<NewsPost | null>(searchResults.value?.[0] ?? null)
             <VPBadge v-if="!post.frontmatter.published" class="text-sm" type="warning">DRAFT</VPBadge><VPBadge class="text-sm" type="info">{{ formatDate(post.frontmatter.date).string }}</VPBadge><VPBadge v-if="post.frontmatter.author" class="text-sm" type="info">by {{ post.frontmatter.author }}</VPBadge>
             <VPBadge v-for="tag in post.frontmatter.tags" :key="tag" type="tip">{{ tag }}</VPBadge>
           </div>
-          <span :class="'font-sans text-2xl font-black uppercase text-' + (post.frontmatter.published ? 'slate' : 'yellow') + '-200'">{{ post.frontmatter.title }}</span><br />
-          <span class="text-sm font-normal text-slate-400">{{ post.frontmatter.description }}</span
-          ><br />
+          <span :class="'font-sans text-2xl font-black uppercase text-' + (post.frontmatter.published ? 'slate' : 'yellow') + '-200'">{{ post.frontmatter.title }}</span><br>
+          <span class="text-sm font-normal text-slate-400">{{ post.frontmatter.description }}</span><br>
         </div>
       </a>
     </div>
