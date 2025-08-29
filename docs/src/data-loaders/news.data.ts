@@ -11,10 +11,7 @@ export interface NewsPost extends ContentData {
 declare const data: NewsPost[]
 export { data }
 
-export default createContentLoader([
-  '/news/**/*.md', 
-  '/tutorials/**/*.md'
-], {
+export default createContentLoader(['news/**/*.md', 'tutorials/**/*.md'], {
   transform(rawData) {
     return rawData
       .map((x): NewsPost => {
@@ -23,6 +20,10 @@ export default createContentLoader([
           date: formatDate(x.frontmatter.date),
         }
       })
-      .sort((a, b) => a.frontmatter.collectionid != null && b.frontmatter.collectionid != null ? a.frontmatter.collectionid - b.frontmatter.collectionid : b.date.time - a.date.time)
+      .sort((a, b) =>
+        a.frontmatter.collectionid != null && b.frontmatter.collectionid != null
+          ? a.frontmatter.collectionid - b.frontmatter.collectionid
+          : b.date.time - a.date.time
+      )
   },
 })
