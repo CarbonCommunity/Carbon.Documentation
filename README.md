@@ -1,6 +1,8 @@
 # Carbon.Documentation
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/CarbonCommunity/Carbon.Documentation)
 
+[carbonmod.gg](https://carbonmod.gg/)
+
 This is official repository for documentation of Carbon framework and other useful stuff.
 
 The website is built using [VitePress](https://vitepress.dev/), powered by [Vite](https://vitejs.dev/) and [Vue.js](https://vuejs.org/). It uses [Tailwind CSS v3](https://v3.tailwindcss.com/) for styling.
