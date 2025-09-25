@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ArrowUpFromDot, CodeXml, Dot, ExternalLink, HardDriveDownload, Plus, RotateCcw, Save, Shield, Trash2, Wifi, X } from 'lucide-vue-next'
+import { ArrowUpFromDot, CodeXml, Dot, Expand, ExternalLink, HardDriveDownload, Plus, RotateCcw, Save, Shield, Trash2, Wifi, X } from 'lucide-vue-next'
 import { onMounted, onUnmounted } from 'vue'
 import { Slot, activeInventory, activeSlot, beltSlots, handleDrag, handleDrop, hideInventory, mainSlots, toolSlots, wearSlots } from './ControlPanel.Inventory'
 import {
@@ -112,7 +112,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="mx-auto space-y-0 px-4 py-8">
+  <div :class="[ 'mx-auto space-y-0 px-4 py-8', !selectedServer?.WideScreen ? 'md:container lg:px-6 xl:px-8 2xl:px-20' : '']">
     <div class="r-list">
       <button v-for="server in servers" :key="server.Address" :class="['r-button', { toggled: server == selectedServer }]" @click="selectServer(server)">
         <Dot
@@ -180,6 +180,14 @@ onUnmounted(() => {
         >
           <CodeXml :size="20" /> Source <ExternalLink :size="13" />
         </a>
+        <button
+          class="r-button"
+          @click="selectedServer.toggleWideScreen()"
+          :class="['r-button', { toggled: selectedServer.WideScreen }]"
+          style="color: var(--docsearch-footer-background); font-size: small"
+        >
+          <Expand :size="20" />
+        </button>
       </div>
     </div>
 

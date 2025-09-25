@@ -189,6 +189,7 @@ function importFromJson(data: string) {
         }
         const localServer = createServer(server.Address, server.Password)
         localServer.AutoConnect = server.AutoConnect
+        localServer.WideScreen = server.WideScreen
         localServer.Secure = server.Secure
         localServer.CachedHostname = server.CachedHostname
         localServer.CommandHistory = server.CommandHistory ?? []
@@ -238,6 +239,7 @@ export class Server {
   Chat: string[] = []
   CommandHistory: string[] = []
   AutoConnect = false
+  WideScreen = false
   Secure = false
   CachedHostname = ''
   IsConnected = false
@@ -506,6 +508,11 @@ export class Server {
 
   toggleAutoConnect() {
     this.AutoConnect = !this.AutoConnect
+    save()
+  }
+
+  toggleWideScreen() {
+    this.WideScreen = !this.WideScreen
     save()
   }
 
