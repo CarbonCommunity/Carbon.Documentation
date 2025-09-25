@@ -255,6 +255,7 @@ function importFromJson(data: string) {
         const localServer = createServer(server.Address, server.Password)
         localServer.AutoConnect = server.AutoConnect
         localServer.WideScreen = server.WideScreen
+        localServer.Bridge = server.Bridge
         localServer.Secure = server.Secure
         localServer.CachedHostname = server.CachedHostname
         localServer.CommandHistory = server.CommandHistory ?? []
@@ -306,6 +307,7 @@ export class Server {
   AutoConnect = false
   WideScreen = false
   Secure = false
+  Bridge = false
   CachedHostname = ''
   IsConnected = false
   IsConnecting = false
@@ -412,6 +414,9 @@ export class Server {
     }
 
     this.Socket = new WebSocket((this.Secure ? 'wss' : 'ws') + '://' + this.Address + '/' + this.Password)
+    if(this.Bridge) {
+      this.Socket.binaryType = 'arraybuffer';
+    }  
     this.IsConnecting = true
 
     this.Socket.onopen = () => {
@@ -435,38 +440,48 @@ export class Server {
       this.UserConnected = false
     }
     this.Socket.onmessage = (event) => {
-      const resp: CommandResponse = JSON.parse(event.data)
-
-      try {
-        let isJson = false
-        let jsonData = null
-
+      if(this.Bridge) {
+        let bytes: Uint8Array;
+        if (event.data instanceof ArrayBuffer) {
+          bytes = new Uint8Array(event.data);
+        }
+        const reader = new BinaryReader(event.data);
+        console.log(reader.int32())
+        console.log(reader.int32())
+      } 
+      else {
+        const resp: CommandResponse = JSON.parse(event.data)
         try {
-          jsonData = JSON.parse(resp.Message)
-          isJson = true
+          let isJson = false
+          let jsonData = null
+
+          try {
+            jsonData = JSON.parse(resp.Message)
+            isJson = true
+          } catch {
+            /* empty */
+          }
+
+          if (this.onIdentifiedCommand(resp.Identifier, jsonData ?? resp)) {
+            return
+          }
         } catch {
           /* empty */
         }
 
-        if (this.onIdentifiedCommand(resp.Identifier, jsonData ?? resp)) {
+        const match = resp.Message.match(/^\[CHAT\]\s+(.+?)\[(\d+)\]\s+:\s+(.+)$/)
+        if(match) {
+          this.appendChat({
+            Username: match[1],
+            UserId: match[2],
+            Message: match[3]
+          })
           return
         }
-      } catch {
-        /* empty */
-      }
 
-      const match = resp.Message.match(/^\[CHAT\]\s+(.+?)\[(\d+)\]\s+:\s+(.+)$/)
-      if(match) {
-        this.appendChat({
-          Username: match[1],
-          UserId: match[2],
-          Message: match[3]
-        })
-        return
+        this.appendLog(resp.Message)
+        tryFocusLogs()
       }
-
-      this.appendLog(resp.Message)
-      tryFocusLogs()
     }
   }
 
@@ -578,6 +593,11 @@ export class Server {
 
   toggleWideScreen() {
     this.WideScreen = !this.WideScreen
+    save()
+  }
+
+  toggleBridge() {
+    this.Bridge = !this.Bridge
     save()
   }
 
