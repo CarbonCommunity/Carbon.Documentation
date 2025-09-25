@@ -112,7 +112,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="mx-auto space-y-0 px-4 py-8 md:container lg:px-6 xl:px-8 2xl:px-20">
+  <div class="mx-auto space-y-0 px-4 py-8">
     <div class="r-list">
       <button v-for="server in servers" :key="server.Address" :class="['r-button', { toggled: server == selectedServer }]" @click="selectServer(server)">
         <Dot
