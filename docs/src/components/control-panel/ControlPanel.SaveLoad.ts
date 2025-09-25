@@ -34,6 +34,71 @@ enum LogType {
   Subscription = 6,
 }
 
+class BinaryReader {
+  private view: DataView;
+  private offset = 0;
+  private decoder = new TextDecoder();
+
+  constructor(private buffer: ArrayBuffer) {
+    this.view = new DataView(buffer);
+  }
+
+  int32(): number {
+    const value = this.view.getInt32(this.offset, true);
+    this.offset += 4;
+    return value;
+  }
+
+  uint32(): number {
+    const value = this.view.getUint32(this.offset, true);
+    this.offset += 4;
+    return value;
+  }
+
+  float(): number {
+    const value = this.view.getFloat32(this.offset, true);
+    this.offset += 4;
+    return value;
+  }
+
+  byte(): number {
+    return this.view.getUint8(this.offset++);
+  }
+
+  bytes(length: number): Uint8Array {
+    const bytes = new Uint8Array(this.buffer, this.offset, length);
+    this.offset += length;
+    return bytes;
+  }
+
+  string(length: number): string {
+    const bytes = this.bytes(length);
+    return this.decoder.decode(bytes);
+  }
+
+  cstring(): string {
+    const start = this.offset;
+    while (this.offset < this.view.byteLength && this.view.getUint8(this.offset) !== 0) {
+      this.offset++;
+    }
+    const bytes = new Uint8Array(this.buffer, start, this.offset - start);
+    this.offset++;
+    return this.decoder.decode(bytes);
+  }
+
+  skip(bytes: number) {
+    this.offset += bytes;
+  }
+
+  get position() {
+    return this.offset;
+  }
+
+  get length() {
+    return this.view.byteLength;
+  }
+}
+
 export async function fetchGeolocation(ip: string) {
   if (ip == '127.0.0.1') {
     return
