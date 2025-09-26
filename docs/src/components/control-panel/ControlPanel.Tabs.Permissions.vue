@@ -14,7 +14,7 @@ function selectGroup(value: string | null, forceSelect: boolean = true) {
     return
   }
   selectedGroup.value = value
-  selectedServer.value.sendRpc("GetGroupPermissions", value)
+  selectedServer.value.sendCall("GetGroupPermissions", value)
 }
 function selectHookable(value: string | null) {
   selectedHookable.value = value
@@ -29,13 +29,13 @@ function togglePermission(value: string) {
   if (value == 'grantall' || value == 'revokeall') {
     const confirm = window.confirm(`Are you sure?`)
     if (confirm) {
-      selectedServer.value.sendRpc("TogglePermission", selectedGroup.value, value, selectedHookable.value.Plugin?.Name ?? selectedHookable.value.Module?.Name)
+      selectedServer.value.sendCall("TogglePermission", selectedGroup.value, value, selectedHookable.value.Plugin?.Name ?? selectedHookable.value.Module?.Name)
       selectGroup(selectedGroup.value)
     }
     return
   }
 
-  selectedServer.value.sendRpc("TogglePermission", selectedGroup.value, value, selectedHookable.value.Plugin?.Name ?? selectedHookable.value.Module?.Name)
+  selectedServer.value.sendCall("TogglePermission", selectedGroup.value, value, selectedHookable.value.Plugin?.Name ?? selectedHookable.value.Module?.Name)
   selectGroup(selectedGroup.value)
 }
 </script>
@@ -117,7 +117,7 @@ export function refreshPermissions() {
       groupPermInfo.value.push(read.string())
     }
   }
-  selectedServer.value.sendRpc("GetPermissionsMetadata")
+  selectedServer.value.sendCall("GetPermissionsMetadata")
 }
 </script>
 
