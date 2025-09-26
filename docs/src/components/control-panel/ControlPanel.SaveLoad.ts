@@ -602,6 +602,45 @@ export class Server {
     this.RpcCallbacks[this.getId('ServerHeaderImage')] = (read) => {
       this.HeaderImage = read.string()
     }
+    this.RpcCallbacks[this.getId('SendPlayerInventory')] = (read) => {
+      clearInventory()
+      activeSlot.value = read.int32()
+      this.readInventory(read, mainSlots)
+      this.readInventory(read, beltSlots)
+      this.readInventory(read, wearSlots)
+    }
+  }
+
+  readInventory(read: any, inventory: any) {
+    const count = read.int32()
+    for (let i = 0; i < count; i++) {
+      const item = this.readItem(read)
+      const position = item.Position
+      if (position == -1 || position >= inventory.value.length) {
+        continue
+      }
+      const slot = inventory.value[position]
+      slot.ItemId = item.ItemId
+      slot.ShortName = item.ShortName
+      slot.Amount = item.Amount
+      slot.MaxCondition = item.MaxCondition
+      slot.Condition = item.Condition
+      slot.ConditionNormalized = item.ConditionNormalized
+      slot.HasCondition = item.HasCondition
+    }
+  }
+
+  readItem(read: BinaryReader) {
+    return {
+      ItemId: read.int32(),
+      ShortName: read.string(),
+      Amount: read.int32(),
+      Position: read.int32(),
+      MaxCondition: read.float(),
+      Condition: read.float(),
+      ConditionNormalized: read.float(),
+      HasCondition: read.bool()
+    }
   }
 
   connect() {
