@@ -32,6 +32,30 @@ export function onSearch() {
     searchedData.value = data.value
     editEntity(selectedEntity.value == null ? 0 : selectedEntity.value.NetId)
   }
+  selectedServer.value.RpcCallbacks[selectedServer.value.getId("SearchEntities")] = (read: any) => {
+    isSearching.value = false
+    searchedData.value = []
+
+    var entities = read.int32()
+    for (let i = 0; i < entities; i++) {
+      searchedData.value.push({
+        NetId: read.uint64(),
+        Name: read.string(),
+        ShortName: read.string(),
+        Id: read.uint32(),
+        Flags: read.int32(),
+        PosX: read.float(),
+        PosY: read.float(),
+        PosZ: read.float(),
+        RotX: read.float(),
+        RotY: read.float(),
+        RotZ: read.float()
+      })
+    }
+
+    console.log(entities)
+    editEntity(selectedEntity.value == null ? 0 : selectedEntity.value.NetId)
+  }
   selectedServer.value.sendRpc("SearchEntities", searchMaxCount.value, currentSearch.value)
 }
 
@@ -45,7 +69,64 @@ export function editEntity(netId: number) {
     isSide.value = true
     refreshIcon()
   }
+  selectedServer.value.RpcCallbacks[selectedServer.value.getId("EntityDetails")] = (read: any) => {
+    selectedEntity.value = readEntity(read)
+    isSide.value = true
+    refreshIcon()
+    console.log(selectedEntity.value)
+  }
   selectedServer.value.sendRpc("EntityDetails", netId)
+}
+
+export function readEntity(read: any) {
+  const entity = {}
+  entity.NetId = read.uint64()
+  entity.Name = read.string()
+  entity.ShortName = read.string()
+  entity.Id = read.uint32()
+  entity.Flags = []
+  const flagCount = read.int32()
+  for (let i = 0; i < flagCount; i++) {
+    entity.Flags.push(read.string())
+  }
+  entity.Type = read.string()
+  entity.PosX = read.float()
+  entity.PosY = read.float()
+  entity.PosZ = read.float()
+  entity.RotX = read.float()
+  entity.RotY = read.float()
+  entity.RotZ = read.float()
+  entity.Owner = read.uint64()
+  entity.Skin = read.uint64()
+  if(read.bool()) {
+    entity.Parent = readEntity(read)
+  }
+  const childCount = read.int32()
+  entity.Children = []
+  for (let i = 0; i < childCount; i++) {
+    entity.Children.push(readEntity(read))
+  }
+  if(read.bool()) {
+    entity.CombatEntity = {
+      Health: read.float(),
+      MaxHealth: read.float()
+    }
+  }
+  if(read.bool()) {
+    entity.PlayerEntity = {
+      DisplayName: read.string(),
+      UserId: read.uint64(),
+      Thirst: read.float(),
+      MaxThirst: read.float(),
+      Hunger: read.float(),
+      MaxHunger: read.float(),
+      Rads: read.float(),
+      MaxRads: read.float(),
+      Bleed: read.float(),
+      MaxBleed: read.float(),
+    }
+  }
+  return entity
 }
 
 export function killEntity(netId: number) {
@@ -64,7 +145,13 @@ export function killEntity(netId: number) {
 }
 
 export function saveEntity() {
-  selectedServer.value.sendRpc("EntitySave", `"${JSON.stringify(selectedEntity.value)}"`)
+  const payload = JSON.stringify(selectedEntity.value, bigintReplacer)
+  console.log(payload.length)
+  selectedServer.value.sendRpc("EntitySave", payload.length, payload)
+}
+
+function bigintReplacer(_key: string, value: any) {
+  return typeof value === 'bigint' ? value.toString() : value;
 }
 
 export function empowerPlayer(data: any) {

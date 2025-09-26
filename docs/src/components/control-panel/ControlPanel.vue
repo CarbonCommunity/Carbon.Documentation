@@ -17,7 +17,6 @@ import {
   selectedSubTab,
   servers,
 } from './ControlPanel.SaveLoad'
-import { selectedEntity, stopEditingEntity } from './ControlPanel.Entities'
 import ConsoleTab from './ControlPanel.Tabs.Console.vue'
 import ChatTab from './ControlPanel.Tabs.Chat.vue'
 import PermissionsTab from './ControlPanel.Tabs.Permissions.vue'

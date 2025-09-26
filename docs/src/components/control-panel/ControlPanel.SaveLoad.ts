@@ -64,6 +64,24 @@ class BinaryReader {
     return v;
   }
 
+  int64(): bigint {
+    const v = this.view.getBigInt64(this.offset, true);
+    this.offset += 8;
+    return v;
+  }
+
+  double(): number {
+    const v = this.view.getFloat64(this.offset, true);
+    this.offset += 4;
+    return v;
+  }
+
+  uint64(): bigint {
+    const v = this.view.getBigUint64(this.offset, true);
+    this.offset += 8;
+    return v;
+  }
+
   byte(): number {
     return this.view.getUint8(this.offset++);
   }
@@ -157,6 +175,18 @@ class BinaryWriter {
     this.ensure(4);
     this.view.setUint32(this.offset, value, true);
     this.offset += 4;
+  }
+
+  int64(value: bigint): void {
+    this.ensure(8);
+    this.view.setBigInt64(this.offset, value, true);
+    this.offset += 8;
+  }
+
+  uint64(value: bigint): void {
+    this.ensure(8);
+    this.view.setBigUint64(this.offset, value, true);
+    this.offset += 8;
   }
 
   float(value: number): void {
@@ -726,6 +756,9 @@ export class Server {
         const value = args[i]
         const type = typeof value
         switch(type) {
+          case 'bigint':
+            write.uint64(value as bigint)
+            break;
           case 'number':
             write.int32(value as number)
             break;
