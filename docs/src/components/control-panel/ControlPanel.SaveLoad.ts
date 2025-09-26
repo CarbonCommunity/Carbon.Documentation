@@ -506,9 +506,9 @@ export class Server {
   registerCommands() {
     this.CommandCallbacks = {}
 
-    this.CommandCallbacks[this.getId('MoveInventoryItem')] = () => {}
+    this.setCommand('MoveInventoryItem', () => {})
 
-    this.CommandCallbacks[this.getId('SendPlayerInventory')] = (data: any) => {
+    this.setCommand('SendPlayerInventory', (data: any) => {
       clearInventory()
       try {
         activeSlot.value = data.value.ActiveSlot
@@ -554,19 +554,19 @@ export class Server {
       } catch (e) {
         console.error(e)
       }
-    }
+    })
 
-    this.CommandCallbacks[this.getId('TestCall')] = (data) => {
+    this.setCommand('TestCall', (data) => {
       console.log(data)
-    } 
+    })
   }
 
   registerRpcs() {
-    this.RpcCallbacks[this.getId('Test')] = (read) => {
+    this.setRpc('Test', (read) => {
       console.log(read.string())
       console.log(read.int32())
-    } 
-    this.RpcCallbacks[this.getId('ServerInfo')] = (read) => {
+    })
+    this.setRpc('ServerInfo', (read) => {
       this.ServerInfo = { 
         Hostname: read.string(),
         MaxPlayers: read.int32(),
@@ -590,25 +590,25 @@ export class Server {
         Protocol: read.string()
       } as const
       this.CachedHostname = this.ServerInfo.Hostname
-    }
-    this.RpcCallbacks[this.getId('CarbonInfo')] = (read) => {
+    })
+    this.setRpc('CarbonInfo', (read) => {
       this.CarbonInfo = {
         Message: read.string()
       }
-    }
-    this.RpcCallbacks[this.getId('ServerDescription')] = (read) => {
+    })
+    this.setRpc('ServerDescription', (read) => {
       this.Description = read.string()
-    }
-    this.RpcCallbacks[this.getId('ServerHeaderImage')] = (read) => {
+    })
+    this.setRpc('ServerHeaderImage', (read) => {
       this.HeaderImage = read.string()
-    }
-    this.RpcCallbacks[this.getId('SendPlayerInventory')] = (read) => {
+    })
+    this.setRpc('SendPlayerInventory', (read) => {
       clearInventory()
       activeSlot.value = read.int32()
       this.readInventory(read, mainSlots)
       this.readInventory(read, beltSlots)
       this.readInventory(read, wearSlots)
-    }
+    })
   }
 
   readInventory(read: any, inventory: any) {
@@ -784,6 +784,14 @@ export class Server {
   getId(id: string) : number {
     const idPrefix = this.Bridge ? "RPC" : "CMD";
     return Number.parseInt(md5(`${idPrefix}_${id}`))
+  }
+
+  setCommand(id: string, callback: (...args: unknown[]) => void) {
+    this.CommandCallbacks[this.getId(id)] = callback
+  }
+
+  setRpc(id: string, callback: (...args: unknown[]) => void) {
+    this.RpcCallbacks[this.getId(id)] = callback
   }
 
   sendRpc(id: string, ...args: unknown[]) {
