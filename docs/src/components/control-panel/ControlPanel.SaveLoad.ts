@@ -566,6 +566,12 @@ export class Server {
         Message: read.string()
       }
     }
+    this.RpcCallbacks[this.getId('ServerDescription')] = (read) => {
+      this.Description = read.string()
+    }
+    this.RpcCallbacks[this.getId('ServerHeaderImage')] = (read) => {
+      this.HeaderImage = read.string()
+    }
   }
 
   connect() {
@@ -599,6 +605,8 @@ export class Server {
       if(this.Bridge) {
         this.sendRpc("ServerInfo")
         this.sendRpc("CarbonInfo")
+        this.sendRpc("ServerDescription")
+        this.sendRpc("ServerHeaderImage")
       } else {
         this.sendCommand('serverinfo', 2)
         this.sendCommand('playerlist', 6)
