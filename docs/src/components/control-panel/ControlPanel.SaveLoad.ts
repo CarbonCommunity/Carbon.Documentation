@@ -75,6 +75,10 @@ class BinaryReader {
     return slice;
   }
 
+  bool(): boolean {
+    return this.byte() == 1
+  }
+
   string(): string {
     const len = this.uint32();
     if (len === 0) return "";
@@ -469,12 +473,12 @@ export class Server {
     }
   }
 
-  registerRpcs() {
+  registerCommands() {
     this.CommandCallbacks = {}
 
-    this.CommandCallbacks[this.getRpc('MoveInventoryItem')] = () => {}
+    this.CommandCallbacks[this.getId('MoveInventoryItem')] = () => {}
 
-    this.CommandCallbacks[this.getRpc('SendPlayerInventory')] = (data: any) => {
+    this.CommandCallbacks[this.getId('SendPlayerInventory')] = (data: any) => {
       clearInventory()
       try {
         activeSlot.value = data.value.ActiveSlot
@@ -522,15 +526,46 @@ export class Server {
       }
     }
 
-    this.CommandCallbacks[this.getRpc('TestCall')] = (data) => {
+    this.CommandCallbacks[this.getId('TestCall')] = (data) => {
       console.log(data)
-    }
-  
-    console.log("test")
-    this.RpcCallbacks[this.getRpc('Test')] = (read) => {
+    } 
+  }
+
+  registerRpcs() {
+    this.RpcCallbacks[this.getId('Test')] = (read) => {
       console.log(read.string())
       console.log(read.int32())
     } 
+    this.RpcCallbacks[this.getId('ServerInfo')] = (read) => {
+      this.ServerInfo = { 
+        Hostname: read.string(),
+        MaxPlayers: read.int32(),
+        Players: read.int32(),
+        Queued: read.int32(),
+        Joining: read.int32(),
+        ReservedSlots: read.int32(),
+        EntityCount: read.int32(),
+        GameTime: read.string(),
+        Uptime: read.int32(),
+        Map: read.string(),
+        Framerate: read.float(),
+        Memory: read.int32(),
+        MemoryUsageSystem: read.int32(),
+        Collections: read.int32(),
+        NetworkIn: read.int32(),
+        NetworkOut: read.int32(),
+        Restarting: read.bool(),
+        SaveCreatedTime: read.string(),
+        Version: read.int32(),
+        Protocol: read.string()
+      } as const
+      this.CachedHostname = this.ServerInfo.Hostname
+    }
+    this.RpcCallbacks[this.getId('CarbonInfo')] = (read) => {
+      this.CarbonInfo = {
+        Message: read.string()
+      }
+    }
   }
 
   connect() {
@@ -559,15 +594,20 @@ export class Server {
       this.IsConnecting = false
       this.IsConnected = true
 
+      this.registerCommands()
       this.registerRpcs()
-      this.sendCommand('serverinfo', 2)
-      this.sendCommand('playerlist', 6)
-      this.sendCommand('console.tail', 7)
-      this.sendCommand('chat.tail', 8)
-      this.sendCommand('c.version', 3)
-      this.sendCommand('server.headerimage', 4)
-      this.sendCommand('server.description', 5)
-      this.sendRpc("Test", 125, "hello wordle!!sdf as")
+      if(this.Bridge) {
+        this.sendRpc("ServerInfo")
+        this.sendRpc("CarbonInfo")
+      } else {
+        this.sendCommand('serverinfo', 2)
+        this.sendCommand('playerlist', 6)
+        this.sendCommand('console.tail', 7)
+        this.sendCommand('chat.tail', 8)
+        this.sendCommand('c.version', 3)
+        this.sendCommand('server.headerimage', 4)
+        this.sendCommand('server.description', 5)
+      }
     }
     this.Socket.onclose = () => {
       this.clear()
@@ -664,7 +704,7 @@ export class Server {
     }
   }
 
-  getRpc(id: string) : number {
+  getId(id: string) : number {
     const idPrefix = this.Bridge ? "RPC" : "CMD";
     return Number.parseInt(md5(`${idPrefix}_${id}`))
   }
@@ -673,7 +713,7 @@ export class Server {
     if(this.Bridge) {
       const write = new BinaryWriter();
       write.int32(0);
-      write.uint32(this.getRpc(id));
+      write.uint32(this.getId(id));
       for (let i = 0; i < args.length; i++) {
         const value = args[i]
         const type = typeof value
@@ -693,7 +733,7 @@ export class Server {
         const arg = args[i]
         args[i] = `"${arg}"`
       }
-      this.sendCommand(`c.webrcon.rpc ${this.getRpc(id)} ${args.join(' ')}`, 100)
+      this.sendCommand(`c.webrcon.rpc ${this.getId(id)} ${args.join(' ')}`, 100)
     }
   }
 

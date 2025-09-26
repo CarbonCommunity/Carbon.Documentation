@@ -56,11 +56,11 @@ export function refreshPermissions() {
   groupInfo.value = null
 
   // GetPermissionsMetadata
-  selectedServer.value.CommandCallbacks[selectedServer.value.getRpc("GetPermissionsMetadata")] = (data: any) => {
+  selectedServer.value.CommandCallbacks[selectedServer.value.getId("GetPermissionsMetadata")] = (data: any) => {
     groupInfo.value = data.value
   }
   // GetGroupPermissions
-  selectedServer.value.CommandCallbacks[selectedServer.value.getRpc("GetGroupPermissions")] = (data: any) => {
+  selectedServer.value.CommandCallbacks[selectedServer.value.getId("GetGroupPermissions")] = (data: any) => {
     groupPermInfo.value = data.value.Permissions
   }
   selectedServer.value.sendRpc("GetPermissionsMetadata")
