@@ -158,22 +158,22 @@ class BinaryWriter {
     this.offset += src.length;
   }
 
-  string(value: string, length: number): void {
+  string(value: string, length?: number): void {
     const bytes = this.encoder.encode(value);
+
+    if (length === undefined) {
+      this.uint32(bytes.length);
+      this.ensure(bytes.length);
+      this.u8.set(bytes, this.offset);
+      this.offset += bytes.length;
+      return;
+    }
+
     this.ensure(length);
     const n = Math.min(bytes.length, length);
     this.u8.set(bytes.subarray(0, n), this.offset);
     if (n < length) this.u8.fill(0, this.offset + n, this.offset + length);
     this.offset += length;
-  }
-
-  cstring(value: string): void {
-    const bytes = this.encoder.encode(value);
-    this.ensure(bytes.length + 1);
-    this.u8.set(bytes, this.offset);
-    this.offset += bytes.length;
-    this.view.setUint8(this.offset, 0); // terminator
-    this.offset += 1;
   }
 
   skip(bytes: number): void {
@@ -544,6 +544,7 @@ export class Server {
       this.sendCommand('c.version', 3)
       this.sendCommand('server.headerimage', 4)
       this.sendCommand('server.description', 5)
+      this.sendRpc("Test", 125, "hello wordle!!sdf as")
     }
     this.Socket.onclose = () => {
       this.clear()
@@ -648,14 +649,12 @@ export class Server {
       for (let i = 0; i < args.length; i++) {
         const value = args[i]
         const type = typeof value
-
         switch(type) {
           case 'number':
             write.int32(value as number)
             break;
-
           case 'string':
-            write.cstring(value as string)
+            write.string(value as string)
             break;
         }
       }
