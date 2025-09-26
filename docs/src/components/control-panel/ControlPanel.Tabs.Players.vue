@@ -64,7 +64,7 @@ function refreshPlayers() {
       })
     }
   }
-  selectedServer.value.sendRpc("Players")
+  selectedServer.value.sendCall("Players")
 }
 </script>
 

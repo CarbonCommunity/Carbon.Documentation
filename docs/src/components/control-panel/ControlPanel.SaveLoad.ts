@@ -672,10 +672,10 @@ export class Server {
       this.registerCommands()
       this.registerRpcs()
       if(this.Bridge) {
-        this.sendRpc("ServerInfo")
-        this.sendRpc("CarbonInfo")
-        this.sendRpc("ServerDescription")
-        this.sendRpc("ServerHeaderImage")
+        this.sendCall("ServerInfo")
+        this.sendCall("CarbonInfo")
+        this.sendCall("ServerDescription")
+        this.sendCall("ServerHeaderImage")
       } else {
         this.sendCommand('serverinfo', 2)
         this.sendCommand('playerlist', 6)
@@ -744,7 +744,7 @@ export class Server {
   }
 
   fetchInventory(playerId: number) {
-    this.sendRpc("SendPlayerInventory", playerId)
+    this.sendCall("SendPlayerInventory", playerId)
   }
 
   sendCommand(input: string, id: number = 1) {
@@ -794,7 +794,7 @@ export class Server {
     this.RpcCallbacks[this.getId(id)] = callback
   }
 
-  sendRpc(id: string, ...args: unknown[]) {
+  sendCall(id: string, ...args: unknown[]) {
     if(this.Bridge) {
       const write = new BinaryWriter();
       write.int32(0);

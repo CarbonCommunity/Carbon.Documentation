@@ -56,7 +56,7 @@ export function onSearch() {
     console.log(entities)
     editEntity(selectedEntity.value == null ? 0 : selectedEntity.value.NetId)
   }
-  selectedServer.value.sendRpc("SearchEntities", searchMaxCount.value, currentSearch.value)
+  selectedServer.value.sendCall("SearchEntities", searchMaxCount.value, currentSearch.value)
 }
 
 export function editEntity(netId: number) {
@@ -75,7 +75,7 @@ export function editEntity(netId: number) {
     refreshIcon()
     console.log(selectedEntity.value)
   }
-  selectedServer.value.sendRpc("EntityDetails", netId)
+  selectedServer.value.sendCall("EntityDetails", netId)
 }
 
 export function readEntity(read: any) {
@@ -138,7 +138,7 @@ export function killEntity(netId: number) {
     if(selectedEntity.value != null && selectedEntity.value.NetId == netId) {
       selectedEntity.value = null
     }
-    selectedServer.value.sendRpc("EntityKill", netId)
+    selectedServer.value.sendCall("EntityKill", netId)
     searchInput.value = currentSearch.value
     onSearch()
   }
@@ -147,7 +147,7 @@ export function killEntity(netId: number) {
 export function saveEntity() {
   const payload = JSON.stringify(selectedEntity.value, bigintReplacer)
   console.log(payload.length)
-  selectedServer.value.sendRpc("EntitySave", payload.length, payload)
+  selectedServer.value.sendCall("EntitySave", payload.length, payload)
 }
 
 function bigintReplacer(_key: string, value: any) {
