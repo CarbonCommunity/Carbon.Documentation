@@ -27,13 +27,12 @@ export function onSearch() {
   searchInput.value = ''
   isSearching.value = true
 
-  // SearchEntities
-  selectedServer.value.Rpcs[1120335884] = (data: any) => {
+  selectedServer.value.Rpcs[selectedServer.value.getRpc("SearchEntities")] = (data: any) => {
     isSearching.value = false
-    searchedData.value = data.Value
+    searchedData.value = data.value
     editEntity(selectedEntity.value == null ? 0 : selectedEntity.value.NetId)
   }
-  selectedServer.value.sendRpc(1120335884, searchMaxCount.value, currentSearch.value)
+  selectedServer.value.sendRpc("SearchEntities", searchMaxCount.value, currentSearch.value)
 }
 
 export function editEntity(netId: number) {
@@ -41,13 +40,12 @@ export function editEntity(netId: number) {
     return
   }
 
-  // EntityDetails
-  selectedServer.value.Rpcs[2650739934] = (data: any) => {
+  selectedServer.value.Rpcs[selectedServer.value.getRpc("EntityDetails")] = (data: any) => {
     selectedEntity.value = data.Value
     isSide.value = true
     refreshIcon()
   }
-  selectedServer.value.sendRpc(2650739934, netId)
+  selectedServer.value.sendRpc("EntityDetails", netId)
 }
 
 export function killEntity(netId: number) {
@@ -59,16 +57,14 @@ export function killEntity(netId: number) {
     if(selectedEntity.value != null && selectedEntity.value.NetId == netId) {
       selectedEntity.value = null
     }
-    // EntityKill
-    selectedServer.value.sendRpc(223927051, netId)
+    selectedServer.value.sendRpc("EntityKill", netId)
     searchInput.value = currentSearch.value
     onSearch()
   }
 }
 
 export function saveEntity() {
-  // EntitySave
-  selectedServer.value.sendRpc(4230705942, `"${JSON.stringify(selectedEntity.value)}"`)
+  selectedServer.value.sendRpc("EntitySave", `"${JSON.stringify(selectedEntity.value)}"`)
 }
 
 export function empowerPlayer(data: any) {
