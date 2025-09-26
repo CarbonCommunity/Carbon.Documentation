@@ -27,7 +27,7 @@ export function onSearch() {
   searchInput.value = ''
   isSearching.value = true
 
-  selectedServer.value.Rpcs[selectedServer.value.getRpc("SearchEntities")] = (data: any) => {
+  selectedServer.value.CommandCallbacks[selectedServer.value.getRpc("SearchEntities")] = (data: any) => {
     isSearching.value = false
     searchedData.value = data.value
     editEntity(selectedEntity.value == null ? 0 : selectedEntity.value.NetId)
@@ -40,7 +40,7 @@ export function editEntity(netId: number) {
     return
   }
 
-  selectedServer.value.Rpcs[selectedServer.value.getRpc("EntityDetails")] = (data: any) => {
+  selectedServer.value.CommandCallbacks[selectedServer.value.getRpc("EntityDetails")] = (data: any) => {
     selectedEntity.value = data.Value
     isSide.value = true
     refreshIcon()

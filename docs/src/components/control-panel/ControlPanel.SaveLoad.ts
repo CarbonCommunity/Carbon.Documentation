@@ -37,29 +37,31 @@ enum LogType {
 
 class BinaryReader {
   private view: DataView;
+  private u8: Uint8Array;
   private offset = 0;
-  private decoder = new TextDecoder();
+  private decoder = new TextDecoder("utf-8", { fatal: false });
 
   constructor(private buffer: ArrayBuffer) {
     this.view = new DataView(buffer);
+    this.u8 = new Uint8Array(buffer);
   }
 
   int32(): number {
-    const value = this.view.getInt32(this.offset, true);
+    const v = this.view.getInt32(this.offset, true);
     this.offset += 4;
-    return value;
+    return v;
   }
 
   uint32(): number {
-    const value = this.view.getUint32(this.offset, true);
+    const v = this.view.getUint32(this.offset, true);
     this.offset += 4;
-    return value;
+    return v;
   }
 
   float(): number {
-    const value = this.view.getFloat32(this.offset, true);
+    const v = this.view.getFloat32(this.offset, true);
     this.offset += 4;
-    return value;
+    return v;
   }
 
   byte(): number {
@@ -67,37 +69,51 @@ class BinaryReader {
   }
 
   bytes(length: number): Uint8Array {
-    const bytes = new Uint8Array(this.buffer, this.offset, length);
-    this.offset += length;
-    return bytes;
+    const end = this.offset + length;
+    const slice = this.u8.subarray(this.offset, end);
+    this.offset = end;
+    return slice;
   }
 
-  string(length: number): string {
-    const bytes = this.bytes(length);
+  string(): string {
+    const len = this.uint32();
+    if (len === 0) return "";
+    const bytes = this.bytes(len);
     return this.decoder.decode(bytes);
+  }
+
+  fixedString(length: number, trimNulls = true): string {
+    const bytes = this.bytes(length);
+    let end = bytes.length;
+
+    if (trimNulls) {
+      for (let i = 0; i < bytes.length; i++) {
+        if (bytes[i] === 0) { end = i; break; }
+      }
+    }
+    return end > 0 ? this.decoder.decode(bytes.subarray(0, end)) : "";
   }
 
   cstring(): string {
     const start = this.offset;
-    while (this.offset < this.view.byteLength && this.view.getUint8(this.offset) !== 0) {
+    const n = this.view.byteLength;
+
+    while (this.offset < n && this.view.getUint8(this.offset) !== 0) {
       this.offset++;
     }
-    const bytes = new Uint8Array(this.buffer, start, this.offset - start);
-    this.offset++;
+
+    const hasTerminator = this.offset < n && this.view.getUint8(this.offset) === 0;
+    const bytes = this.u8.subarray(start, this.offset);
+
+    if (hasTerminator) this.offset++;
+
     return this.decoder.decode(bytes);
   }
 
-  skip(bytes: number) {
-    this.offset += bytes;
-  }
-
-  get position() {
-    return this.offset;
-  }
-
-  get length() {
-    return this.view.byteLength;
-  }
+  skip(bytes: number) { this.offset += bytes; }
+  get position() { return this.offset; }
+  set position(p: number) { this.offset = p; }
+  get length() { return this.view.byteLength; }
 }
 
 class BinaryWriter {
@@ -433,7 +449,8 @@ export class Server {
   PlayerInfo: any | null = null
   HeaderImage = ''
   Description = ''
-  Rpcs: Record<number, (...args: unknown[]) => void> = {}
+  CommandCallbacks: Record<number, (...args: unknown[]) => void> = {}
+  RpcCallbacks: Record<number, (...args: unknown[]) => void> = {}
 
   clear() {
     this.IsConnecting = false
@@ -453,11 +470,11 @@ export class Server {
   }
 
   registerRpcs() {
-    this.Rpcs = {}
+    this.CommandCallbacks = {}
 
-    this.Rpcs[this.getRpc('MoveInventoryItem')] = () => {}
+    this.CommandCallbacks[this.getRpc('MoveInventoryItem')] = () => {}
 
-    this.Rpcs[this.getRpc('SendPlayerInventory')] = (data: any) => {
+    this.CommandCallbacks[this.getRpc('SendPlayerInventory')] = (data: any) => {
       clearInventory()
       try {
         activeSlot.value = data.value.ActiveSlot
@@ -505,9 +522,15 @@ export class Server {
       }
     }
 
-    this.Rpcs[this.getRpc('TestCall')] = (data) => {
+    this.CommandCallbacks[this.getRpc('TestCall')] = (data) => {
       console.log(data)
     }
+  
+    console.log("test")
+    this.RpcCallbacks[this.getRpc('Test')] = (read) => {
+      console.log(read.string())
+      console.log(read.int32())
+    } 
   }
 
   connect() {
@@ -558,9 +581,14 @@ export class Server {
         if (event.data instanceof ArrayBuffer) {
           bytes = new Uint8Array(event.data);
         }
-        const reader = new BinaryReader(event.data);
-        console.log(reader.int32())
-        console.log(reader.int32())
+        const read = new BinaryReader(event.data)
+        switch(read.int32()) {
+          case 0:
+            if(this.onIdentifiedRpc(read)) {
+              return
+            }
+            break;
+        }
       } 
       else {
         const resp: CommandResponse = JSON.parse(event.data)
@@ -713,13 +741,21 @@ export class Server {
       case 100: {
         // c.webrcon.rpc
         const rpcId = Number(data.rpcId)
-        if (rpcId in this.Rpcs) {
-          this.Rpcs[rpcId](data)
+        if (rpcId in this.CommandCallbacks) {
+          this.CommandCallbacks[rpcId](data)
         }
         break
       }
     }
 
+    return true
+  }
+
+  onIdentifiedRpc(read: BinaryReader) : boolean {
+    const rpcId = read.uint32()
+    if (rpcId in this.RpcCallbacks) {
+      this.RpcCallbacks[rpcId](read)
+    }
     return true
   }
 
