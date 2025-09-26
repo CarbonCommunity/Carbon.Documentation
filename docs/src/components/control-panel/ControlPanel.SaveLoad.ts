@@ -4,6 +4,7 @@ import { message, tryFocusChat } from './ControlPanel.Chat'
 import { activeSlot, beltSlots, clearInventory, hideInventory, mainSlots, wearSlots } from './ControlPanel.Inventory'
 import { refreshPermissions } from './ControlPanel.Tabs.Permissions.vue'
 import { resetEntities } from './ControlPanel.Entities'
+import MD5 from 'crypto-js/md5';
 
 export const selectedServer = ref<Server | null>(null)
 export const selectedSubTab = shallowRef<number>(0)
@@ -32,6 +33,236 @@ enum LogType {
   Report = 4,
   ClientPerf = 5,
   Subscription = 6,
+}
+
+class BinaryReader {
+  private view: DataView;
+  private u8: Uint8Array;
+  private offset = 0;
+  private decoder = new TextDecoder("utf-8", { fatal: false });
+
+  constructor(private buffer: ArrayBuffer) {
+    this.view = new DataView(buffer);
+    this.u8 = new Uint8Array(buffer);
+  }
+
+  int32(): number {
+    const v = this.view.getInt32(this.offset, true);
+    this.offset += 4;
+    return v;
+  }
+
+  uint32(): number {
+    const v = this.view.getUint32(this.offset, true);
+    this.offset += 4;
+    return v;
+  }
+
+  float(): number {
+    const v = this.view.getFloat32(this.offset, true);
+    this.offset += 4;
+    return v;
+  }
+
+  int64(): bigint {
+    const v = this.view.getBigInt64(this.offset, true);
+    this.offset += 8;
+    return v;
+  }
+
+  double(): number {
+    const v = this.view.getFloat64(this.offset, true);
+    this.offset += 4;
+    return v;
+  }
+
+  uint64(): bigint {
+    const v = this.view.getBigUint64(this.offset, true);
+    this.offset += 8;
+    return v;
+  }
+
+  byte(): number {
+    return this.view.getUint8(this.offset++);
+  }
+
+  bytes(length: number): Uint8Array {
+    const end = this.offset + length;
+    const slice = this.u8.subarray(this.offset, end);
+    this.offset = end;
+    return slice;
+  }
+
+  bool(): boolean {
+    return this.byte() == 1
+  }
+
+  string(): string {
+    const len = this.uint32();
+    if (len === 0) return "";
+    const bytes = this.bytes(len);
+    return this.decoder.decode(bytes);
+  }
+
+  fixedString(length: number, trimNulls = true): string {
+    const bytes = this.bytes(length);
+    let end = bytes.length;
+
+    if (trimNulls) {
+      for (let i = 0; i < bytes.length; i++) {
+        if (bytes[i] === 0) { end = i; break; }
+      }
+    }
+    return end > 0 ? this.decoder.decode(bytes.subarray(0, end)) : "";
+  }
+
+  cstring(): string {
+    const start = this.offset;
+    const n = this.view.byteLength;
+
+    while (this.offset < n && this.view.getUint8(this.offset) !== 0) {
+      this.offset++;
+    }
+
+    const hasTerminator = this.offset < n && this.view.getUint8(this.offset) === 0;
+    const bytes = this.u8.subarray(start, this.offset);
+
+    if (hasTerminator) this.offset++;
+
+    return this.decoder.decode(bytes);
+  }
+
+  skip(bytes: number) { this.offset += bytes; }
+  get position() { return this.offset; }
+  set position(p: number) { this.offset = p; }
+  get length() { return this.view.byteLength; }
+}
+
+class BinaryWriter {
+  private view: DataView;
+  private buf: ArrayBuffer;
+  private u8: Uint8Array;
+  private offset = 0;
+  private encoder = new TextEncoder();
+
+  constructor(initialCapacity = 1024) {
+    this.buf = new ArrayBuffer(initialCapacity);
+    this.view = new DataView(this.buf);
+    this.u8 = new Uint8Array(this.buf);
+  }
+
+  private ensure(extra: number) {
+    const need = this.offset + extra;
+    if (need <= this.view.byteLength) return;
+
+    let cap = this.view.byteLength || 1;
+    while (cap < need) cap *= 2;
+
+    const next = new ArrayBuffer(cap);
+    new Uint8Array(next).set(this.u8.subarray(0, this.offset));
+    this.buf = next;
+    this.view = new DataView(this.buf);
+    this.u8 = new Uint8Array(this.buf);
+  }
+
+  int32(value: number): void {
+    this.ensure(4);
+    this.view.setInt32(this.offset, value, true);
+    this.offset += 4;
+  }
+
+  uint32(value: number): void {
+    this.ensure(4);
+    this.view.setUint32(this.offset, value, true);
+    this.offset += 4;
+  }
+
+  int64(value: bigint): void {
+    this.ensure(8);
+    this.view.setBigInt64(this.offset, value, true);
+    this.offset += 8;
+  }
+
+  uint64(value: bigint): void {
+    this.ensure(8);
+    this.view.setBigUint64(this.offset, value, true);
+    this.offset += 8;
+  }
+
+  float(value: number): void {
+    this.ensure(4);
+    this.view.setFloat32(this.offset, value, true);
+    this.offset += 4;
+  }
+
+  byte(value: number): void {
+    this.ensure(1);
+    this.view.setUint8(this.offset, value & 0xff);
+    this.offset += 1;
+  }
+
+  bytes(data: Uint8Array | ArrayBuffer): void {
+    const src = data instanceof Uint8Array ? data : new Uint8Array(data);
+    this.ensure(src.length);
+    this.u8.set(src, this.offset);
+    this.offset += src.length;
+  }
+
+  string(value: string, length?: number): void {
+    const bytes = this.encoder.encode(value);
+
+    if (length === undefined) {
+      this.uint32(bytes.length);
+      this.ensure(bytes.length);
+      this.u8.set(bytes, this.offset);
+      this.offset += bytes.length;
+      return;
+    }
+
+    this.ensure(length);
+    const n = Math.min(bytes.length, length);
+    this.u8.set(bytes.subarray(0, n), this.offset);
+    if (n < length) this.u8.fill(0, this.offset + n, this.offset + length);
+    this.offset += length;
+  }
+
+  skip(bytes: number): void {
+    this.ensure(bytes);
+    this.u8.fill(0, this.offset, this.offset + bytes);
+    this.offset += bytes;
+  }
+
+  get length(): number {
+    return this.offset;
+  }
+
+  get position(): number {
+    return this.offset;
+  }
+
+  get capacity(): number {
+    return this.view.byteLength;
+  }
+
+  toArrayBuffer(): ArrayBuffer {
+    return this.buf.slice(0, this.offset);
+  }
+
+  toUint8Array(): Uint8Array {
+    return new Uint8Array(this.buf, 0, this.offset);
+  }
+}
+
+export const md5 = (s: string) => String(md5FirstUint32LE(s));
+
+export function md5FirstUint32LE(str: string): number {
+  const wa = MD5(str);
+  const w0 = wa.words[0] | 0;
+  const b0 = (w0 >>> 24) & 0xff;
+  const b1 = (w0 >>> 16) & 0xff;
+  const b2 = (w0 >>>  8) & 0xff;
+  const b3 =  w0         & 0xff;
+  return (b0 | (b1 << 8) | (b2 << 16) | (b3 << 24)) >>> 0;
 }
 
 export async function fetchGeolocation(ip: string) {
@@ -190,6 +421,7 @@ function importFromJson(data: string) {
         const localServer = createServer(server.Address, server.Password)
         localServer.AutoConnect = server.AutoConnect
         localServer.WideScreen = server.WideScreen
+        localServer.Bridge = server.Bridge
         localServer.Secure = server.Secure
         localServer.CachedHostname = server.CachedHostname
         localServer.CommandHistory = server.CommandHistory ?? []
@@ -241,6 +473,7 @@ export class Server {
   AutoConnect = false
   WideScreen = false
   Secure = false
+  Bridge = false
   CachedHostname = ''
   IsConnected = false
   IsConnecting = false
@@ -250,7 +483,8 @@ export class Server {
   PlayerInfo: any | null = null
   HeaderImage = ''
   Description = ''
-  Rpcs: Record<number, (...args: unknown[]) => void> = {}
+  CommandCallbacks: Record<number, (...args: unknown[]) => void> = {}
+  RpcCallbacks: Record<number, (...args: unknown[]) => void> = {}
 
   clear() {
     this.IsConnecting = false
@@ -269,18 +503,16 @@ export class Server {
     }
   }
 
-  registerRpcs() {
-    this.Rpcs = {}
+  registerCommands() {
+    this.CommandCallbacks = {}
 
-    // MoveInventoryItem
-    this.Rpcs[3553623853] = () => {}
+    this.setCommand('MoveInventoryItem', () => {})
 
-    // SendPlayerInventory
-    this.Rpcs[1739174796] = (data: any) => {
+    this.setCommand('SendPlayerInventory', (data: any) => {
       clearInventory()
       try {
-        activeSlot.value = data.Value.ActiveSlot
-        data.Value.Main.forEach((item: any) => {
+        activeSlot.value = data.value.ActiveSlot
+        data.value.Main.forEach((item: any) => {
           if (item.Position == -1 || item.Position >= mainSlots.value.length) {
             return
           }
@@ -293,7 +525,7 @@ export class Server {
           slot.ConditionNormalized = item.ConditionNormalized
           slot.HasCondition = item.HasCondition
         })
-        data.Value.Belt.forEach((item: any) => {
+        data.value.Belt.forEach((item: any) => {
           if (item.Position == -1 || item.Position >= beltSlots.value.length) {
             return
           }
@@ -306,7 +538,7 @@ export class Server {
           slot.ConditionNormalized = item.ConditionNormalized
           slot.HasCondition = item.HasCondition
         })
-        data.Value.Wear.forEach((item: any) => {
+        data.value.Wear.forEach((item: any) => {
           if (item.Position == -1 || item.Position >= wearSlots.value.length) {
             return
           }
@@ -322,11 +554,92 @@ export class Server {
       } catch (e) {
         console.error(e)
       }
-    }
+    })
 
-    // TestCall
-    this.Rpcs[951948318] = (data) => {
+    this.setCommand('TestCall', (data) => {
       console.log(data)
+    })
+  }
+
+  registerRpcs() {
+    this.setRpc('Test', (read) => {
+      console.log(read.string())
+      console.log(read.int32())
+    })
+    this.setRpc('ServerInfo', (read) => {
+      this.ServerInfo = { 
+        Hostname: read.string(),
+        MaxPlayers: read.int32(),
+        Players: read.int32(),
+        Queued: read.int32(),
+        Joining: read.int32(),
+        ReservedSlots: read.int32(),
+        EntityCount: read.int32(),
+        GameTime: read.string(),
+        Uptime: read.int32(),
+        Map: read.string(),
+        Framerate: read.float(),
+        Memory: read.int32(),
+        MemoryUsageSystem: read.int32(),
+        Collections: read.int32(),
+        NetworkIn: read.int32(),
+        NetworkOut: read.int32(),
+        Restarting: read.bool(),
+        SaveCreatedTime: read.string(),
+        Version: read.int32(),
+        Protocol: read.string()
+      } as const
+      this.CachedHostname = this.ServerInfo.Hostname
+    })
+    this.setRpc('CarbonInfo', (read) => {
+      this.CarbonInfo = {
+        Message: read.string()
+      }
+    })
+    this.setRpc('ServerDescription', (read) => {
+      this.Description = read.string()
+    })
+    this.setRpc('ServerHeaderImage', (read) => {
+      this.HeaderImage = read.string()
+    })
+    this.setRpc('SendPlayerInventory', (read) => {
+      clearInventory()
+      activeSlot.value = read.int32()
+      this.readInventory(read, mainSlots)
+      this.readInventory(read, beltSlots)
+      this.readInventory(read, wearSlots)
+    })
+  }
+
+  readInventory(read: any, inventory: any) {
+    const count = read.int32()
+    for (let i = 0; i < count; i++) {
+      const item = this.readItem(read)
+      const position = item.Position
+      if (position == -1 || position >= inventory.value.length) {
+        continue
+      }
+      const slot = inventory.value[position]
+      slot.ItemId = item.ItemId
+      slot.ShortName = item.ShortName
+      slot.Amount = item.Amount
+      slot.MaxCondition = item.MaxCondition
+      slot.Condition = item.Condition
+      slot.ConditionNormalized = item.ConditionNormalized
+      slot.HasCondition = item.HasCondition
+    }
+  }
+
+  readItem(read: BinaryReader) {
+    return {
+      ItemId: read.int32(),
+      ShortName: read.string(),
+      Amount: read.int32(),
+      Position: read.int32(),
+      MaxCondition: read.float(),
+      Condition: read.float(),
+      ConditionNormalized: read.float(),
+      HasCondition: read.bool()
     }
   }
 
@@ -347,21 +660,31 @@ export class Server {
     }
 
     this.Socket = new WebSocket((this.Secure ? 'wss' : 'ws') + '://' + this.Address + '/' + this.Password)
+    if(this.Bridge) {
+      this.Socket.binaryType = 'arraybuffer';
+    }  
     this.IsConnecting = true
 
     this.Socket.onopen = () => {
       this.IsConnecting = false
       this.IsConnected = true
 
+      this.registerCommands()
       this.registerRpcs()
-      this.sendCommand('serverinfo', 2)
-      this.sendCommand('playerlist', 6)
-      this.sendCommand('console.tail', 7)
-      this.sendCommand('chat.tail', 8)
-      this.sendCommand('c.version', 3)
-      this.sendCommand('server.headerimage', 4)
-      this.sendCommand('server.description', 5)
-      this.sendRpc(951948318, 'Ping sentence!')
+      if(this.Bridge) {
+        this.sendRpc("ServerInfo")
+        this.sendRpc("CarbonInfo")
+        this.sendRpc("ServerDescription")
+        this.sendRpc("ServerHeaderImage")
+      } else {
+        this.sendCommand('serverinfo', 2)
+        this.sendCommand('playerlist', 6)
+        this.sendCommand('console.tail', 7)
+        this.sendCommand('chat.tail', 8)
+        this.sendCommand('c.version', 3)
+        this.sendCommand('server.headerimage', 4)
+        this.sendCommand('server.description', 5)
+      }
     }
     this.Socket.onclose = () => {
       this.clear()
@@ -370,44 +693,58 @@ export class Server {
       this.UserConnected = false
     }
     this.Socket.onmessage = (event) => {
-      const resp: CommandResponse = JSON.parse(event.data)
-
-      try {
-        let isJson = false
-        let jsonData = null
-
+      if(this.Bridge) {
+        let bytes: Uint8Array;
+        if (event.data instanceof ArrayBuffer) {
+          bytes = new Uint8Array(event.data);
+        }
+        const read = new BinaryReader(event.data)
+        switch(read.int32()) {
+          case 0:
+            if(this.onIdentifiedRpc(read)) {
+              return
+            }
+            break;
+        }
+      } 
+      else {
+        const resp: CommandResponse = JSON.parse(event.data)
         try {
-          jsonData = JSON.parse(resp.Message)
-          isJson = true
+          let isJson = false
+          let jsonData = null
+
+          try {
+            jsonData = JSON.parse(resp.Message)
+            isJson = true
+          } catch {
+            /* empty */
+          }
+
+          if (this.onIdentifiedCommand(resp.Identifier, jsonData ?? resp)) {
+            return
+          }
         } catch {
           /* empty */
         }
 
-        if (this.onIdentifiedCommand(resp.Identifier, jsonData ?? resp)) {
+        const match = resp.Message.match(/^\[CHAT\]\s+(.+?)\[(\d+)\]\s+:\s+(.+)$/)
+        if(match) {
+          this.appendChat({
+            Username: match[1],
+            UserId: match[2],
+            Message: match[3]
+          })
           return
         }
-      } catch {
-        /* empty */
-      }
 
-      const match = resp.Message.match(/^\[CHAT\]\s+(.+?)\[(\d+)\]\s+:\s+(.+)$/)
-      if(match) {
-        this.appendChat({
-          Username: match[1],
-          UserId: match[2],
-          Message: match[3]
-        })
-        return
+        this.appendLog(resp.Message)
+        tryFocusLogs()
       }
-
-      this.appendLog(resp.Message)
-      tryFocusLogs()
     }
   }
 
   fetchInventory(playerId: number) {
-    // SendPlayerInventory
-    this.sendRpc(1739174796, playerId)
+    this.sendRpc("SendPlayerInventory", playerId)
   }
 
   sendCommand(input: string, id: number = 1) {
@@ -444,12 +781,48 @@ export class Server {
     }
   }
 
-  sendRpc(id: number, ...args: unknown[]) {
-    for (let i = 0; i < args.length; i++) {
-      const arg = args[i]
-      args[i] = `"${arg}"`
+  getId(id: string) : number {
+    const idPrefix = this.Bridge ? "RPC" : "CMD";
+    return Number.parseInt(md5(`${idPrefix}_${id}`))
+  }
+
+  setCommand(id: string, callback: (...args: unknown[]) => void) {
+    this.CommandCallbacks[this.getId(id)] = callback
+  }
+
+  setRpc(id: string, callback: (...args: unknown[]) => void) {
+    this.RpcCallbacks[this.getId(id)] = callback
+  }
+
+  sendRpc(id: string, ...args: unknown[]) {
+    if(this.Bridge) {
+      const write = new BinaryWriter();
+      write.int32(0);
+      write.uint32(this.getId(id));
+      for (let i = 0; i < args.length; i++) {
+        const value = args[i]
+        const type = typeof value
+        switch(type) {
+          case 'bigint':
+            write.uint64(value as bigint)
+            break;
+          case 'number':
+            write.int32(value as number)
+            break;
+          case 'string':
+            write.string(value as string)
+            break;
+        }
+      }
+      this.Socket?.send(write.toArrayBuffer())
     }
-    this.sendCommand(`c.webrcon.rpc ${id} ${args.join(' ')}`, 100)
+    else {
+      for (let i = 0; i < args.length; i++) {
+        const arg = args[i]
+        args[i] = `"${arg}"`
+      }
+      this.sendCommand(`c.webrcon.rpc ${this.getId(id)} ${args.join(' ')}`, 100)
+    }
   }
 
   onIdentifiedCommand(id: number, data: any) {
@@ -495,14 +868,22 @@ export class Server {
         break
       case 100: {
         // c.webrcon.rpc
-        const rpcId = Number(data.RpcId)
-        if (rpcId in this.Rpcs) {
-          this.Rpcs[rpcId](data)
+        const rpcId = Number(data.rpcId)
+        if (rpcId in this.CommandCallbacks) {
+          this.CommandCallbacks[rpcId](data)
         }
         break
       }
     }
 
+    return true
+  }
+
+  onIdentifiedRpc(read: BinaryReader) : boolean {
+    const rpcId = read.uint32()
+    if (rpcId in this.RpcCallbacks) {
+      this.RpcCallbacks[rpcId](read)
+    }
     return true
   }
 
@@ -513,6 +894,11 @@ export class Server {
 
   toggleWideScreen() {
     this.WideScreen = !this.WideScreen
+    save()
+  }
+
+  toggleBridge() {
+    this.Bridge = !this.Bridge
     save()
   }
 

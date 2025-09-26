@@ -14,7 +14,7 @@ function selectGroup(value: string | null, forceSelect: boolean = true) {
     return
   }
   selectedGroup.value = value
-  selectedServer.value.sendRpc(631493895, value)
+  selectedServer.value.sendRpc("GetGroupPermissions", value)
 }
 function selectHookable(value: string | null) {
   selectedHookable.value = value
@@ -29,13 +29,13 @@ function togglePermission(value: string) {
   if (value == 'grantall' || value == 'revokeall') {
     const confirm = window.confirm(`Are you sure?`)
     if (confirm) {
-      selectedServer.value.sendRpc(3261363143, selectedGroup.value, value, selectedHookable.value.Plugin?.Name ?? selectedHookable.value.Module?.Name)
+      selectedServer.value.sendRpc("TogglePermission", selectedGroup.value, value, selectedHookable.value.Plugin?.Name ?? selectedHookable.value.Module?.Name)
       selectGroup(selectedGroup.value)
     }
     return
   }
 
-  selectedServer.value.sendRpc(3261363143, selectedGroup.value, value, selectedHookable.value.Plugin?.Name ?? selectedHookable.value.Module?.Name)
+  selectedServer.value.sendRpc("TogglePermission", selectedGroup.value, value, selectedHookable.value.Plugin?.Name ?? selectedHookable.value.Module?.Name)
   selectGroup(selectedGroup.value)
 }
 </script>
@@ -55,15 +55,69 @@ export function refreshPermissions() {
   selectedHookable.value = null
   groupInfo.value = null
 
-  // GetPermissionsMetadata
-  selectedServer.value.Rpcs[1317317511] = (data: any) => {
-    groupInfo.value = data.Value
+  selectedServer.value.CommandCallbacks[selectedServer.value.getId("GetPermissionsMetadata")] = (data: any) => {
+    groupInfo.value = data.value
   }
-  // GetGroupPermissions
-  selectedServer.value.Rpcs[631493895] = (data: any) => {
-    groupPermInfo.value = data.Value.Permissions
+  selectedServer.value.RpcCallbacks[selectedServer.value.getId("GetPermissionsMetadata")] = (read: any) => {
+    groupInfo.value = {
+      Groups: [],
+      Permissions: [],
+      Plugins: [],
+      Modules: []
+    }
+    const groupCount = read.int32()
+    for (let i = 0; i < groupCount; i++) {
+      groupInfo.value.Groups.push(read.string())
+    }
+    const permissionsCount = read.int32()
+    for (let i = 0; i < permissionsCount; i++) {
+      groupInfo.value.Permissions.push(read.string())
+    }
+    const pluginCount = read.int32()
+    for (let i = 0; i < pluginCount; i++) {
+      const plugin = {
+        Name: read.string(),
+        Author: read.string()
+      }
+      const permissions = []
+      const permissionCount = read.int32()
+      for (let p = 0; p < permissionCount; p++) {
+        permissions.push(read.string())
+      }
+      groupInfo.value.Plugins.push({
+        Plugin: plugin,
+        Permissions: permissions
+      })
+    }
+    const moduleCount = read.int32()
+    for (let i = 0; i < moduleCount; i++) {
+      const module = {
+        Name: read.string(),
+        Author: read.string()
+      }
+      const permissions = []
+      const permissionCount = read.int32()
+      for (let p = 0; p < permissionCount; p++) {
+        permissions.push(read.string())
+      }
+      groupInfo.value.Modules.push({
+        Module: module,
+        Permissions: permissions
+      })
+    }
+    console.log(groupInfo.value)
   }
-  selectedServer.value.sendRpc(1317317511)
+  selectedServer.value.CommandCallbacks[selectedServer.value.getId("GetGroupPermissions")] = (data: any) => {
+    groupPermInfo.value = data.value.Permissions
+  }
+  selectedServer.value.RpcCallbacks[selectedServer.value.getId("GetGroupPermissions")] = (read: any) => {
+    groupPermInfo.value = []
+    const permissionCount = read.int32()
+    for (let i = 0; i < permissionCount; i++) {
+      groupPermInfo.value.push(read.string())
+    }
+  }
+  selectedServer.value.sendRpc("GetPermissionsMetadata")
 }
 </script>
 

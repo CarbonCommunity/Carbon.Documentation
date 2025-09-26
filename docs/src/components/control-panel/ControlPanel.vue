@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ArrowUpFromDot, CodeXml, Dot, Expand, ExternalLink, HardDriveDownload, Plus, RotateCcw, Save, Shield, Trash2, Wifi, X } from 'lucide-vue-next'
+import { Antenna, ArrowUpFromDot, CodeXml, Dot, Expand, ExternalLink, HardDriveDownload, Plus, RotateCcw, Save, Shield, Trash2, Wifi, X } from 'lucide-vue-next'
 import { onMounted, onUnmounted } from 'vue'
 import { Slot, activeInventory, activeSlot, beltSlots, handleDrag, handleDrop, hideInventory, mainSlots, toolSlots, wearSlots } from './ControlPanel.Inventory'
 import {
@@ -17,7 +17,6 @@ import {
   selectedSubTab,
   servers,
 } from './ControlPanel.SaveLoad'
-import { selectedEntity, stopEditingEntity } from './ControlPanel.Entities'
 import ConsoleTab from './ControlPanel.Tabs.Console.vue'
 import ChatTab from './ControlPanel.Tabs.Chat.vue'
 import PermissionsTab from './ControlPanel.Tabs.Permissions.vue'
@@ -152,6 +151,15 @@ onUnmounted(() => {
           :style="'color: ' + (!selectedServer?.IsConnected ? 'var(--docsearch-footer-background);' : 'var(--c-carbon-3);') + 'font-size: small;'"
         >
           <Wifi :size="20" /> {{ selectedServer?.IsConnected ? 'Disconnect' : 'Connect' }}
+        </button>
+        <button
+          class="r-button"
+          :disabled="selectedServer.IsConnecting || selectedServer.IsConnected"
+          @click="selectedServer.toggleBridge()"
+          :class="['r-button', { toggled: selectedServer.Bridge }]"
+          style="color: var(--docsearch-footer-background); font-size: small"
+        >
+          <Antenna :size="20" /> Bridge
         </button>
         <button class="r-button" @click="(e) => deleteServer(selectedServer, e)" style="color: var(--docsearch-footer-background); font-size: small">
           <X :size="20" /> Delete

@@ -34,6 +34,7 @@ const filteredOptions = computed(() => {
 })
 
 onMounted(async () => {
+  refreshPlayers()
   const { data } = await fetchItems()
   data.forEach(item => {
     itemOptions.push({ 
@@ -42,6 +43,29 @@ onMounted(async () => {
     })
   });
 })
+
+function refreshPlayers() {
+  selectedServer.value.RpcCallbacks[selectedServer.value.getId("Players")] = (read: any) => {
+    selectedServer.value.PlayerInfo = []
+    const playerCount = read.int32()
+    for (let i = 0; i < playerCount; i++) {
+      selectedServer.value?.PlayerInfo.push({
+        SteamID: read.uint64(),
+        OwnerSteamID: read.uint64(),
+        DisplayName: read.string(),
+        Ping: read.int32(),
+        Address: read.string(),
+        EntityId: read.uint64(),
+        ConnectedSeconds: read.int32(),
+        ViolationLevel: read.float(),
+        CurrentLevel: read.int32(),
+        UnspentXp: read.int32(),
+        Health: read.float()
+      })
+    }
+  }
+  selectedServer.value.sendRpc("Players")
+}
 </script>
 
 <template>
