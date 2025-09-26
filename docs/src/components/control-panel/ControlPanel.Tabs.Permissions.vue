@@ -105,7 +105,6 @@ export function refreshPermissions() {
         Permissions: permissions
       })
     }
-    console.log(groupInfo.value)
   }
   selectedServer.value.CommandCallbacks[selectedServer.value.getId("GetGroupPermissions")] = (data: any) => {
     groupPermInfo.value = data.value.Permissions
