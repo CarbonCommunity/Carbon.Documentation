@@ -269,6 +269,7 @@ export class Server {
   Description = ''
   CommandCallbacks: Record<number, (...args: unknown[]) => void> = {}
   RpcCallbacks: Record<number, (...args: unknown[]) => void> = {}
+  RpcPermissions: any | null = []
 
   clear() {
     this.IsConnecting = false
@@ -436,6 +437,19 @@ export class Server {
       this.appendLog(log.Message as string)
       tryFocusLogs(true)
     })
+    this.setRpc('AccountPermissions', (read) => {
+      this.RpcPermissions['console_view'] = read.bool()
+      this.RpcPermissions['console_input'] = read.bool()
+      this.RpcPermissions['chat_view'] = read.bool()
+      this.RpcPermissions['chat_input'] = read.bool()
+      this.RpcPermissions['players_view'] = read.bool()
+      this.RpcPermissions['players_ip'] = read.bool()
+      this.RpcPermissions['players_inventory'] = read.bool()
+      this.RpcPermissions['entities_view'] = read.bool()
+      this.RpcPermissions['entities_edit'] = read.bool()
+      this.RpcPermissions['permissions_view'] = read.bool()
+      this.RpcPermissions['permissions_edit'] = read.bool()
+    })
   }
 
   readInventory(read: any, inventory: any) {
@@ -505,6 +519,7 @@ export class Server {
         this.sendCall("ServerHeaderImage")
         this.sendCall("Players")
         this.sendCall("ConsoleTail", 300)
+        this.sendCall("AccountPermissions")
       } else {
         this.sendCommand('serverinfo', 2)
         this.sendCommand('playerlist', 6)
