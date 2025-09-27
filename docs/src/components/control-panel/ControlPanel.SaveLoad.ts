@@ -427,6 +427,15 @@ export class Server {
       })
       tryFocusLogs(true)
     })
+    this.setRpc('ConsoleLog', (read) => {
+      const log = {
+        Message: read.string(),
+        Type: read.string(),
+        Time: read.int32()
+      }
+      this.appendLog(log.Message as string)
+      tryFocusLogs(true)
+    })
   }
 
   readInventory(read: any, inventory: any) {
