@@ -525,7 +525,7 @@ export class Server {
         this.sendCall("ServerDescription")
         this.sendCall("ServerHeaderImage")
         this.sendCall("Players")
-        this.sendCall("ConsoleTail", 300)
+        this.sendCall("ConsoleTail", 200)
         this.sendCall("AccountPermissions")
       } else {
         this.sendCommand('serverinfo', 2)
