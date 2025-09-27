@@ -28,11 +28,13 @@ let timerSwitch: ReturnType<typeof setTimeout> = null!
 const subTabs = [
   {
     Name: 'Console',
-    Description: 'An RCon based console displaying all log output sent by the server and allows sending commands to the server.'
+    Description: 'An RCon based console displaying all log output sent by the server and allows sending commands to the server.',
+    IsHidden: () => selectedServer.value?.hasPermission("console_view")
   },
   {
     Name: 'Chat',
-    Description: 'All the chatter going on the server.'
+    Description: 'All the chatter going on the server.',
+    IsHidden: () => selectedServer.value?.hasPermission("chat_view")
   },
   {
     Name: 'Information',
@@ -42,14 +44,17 @@ const subTabs = [
     Name: 'Players',
     Description: 'A list of players or something like that.',
     ExtraData: (selectedServer: Server) => `(${selectedServer?.PlayerInfo?.length})`,
+    IsHidden: () => selectedServer.value?.hasPermission("players_view")
   },
   {
     Name: 'Permissions',
-    Description: "Good ol' permissions."
+    Description: "Good ol' permissions.",
+    IsHidden: () => selectedServer.value?.hasPermission("permissions_view")
   },
   {
     Name: 'Entities',
-    Description: "Search and inspect any entities on the server."
+    Description: "Search and inspect any entities on the server.",
+    IsHidden: () => selectedServer.value?.hasPermission("entities_view")
   }
 ]
 
@@ -216,7 +221,7 @@ onUnmounted(() => {
     <div v-if="selectedServer && selectedServer.ServerInfo" style="margin-top: 15px; display: flow" class="r-settings">
       <div class="mb-5 flex">
         <button
-          v-for="(tab, index) in subTabs"
+          v-for="(tab, index) in subTabs.filter(tab => tab.IsHidden == null || tab.IsHidden())"
           :key="index"
           class="r-button"
           @click="selectSubTab(index)"

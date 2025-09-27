@@ -271,6 +271,13 @@ export class Server {
   RpcCallbacks: Record<number, (...args: unknown[]) => void> = {}
   RpcPermissions: any | null = []
 
+  hasPermission(permission: string) {
+    if(permission in this.RpcPermissions) {
+      return this.RpcPermissions[permission]
+    }
+    return true
+  }
+
   clear() {
     this.IsConnecting = false
     this.IsConnected = false
