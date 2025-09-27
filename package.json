@@ -23,6 +23,7 @@
     "docs:preview": "vitepress preview docs"
   },
   "dependencies": {
+    "@types/crypto-js": "^4.2.2",
     "@vueuse/core": "^13.0.0",
     "crypto-js": "^4.2.0",
     "long": "^5.3.2",
