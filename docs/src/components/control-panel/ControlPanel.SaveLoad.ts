@@ -393,6 +393,25 @@ export class Server {
       this.readInventory(read, beltSlots)
       this.readInventory(read, wearSlots)
     })
+    this.setRpc('Players', (read) => {
+      this.PlayerInfo = []
+      const playerCount = read.int32()
+      for (let i = 0; i < playerCount; i++) {
+        this.PlayerInfo.push({
+          SteamID: read.uint64(),
+          OwnerSteamID: read.uint64(),
+          DisplayName: read.string(),
+          Ping: read.int32(),
+          Address: read.string(),
+          EntityId: read.uint64(),
+          ConnectedSeconds: read.int32(),
+          ViolationLevel: read.float(),
+          CurrentLevel: read.int32(),
+          UnspentXp: read.int32(),
+          Health: read.float()
+        })
+      }
+    })
   }
 
   readInventory(read: any, inventory: any) {
@@ -460,6 +479,7 @@ export class Server {
         this.sendCall("CarbonInfo")
         this.sendCall("ServerDescription")
         this.sendCall("ServerHeaderImage")
+        this.sendCall("Players")
       } else {
         this.sendCommand('serverinfo', 2)
         this.sendCommand('playerlist', 6)
