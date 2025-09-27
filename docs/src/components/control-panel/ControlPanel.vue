@@ -28,11 +28,13 @@ let timerSwitch: ReturnType<typeof setTimeout> = null!
 const subTabs = [
   {
     Name: 'Console',
-    Description: 'An RCon based console displaying all log output sent by the server and allows sending commands to the server.'
+    Description: 'An RCon based console displaying all log output sent by the server and allows sending commands to the server.',
+    IsDisabled: () => !selectedServer.value?.hasPermission("console_view")
   },
   {
     Name: 'Chat',
-    Description: 'All the chatter going on the server.'
+    Description: 'All the chatter going on the server.',
+    IsDisabled: () => !selectedServer.value?.hasPermission("chat_view")
   },
   {
     Name: 'Information',
@@ -42,14 +44,17 @@ const subTabs = [
     Name: 'Players',
     Description: 'A list of players or something like that.',
     ExtraData: (selectedServer: Server) => `(${selectedServer?.PlayerInfo?.length})`,
+    IsDisabled: () => !selectedServer.value?.hasPermission("players_view")
   },
   {
     Name: 'Permissions',
-    Description: "Good ol' permissions."
+    Description: "Good ol' permissions.",
+    IsDisabled: () => !selectedServer.value?.hasPermission("permissions_view")
   },
   {
     Name: 'Entities',
-    Description: "Search and inspect any entities on the server."
+    Description: "Search and inspect any entities on the server.",
+    IsDisabled: () => !selectedServer.value?.hasPermission("entities_view")
   }
 ]
 
@@ -64,9 +69,11 @@ onMounted(() => {
         server.connect()
         return
       }
-      server.sendCommand('serverinfo', 2)
-      server.sendCommand('playerlist', 6)
-      server.sendCommand('server.description', 5)
+      if(server.Bridge) {
+        server.sendCommand('serverinfo', 2)
+      } else {
+        server.sendCall("ServerInfo")
+      }
     })
   }
 
@@ -199,7 +206,7 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <div v-if="isUsingHttps()" class="r-settings text-xs" style="margin-top: 15px; opacity: 75%">
+    <div v-if="isUsingHttps()" v-show="!selectedServer?.IsConnected" class="r-settings text-xs" style="margin-top: 15px; opacity: 75%">
       <p style="text-align: center">
         You're currently using Control Panel in HTTPS mode.
         <br />
@@ -217,6 +224,7 @@ onUnmounted(() => {
           v-for="(tab, index) in subTabs"
           :key="index"
           class="r-button"
+          v-show="tab.IsDisabled == null || !tab.IsDisabled()"
           @click="selectSubTab(index)"
           :class="['r-button', { toggled: selectedSubTab == index }]"
           style="color: var(--docsearch-footer-background); font-size: small"

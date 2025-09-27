@@ -55,10 +55,10 @@ export function refreshPermissions() {
   selectedHookable.value = null
   groupInfo.value = null
 
-  selectedServer.value.CommandCallbacks[selectedServer.value.getId("GetPermissionsMetadata")] = (data: any) => {
+  selectedServer.value?.setCommand('GetPermissionsMetadata', (data: any) => {
     groupInfo.value = data.value
-  }
-  selectedServer.value.RpcCallbacks[selectedServer.value.getId("GetPermissionsMetadata")] = (read: any) => {
+  })
+  selectedServer.value?.setRpc('GetPermissionsMetadata', (read: any) => {
     groupInfo.value = {
       Groups: [],
       Permissions: [],
@@ -105,19 +105,18 @@ export function refreshPermissions() {
         Permissions: permissions
       })
     }
-    console.log(groupInfo.value)
-  }
-  selectedServer.value.CommandCallbacks[selectedServer.value.getId("GetGroupPermissions")] = (data: any) => {
+  })
+  selectedServer.value?.setCommand('GetGroupPermissions', (data: any) => {
     groupPermInfo.value = data.value.Permissions
-  }
-  selectedServer.value.RpcCallbacks[selectedServer.value.getId("GetGroupPermissions")] = (read: any) => {
+  })
+  selectedServer.value?.setRpc('GetGroupPermissions', (read: any) => {
     groupPermInfo.value = []
     const permissionCount = read.int32()
     for (let i = 0; i < permissionCount; i++) {
       groupPermInfo.value.push(read.string())
     }
-  }
-  selectedServer.value.sendCall("GetPermissionsMetadata")
+  })
+  selectedServer.value?.sendCall("GetPermissionsMetadata")
 }
 </script>
 

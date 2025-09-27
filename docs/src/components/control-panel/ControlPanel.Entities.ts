@@ -27,12 +27,12 @@ export function onSearch() {
   searchInput.value = ''
   isSearching.value = true
 
-  selectedServer.value.CommandCallbacks[selectedServer.value.getId("SearchEntities")] = (data: any) => {
+  selectedServer.value?.setCommand('SearchEntities', (data: any) => {
     isSearching.value = false
     searchedData.value = data.value
     editEntity(selectedEntity.value == null ? 0 : selectedEntity.value.NetId)
-  }
-  selectedServer.value.RpcCallbacks[selectedServer.value.getId("SearchEntities")] = (read: any) => {
+  })
+  selectedServer.value?.setRpc('SearchEntities', (read: any) => {
     isSearching.value = false
     searchedData.value = []
 
@@ -55,8 +55,8 @@ export function onSearch() {
 
     console.log(entities)
     editEntity(selectedEntity.value == null ? 0 : selectedEntity.value.NetId)
-  }
-  selectedServer.value.sendCall("SearchEntities", searchMaxCount.value, currentSearch.value)
+  })
+  selectedServer.value?.sendCall("SearchEntities", searchMaxCount.value, currentSearch.value)
 }
 
 export function editEntity(netId: number) {
@@ -64,18 +64,18 @@ export function editEntity(netId: number) {
     return
   }
 
-  selectedServer.value.CommandCallbacks[selectedServer.value.getId("EntityDetails")] = (data: any) => {
+  selectedServer.value?.setCommand('EntityDetails', (data: any) => {
     selectedEntity.value = data.Value
     isSide.value = true
     refreshIcon()
-  }
-  selectedServer.value.RpcCallbacks[selectedServer.value.getId("EntityDetails")] = (read: any) => {
+  })
+  selectedServer.value?.setRpc('EntityDetails', (read: any) => {
     selectedEntity.value = readEntity(read)
     isSide.value = true
     refreshIcon()
     console.log(selectedEntity.value)
-  }
-  selectedServer.value.sendCall("EntityDetails", netId)
+  })
+  selectedServer.value?.sendCall("EntityDetails", netId)
 }
 
 export function readEntity(read: any) {
