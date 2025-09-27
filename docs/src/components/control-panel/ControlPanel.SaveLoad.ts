@@ -412,6 +412,21 @@ export class Server {
         })
       }
     })
+    this.setRpc('ConsoleTail', (read) => {
+      const logs = []
+      const logCount = read.int32()
+      for (let i = 0; i < logCount; i++) {
+        logs.push({
+          Message: read.string(),
+          Type: read.string(),
+          Time: read.int32()
+        })
+      }
+      logs.forEach((log: any) => {
+        this.appendLog(log.Message as string)
+      })
+      tryFocusLogs(true)
+    })
   }
 
   readInventory(read: any, inventory: any) {
@@ -480,6 +495,7 @@ export class Server {
         this.sendCall("ServerDescription")
         this.sendCall("ServerHeaderImage")
         this.sendCall("Players")
+        this.sendCall("ConsoleTail", 300)
       } else {
         this.sendCommand('serverinfo', 2)
         this.sendCommand('playerlist', 6)
