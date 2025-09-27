@@ -66,14 +66,8 @@ onMounted(() => {
       }
       if(server.Bridge) {
         server.sendCommand('serverinfo', 2)
-        server.sendCommand('playerlist', 6)
-        server.sendCommand('server.description', 5)
       } else {
         server.sendCall("ServerInfo")
-        server.sendCall("CarbonInfo")
-        server.sendCall("ServerDescription")
-        server.sendCall("ServerHeaderImage")
-        server.sendCall("Players")
       }
     })
   }
