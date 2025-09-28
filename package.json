@@ -1,6 +1,7 @@
 {
   "devDependencies": {
     "@eslint/js": "^9.27.0",
+    "@types/crypto-js": "^4.2.2",
     "@types/node": "^22.14.0",
     "autoprefixer": "^9.8.8",
     "eslint": "^9.27.0",
@@ -23,7 +24,6 @@
     "docs:preview": "vitepress preview docs"
   },
   "dependencies": {
-    "@types/crypto-js": "^4.2.2",
     "@vueuse/core": "^13.0.0",
     "crypto-js": "^4.2.0",
     "long": "^5.3.2",
