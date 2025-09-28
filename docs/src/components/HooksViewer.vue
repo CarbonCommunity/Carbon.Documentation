@@ -119,9 +119,15 @@ function tryLoadMiniSearch() {
         .replace(/([A-Z])([A-Z][a-z])/g, '$1 $2')
         .toLowerCase()
         .split(SPACE_OR_PUNCTUATION)
-        .filter((token) => token.length > 1)
+        .filter((token) => token.length)
 
       if (fieldName != 'Descriptions') {
+        let cumulativeToken = ''
+        for (let i = processed.length - 1; i >= 0; i--) {
+          cumulativeToken = processed[i] + cumulativeToken
+          processed.push(cumulativeToken)
+        }
+
         processed.push(text.toLowerCase())
       }
 
@@ -134,7 +140,7 @@ function tryLoadMiniSearch() {
         })
       }
 
-      return Array.from(new Set(processed))
+      return Array.from(new Set(processed.filter((token) => token.length > 1)))
     },
   })
 
