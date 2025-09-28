@@ -603,13 +603,18 @@ export class Server {
       return
     }
 
-    if (this.Socket && this.IsConnected) {
-      const packet: CommandSend = {
-        Message: input,
-        Identifier: id,
+    if(this.Bridge) {
+      this.sendCall('ConsoleInput', input)
+    } else {
+      if (this.Socket && this.IsConnected) {
+        const packet: CommandSend = {
+          Message: input,
+          Identifier: id,
+        }
+        this.Socket.send(JSON.stringify(packet))
       }
-      this.Socket.send(JSON.stringify(packet))
     }
+
 
     if (input == command.value) {
       this.appendLog('<span style="color: var(--category-misc);"><strong>></strong></span> ' + input)
@@ -672,7 +677,7 @@ export class Server {
         const arg = args[i]
         args[i] = `"${arg}"`
       }
-      this.sendCommand(`c.webrcon.rpc ${this.getId(id)} ${args.join(' ')}`, 100)
+      this.sendCommand(`c.webpanel.cmd ${this.getId(id)} ${args.join(' ')}`, 100)
     }
   }
 
@@ -718,7 +723,7 @@ export class Server {
         this.Description = data.Message.toString().split(' ').slice(1, 1000).join(' ').replace(/['"]/g, '')
         break
       case 100: {
-        // c.webrcon.rpc
+        // c.webpanel.cmd
         const rpcId = Number(data.rpcId)
         if (rpcId in this.CommandCallbacks) {
           this.CommandCallbacks[rpcId](data)

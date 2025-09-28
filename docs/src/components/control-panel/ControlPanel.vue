@@ -69,7 +69,7 @@ onMounted(() => {
         server.connect()
         return
       }
-      if(server.Bridge) {
+      if(!server.Bridge) {
         server.sendCommand('serverinfo', 2)
       } else {
         server.sendCall("ServerInfo")
