@@ -29,7 +29,6 @@
     "lucide-vue-next": "^0.525.0",
     "markdown-it": "^14.1.0",
     "minisearch": "^7.1.2",
-    "protobufjs": "^7.5.4",
     "vue-draggable-plus": "^0.6.0"
   },
   "type": "module"
