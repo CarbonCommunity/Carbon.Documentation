@@ -73,6 +73,7 @@ onMounted(() => {
         server.sendCommand('serverinfo', 2)
       } else {
         server.sendCall("ServerInfo")
+        server.sendCall("Players")
       }
     })
   }
