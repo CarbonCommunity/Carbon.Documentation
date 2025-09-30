@@ -136,14 +136,14 @@ onUnmounted(() => {
             <p style="font-size: 12px; color: var(--vp-badge-info-text)">{{ server.Address }}</p>
           </div>
         </button>
-        <div class="grid gap-y-0 text-xs" v-if="server == selectedServer">
-          <button class="r-button" @click="shiftServer(i, true)"><ArrowLeft :size="18" /></button>
-          <button class="r-button" @click="shiftServer(i, false)"><ArrowRight :size="18" /></button>
-        </div>
       </div>
       <button class="r-button" @click="addServer(createServer('', ''), true)">
         <Plus />
       </button>
+      <div class="flex flex-col text-xs" v-if="selectedServer">
+        <button class="r-button" @click="shiftServer(servers.findIndex((s) => s == selectedServer), true)"><ArrowLeft :size="18" /></button>
+        <button class="r-button" @click="shiftServer(servers.findIndex((s) => s == selectedServer), false)"><ArrowRight :size="18" /></button>
+      </div>
       <div class="grid gap-y-0 text-xs">
         <button class="r-button" @click="importSave()"><HardDriveDownload :size="14" /> Import Clipboard</button>
         <button class="r-button" @click="exportSave()"><Save :size="14" /> Export Clipboard</button>
@@ -323,6 +323,7 @@ onUnmounted(() => {
   overflow: scroll;
   flex-flow: wrap;
   scrollbar-width: none;
+  min-height: 72px;
 }
 
 .r-settings {
