@@ -683,6 +683,7 @@ export class Server {
       Username: "SERVER",
       UserId: 0,
       Color: "#fff",
+      Channel: 2,
       Time: Math.floor(Date.now() / 1000)
     })
     if (clearMessage) {
@@ -820,8 +821,33 @@ export class Server {
   }
 
   appendChat(message: any) {
+    let channel = ""
+    switch (message.Channel) {
+      case 0:
+        channel = "Global"
+        break
+      case 1:
+        channel = "Team"
+        break
+      case 2:
+        channel = "Server"
+        break
+      case 3:
+        channel = "Cards"
+        break
+      case 4:
+        channel = "Local"
+        break
+      case 5:
+        channel = "Clan"
+        break
+      case 6:
+        channel = "ExternalDM"
+        break
+    }
+
     this.Chat.push(
-      `<span class="text-zinc-500 text-xs">${new Date(message.Time * 1000).toLocaleTimeString()}</span> <a style="color: ${message.Color}" href="http://steamcommunity.com/profiles/${message.UserId}" target="_blank">${message.Username}</a>: ${message.Message}`
+      `<span class="text-zinc-500 text-xs">${new Date(message.Time * 1000).toLocaleTimeString()}  ${channel}\t</span> <a style="color: ${message.Color}" href="http://steamcommunity.com/profiles/${message.UserId}" target="_blank">${message.Username}</a>: ${message.Message}`
     )
   }
 
