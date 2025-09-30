@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { Antenna, ArrowUpFromDot, CodeXml, Dot, Expand, ExternalLink, HardDriveDownload, Plus, RotateCcw, Save, Shield, Trash2, Wifi, X } from 'lucide-vue-next'
+import { Antenna, ArrowBigDown, ArrowBigLeft, ArrowBigRight, ArrowBigUp, ArrowLeft, ArrowRight, ArrowUpFromDot, CodeXml, Dot, Expand, ExternalLink, HardDriveDownload, Plus, RotateCcw, Save, Shield, Trash2, Wifi, X } from 'lucide-vue-next'
 import { onMounted, onUnmounted } from 'vue'
 import { Slot, activeInventory, activeSlot, beltSlots, handleDrag, handleDrop, hideInventory, mainSlots, toolSlots, wearSlots } from './ControlPanel.Inventory'
 import {
@@ -11,6 +11,7 @@ import {
   importSave,
   isUsingHttps,
   load,
+  shiftServer,
   selectServer,
   selectSubTab,
   selectedServer,
@@ -122,18 +123,24 @@ onUnmounted(() => {
 <template>
   <div :class="[ 'mx-auto space-y-0 px-4 py-8', !selectedServer?.WideScreen ? 'md:container lg:px-6 xl:px-8 2xl:px-20' : '']">
     <div class="r-list">
-      <button v-for="server in servers" :key="server.Address" :class="['r-button', { toggled: server == selectedServer }]" @click="selectServer(server)">
-        <Dot
-          :size="45"
-          :style="'margin: -10px; color: ' + (server.IsConnecting ? 'yellow' : server.IsConnected ? 'green' : 'red') + '; filter: blur(1.5px);'"
-        />
-        <div class="grid">
-          <p>
-            <strong>{{ !server.CachedHostname ? 'Unknown' : server.CachedHostname }}</strong>
-          </p>
-          <p style="font-size: 12px; color: var(--vp-badge-info-text)">{{ server.Address }}</p>
+      <div class="flex" v-for="(server, i) in servers" :key="server.Address">
+        <button :class="['r-button', { toggled: server == selectedServer }]" @click="selectServer(server)">
+          <Dot
+            :size="45"
+            :style="'margin: -10px; color: ' + (server.IsConnecting ? 'yellow' : server.IsConnected ? 'green' : 'red') + '; filter: blur(1.5px);'"
+          />
+          <div class="grid">
+            <p>
+              <strong>{{ !server.CachedHostname ? 'Unknown' : server.CachedHostname }}</strong>
+            </p>
+            <p style="font-size: 12px; color: var(--vp-badge-info-text)">{{ server.Address }}</p>
+          </div>
+        </button>
+        <div class="grid gap-y-0 text-xs" v-if="server == selectedServer">
+          <button class="r-button" @click="shiftServer(i, true)"><ArrowLeft :size="18" /></button>
+          <button class="r-button" @click="shiftServer(i, false)"><ArrowRight :size="18" /></button>
         </div>
-      </button>
+      </div>
       <button class="r-button" @click="addServer(createServer('', ''), true)">
         <Plus />
       </button>

@@ -195,6 +195,20 @@ export function importSave() {
   }
 }
 
+export function shiftServer(index: number, before: boolean) {
+  const list = servers.value;
+  if (!list || index < 0 || index >= list.length) {
+    return;
+  }
+  const newIndex = before ? index - 1 : index + 1;
+  if (newIndex < 0 || newIndex >= list.length) {
+    return;
+  }
+  const temp = list[index];
+  list[index] = list[newIndex];
+  list[newIndex] = temp;
+}
+
 function importFromJson(data: string) {
   try {
     if (data) {
