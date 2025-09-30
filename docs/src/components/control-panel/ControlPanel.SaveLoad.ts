@@ -204,9 +204,8 @@ export function shiftServer(index: number, before: boolean) {
   if (newIndex < 0 || newIndex >= list.length) {
     return;
   }
-  const temp = list[index];
-  list[index] = list[newIndex];
-  list[newIndex] = temp;
+
+  [list[index], list[newIndex]] = [list[newIndex], list[index]]
 }
 
 function importFromJson(data: string) {
