@@ -168,7 +168,7 @@ onUnmounted(() => {
     <div v-if="selectedServer" class="r-settings" style="margin-top: 15px">
       <div class="r-settings-input-group">
         <span class="r-settings-input-label" style="user-select: none">Address</span>
-        <input v-model="selectedServer.Address" type="text" class="r-settings-custom-input" placeholder="localhost:28507" />
+        <input v-model="selectedServer.Address" type="text" class="r-settings-custom-input placeholder:text-[#8D8D8D]" placeholder="localhost:28507" />
       </div>
       <div class="r-settings-input-group">
         <span class="r-settings-input-label" style="user-select: none">Password</span>
