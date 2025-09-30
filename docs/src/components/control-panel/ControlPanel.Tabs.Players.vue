@@ -57,7 +57,7 @@ function refreshPlayers() {
         <th class="vp-doc th">Player</th>
         <th class="vp-doc th text-center">Health</th>
         <th class="vp-doc th">Connected</th>
-        <th class="vp-doc th"></th>
+        <th class="vp-doc th">Actions</th>
       </tr>
     </thead>
     <tr v-for="player in selectedServer?.PlayerInfo" :key="player.SteamID">
@@ -82,7 +82,7 @@ function refreshPlayers() {
         <span class="text-xs text-slate-400">{{ formatDuration(player.ConnectedSeconds) }}</span>
       </td>
       <td class="vp-doc td">
-        <button class="r-send-button" @click="showInventory(player.SteamID)">Inventory</button>
+        <button v-if="selectedServer?.hasPermission('players_inventory')" class="r-send-button" @click="showInventory(player.SteamID)">Inventory</button>
       </td>
     </tr>
   </table>

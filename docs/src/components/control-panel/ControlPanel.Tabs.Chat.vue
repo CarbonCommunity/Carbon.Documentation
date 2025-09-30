@@ -8,8 +8,7 @@ import { selectedServer } from './ControlPanel.SaveLoad'
     v-if="selectedServer"
     ref="chatContainer"
     class="rounded p-4 font-mono text-sm"
-    style="overflow: auto; align-content: end; background-color: var(--vp-code-copy-code-bg); min-height: 300px; max-height: 700px; scrollbar-width: none"
-  >
+    style="overflow: auto; align-content: end; background-color: var(--vp-code-copy-code-bg); min-height: 300px; max-height: 700px; scrollbar-width: none">
     <p v-for="(line, i) in selectedServer?.Chat" :key="i" v-html="line" style="white-space: pre-wrap; text-wrap-mode: nowrap"></p>
   </div>
   <div v-if="selectedServer" class="flex gap-2" style="align-items: center; background-color: var(--vp-code-copy-code-bg); padding: 10px">
@@ -19,8 +18,7 @@ import { selectedServer } from './ControlPanel.SaveLoad'
       class="w-full"
       spellcheck="false"
       v-model="message"
-      @keyup.enter='selectedServer?.sendMessage(message)'
-    />
+      @keyup.enter='selectedServer?.sendMessage(message)'/>
     <button @click='selectedServer?.sendMessage(message)' class="r-send-button"><span style="user-select: none">Send</span></button>
   </div>
 

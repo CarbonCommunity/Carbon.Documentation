@@ -138,7 +138,7 @@ onUnmounted(() => {
 <template>
   <div :class="['mx-auto space-y-0 px-4 py-8', !selectedServer?.WideScreen ? 'md:container lg:px-6 xl:px-8 2xl:px-20' : '']">
     <div class="r-list">
-      <div class="flex" v-for="(server, i) in servers" :key="server.Address">
+      <div class="flex" v-for="server in servers" :key="server.Address">
         <button :class="['r-button', { toggled: server == selectedServer }]" @click="selectServer(server)">
           <Dot
             :size="45"

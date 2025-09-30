@@ -457,6 +457,37 @@ export class Server {
       this.appendLog(log.Message as string)
       tryFocusLogs(true)
     })
+    this.setRpc('ChatTail', (read) => {
+      const messages = []
+      const messageCount = read.int32()
+      console.log(messageCount)
+      for (let i = 0; i < messageCount; i++) {
+        messages.push({
+          Channel: read.int32(),
+          Message: read.string(),
+          UserId: read.string(),
+          Username: read.string(),
+          Color: read.string(),
+          Time: read.int32()
+        })
+      }
+      messages.forEach((log: any) => {
+        this.appendChat(log)
+      })
+      tryFocusChat(true)
+    })
+    this.setRpc('ChatLog', (read) => {
+      const message = {
+          Channel: read.int32(),
+          Message: read.string(),
+          UserId: read.string(),
+          Username: read.string(),
+          Color: read.string(),
+          Time: read.int32()
+      }
+      this.appendChat(message)
+      tryFocusChat(true)
+    })
     this.setRpc('AccountPermissions', (read) => {
       this.RpcPermissions['console_view'] = read.bool()
       this.RpcPermissions['console_input'] = read.bool()
@@ -539,6 +570,7 @@ export class Server {
         this.sendCall('ServerHeaderImage')
         this.sendCall('Players')
         this.sendCall('ConsoleTail', 200)
+        this.sendCall('ChatTail', 200)
         this.sendCall('AccountPermissions')
       } else {
         this.sendCommand('serverinfo', 2)
@@ -641,8 +673,18 @@ export class Server {
   }
 
   sendMessage(input: string, clearMessage: boolean = true) {
-    this.sendCommand(`say ${input}`, 1)
-    this.Chat.push(`SERVER: ${input}`)
+    if(this.Bridge) {
+      this.sendCall('ChatInput', "SERVER", input, "#fff", "0")
+    } else { 
+      this.sendCommand(`say ${input}`, 1)
+    }
+    this.appendChat({
+      Message: input,
+      Username: "SERVER",
+      UserId: 0,
+      Color: "#fff",
+      Time: Math.floor(Date.now() / 1000)
+    })
     if (clearMessage) {
       message.value = ''
     }
@@ -779,7 +821,7 @@ export class Server {
 
   appendChat(message: any) {
     this.Chat.push(
-      `<a style="color: ${message.Color}" href="http://steamcommunity.com/profiles/${message.UserId}" target="_blank">${message.Username}</a>: ${message.Message}`
+      `<span class="text-zinc-500 text-xs">${new Date(message.Time * 1000).toLocaleTimeString()}</span> <a style="color: ${message.Color}" href="http://steamcommunity.com/profiles/${message.UserId}" target="_blank">${message.Username}</a>: ${message.Message}`
     )
   }
 
