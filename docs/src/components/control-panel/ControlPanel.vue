@@ -1,7 +1,22 @@
 <script lang="ts" setup>
-import { Antenna, ArrowBigDown, ArrowBigLeft, ArrowBigRight, ArrowBigUp, ArrowLeft, ArrowRight, ArrowUpFromDot, CodeXml, Dot, Expand, ExternalLink, HardDriveDownload, Plus, RotateCcw, Save, Shield, Trash2, Wifi, X } from 'lucide-vue-next'
+import {
+  Antenna,
+  ArrowLeft,
+  ArrowRight,
+  CodeXml,
+  Dot,
+  Expand,
+  ExternalLink,
+  HardDriveDownload,
+  Plus,
+  RotateCcw,
+  Save,
+  Shield,
+  Wifi,
+  X
+} from 'lucide-vue-next'
 import { onMounted, onUnmounted } from 'vue'
-import { Slot, activeInventory, activeSlot, beltSlots, handleDrag, handleDrop, hideInventory, mainSlots, toolSlots, wearSlots } from './ControlPanel.Inventory'
+import { Slot, beltSlots, mainSlots, toolSlots, wearSlots } from './ControlPanel.Inventory'
 import {
   Server,
   addServer,
@@ -11,18 +26,18 @@ import {
   importSave,
   isUsingHttps,
   load,
-  shiftServer,
   selectServer,
   selectSubTab,
   selectedServer,
   selectedSubTab,
   servers,
+  shiftServer,
 } from './ControlPanel.SaveLoad'
-import ConsoleTab from './ControlPanel.Tabs.Console.vue'
 import ChatTab from './ControlPanel.Tabs.Chat.vue'
+import ConsoleTab from './ControlPanel.Tabs.Console.vue'
+import EntitiesTab from './ControlPanel.Tabs.Entities.vue'
 import PermissionsTab from './ControlPanel.Tabs.Permissions.vue'
 import PlayersTab from './ControlPanel.Tabs.Players.vue'
-import EntitiesTab from './ControlPanel.Tabs.Entities.vue'
 
 let timerSwitch: ReturnType<typeof setTimeout> = null!
 
@@ -30,33 +45,33 @@ const subTabs = [
   {
     Name: 'Console',
     Description: 'An RCon based console displaying all log output sent by the server and allows sending commands to the server.',
-    IsDisabled: () => !selectedServer.value?.hasPermission("console_view")
+    IsDisabled: () => !selectedServer.value?.hasPermission('console_view'),
   },
   {
     Name: 'Chat',
     Description: 'All the chatter going on the server.',
-    IsDisabled: () => !selectedServer.value?.hasPermission("chat_view")
+    IsDisabled: () => !selectedServer.value?.hasPermission('chat_view'),
   },
   {
     Name: 'Information',
-    Description: 'Useful info about the server activity and various other options.'
+    Description: 'Useful info about the server activity and various other options.',
   },
   {
     Name: 'Players',
     Description: 'A list of players or something like that.',
     ExtraData: (selectedServer: Server) => `(${selectedServer?.PlayerInfo?.length})`,
-    IsDisabled: () => !selectedServer.value?.hasPermission("players_view")
+    IsDisabled: () => !selectedServer.value?.hasPermission('players_view'),
   },
   {
     Name: 'Permissions',
     Description: "Good ol' permissions.",
-    IsDisabled: () => !selectedServer.value?.hasPermission("permissions_view")
+    IsDisabled: () => !selectedServer.value?.hasPermission('permissions_view'),
   },
   {
     Name: 'Entities',
-    Description: "Search and inspect any entities on the server.",
-    IsDisabled: () => !selectedServer.value?.hasPermission("entities_view")
-  }
+    Description: 'Search and inspect any entities on the server.',
+    IsDisabled: () => !selectedServer.value?.hasPermission('entities_view'),
+  },
 ]
 
 onMounted(() => {
@@ -70,12 +85,12 @@ onMounted(() => {
         server.connect()
         return
       }
-      if(!server.Bridge) {
+      if (!server.Bridge) {
         server.sendCommand('serverinfo', 2)
         server.sendCommand('playerlist', 6)
       } else {
-        server.sendCall("ServerInfo")
-        server.sendCall("Players")
+        server.sendCall('ServerInfo')
+        server.sendCall('Players')
       }
     })
   }
@@ -121,7 +136,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div :class="[ 'mx-auto space-y-0 px-4 py-8', !selectedServer?.WideScreen ? 'md:container lg:px-6 xl:px-8 2xl:px-20' : '']">
+  <div :class="['mx-auto space-y-0 px-4 py-8', !selectedServer?.WideScreen ? 'md:container lg:px-6 xl:px-8 2xl:px-20' : '']">
     <div class="r-list">
       <div class="flex" v-for="(server, i) in servers" :key="server.Address">
         <button :class="['r-button', { toggled: server == selectedServer }]" @click="selectServer(server)">
