@@ -71,6 +71,7 @@ onMounted(() => {
       }
       if(!server.Bridge) {
         server.sendCommand('serverinfo', 2)
+        server.sendCommand('playerlist', 6)
       } else {
         server.sendCall("ServerInfo")
         server.sendCall("Players")
