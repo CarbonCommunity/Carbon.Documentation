@@ -845,9 +845,10 @@ export class Server {
         channel = "ExternalDM"
         break
     }
+    channel = channel.toUpperCase()
 
     this.Chat.push(
-      `<span class="text-zinc-500 text-xs">${new Date(message.Time * 1000).toLocaleTimeString()}  ${channel}\t</span> <a style="color: ${message.Color}" href="http://steamcommunity.com/profiles/${message.UserId}" target="_blank">${message.Username}</a>: ${message.Message}`
+      `<span class="text-zinc-500 text-xs">${new Date(message.Time * 1000).toLocaleTimeString()}\t ${channel} \t</span> <a style="color: ${message.Color}" href="http://steamcommunity.com/profiles/${message.UserId}" target="_blank">${message.Username}</a>: ${message.Message}`
     )
   }
 
