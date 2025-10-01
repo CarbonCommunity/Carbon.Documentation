@@ -1,17 +1,17 @@
 ---
-title: CUI Update
+title: October Update
 description: Rust CUI updates, meta shift, bug fixes, Web Control Panel accounts.
-header: /news/cui-update-background.jpg
-logo: /news/cui-update.webp
+header: https://files.facepunch.com/lewis/1b2511b1/brutalist-7.jpg
+logo: /news/october-25-update.webp
 author: Raul
 date: 2025-10-01T16:00:24.712Z
 tags:
-    - carbon
-    - control
-    - cui
-    - rust
-    - update
-    - panel
+  - carbon
+  - control
+  - cui
+  - rust
+  - update
+  - panel
 layout: news-layout
 category: news
 sidebar: false
@@ -66,6 +66,10 @@ Be sure to manage the list of `CustomVitalInfo` and `CustomVitals` instance prop
 <NewsSection>
 
 While you're still able to use the <a href="/tools/control-panel" target="_blank">WebControlPanel</a> using Rust's default WebRCon with one defined password granting the ability to execute owner-level commands, we're introducing **Accounts** with this brand new update!
+
+:::info
+Due to browser limitations, if you're using the WebControlPanel tool with secured connection, aka `https://` mode, you're required to set up a SSL certificate on your Rust WebRCon connection. **To use an insecure connection (bypass the certificate), switch to `http://`.**
+:::
 
 <NewsSectionSubtitle text="Carbon Bridge"/>
 A new mode will be available on the panel, named **Bridge**. Once configured on your server, it will start a new RCon-like TCP connection which is entirely buffer-based (relative to Rust's WebRCon JSON-based communication) running under Carbon's <a href="/devs/features/bridge">Bridge system</a>. 
