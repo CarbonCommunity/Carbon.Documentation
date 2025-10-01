@@ -55,8 +55,8 @@ Be sure to manage the list of `CustomVitalInfo` and `CustomVitals` instance prop
 :::
 
 <NewsSectionSubtitle text="Sources"/>
-- <a href="https://github.com/Facepunch/Rust.Community/blob/master/CommunityEntity.UI.cs" target="_blank">CommunityEntity (Rust.Community)</a> 
-- <a href="https://github.com/CarbonCommunity/Carbon.Common/blob/8ea6781a8dd2344c364e4d46baa60eb707c26ccd/src/Oxide/CUI/CuiCore.cs" target="_blank">CuiCore (Carbon.Common)</a> 
+- <a href="https://github.com/Facepunch/Rust.Community/blob/master/CommunityEntity.UI.cs" target="_blank">**CommunityEntity** (Rust.Community)</a> 
+- <a href="https://github.com/CarbonCommunity/Carbon.Common/blob/8ea6781a8dd2344c364e4d46baa60eb707c26ccd/src/Oxide/CUI/CuiCore.cs" target="_blank">**CuiCore** (Carbon.Common)</a> 
 
 </NewsSection>
 </NewsHeroSection>
@@ -65,6 +65,76 @@ Be sure to manage the list of `CustomVitalInfo` and `CustomVitals` instance prop
 <NewsSectionTitle text="Web Control Panel" author="raulssorban"/>
 <NewsSection>
 
+While you're still able to use the <a href="/tools/control-panel" target="_blank">WebControlPanel</a> using Rust's default WebRCon with one defined password granting the ability to execute owner-level commands, we're introducing **Accounts** with this brand new update!
+
+<NewsSectionSubtitle text="Carbon Bridge"/>
+A new mode will be available on the panel, named **Bridge**. Once configured on your server, it will start a new RCon-like TCP connection which is entirely buffer-based (relative to Rust's WebRCon JSON-based communication) running under Carbon's <a href="/devs/features/bridge">Bridge system</a>. 
+
+<NewsSectionSubtitle text="Accounts"/>
+As the name might tell, with the introduction of the brand new Bridge connection, you're now able to have multiple passwords for the Bridge connection, which grant the people with access different permissions, opposite to granting them the rights to execute any owner-level commands.
+
+<NewsSectionSubtitle text="How to set up?"/>
+The location of the brand new WebPanel config is at `<root>/carbon/config.webpanel.json` by default. Depending on the viewing permissions, once accounts log in, they will only see and access the tabs that they have permission to.
+<br><br>
+The config can be reloaded on the fly as well as the Bridge server connection and port can be changed when reloading the config. Here're the available relevant commands:
+
+- `c.webpanel.loadcfg`: Reloads the config, (re)starting the connection.
+- `c.webpanel.savecfg`: Saves the config in case any changes haven't saved.
+- `c.webpanel.setenabled`: Changes on-the-fly the status of the server if was previously configured to be enabled.
+- `c.webpanel.clients`: Prints a table list of all connected web clients. 
+- `c.webpanel.connected`: Is a readonly Carbon variable which lets you know if the Bridge server is broadcasting.
+
+:::info
+Whenever the config gets reloaded and new permission changes apply, all currently connected web clients will be disconnected, requiring them to reconnect with fresh account permissions.
+:::
+
+:::code-group
+```json [config.webpanel.json]
+{
+  "Enabled": true,
+  "BridgeServer": {
+    "Ip": "localhost",
+    "Port": 28608
+  },
+  "WebAccounts": [
+    {
+      "Name": "owner",
+      "Password": "BMjgFMH",
+      "Permissions": {
+        "console_view": true,
+        "console_input": true,
+        "chat_view": true,
+        "chat_input": true,
+        "players_view": true,
+        "players_ip": true,
+        "players_inventory": true,
+        "entities_view": true,
+        "entities_edit": true,
+        "permissions_view": true,
+        "permissions_edit": true
+      }
+    },
+    {
+      "Name": "guest",
+      "Password": "guest",
+      "Permissions": {
+        "console_view": false,
+        "console_input": false,
+        "chat_view": true,
+        "chat_input": true,
+        "players_view": true,
+        "players_ip": false,
+        "players_inventory": false,
+        "entities_view": false,
+        "entities_edit": false,
+        "permissions_view": false,
+        "permissions_edit": false
+      }
+    }
+  ]
+}
+```
+:::
 
 </NewsSection>
 
