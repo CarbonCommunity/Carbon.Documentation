@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -57,6 +58,7 @@ public class CodeGen : CarbonPlugin
 			ConsoleSystem.Run(ConsoleSystem.Option.Server, "quit");
 		}
 	}
+
 
 	private static async ValueTask Generate()
 	{
@@ -364,7 +366,32 @@ public class CodeGen : CarbonPlugin
 				                 x.Name.Equals("InitLogging")).GroupBy(x => x.Category)
 					.ToDictionary(key => key.Key, value => value.ToArray()), Formatting.Indented));
 
+		Generate_HooksResearch(hooks);
+
 		Logger.Log("Hooks done");
+	}
+
+	private static void Generate_HooksResearch(List<CarbonHook> hooks)
+	{
+		var names = new Dictionary<string, ResearchHook>();
+		foreach (var hook in hooks)
+		{
+			if (hook.Name.Contains("patch", CompareOptions.IgnoreCase))
+			{
+				continue;
+			}
+
+			ResearchHook researchHook = default;
+			researchHook.Source = hook.MethodSource;
+			names[hook.Name] = researchHook;
+		}
+		OsEx.File.Create(Path.Combine("carbon", "results", "hooks_research.json"), JsonConvert.SerializeObject(names, Formatting.Indented));
+		Logger.Log("Hook research done");
+	}
+
+	private struct ResearchHook
+	{
+		public string Source;
 	}
 
 	private static void Generate_Switches()
