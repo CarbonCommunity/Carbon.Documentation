@@ -31,10 +31,10 @@ features:
     details: We have made it very easy to make the switch from Oxide to Carbon by keeping the folder/plugin structure the same. <a class="textLink" href="/owners/oxide-porting">Learn more</a>
     icon: 🎯
   - title: Scalability
-    details: Carbon super lightweight by only providing the very essential hooks needed, keeping things vanilla when there are no changes made by plugins.
+    details: Carbon is super lightweight by only providing the very essential hooks needed, keeping things vanilla when there are no changes made by plugins.
     icon: ⚖️
   - title: Permissions
-    details: We have created a more optimized modular permission system that allows for users to create their own serializers. <a class="textLink" href="/devs/features/permissions">Learn more</a>
+    details: We have created a more optimized modular permission system that allows users to create their own serializers. <a class="textLink" href="/devs/features/permissions">Learn more</a>
     icon: ⚙️
   - title: Dynamic Hooks
     details: Hooks are loaded dynamically to ensure only the hooks used by plugins are loaded. This eliminates a ton of redundant calls and will improve performance. <a class="textLink" href="/references/hooks">Learn more</a>
