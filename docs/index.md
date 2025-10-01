@@ -4,7 +4,7 @@ layout: home
 hero:
   name: "Carbon"
   text: "Modding Framework"
-  tagline: <div class="text-[20px]">A drop-in replacement for Oxide featuring self-updating, SQL permissions and an in-game interface to install, update and configure plugins.</div> 
+  tagline: A drop-in replacement for Oxide featuring self-updating, SQL permissions and an in-game interface to install, update and configure plugins.
   actions:
     - theme: brand
       text: Get Carbon
