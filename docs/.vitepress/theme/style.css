@@ -308,8 +308,10 @@ html:not(.dark) .dark-only {
   position: relative;
 }
 
-.VPHero .tagline {
-  font-size: 20px;
+@media (min-width: 960px) {
+  .VPHero .tagline {
+    font-size: 20px;
+  }
 }
 
 /* Force image section to be visible */
