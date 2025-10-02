@@ -33,6 +33,18 @@ Introduced by Kulltero in PR <a href="https://github.com/Facepunch/Rust.Communit
 <NewsSectionSubtitle text="RectTransform Rotation" author="codefling-0xf"/>
 Introduced by 0xF in PR <a href="https://github.com/Facepunch/Rust.Community/pull/69" target="_blank">#69</a> (nice), you're now able to rotate any UI elements you're creating.
 
+<NewsSectionSubtitle text="Sources"/>
+- <a href="https://github.com/Facepunch/Rust.Community/blob/master/CommunityEntity.UI.cs" target="_blank">**CommunityEntity** (Rust.Community)</a> 
+- <a href="https://github.com/CarbonCommunity/Carbon.Common/blob/8ea6781a8dd2344c364e4d46baa60eb707c26ccd/src/Oxide/CUI/CuiCore.cs" target="_blank">**CuiCore** (Carbon.Common)</a> 
+
+</NewsSection>
+</NewsHeroSection>
+
+<NewsHeroSection src="https://files.facepunch.com/ianhenderson/1b0111b1/Photos_p1CM7u1uEf.jpg">
+<NewsSectionTitle text="Extra Community Features" author="raulssorban"/>
+<NewsSection>
+With this update, Jake continued adding a few new awesome features in addition to the CUI changes. 
+
 <NewsSectionSubtitle text="Custom Vitals" author="Jake-Rich"/>
 Introduced by Jake Rich in <a href="https://github.com/Facepunch/Rust.Community/commit/f1eef905473105e7814b984bc5745d4d9cbaa006" target="_blank">commit</a>, in Protobuf format you're now able to add entirely custom player vital elements with very high customisation, allowing you to change the following:
 
@@ -54,9 +66,8 @@ public int timeLeft;
 Be sure to manage the list of `CustomVitalInfo` and `CustomVitals` instance properly by using `Facepunch.Pool.Get` and `Free` as they are pooled objects.
 :::
 
-<NewsSectionSubtitle text="Sources"/>
-- <a href="https://github.com/Facepunch/Rust.Community/blob/master/CommunityEntity.UI.cs" target="_blank">**CommunityEntity** (Rust.Community)</a> 
-- <a href="https://github.com/CarbonCommunity/Carbon.Common/blob/8ea6781a8dd2344c364e4d46baa60eb707c26ccd/src/Oxide/CUI/CuiCore.cs" target="_blank">**CuiCore** (Carbon.Common)</a> 
+<NewsSectionSubtitle text="Entity Scaling" author="Jake-Rich"/>
+You can now change the scale of entities. And it's fairly easy too, as well as optimal on the network. The scale only gets networked if the `BaseEntity.networkEntityScale` is set to `true`. To actually update and sync the change, you just update the `transform.localScale` and run `entity.SendNetworkUpdate()`.
 
 </NewsSection>
 </NewsHeroSection>
@@ -141,5 +152,6 @@ Whenever the config gets reloaded and new permission changes apply, all currentl
 :::
 
 </NewsSection>
-
 </NewsHeroSection>
+
+<NewsReleaseNotes version="2.0.203"/>
