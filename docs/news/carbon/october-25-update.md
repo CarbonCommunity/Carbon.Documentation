@@ -16,7 +16,7 @@ layout: news-layout
 category: news
 sidebar: false
 fmContentType: blogpost
-published: false
+published: true
 showjoinus: true
 hidden: false
 ---
@@ -154,4 +154,4 @@ Whenever the config gets reloaded and new permission changes apply, all currentl
 </NewsSection>
 </NewsHeroSection>
 
-<NewsReleaseNotes version="2.0.203"/>
+<NewsReleaseNotes version="2.0.211"/>
