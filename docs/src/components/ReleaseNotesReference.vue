@@ -37,15 +37,6 @@ const paginatedReleaseNotes = computed(() => {
   return filteredReleaseNotes.value.slice(start, end)
 })
 
-let debounceTimeout: NodeJS.Timeout
-const updateDebouncedSearch = (value: string) => {
-  clearTimeout(debounceTimeout)
-  debounceTimeout = setTimeout(() => {
-    debouncedSearchQuery.value = value
-    currentPage.value = 1
-  }, 300)
-}
-
 const moduleLinks = {
   'Admin Module': '/owners/modules/admin-module',
   'AutoWipe Module': '/owners/modules/optional-modules/autowipe-module',
@@ -193,7 +184,7 @@ const getChangeType = (val: number) => {
           <div class="inline-block min-w-full">
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <tbody>
-                <tr v-for="change in releaseNotes[0].Changes.slice().sort((a, b) => a.Type - b.Type)" class="items-table-row">
+                <tr v-for="(change, i) in releaseNotes[0].Changes.slice().sort((a, b) => a.Type - b.Type)" :key="i" class="items-table-row">
                   <td class="whitespace-normal">
                     <CarbonChange
                       :variant="getChangeType(change.Type)"
@@ -219,7 +210,7 @@ const getChangeType = (val: number) => {
 
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <tbody>
-                <tr v-for="releaseNote in releaseNotes" class="items-table-row">
+                <tr v-for="releaseNote in releaseNotes" :key="releaseNote.Version" class="items-table-row">
                   <td>
                     <details v-if="releaseNote != releaseNotes[0]" style="margin: 2.5px; margin-left: 10px">
                       <summary style="font-size: 15px">
@@ -233,7 +224,7 @@ const getChangeType = (val: number) => {
                       </summary>
                       <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700" style="margin: 10px">
                         <tbody>
-                          <tr v-for="change in releaseNote.Changes.slice().sort((a, b) => a.Type - b.Type)" class="items-table-row">
+                          <tr v-for="(change, i) in releaseNote.Changes.slice().sort((a, b) => a.Type - b.Type)" :key="i" class="items-table-row">
                             <td class="whitespace-normal">
                               <CarbonChange
                                 :variant="getChangeType(change.Type)"
