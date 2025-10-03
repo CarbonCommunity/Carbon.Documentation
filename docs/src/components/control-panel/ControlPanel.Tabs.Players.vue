@@ -57,7 +57,7 @@ function refreshPlayers() {
         <th class="vp-doc th">Player</th>
         <th class="vp-doc th text-center">Health</th>
         <th class="vp-doc th">Connected</th>
-        <th class="vp-doc th">Actions</th>
+        <th class="vp-doc th text-center">Actions</th>
       </tr>
     </thead>
     <tr v-for="player in selectedServer?.PlayerInfo" :key="player.SteamID">
