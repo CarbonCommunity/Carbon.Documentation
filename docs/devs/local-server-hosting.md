@@ -1,17 +1,21 @@
-# <CarbonIcons icon="server" /> Local Server Hosting
+<script setup lang="ts">
+import { BugOffIcon, DownloadIcon, ListIcon, PlayIcon, ServerIcon } from 'lucide-vue-next'
+</script>
+
+# <ServerIcon class="carbon-icon" /> Local Server Hosting
 
 This is a guide on how to get started with the
 [`Carbon.QuickStart`](https://github.com/CarbonCommunity/Carbon.QuickStart/tree/main/win) repository on
 running a local server (for development purposes).
 
-## <CarbonIcons icon="download" /> Download
+## <DownloadIcon class="carbon-icon" /> Download
 
 1. Visit the [**Carbon.QuickStart**](https://github.com/CarbonCommunity/Carbon.QuickStart/tree/main/win)
    repository
 2. Download the Windows (`win`) files
 3. Extract contents to a new folder
 
-## <CarbonIcons icon="list" /> Batch Steps
+## <ListIcon class="carbon-icon" /> Batch Steps
 
 Run any `update_*.bat` file corresponding to your preferred Rust/Carbon branch. These files automate:
 
@@ -26,7 +30,7 @@ Run any `update_*.bat` file corresponding to your preferred Rust/Carbon branch. 
 The batch files handle everything - no manual intervention required!
 :::
 
-## <CarbonIcons icon="bugoff" /> Debugger Setup (Optional)
+## <BugOffIcon class="carbon-icon" /> Debugger Setup (Optional)
 
 Enable debugging for plugin development by editing `<root>/doorstop_config.ini`:
 
@@ -46,10 +50,10 @@ Backup your changes before updating.
 Be aware that `debug_suspend=true` will prevent the server from starting until you attach a debugger.
 :::
 
-## <CarbonIcons icon="play" /> Run Your Server
+## <PlayIcon class="carbon-icon" /> Run Your Server
 
 1. Edit `run.bat` to configure:
-    - Ports
-    - Folder paths
-    - Server settings
+   - Ports
+   - Folder paths
+   - Server settings
 2. Save changes and double-click `run.bat` to launch

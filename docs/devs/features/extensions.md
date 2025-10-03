@@ -3,7 +3,12 @@ title: Extensions
 description: Carbon Extensions allow you to extend and reuse tools in one or more plugins.
 ---
 
-# <CarbonIcons icon="star" /> Extensions
+<script setup lang="ts">
+import CarbonButton from '@/components/CarbonButton.vue'
+import { StarIcon } from 'lucide-vue-next'
+</script>
+
+# <StarIcon class="carbon-icon" /> Extensions
 
 Carbon Extension allow you to extend and reuse tools in one or multiple of your plugins. These can viewed a library or
 common code base to reference across multiple locations.

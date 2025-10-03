@@ -2,7 +2,6 @@
 import CarbonBadge from '@/components/CarbonBadge.vue'
 import CarbonButton from '@/components/CarbonButton.vue'
 import CarbonChange from '@/components/CarbonChange.vue'
-import CarbonIcons from '@/components/CarbonIcons.vue'
 import NewsSection from '@/components/news/NewsSection.vue'
 import NewsHeroSection from '@/components/news/NewsHeroSection.vue'
 import NewsSectionTitle from '@/components/news/NewsSectionTitle.vue'
@@ -29,7 +28,6 @@ export default {
     app.component('CarbonButton', CarbonButton)
     app.component('CarbonBadge', CarbonBadge)
     app.component('CarbonChange', CarbonChange)
-    app.component('CarbonIcons', CarbonIcons)
     app.component('NewsImage', NewsImage)
     app.component('NewsImageGrid', NewsImageGrid)
     app.component('NewsSection', NewsSection)

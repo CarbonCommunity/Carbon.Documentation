@@ -436,3 +436,9 @@ body::after {
     grid-template-columns: repeat(auto-fit, minmax(134px, 1fr)) !important;
   }
 }
+
+.carbon-icon {
+  display: inline-flex;
+  position: relative;
+  top: -2px;
+}

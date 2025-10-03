@@ -1,8 +1,8 @@
 ﻿<script lang="ts" setup>
+import { ChevronDownIcon, ChevronRightIcon, ExternalLinkIcon } from 'lucide-vue-next'
 import { VPBadge } from 'vitepress/theme'
 import { Ref, ref } from 'vue'
 import CarbonButton from './CarbonButton.vue'
-import CarbonIcons from './CarbonIcons.vue'
 
 class ReleaseBuild {
   private static __idCounter: number = 0
@@ -88,7 +88,7 @@ const expandedReleases: Ref<boolean[]> = ref(sections.flatMap(x => x.releaseBuil
           @click="expandedReleases[releaseBuild._id] = !expandedReleases[releaseBuild._id]"
         >
           <span class="text-xl font-semibold ">{{ releaseBuild.displayName }}</span>
-          <CarbonIcons :icon="expandedReleases[releaseBuild._id] ? 'ChevronDown' : 'ChevronRight'" size="18" />
+          <component :is="expandedReleases[releaseBuild._id] ? ChevronDownIcon : ChevronRightIcon" :size="18" />
         </div>
         <Transition name="expand">
           <div
@@ -116,7 +116,7 @@ const expandedReleases: Ref<boolean[]> = ref(sections.flatMap(x => x.releaseBuil
                 target="_blank"
               >
                 <VPBadge :type=linkObject.badgeType>{{ linkObject.msg }}&nbsp;
-                  <CarbonIcons icon="ExternalLink" size="14" />
+                  <ExternalLinkIcon class="carbon-icon" :size="14" />
                 </VPBadge>
               </a>
             </div>
@@ -151,7 +151,7 @@ const expandedReleases: Ref<boolean[]> = ref(sections.flatMap(x => x.releaseBuil
                  :href="'https://steamdb.info/app/258550/depots/?branch=' + rustBranch"
                  target="_blank"
               >
-                <VPBadge type="warning">{{ rustBranch }}&nbsp;<CarbonIcons icon="ExternalLink" size="14" /></VPBadge>
+                <VPBadge type="warning">{{ rustBranch }}&nbsp;<ExternalLinkIcon class="carbon-icon" :size="14" /></VPBadge>
               </a>
               Rust branch.
             </span>
