@@ -109,7 +109,7 @@ const expandedReleases: Ref<boolean[]> = ref(sections.flatMap((x) => x.releaseBu
 
 <template>
   <div class="mb-6 mt-6 flex gap-6">
-    <template v-for="section in sections">
+    <template v-for="section in sections" :key="section._id">
       <button
         class="section-button rounded-lg px-8 py-1.5 text-lg transition-all"
         :class="{ active: activeSection?.name == section.name }"
@@ -141,10 +141,11 @@ const expandedReleases: Ref<boolean[]> = ref(sections.flatMap((x) => x.releaseBu
             </span>
             <div class="mt-4 flex gap-1">
               <a
-                v-for="linkObject in [
+                v-for="(linkObject, i) in [
                   { urlToAdd: 'releases/tag', badgeType: 'danger', msg: 'Github Release' },
                   { urlToAdd: 'commit', badgeType: 'info', msg: 'Latest Commit' },
                 ]"
+                :key="i"
                 :href="'https://github.com/CarbonCommunity/Carbon/' + linkObject.urlToAdd + '/' + releaseBuild.tag"
                 target="_blank"
               >
@@ -163,7 +164,7 @@ const expandedReleases: Ref<boolean[]> = ref(sections.flatMap((x) => x.releaseBu
               </thead>
               <tbody>
                 <tr v-for="build in releaseBuild.builds" :key="build">
-                  <td v-for="os in ['win', 'linux']">
+                  <td v-for="os in ['win', 'linux']" :key="os">
                     <CarbonButton
                       :href="
                         'https://github.com/CarbonCommunity/Carbon/releases/download/' +
