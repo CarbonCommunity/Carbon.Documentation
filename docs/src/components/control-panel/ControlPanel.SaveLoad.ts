@@ -300,6 +300,9 @@ export class Server {
     this.HeaderImage = ''
     this.Description = ''
     this.Socket = null
+    this.CommandCallbacks = {}
+    this.RpcCallbacks = {}
+    this.RpcPermissions = {}
 
     if (selectedServer.value == this) {
       hideInventory()
