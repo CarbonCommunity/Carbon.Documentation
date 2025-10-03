@@ -66,8 +66,28 @@ public int timeLeft;
 Be sure to manage the list of `CustomVitalInfo` and `CustomVitals` instance properly by using `Facepunch.Pool.Get` and `Free` as they are pooled objects.
 :::
 
+### Time Left
+To use `TimeLeft`, you must also assign `rightText` with a similar format such as the following: `"{timeleft:ss}"`. When the countdown reaches zero, nothing will happen, it's just a client-side visual countdown.
+
+### Icons
+The `icon` field is a string but it actually takes in a `FileStorage` CRC value.
+
 <NewsSectionSubtitle text="Entity Scaling" author="Jake-Rich"/>
 You can now change the scale of entities. And it's fairly easy too, as well as optimal on the network. The scale only gets networked if the `BaseEntity.networkEntityScale` is set to `true`. To actually update and sync the change, you just update the `transform.localScale` and run `entity.SendNetworkUpdate()`.
+:::info
+You can also use `ent scale <value>` to rescale an entity. Use `ent scale 1` to revert back to the original size.
+:::
+
+
+<NewsSectionSubtitle text="Custom Item Icons" author="Jake-Rich"/>
+You can now assign custom item icons by using `item.itemImageId` which is a `FileStorage` CRC `uint` value. Make sure to mark the item dirty with `item.MarkDirty()` to see it update immediately.
+
+<NewsSectionSubtitle text="Non-Moddable Improvements" author="Jake-Rich"/>
+There are a few modding-related supported changes, such as the following:
+- Dropped item names will show custom names now
+- Modified Drone tax will now show up correctly
+- Have the ability to make previously throwable melee weapons as non-throwable
+- Modified player max. health will now properly scale on the client
 
 </NewsSection>
 </NewsHeroSection>
