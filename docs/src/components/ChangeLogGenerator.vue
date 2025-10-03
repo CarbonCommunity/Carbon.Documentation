@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { CircleX } from 'lucide-vue-next'
-import { ref, Ref, watch, onMounted } from 'vue'
+import { onMounted, ref, Ref, watch } from 'vue'
 import { VueDraggable } from 'vue-draggable-plus'
 import CarbonBadge from './CarbonBadge.vue'
 
@@ -67,18 +67,13 @@ class ChangeLog {
 }
 
 const changeLog: Ref<ChangeLog> = ref(
-  new ChangeLog(
-    '',
-    '',
-    'https://github.com/CarbonCommunity/Carbon/commit/',
-    [
-      new ChangeLogSection('Add', 0, []),
-      new ChangeLogSection('Update', 1, []),
-      new ChangeLogSection('Remove', 2, []),
-      new ChangeLogSection('Fix', 3, []),
-      new ChangeLogSection('Misc', 4, []),
-    ]
-  )
+  new ChangeLog('', '', 'https://github.com/CarbonCommunity/Carbon/commit/', [
+    new ChangeLogSection('Add', 0, []),
+    new ChangeLogSection('Update', 1, []),
+    new ChangeLogSection('Remove', 2, []),
+    new ChangeLogSection('Fix', 3, []),
+    new ChangeLogSection('Misc', 4, []),
+  ])
 )
 
 function addChange(section: ChangeLogSection, event: Event) {
@@ -218,7 +213,9 @@ watch(currentDatePickerValue, (newDate) => {
     const currentDate = fromPrettyToIsoDate(changeLog.value.Date)
     date.setHours(currentDate.getHours())
     date.setMinutes(currentDate.getMinutes())
-  } catch (e) {}
+  } catch {
+    /* empty */
+  }
   changeLog.value.Date = prettyIsoDate(date.toISOString())
   save()
 })
@@ -232,11 +229,7 @@ function save() {
 function clear() {
   const confirmDelete = window.confirm(`Are you sure you want to clear?`)
   if (confirmDelete) {
-    changeLog.value = new ChangeLog(
-    '',
-    '',
-    'https://github.com/CarbonCommunity/Carbon/commit/',
-    [
+    changeLog.value = new ChangeLog('', '', 'https://github.com/CarbonCommunity/Carbon/commit/', [
       new ChangeLogSection('Add', 0, []),
       new ChangeLogSection('Update', 1, []),
       new ChangeLogSection('Remove', 2, []),
@@ -249,12 +242,21 @@ function clear() {
 
 onMounted(() => {
   const lastChangelog = localStorage.getItem('docs-changelog-latest')
-  if(lastChangelog) {
+  if (lastChangelog) {
     const cg = JSON.parse(lastChangelog)
     changeLog.value = new ChangeLog(
-    cg['Date'],
-    cg['Version'],
-    cg['CommitUrl'], cg['Sections'].map(section => new ChangeLogSection(section['Title'], Number(section['TypeId']), section['Changes'].map(change => new Change(change['Message'], change['Authors'])))))
+      cg['Date'],
+      cg['Version'],
+      cg['CommitUrl'],
+      cg['Sections'].map(
+        (section) =>
+          new ChangeLogSection(
+            section['Title'],
+            Number(section['TypeId']),
+            section['Changes'].map((change) => new Change(change['Message'], change['Authors']))
+          )
+      )
+    )
   }
 })
 </script>
@@ -266,12 +268,7 @@ onMounted(() => {
       <div>
         <input type="date" @change="save()" v-model="currentDatePickerValue" />
       </div>
-      <input
-        v-model="changeLog.Date"
-        type="text"
-        @change="save()"
-        placeholder="Date ( 2025-05-12 11:40 UTC+0 ) BETTER BE UTC"
-      />
+      <input v-model="changeLog.Date" type="text" @change="save()" placeholder="Date ( 2025-05-12 11:40 UTC+0 ) BETTER BE UTC" />
       <input v-model="changeLog.Version" type="text" @change="save()" placeholder="Semantic Version ( 2.0.185 )" />
       <input
         class="underline"
@@ -282,43 +279,36 @@ onMounted(() => {
         @change="save()"
         @click="(event: MouseEvent) => openCommitUrl(event)"
       />
-      <VueDraggable
-        v-model="changeLog.Sections"
-        :animation="150"
-        ghostClass="ghost"
-        class="mt-4 flex flex-col gap-8"
-      >
+      <VueDraggable v-model="changeLog.Sections" :animation="150" ghostClass="ghost" class="mt-4 flex flex-col gap-8">
         <div class="flex flex-col gap-2" v-for="section in changeLog.Sections" :key="section._id">
           <h2 class="text-xl font-bold">{{ section.Title }}</h2>
           <div class="flex flex-col gap-4">
-            <VueDraggable
-              v-model="section.Changes"
-              :animation="150"
-              ghostClass="ghost"
-              group="changes"
-              class="flex flex-col gap-2"
-            >
+            <VueDraggable v-model="section.Changes" :animation="150" ghostClass="ghost" group="changes" class="flex flex-col gap-2">
               <template v-for="change in section.Changes" :key="change._id">
-                <div class="flex flex-row gap-2 items-center">
+                <div class="flex flex-row items-center gap-2">
                   <div class="relative">
                     <button
-                      class="absolute top-1/2 -translate-y-1/2 -translate-x-full text-red-500 hover:text-red-300 z-100"
+                      class="z-100 absolute top-1/2 -translate-x-full -translate-y-1/2 text-red-500 hover:text-red-300"
                       @click="() => removeChange(section, change)"
                     >
                       <CircleX :size="18" :stroke-width="1.5" />
                     </button>
-                    <CarbonBadge style="user-select: none" :variant="section.getChangeType()">{{
-                      section.getChangeType().toUpperCase()
-                    }}</CarbonBadge>
+                    <CarbonBadge style="user-select: none" :variant="section.getChangeType()">{{ section.getChangeType().toUpperCase() }}</CarbonBadge>
                   </div>
-                  <div class="flex flex-col text-sm w-full">
+                  <div class="flex w-full flex-col text-sm">
                     <input placeholder="Message" @change="save()" v-model="change.Message" type="text" />
                     <input
                       placeholder="Authors"
                       class="text-xs text-blue-300"
                       :value="change.Authors"
                       @change="save()"
-                      @input="event => change.Authors = (event.target as HTMLInputElement)?.value.trim().split(',').map(author => author.trim())"
+                      @input="
+                        (event) =>
+                          (change.Authors = (event.target as HTMLInputElement)?.value
+                            .trim()
+                            .split(',')
+                            .map((author) => author.trim()))
+                      "
                       type="text"
                     />
                   </div>
@@ -326,33 +316,19 @@ onMounted(() => {
               </template>
             </VueDraggable>
             <form class="flex flex-col gap-2" @submit.prevent="(event: Event) => addChange(section, event)">
-              <input
-                type="text"
-                placeholder="Add a new change message"
-                class="text-sm"
-                @change="save()"
-                @focus="focusChangeInput(section)"
-              />
-              <input
-                type="text"
-                placeholder="Author1,Author2"
-                class="text-sm"
-                @change="save()"
-                v-show="currentlyFocusedChangeLogSection === section"
-              />
+              <input type="text" placeholder="Add a new change message" class="text-sm" @change="save()" @focus="focusChangeInput(section)" />
+              <input type="text" placeholder="Author1,Author2" class="text-sm" @change="save()" v-show="currentlyFocusedChangeLogSection === section" />
               <button class="hidden" type="submit"></button>
             </form>
           </div>
         </div>
       </VueDraggable>
-      <button class="btn btn-primary" @click="save">Save</button>
-      <button class="btn btn-primary" @click="clear">Clear</button>
-      <button class="btn btn-primary" @click="exportToJsonToClipboard">JSON to clipboard</button>
-      <button class="btn btn-primary" @click="exportToJsonToFile">JSON to file</button>
-      <button class="btn btn-primary" @click="setJsonFromUserClipboard">Import from JSON clipboard</button>
-      <button class="btn btn-primary" @click="appendJsonFromUserClipboard">
-        Append changes from JSON clipboard
-      </button>
+      <button @click="save">Save</button>
+      <button @click="clear">Clear</button>
+      <button @click="exportToJsonToClipboard">JSON to clipboard</button>
+      <button @click="exportToJsonToFile">JSON to file</button>
+      <button @click="setJsonFromUserClipboard">Import from JSON clipboard</button>
+      <button @click="appendJsonFromUserClipboard">Append changes from JSON clipboard</button>
     </div>
   </div>
 </template>
