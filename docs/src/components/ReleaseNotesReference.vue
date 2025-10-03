@@ -19,10 +19,10 @@ const error: Ref<string | null> = ref(null)
 const filteredReleaseNotes = computed(() => {
   if (!releaseNotes.value?.length) return []
 
-  let filtered = releaseNotes.value.filter(releaseNote => releaseNote && releaseNote.Version)
+  let filtered = releaseNotes.value.filter((releaseNote) => releaseNote && releaseNote.Version)
 
   if (debouncedSearchQuery.value) {
-    filtered = filtered.filter(releaseNote => {
+    filtered = filtered.filter((releaseNote) => {
       if (!releaseNote) return false
       return true
     })
@@ -51,7 +51,7 @@ const moduleLinks = {
   'AutoWipe Module': '/owners/modules/optional-modules/autowipe-module',
   'StackManager Module': '/owners/modules/optional-modules/stack-manager-module',
   'GatherManager Module': '/owners/modules/optional-modules/gather-manager-module',
-  'Vanish Module': '/owners/modules/optional-modules/vanish-module'
+  'Vanish Module': '/owners/modules/optional-modules/vanish-module',
 }
 
 const linkifyModules = (text: string) => {
@@ -66,12 +66,12 @@ const loadReleaseNotes = async () => {
     isLoading.value = true
     error.value = null
     const data = await fetchChangelogsCarbon()
-    releaseNotes.value = data.map(release => ({
+    releaseNotes.value = data.map((release) => ({
       ...release,
-      Changes: release.Changes.map(change => ({
+      Changes: release.Changes.map((change) => ({
         ...change,
-        Message: linkifyModules(change.Message)
-      }))
+        Message: linkifyModules(change.Message),
+      })),
     }))
   } catch (err) {
     console.error('Failed to load release notes:', err)
@@ -119,39 +119,34 @@ const getChangeType = (val: number) => {
   }
   return 'date'
 }
-
 </script>
 
 <template>
-  <div class="max-w-screen-lg mx-auto px-4 py-8">
-    <h1 class="text-2xl font-bold mb-4">Release Notes</h1>
+  <div class="mx-auto max-w-screen-lg px-4 py-8">
+    <h1 class="mb-4 text-2xl font-bold">Release Notes</h1>
     <p class="mb-8">Carbon change patch notes and more information about the changes we've done recently.</p>
 
-    <h1 class="text-2xl font-bold mb-4">Latest Update</h1>
-    <p class="mb-8">Latest production release build changelog based on the <a
-      href="https://github.com/CarbonCommunity/Carbon/tree/production" target="_blank"><strong>production
-      branch</strong></a>.</p>
+    <h1 class="mb-4 text-2xl font-bold">Latest Update</h1>
+    <p class="mb-8">
+      Latest production release build changelog based on the
+      <a href="https://github.com/CarbonCommunity/Carbon/tree/production" target="_blank"><strong>production branch</strong></a
+      >.
+    </p>
 
     <div v-if="!isLoading">
-<div style="width:215px; display: flex; flex-direction: column; align-items: center; gap:2px;">
-  <Badge
-    type="info"
-    :text="'Current Version: ' + releaseNotes[0]?.Version"
-    style="text-align:center; width:100%; user-select:none; margin: 0;" />
+      <div style="width: 215px; display: flex; flex-direction: column; align-items: center; gap: 2px">
+        <Badge type="info" :text="'Current Version: ' + releaseNotes[0]?.Version" style="text-align: center; width: 100%; user-select: none; margin: 0" />
 
-  <CarbonButton
-    href="https://github.com/CarbonCommunity/Carbon.Core/releases/tag/production_build"
-    text="Download Latest"
-    :icon="CloudDownloadIcon"
-    external
-    style="width:100%; text-align:center; margin-top: -4px;" />
+        <CarbonButton
+          href="https://github.com/CarbonCommunity/Carbon.Core/releases/tag/production_build"
+          text="Download Latest"
+          :icon="CloudDownloadIcon"
+          external
+          style="width: 100%; text-align: center; margin-top: -4px"
+        />
 
-  <Badge
-    type="info"
-    :text="releaseNotes[0]?.Date"
-    style="text-align:center; width:100%; user-select:none; margin: 0;" />
-</div>
-
+        <Badge type="info" :text="releaseNotes[0]?.Date" style="text-align: center; width: 100%; user-select: none; margin: 0" />
+      </div>
     </div>
     <div v-else class="flex justify-center py-4">
       <Loader2 class="animate-spin" :size="24" />
@@ -165,23 +160,21 @@ const getChangeType = (val: number) => {
           Release Notes API
           <ExternalLink :size="14" class="opacity-80" />
         </a>
-        <div style="width: 10px;"></div>
-        <a v-if="releaseNotes[0]?.CommitUrl" :href="releaseNotes[0]?.CommitUrl" target="_blank"
-           class="vp-button medium brand flex items-center gap-2">
+        <div style="width: 10px"></div>
+        <a v-if="releaseNotes[0]?.CommitUrl" :href="releaseNotes[0]?.CommitUrl" target="_blank" class="vp-button medium brand flex items-center gap-2">
           <GitPullRequestIcon :size="16" />
           Full Commit Log
           <ExternalLink :size="14" class="opacity-80" />
         </a>
-        <div style="width: 10px;"></div>
-        <a href="/tools/changelog-generator/"
-           class="vp-button medium brand flex items-center gap-2">
+        <div style="width: 10px"></div>
+        <a href="/tools/changelog-generator/" class="vp-button medium brand flex items-center gap-2">
           <LucideTextCursorInput :size="16" />
           Editor
         </a>
       </div>
     </div>
     <p class="mb-8"></p>
-    <h1 class="text-2xl font-bold mb-4">Change Logs</h1>
+    <h1 class="mb-4 text-2xl font-bold">Change Logs</h1>
 
     <div v-if="isLoading" class="flex items-center justify-center py-8">
       <Loader2 class="animate-spin" :size="24" />
@@ -190,10 +183,8 @@ const getChangeType = (val: number) => {
 
     <div v-else>
       <div v-if="paginatedReleaseNotes && paginatedReleaseNotes.length">
-
         <div class="fixed bottom-4 right-4 z-50">
-          <div
-            class="text-sm text-gray-500 dark:text-gray-400 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm px-4 py-2">
+          <div class="bg-white/90 px-4 py-2 text-sm text-gray-500 backdrop-blur-sm dark:bg-gray-800/90 dark:text-gray-400">
             Showing {{ paginatedReleaseNotes.length }} of {{ filteredReleaseNotes.length }} release notes
           </div>
         </div>
@@ -202,51 +193,70 @@ const getChangeType = (val: number) => {
           <div class="inline-block min-w-full">
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <tbody>
-              <tr v-for="change in releaseNotes[0].Changes.slice().sort((a, b) => a.Type - b.Type)"
-                  class="items-table-row">
-                <td class="whitespace-normal">
-                  <CarbonChange :variant="getChangeType(change.Type)"
-                                :text="change.Message + (change.Authors != null && change.Authors.length > 0 ? `<br><p style='font-size: 12px;'>Authors: ` + change.Authors.map(x => `<a style='color: var(--c-carbon-1);' target='_blank' href='https://github.com/${x}'/>@` + x + ` </a> `).join(', ') + '</p>' : '')" />
-                </td>
-              </tr>
+                <tr v-for="change in releaseNotes[0].Changes.slice().sort((a, b) => a.Type - b.Type)" class="items-table-row">
+                  <td class="whitespace-normal">
+                    <CarbonChange
+                      :variant="getChangeType(change.Type)"
+                      :text="
+                        change.Message +
+                        (change.Authors != null && change.Authors.length > 0
+                          ? `<br><p style='font-size: 12px;'>Authors: ` +
+                            change.Authors.map(
+                              (x) => `<a style='color: var(--c-carbon-1);' target='_blank' href='https://github.com/${x}'/>@` + x + ` </a> `
+                            ).join(', ') +
+                            '</p>'
+                          : '')
+                      "
+                    />
+                  </td>
+                </tr>
               </tbody>
             </table>
 
             <p class="mb-8"></p>
-            <h1 class="text-2xl font-bold mb-4">Older Updates</h1>
+            <h1 class="mb-4 text-2xl font-bold">Older Updates</h1>
             <p class="mb-8">All changelogs from previous Carbon updates.</p>
 
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <tbody>
-              <tr v-for="releaseNote in releaseNotes" class="items-table-row">
-                <td>
-                  <details v-if="releaseNote != releaseNotes[0]" style="margin: 2.5px; margin-left: 10px;">
-                    <summary style="font-size: 15px; ">
-                      <span style="display: inline-flex; align-items: center; gap: 5px;">
-                        {{ releaseNote.Version }}
-                        <a v-if="releaseNote.CommitUrl" :href="releaseNote.CommitUrl" target="_blank"><ExternalLink
-                          class="opacity-60" style="width: 15px; height: 15px;" /></a>
-                        <CarbonBadge v-if="releaseNote.Date" variant="date" :text="releaseNote.Date" />
-                      </span>
-
-                    </summary>
-                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700" style="margin: 10px;">
-                    <tbody>
-                    <tr v-for="change in releaseNote.Changes.slice().sort((a, b) => a.Type - b.Type)"
-                        class="items-table-row">
-                      <td class="whitespace-normal">
-                        <CarbonChange :variant="getChangeType(change.Type)"
-                                      :text="change.Message + (change.Authors != null && change.Authors.length > 0 ?  `<br><p style='font-size: 12px;'>Authors: ` + change.Authors.map(x => `<a style='color: var(--c-carbon-1);' target='_blank' href='https://github.com/${x}'/>@` + x + ` </a> `).join(', ') + '</p>' : '')" />
-                      </td>
-                    </tr>
-                    </tbody>
-                    </table>
-                  </details>
-                </td>
-              </tr>
+                <tr v-for="releaseNote in releaseNotes" class="items-table-row">
+                  <td>
+                    <details v-if="releaseNote != releaseNotes[0]" style="margin: 2.5px; margin-left: 10px">
+                      <summary style="font-size: 15px">
+                        <span style="display: inline-flex; align-items: center; gap: 5px">
+                          {{ releaseNote.Version }}
+                          <a v-if="releaseNote.CommitUrl" :href="releaseNote.CommitUrl" target="_blank"
+                            ><ExternalLink class="opacity-60" style="width: 15px; height: 15px"
+                          /></a>
+                          <CarbonBadge v-if="releaseNote.Date" variant="date" :text="releaseNote.Date" />
+                        </span>
+                      </summary>
+                      <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700" style="margin: 10px">
+                        <tbody>
+                          <tr v-for="change in releaseNote.Changes.slice().sort((a, b) => a.Type - b.Type)" class="items-table-row">
+                            <td class="whitespace-normal">
+                              <CarbonChange
+                                :variant="getChangeType(change.Type)"
+                                :text="
+                                  change.Message +
+                                  (change.Authors != null && change.Authors.length > 0
+                                    ? `<br><p style='font-size: 12px;'>Authors: ` +
+                                      change.Authors.map(
+                                        (x) => `<a style='color: var(--c-carbon-1);' target='_blank' href='https://github.com/${x}'/>@` + x + ` </a> `
+                                      ).join(', ') +
+                                      '</p>'
+                                    : '')
+                                "
+                              />
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </details>
+                  </td>
+                </tr>
               </tbody>
             </table>
-
           </div>
         </div>
 
@@ -254,14 +264,10 @@ const getChangeType = (val: number) => {
           <Loader2 class="animate-spin" :size="24" />
         </div>
       </div>
-      <div v-else class="text-center py-8 text-gray-500">
+      <div v-else class="py-8 text-center text-gray-500">
         <p>No release notes found matching your search</p>
-        <p v-if="releaseNotes && releaseNotes.length === 0" class="mt-2 text-sm">
-          Debug: No release notes loaded. Check console for errors.
-        </p>
-        <p v-else-if="debouncedSearchQuery" class="mt-2 text-sm">
-          Debug: Search query "{{ debouncedSearchQuery }}" returned no results.
-        </p>
+        <p v-if="releaseNotes && releaseNotes.length === 0" class="mt-2 text-sm">Debug: No release notes loaded. Check console for errors.</p>
+        <p v-else-if="debouncedSearchQuery" class="mt-2 text-sm">Debug: Search query "{{ debouncedSearchQuery }}" returned no results.</p>
       </div>
     </div>
   </div>
@@ -279,4 +285,4 @@ const getChangeType = (val: number) => {
 .dark .items-table-row:hover {
   background-color: #1f2937;
 }
-</style> 
+</style>
