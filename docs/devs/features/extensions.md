@@ -5,7 +5,7 @@ description: Carbon Extensions allow you to extend and reuse tools in one or mor
 
 <script setup lang="ts">
 import CarbonButton from '@/components/CarbonButton.vue'
-import { StarIcon } from 'lucide-vue-next'
+import { DownloadIcon, StarIcon } from 'lucide-vue-next'
 </script>
 
 # <StarIcon class="carbon-icon" /> Extensions
@@ -71,5 +71,6 @@ build your extension for Carbon-only, Oxide-only or both within the same project
 <CarbonButton
 href="/Carbon.ExtensionTemplate.zip"
 text="Download Template"
-icon="download" external
+:icon="DownloadIcon"
+external
 />

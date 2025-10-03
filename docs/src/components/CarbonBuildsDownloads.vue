@@ -1,5 +1,5 @@
 ﻿<script lang="ts" setup>
-import { ChevronDownIcon, ChevronRightIcon, ExternalLinkIcon } from 'lucide-vue-next'
+import { ChevronDownIcon, ChevronRightIcon, ExternalLinkIcon, PackageIcon } from 'lucide-vue-next'
 import { VPBadge } from 'vitepress/theme'
 import { Ref, ref } from 'vue'
 import CarbonButton from './CarbonButton.vue'
@@ -139,7 +139,9 @@ const expandedReleases: Ref<boolean[]> = ref(sections.flatMap(x => x.releaseBuil
                       build +
                       (os == 'win' ? '.zip' : '.tar.gz')"
                     :text="build + ' Build'"
-                    class="w-36" external
+                    :icon="PackageIcon"
+                    class="w-44"
+                    external
                   />
                 </td>
               </tr>

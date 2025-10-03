@@ -21,7 +21,7 @@ development environment for Carbon plugins.
 - Preconfigured `.csproj` file pointing to `Carbon.targets`
 - Self-contained local server within the project folder
 
-<CarbonButton href="https://cdn.carbonmod.gg/TemplateProject.zip" text="TemplateProject.zip" icon="clouddownload" external/> 
+<CarbonButton href="https://cdn.carbonmod.gg/TemplateProject.zip" text="TemplateProject.zip" :icon="CloudDownloadIcon" external/> 
 == Instructions
 1. Download `TemplateProject.zip` and move it to:
    `%USERPROFILE%\Documents\Visual Studio 2022\Templates\ProjectTemplates\`

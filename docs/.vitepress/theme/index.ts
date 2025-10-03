@@ -1,6 +1,5 @@
 // https://vitepress.dev/guide/custom-theme
 import CarbonBadge from '@/components/CarbonBadge.vue'
-import CarbonButton from '@/components/CarbonButton.vue'
 import CarbonChange from '@/components/CarbonChange.vue'
 import NewsSection from '@/components/news/NewsSection.vue'
 import NewsHeroSection from '@/components/news/NewsHeroSection.vue'
@@ -25,7 +24,6 @@ export default {
   },
   enhanceApp({ app }) {
     // https://vitepress.dev/guide/extending-default-theme#app-level-enhancements
-    app.component('CarbonButton', CarbonButton)
     app.component('CarbonBadge', CarbonBadge)
     app.component('CarbonChange', CarbonChange)
     app.component('NewsImage', NewsImage)

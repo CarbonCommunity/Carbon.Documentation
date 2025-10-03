@@ -3,11 +3,16 @@ title: Vault
 description: Carbon.Vault is an encrypted and locally stored database dedicated to storing sensitive information in plugin configurations and more.
 ---
 
+<script setup lang="ts">
+import CarbonButton from '@/components/CarbonButton.vue'
+import { CodeIcon } from 'lucide-vue-next'
+</script>
+
 # Vault
 `Carbon.Vault` is an encrypted and locally stored database dedicated to storing sensitive information in plugin
 configurations and more.
 
-<CarbonButton href="https://github.com/CarbonCommunity/Carbon.Common/blob/develop/src/Carbon/Components/Vault.cs" icon="code" text="Source Code" external/>
+<CarbonButton href="https://github.com/CarbonCommunity/Carbon.Common/blob/develop/src/Carbon/Components/Vault.cs" :icon="CodeIcon" text="Source Code" external/>
 
 :::tip STORAGE
 It's an encrypted, compressed and locally stored file named `<root>/server/identity/carbon.vault` in which all the

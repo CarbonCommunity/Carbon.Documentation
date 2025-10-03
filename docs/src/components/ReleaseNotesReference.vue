@@ -2,9 +2,10 @@
 import { URL_METDAT_CARB_CHANGELOGS } from '@/api/constants'
 import type { ChangelogCarbon } from '@/api/metadata/carbon/changelogs'
 import { fetchChangelogsCarbon } from '@/api/metadata/carbon/changelogs'
-import { Database, ExternalLink, GitPullRequestIcon, Loader2, LucideTextCursorInput } from 'lucide-vue-next'
+import { CloudDownloadIcon, Database, ExternalLink, GitPullRequestIcon, Loader2, LucideTextCursorInput } from 'lucide-vue-next'
 import { computed, onMounted, onUnmounted, ref, Ref } from 'vue'
 import CarbonBadge from './CarbonBadge.vue'
+import CarbonButton from './CarbonButton.vue'
 
 const releaseNotes: Ref<ChangelogCarbon[]> = ref([])
 const isLoading = ref(true)
@@ -141,7 +142,7 @@ const getChangeType = (val: number) => {
   <CarbonButton
     href="https://github.com/CarbonCommunity/Carbon.Core/releases/tag/production_build"
     text="Download Latest"
-    icon="CloudDownload"
+    :icon="CloudDownloadIcon"
     external
     style="width:100%; text-align:center; margin-top: -4px;" />
 
