@@ -10,13 +10,22 @@ class ReleaseBuild {
   branch: string
   tag: string
   displayName: string
-  displayDesc : string
+  displayDesc: string
   color: string
   rustBranches: string[]
   builds: string[]
   collapsed: boolean
 
-  constructor(branch: string, tag: string, displayName: string, color: string, rustBranches: string[], builds: string[], collapsed: boolean = false, displayDesc: string = "") {
+  constructor(
+    branch: string,
+    tag: string,
+    displayName: string,
+    color: string,
+    rustBranches: string[],
+    builds: string[],
+    collapsed: boolean = false,
+    displayDesc: string = ''
+  ) {
     this._id = ReleaseBuild.__idCounter++
     this.branch = branch
     this.tag = tag
@@ -44,10 +53,46 @@ class DownloadSection {
 
 const sections = [
   new DownloadSection('Main', [
-    new ReleaseBuild('production', 'production_build', 'Production', '#8f3333', ['public', 'release'], ['Release', 'Minimal'], true, "This is the most stable Carbon build you could run against the official Rust server public release."),
-    new ReleaseBuild('develop', 'edge_build', 'Edge Build', '#6a6a0c', ['public', 'release'], ['Debug', 'Minimal'], false, "This build is Carbon's version of a staging build, packed with the most recent changes and features in Carbon that might end up getting added or not in the production build."),
-    new ReleaseBuild('qa', 'qa_build', 'QA', '#0c676a', ['public', 'release', 'staging'], ['Debug', 'Release', 'Minimal'], false, "Periodically updated when the Carbon team has one or more significant changes that need crowd testing."),
-    new ReleaseBuild('preview', 'preview_build', 'Preview', '#984b2b', ['public', 'release'], ['Debug', 'Minimal'], false, "This build is periodically updated and is packed with latest or experimental features and ideas that might never end up getting released in the official Carbon build."),
+    new ReleaseBuild(
+      'production',
+      'production_build',
+      'Production',
+      '#8f3333',
+      ['public', 'release'],
+      ['Release', 'Minimal'],
+      true,
+      'This is the most stable Carbon build you could run against the official Rust server public release.'
+    ),
+    new ReleaseBuild(
+      'develop',
+      'edge_build',
+      'Edge Build',
+      '#6a6a0c',
+      ['public', 'release'],
+      ['Debug', 'Minimal'],
+      false,
+      "This build is Carbon's version of a staging build, packed with the most recent changes and features in Carbon that might end up getting added or not in the production build."
+    ),
+    new ReleaseBuild(
+      'qa',
+      'qa_build',
+      'QA',
+      '#0c676a',
+      ['public', 'release', 'staging'],
+      ['Debug', 'Release', 'Minimal'],
+      false,
+      'Periodically updated when the Carbon team has one or more significant changes that need crowd testing.'
+    ),
+    new ReleaseBuild(
+      'preview',
+      'preview_build',
+      'Preview',
+      '#984b2b',
+      ['public', 'release'],
+      ['Debug', 'Minimal'],
+      false,
+      'This build is periodically updated and is packed with latest or experimental features and ideas that might never end up getting released in the official Carbon build.'
+    ),
   ]),
   new DownloadSection('Rust', [
     new ReleaseBuild('rust_beta/staging', 'rustbeta_staging_build', 'Rust (Beta) Staging', '', ['staging'], ['Debug', 'Minimal']),
@@ -59,14 +104,14 @@ const sections = [
 ]
 
 const activeSection: Ref<DownloadSection | null> = ref(sections.length ? sections[0] : null)
-const expandedReleases: Ref<boolean[]> = ref(sections.flatMap(x => x.releaseBuilds).map(release => release.collapsed))
+const expandedReleases: Ref<boolean[]> = ref(sections.flatMap((x) => x.releaseBuilds).map((release) => release.collapsed))
 </script>
 
 <template>
-  <div class="mt-6 mb-6 flex gap-6">
+  <div class="mb-6 mt-6 flex gap-6">
     <template v-for="section in sections">
       <button
-        class="section-button text-lg px-8 py-1.5 rounded-lg transition-all"
+        class="section-button rounded-lg px-8 py-1.5 text-lg transition-all"
         :class="{ active: activeSection?.name == section.name }"
         @click="activeSection = section"
       >
@@ -75,83 +120,76 @@ const expandedReleases: Ref<boolean[]> = ref(sections.flatMap(x => x.releaseBuil
     </template>
   </div>
   <div class="flex flex-col gap-4">
-    <template
-      v-for="releaseBuild in activeSection?.releaseBuilds"
-      :key="releaseBuild._id"
-    >
-      <div
-        :style="'border: 2px solid ' + (releaseBuild.color || '#444444')"
-        class="collapsible-section overflow-hidden rounded-lg"
-      >
+    <template v-for="releaseBuild in activeSection?.releaseBuilds" :key="releaseBuild._id">
+      <div :style="'border: 2px solid ' + (releaseBuild.color || '#444444')" class="collapsible-section overflow-hidden rounded-lg">
         <div
-          class="collapsible-header px-6 py-3 cursor-pointer flex items-center justify-between"
+          class="collapsible-header flex cursor-pointer items-center justify-between px-6 py-3"
           @click="expandedReleases[releaseBuild._id] = !expandedReleases[releaseBuild._id]"
         >
-          <span class="text-xl font-semibold ">{{ releaseBuild.displayName }}</span>
+          <span class="text-xl font-semibold">{{ releaseBuild.displayName }}</span>
           <component :is="expandedReleases[releaseBuild._id] ? ChevronDownIcon : ChevronRightIcon" :size="18" />
         </div>
         <Transition name="expand">
-          <div
-            v-show="expandedReleases[releaseBuild._id]"
-            class="collapsible-content px-6 py-3 flex flex-col"
-          >
+          <div v-show="expandedReleases[releaseBuild._id]" class="collapsible-content flex flex-col px-6 py-3">
             <span class="mt-1" v-if="releaseBuild.displayDesc != ''">{{ releaseBuild.displayDesc }}</span>
             <span class="mt-2">
               Based on the
               <code>
-                <a
-                  :href="'https://github.com/CarbonCommunity/Carbon/tree/' + releaseBuild.branch"
-                  target="_blank">{{ releaseBuild.branch }}
-                </a>
+                <a :href="'https://github.com/CarbonCommunity/Carbon/tree/' + releaseBuild.branch" target="_blank">{{ releaseBuild.branch }} </a>
               </code>
               branch.
             </span>
             <div class="mt-4 flex gap-1">
               <a
                 v-for="linkObject in [
-                  { urlToAdd: 'releases/tag', badgeType: 'danger', msg: 'Github Release'},
-                  { urlToAdd: 'commit', badgeType: 'info', msg: 'Latest Commit'},
+                  { urlToAdd: 'releases/tag', badgeType: 'danger', msg: 'Github Release' },
+                  { urlToAdd: 'commit', badgeType: 'info', msg: 'Latest Commit' },
                 ]"
                 :href="'https://github.com/CarbonCommunity/Carbon/' + linkObject.urlToAdd + '/' + releaseBuild.tag"
                 target="_blank"
               >
-                <VPBadge :type=linkObject.badgeType>{{ linkObject.msg }}&nbsp;
+                <VPBadge :type="linkObject.badgeType"
+                  >{{ linkObject.msg }}&nbsp;
                   <ExternalLinkIcon class="carbon-icon" :size="14" />
                 </VPBadge>
               </a>
             </div>
             <table>
               <thead>
-              <tr>
-                <th>Windows</th>
-                <th>Linux</th>
-              </tr>
+                <tr>
+                  <th>Windows</th>
+                  <th>Linux</th>
+                </tr>
               </thead>
               <tbody>
-              <tr v-for="build in releaseBuild.builds" :key="build">
-                <td v-for="os in ['win', 'linux']">
-                  <CarbonButton
-                    :href="'https://github.com/CarbonCommunity/Carbon/releases/download/' +
-                      releaseBuild.tag +
-                      '/Carbon.' +
-                      (os == 'win' ? 'Windows' : 'Linux') +
-                      '.' +
-                      build +
-                      (os == 'win' ? '.zip' : '.tar.gz')"
-                    :text="build + ' Build'"
-                    :icon="PackageIcon"
-                    class="w-44"
-                    external
-                  />
-                </td>
-              </tr>
+                <tr v-for="build in releaseBuild.builds" :key="build">
+                  <td v-for="os in ['win', 'linux']">
+                    <CarbonButton
+                      :href="
+                        'https://github.com/CarbonCommunity/Carbon/releases/download/' +
+                        releaseBuild.tag +
+                        '/Carbon.' +
+                        (os == 'win' ? 'Windows' : 'Linux') +
+                        '.' +
+                        build +
+                        (os == 'win' ? '.zip' : '.tar.gz')
+                      "
+                      :text="build + ' Build'"
+                      :icon="PackageIcon"
+                      class="w-44"
+                      external
+                    />
+                  </td>
+                </tr>
               </tbody>
             </table>
             <span>
-            This build is compatible with
-              <a v-for="rustBranch in releaseBuild.rustBranches" :key="rustBranch"
-                 :href="'https://steamdb.info/app/258550/depots/?branch=' + rustBranch"
-                 target="_blank"
+              This build is compatible with
+              <a
+                v-for="rustBranch in releaseBuild.rustBranches"
+                :key="rustBranch"
+                :href="'https://steamdb.info/app/258550/depots/?branch=' + rustBranch"
+                target="_blank"
               >
                 <VPBadge type="warning">{{ rustBranch }}&nbsp;<ExternalLinkIcon class="carbon-icon" :size="14" /></VPBadge>
               </a>
@@ -190,7 +228,6 @@ const expandedReleases: Ref<boolean[]> = ref(sections.flatMap(x => x.releaseBuil
 
 .collapsible-header:hover {
   transform: scale(0.99);
-
 }
 
 .collapsible-content {
@@ -222,5 +259,4 @@ const expandedReleases: Ref<boolean[]> = ref(sections.flatMap(x => x.releaseBuil
 .expand-leave-active {
   transition-duration: 0.2s;
 }
-
 </style>
