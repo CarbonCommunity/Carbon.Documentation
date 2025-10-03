@@ -78,7 +78,6 @@ You can now change the scale of entities. And it's fairly easy too, as well as o
 You can also use `ent scale <value>` to rescale an entity. Use `ent scale 1` to revert back to the original size.
 :::
 
-
 <NewsSectionSubtitle text="Custom Item Icons" author="Jake-Rich"/>
 You can now assign custom item icons by using `item.itemImageId` which is a `FileStorage` CRC `uint` value. Make sure to mark the item dirty with `item.MarkDirty()` to see it update immediately.
 

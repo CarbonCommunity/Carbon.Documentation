@@ -57,7 +57,7 @@ function refreshPlayers() {
         <th class="vp-doc th">Player</th>
         <th class="vp-doc th text-center">Health</th>
         <th class="vp-doc th">Connected</th>
-        <th class="vp-doc th">Actions</th>
+        <th class="vp-doc th text-center">Actions</th>
       </tr>
     </thead>
     <tr v-for="player in selectedServer?.PlayerInfo" :key="player.SteamID">
@@ -136,7 +136,7 @@ function refreshPlayers() {
             <div v-if="slot.hasItem() && slot.HasCondition" class="slot-condition" :style="'height: ' + slot.ConditionNormalized * 100 + '%;'"></div>
           </div>
         </div>
-        <div class="inventory-grid-tools mt-5 items-center justify-center opacity-50">
+        <div :class="'inventory-grid-tools cols-' + (selectedServer?.hasPermission('console_input') ? '5' : '2') +  ' mt-5 items-center justify-center opacity-50'">
           <div
             v-for="slot in toolSlots"
             :key="slot.Position"
@@ -147,7 +147,7 @@ function refreshPlayers() {
             <span v-if="slot.Container == 10" class="select-none justify-items-center text-xs opacity-50"><ArrowUpFromDot /> Drop</span>
             <span v-if="slot.Container == 11" class="select-none justify-items-center text-xs opacity-50"><Trash2 /> Discard</span>
           </div>
-          <div class="slot-tool w-52 justify-items-center text-xs">
+          <div v-if="selectedServer?.hasPermission('console_input')" class="slot-tool w-52 justify-items-center text-xs">
             <div class="grid">
               <div class="flex">
                 <input class="w-6 text-center" v-model="selectedItemAmount"/><span class="content-center">x</span>
@@ -192,6 +192,13 @@ function refreshPlayers() {
   display: grid;
   grid-template-columns: repeat(5, 64px);
   grid-gap: 6px;
+}
+
+.inventory-grid-tools.cols-2 {
+  grid-template-columns: repeat(2, 64px);
+}
+.inventory-grid-tools.cols-5 {
+  grid-template-columns: repeat(5, 64px);
 }
 
 .slot {

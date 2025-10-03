@@ -170,6 +170,9 @@ function exportToJson(): string {
       case 'PlayerInfo':
       case 'HeaderImage':
       case 'Description':
+      case 'CommandCallbacks':
+      case 'RpcCallbacks':
+      case 'RpcPermissions':
       case 'Logs':
       case 'Chat':
       case 'Rpcs':
@@ -220,6 +223,9 @@ function importFromJson(data: string) {
         localServer.WideScreen = server.WideScreen
         localServer.Bridge = server.Bridge
         localServer.Secure = server.Secure
+        localServer.ChatUsername = server.ChatUsername
+        localServer.ChatUserId = server.ChatUserId
+        localServer.ChatColor = server.ChatColor
         localServer.CachedHostname = server.CachedHostname
         localServer.CommandHistory = server.CommandHistory ?? []
         addServer(localServer)
@@ -283,6 +289,9 @@ export class Server {
   CommandCallbacks: Record<number, (...args: unknown[]) => void> = {}
   RpcCallbacks: Record<number, (...args: unknown[]) => void> = {}
   RpcPermissions: any | null = []
+  ChatUsername = 'SERVER'
+  ChatUserId = '0'
+  ChatColor = '#af5'
 
   hasPermission(permission: string) {
     if (permission in this.RpcPermissions) {
@@ -300,6 +309,9 @@ export class Server {
     this.HeaderImage = ''
     this.Description = ''
     this.Socket = null
+    this.CommandCallbacks = {}
+    this.RpcCallbacks = {}
+    this.RpcPermissions = {}
 
     if (selectedServer.value == this) {
       hideInventory()
@@ -673,16 +685,19 @@ export class Server {
   }
 
   sendMessage(input: string, clearMessage: boolean = true) {
+    if(input.trim() == '') {
+      return
+    }
     if(this.Bridge) {
-      this.sendCall('ChatInput', "SERVER", input, "#fff", "0")
+      this.sendCall('ChatInput', this.ChatUsername, input, this.ChatColor, this.ChatUserId)
     } else { 
       this.sendCommand(`say ${input}`, 1)
     }
     this.appendChat({
       Message: input,
-      Username: "SERVER",
-      UserId: 0,
-      Color: "#fff",
+      Username: this.ChatUsername,
+      UserId: this.ChatUserId,
+      Color: this.ChatColor,
       Channel: 2,
       Time: Math.floor(Date.now() / 1000)
     })
