@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { URL_ASSETS_ITEMS, URL_ASSETS_PREFABS, URL_METDAT_RUST_PREFABS } from '@/api/constants'
+import { URL_ASSETS_PREFABS, URL_METDAT_RUST_PREFABS } from '@/api/constants'
 import type { Prefab } from '@/api/metadata/rust/prefabs'
 import { fetchPrefabs } from '@/api/metadata/rust/prefabs'
 import { ArrowLeft, CheckCircle2, Copy, Database, ExternalLink, Image, Loader2 } from 'lucide-vue-next'
@@ -13,7 +13,7 @@ const copiedId = ref<string | number | null>(null)
 const imageError = ref(false)
 
 const timerDelay = 4000
-let timerSwitch: NodeJS.Timeout = null!
+let timerSwitch: ReturnType<typeof setTimeout> = null!
 
 const copyToClipboard = async (text: string, id: string | number | null = null) => {
   try {
