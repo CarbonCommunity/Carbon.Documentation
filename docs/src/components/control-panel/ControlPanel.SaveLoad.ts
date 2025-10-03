@@ -223,9 +223,9 @@ function importFromJson(data: string) {
         localServer.WideScreen = server.WideScreen
         localServer.Bridge = server.Bridge
         localServer.Secure = server.Secure
-        localServer.ChatUsername = server.ChatUsername
+        localServer.ChatUsername = server.ChatUsername == null ? 'SERVER' : server.ChatUsername
         localServer.ChatUserId = server.ChatUserId
-        localServer.ChatColor = server.ChatColor
+        localServer.ChatColor = server.ChatColor == null ? '#af5' : server.ChatColor
         localServer.CachedHostname = server.CachedHostname
         localServer.CommandHistory = server.CommandHistory ?? []
         addServer(localServer)
