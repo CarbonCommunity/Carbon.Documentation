@@ -8,11 +8,10 @@ import { selectedServer } from './ControlPanel.SaveLoad'
     v-if="selectedServer"
     ref="consoleContainer"
     class="rounded p-4 font-mono text-sm"
-    style="overflow: auto; align-content: end; background-color: var(--vp-code-copy-code-bg); min-height: 300px; max-height: 700px; scrollbar-width: none"
-  >
+    style="overflow: auto; align-content: end; background-color: var(--vp-code-copy-code-bg); min-height: 300px; max-height: 700px; scrollbar-width: none">
     <p v-for="(line, i) in selectedServer?.Logs" :key="i" v-html="line" style="white-space: pre-wrap; text-wrap-mode: nowrap"></p>
   </div>
-  <div v-if="selectedServer" class="flex gap-2" style="align-items: center; background-color: var(--vp-code-copy-code-bg); padding: 10px">
+  <div v-if="selectedServer && selectedServer.hasPermission('console_input')" class="flex gap-2" style="align-items: center; background-color: var(--vp-code-copy-code-bg); padding: 10px">
     <div style="color: var(--category-misc); font-family: monospace; font-weight: 900; user-select: none">></div>
     <input
       style="font-family: monospace; color: var(--docsearch-muted-color)"
