@@ -31,18 +31,38 @@ const selectedAssembly = ref<AssemblyName | null>(null)
         <h2 class="text-lg font-semibold mb-2">ASSEMBLIES ({{ currentProfile?.Assemblies.length.toLocaleString() }}):</h2>
         <input type="text" placeholder="Search..." class="w-full mb-3 p-2 bg-gray-800 text-gray-200 border-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500"/>
         <div v-if="currentProfile" class="space-y-1">
-          <div v-for="(assembly, i) in sortedAssemblies" :key="i" class="flex justify-between items-center bg-gray-800 hover:bg-red-600 text-white px-2 py-1 cursor-pointer" @click="selectedAssembly = assembly.Name">
+        <div
+          v-for="(assembly, i) in sortedAssemblies"
+          :key="i"
+          class="flex items-center justify-between bg-gray-800 hover:bg-gray-700 text-white cursor-pointer"
+          @click="selectedAssembly = assembly.Name">
+
+          <div v-if="selectedAssembly == assembly.Name" class="w-[5px] bg-red-600 self-stretch"></div>
+
+          <!-- Main content (left + right sections) -->
+          <div class="flex justify-between w-full px-2 py-1">
+            <!-- Left side -->
             <div class="flex flex-col">
               <span class="font-semibold text-sm leading-tight">{{ assembly.Name?.DisplayName }}</span>
               <span class="text-xs text-gray-200">
-                {{ assembly.getTotalTime() }} ({{ assembly.TotalTimePercentage.toFixed(1) }}%) | {{ (assembly.Alloc / 1000n).toLocaleString() }} KB | {{ assembly.TotalExceptions.toLocaleString() }} excep.
+                {{ assembly.getTotalTime() }} ({{ assembly.TotalTimePercentage.toFixed(1) }}%) |
+                {{ (assembly.Alloc / 1000n).toLocaleString() }} KB |
+                {{ assembly.TotalExceptions.toLocaleString() }} excep.
               </span>
             </div>
+
+            <!-- Right side -->
             <div class="flex flex-col items-end text-right">
-              <span class="uppercase text-xs font-semibold opacity-80">{{ ProfileTypes[assembly.Name?.ProfileType] }}</span>
-              <span class="text-xs font-bold">{{ assembly.Calls.toLocaleString() }} calls</span>
+              <span class="uppercase text-xs font-semibold opacity-80">
+                {{ ProfileTypes[assembly.Name?.ProfileType] }}
+              </span>
+              <span class="text-xs font-bold">
+                {{ assembly.Calls.toLocaleString() }} calls
+              </span>
             </div>
           </div>
+        </div>
+
         </div>
       </div>
 
@@ -51,7 +71,7 @@ const selectedAssembly = ref<AssemblyName | null>(null)
         <h2 class="text-lg font-semibold mb-2">CALLS ({{ currentProfile?.Calls.length.toLocaleString() }}):</h2>
         <input type="text" placeholder="Search..." class="w-full mb-3 p-2 bg-gray-800 text-gray-200 border-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500"/>
         <div v-if="currentProfile" class="space-y-1">
-          <div v-for="(call, i) in sortedCalls" :key="i" class="flex justify-between items-center bg-gray-800 hover:bg-red-600 text-white px-2 py-1 cursor-pointer">
+          <div v-for="(call, i) in sortedCalls" :key="i" class="flex justify-between items-center bg-gray-800 hover:bg-gray-700 text-white px-2 py-1 cursor-pointer">
             <div class="flex flex-col">
               <span class="font-semibold text-sm leading-tight">{{ call.MethodName }}</span>
               <span class="text-xs text-gray-200">
