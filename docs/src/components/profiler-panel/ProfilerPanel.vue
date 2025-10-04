@@ -2,7 +2,7 @@
 import {
 
 } from 'lucide-vue-next'
-import { doTest } from './ProfilerPanel.SaveLoad';
+import { loadProfile } from './ProfilerPanel.SaveLoad';
 </script>
 
 <template>
@@ -10,8 +10,7 @@ import { doTest } from './ProfilerPanel.SaveLoad';
     <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
       <h2 class="text-lg font-semibold">Profiler Panel</h2>
       <div class="flex space-x-2">
-        <input type="file" @change="doTest" id="fileInput" />
-        <button class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600" @click="doTest()">Load</button>
+        <input type="file" @change="loadProfile" id="fileInput" />
         <button class="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600">Action 2</button>
         <!-- Add buttons or controls here -->
       </div>
