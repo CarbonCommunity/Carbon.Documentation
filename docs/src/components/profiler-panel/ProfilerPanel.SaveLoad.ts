@@ -29,10 +29,26 @@ export function load(reader: BinaryReader) : Profile | null {
   profile.Comparison.Duration = reader.int32()
 
   const assemblyLength = reader.int32()
-  console.log(`Assemblies found: ${assemblyLength}`)
   for (let i = 0; i < assemblyLength; i++) {
     const record = {} as Assembly
     record.TotalTime = reader.uint64()
+    record.TotalTimePercentage = reader.double()
+    record.TotalExceptions = reader.uint64()
+    record.Calls = reader.uint64()
+    record.Alloc = reader.uint64()
+    record.Name = {
+      Name: reader.bstring(),
+      DisplayName: reader.bstring(),
+      DisplayNameNonIncrement: reader.bstring(),
+      ProfileType: reader.int32() as ProfileTypes
+    } as AssemblyName
+    record.Comparison = {
+      IsCompared: reader.bool(),
+      TotalTime: reader.int32() as Difference,
+      TotalExceptions: reader.int32() as Difference,
+      Calls: reader.int32() as Difference,
+      Alloc: reader.int32() as Difference
+    }
     profile.Assemblies.push(record)
   }
 
@@ -43,25 +59,33 @@ export class Profile {
   Protocol: number = 0
   Duration: number = 0
   IsCompared: boolean = false
-  Comparison: Comparison = { 
-    Duration: 0
+  Comparison: ProfileSampleComparison = { 
+    Duration: Difference.None
   }
   Assemblies: Assembly[] = []
+  
 }
 
-export class Comparison {
-  Duration: number = 0
-}
+export class ProfileSampleComparison {
+    Duration: Difference = Difference.None
+  }
 
 export class Assembly {
   TotalTime: bigint = 0n
   TotalTimePercentage: number = 0
-  TotalExceptions: number = 0
-  Calls: number = 0
-  Alloc: number = 0
-  Comparison: Comparison = {
-    Duration: 0
-  }
+  TotalExceptions: bigint = 0n
+  Calls: bigint = 0n
+  Alloc: bigint = 0n
+  Name: AssemblyName | null = null
+  Comparison = new AssemblyComparison()
+}
+
+export class AssemblyComparison {
+  IsCompared: boolean = false
+  TotalTime: Difference = Difference.None
+  TotalExceptions: Difference = Difference.None
+  Calls: Difference = Difference.None
+  Alloc: Difference = Difference.None
 }
 
 export class AssemblyName {
@@ -81,4 +105,11 @@ export enum ProfileTypes {
   Module = 2,
   Extension = 3,
   Harmony = 4
+}
+
+export enum Difference {
+  None = 0,
+  ValueHigher = 1,
+  ValueEqual = 2,
+  ValueLower = 3
 }
