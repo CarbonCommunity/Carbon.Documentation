@@ -698,7 +698,7 @@ export class Server {
       Username: this.ChatUsername,
       UserId: this.ChatUserId,
       Color: this.ChatColor,
-      Channel: 2,
+      Channel: 0,
       Time: Math.floor(Date.now() / 1000)
     })
     if (clearMessage) {
