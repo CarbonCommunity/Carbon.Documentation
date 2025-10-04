@@ -13,7 +13,7 @@ import { selectedServer, save } from './ControlPanel.SaveLoad'
   </div>
   <div v-if="selectedServer?.hasPermission('chat_input')" class="flex gap-2" style="align-items: center; background-color: var(--vp-code-copy-code-bg); padding: 10px">
     <div :class="`max-w-${showingChatColorPicker ? '64' : '16'}`">
-      <input class="w-full text-right" :style="{ color: selectedServer.ChatColor }" @keyup.enter="save()" @click="showingChatColorPicker = !showingChatColorPicker" style="font-family: monospace;" spellcheck="false" v-model="selectedServer.ChatUsername"/>
+      <input class="w-full text-right" :style="{ color: selectedServer.ChatColor }" @keyup.enter="save()" @click="showingChatColorPicker = !showingChatColorPicker; save()" style="font-family: monospace;" spellcheck="false" v-model="selectedServer.ChatUsername"/>
       <div v-if="showingChatColorPicker" class="flex text-xs" style="color: var(--category-misc);">UserId: <input class="w-full text-right text-xs ml-1" @keyup.enter="save()" style="color: #fff; font-family: monospace;" spellcheck="false" v-model="selectedServer.ChatUserId"/></div> 
       <div v-if="showingChatColorPicker" class="flex text-xs" style="color: var(--category-misc);">Color: <input class="w-full text-right text-xs ml-1" @keyup.enter="save()" style="color: #fff; font-family: monospace;" spellcheck="false" v-model="selectedServer.ChatColor"/></div> 
     </div>
