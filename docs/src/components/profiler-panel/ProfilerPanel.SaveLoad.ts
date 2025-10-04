@@ -31,7 +31,7 @@ export function load(reader: BinaryReader) : Profile | null {
 
   const assemblyLength = reader.int32()
   for (let i = 0; i < assemblyLength; i++) {
-    const record = {} as Assembly
+    const record = new Assembly()
     record.TotalTime = reader.uint64()
     record.TotalTimePercentage = reader.double()
     record.TotalExceptions = reader.uint64()
@@ -56,7 +56,7 @@ export function load(reader: BinaryReader) : Profile | null {
 
   const callsLength = reader.int32()
   for (let i = 0; i < callsLength; i++) {
-    const record = {} as Call
+    const record = new Call()
     record.TotalTime = reader.uint64()
     record.TotalTimePercentage = reader.double()
     record.OwnTime = reader.uint64()
@@ -83,7 +83,7 @@ export function load(reader: BinaryReader) : Profile | null {
 
   const memoryLength = reader.int32()
   for (let i = 0; i < memoryLength; i++) {
-    const record = {} as Memory
+    const record = new Memory()
     record.Allocations = reader.uint64()
     record.TotalAllocSize = reader.uint64()
     record.InstanceSize = reader.uint32()
@@ -129,6 +129,18 @@ export class Assembly {
   Alloc: bigint = 0n
   Name: AssemblyName | null = null
   Comparison = new AssemblyComparison()
+
+  TotalTimeMsStr: string = ''
+
+  total_time_ms() : bigint {
+    return this.TotalTime / 1000n;
+  }
+
+  getTotalTime(): string {
+    if (this.TotalTimeMsStr) return this.TotalTimeMsStr
+    const totalTimeMs = this.total_time_ms()
+    return this.TotalTimeMsStr = totalTimeMs < 10 ? `${this.TotalTime.toLocaleString()}μs` : `${totalTimeMs.toLocaleString()}ms`
+  }
 }
 
 export class AssemblyComparison {
@@ -163,6 +175,27 @@ export class Call {
   MethodName: string = ''
   AssemblyName: AssemblyName | null = null
   Comparison = new CallComparison()
+
+  TotalTimeMsStr: string = ''
+  OwnTimeMsStr: string = ''
+
+  total_time_ms() : bigint {
+    return this.TotalTime / 1000n;
+  }  
+  own_time_ms() : bigint {
+    return this.OwnTime / 1000n;
+  }
+
+  getTotalTime(): string {
+    if (this.TotalTimeMsStr) return this.TotalTimeMsStr
+    const totalTimeMs = this.total_time_ms()
+    return this.TotalTimeMsStr = totalTimeMs < 10 ? `${this.TotalTime.toLocaleString()}μs` : `${totalTimeMs.toLocaleString()}ms`
+  }
+  getOwnTime(): string {
+    if (this.OwnTimeMsStr) return this.OwnTimeMsStr
+    const ownTimeMs = this.own_time_ms()
+    return this.OwnTimeMsStr = ownTimeMs < 10 ? `${this.OwnTime.toLocaleString()}μs` : `${ownTimeMs.toLocaleString()}ms`
+  }
 }
 
 export class CallComparison {
