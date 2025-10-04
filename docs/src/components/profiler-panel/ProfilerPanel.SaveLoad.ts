@@ -1,6 +1,7 @@
 import { BinaryReader } from '@/utils/BinaryReader';
 import { ref } from 'vue';
 import pako from 'pako'
+import ProfilerPanel from './ProfilerPanel.vue'
 
 export const currentProfile = ref<Profile | null>(null)
 export function loadProfile(event: Event) {
@@ -80,6 +81,27 @@ export function load(reader: BinaryReader) : Profile | null {
     profile.Calls.push(record)
   }
 
+  const memoryLength = reader.int32()
+  for (let i = 0; i < memoryLength; i++) {
+    const record = {} as Memory
+    record.Allocations = reader.uint64()
+    record.TotalAllocSize = reader.uint64()
+    record.InstanceSize = reader.uint32()
+    record.ClassToken = reader.uint32()
+    record.ClassName = reader.bstring()
+    record.AssemblyName = profile.AssemblyNames[reader.int32()]
+    record.Comparison = {
+      IsCompared: reader.bool(),
+      Allocations: reader.int32(),
+      TotalAllocSize: reader.int32()
+    }
+    profile.Memory.push(record)
+  }
+
+  profile.GC = {
+    Calls: reader.uint64(),
+    TotalTime: reader.uint64()
+  }
   return profile
 }
 
@@ -87,12 +109,12 @@ export class Profile {
   Protocol: number = 0
   Duration: number = 0
   IsCompared: boolean = false
-  Comparison: ProfileSampleComparison = { 
-    Duration: Difference.None
-  }
+  Comparison = new ProfileSampleComparison()
   Assemblies: Assembly[] = []
   AssemblyNames: AssemblyName[] = []
   Calls: Call[] = []
+  Memory: Memory[] = []
+  GC = new GC()
 }
 
 export class ProfileSampleComparison {
@@ -152,6 +174,27 @@ export class CallComparison {
   OwnAlloc: Difference = Difference.None
   TotalExceptions: Difference = Difference.None
   OwnExceptions: Difference = Difference.None
+}
+
+export class Memory {
+  Allocations: bigint = 0n
+  TotalAllocSize: bigint = 0n
+  InstanceSize: number = 0
+  ClassToken: number = 0
+  ClassName: string = ''
+  AssemblyName: AssemblyName | null = null
+  Comparison = new MemoryComparison()
+}
+
+export class MemoryComparison {
+  IsCompared: boolean = false
+  Allocations: Difference = Difference.None
+  TotalAllocSize: Difference = Difference.None
+}
+
+export class GC {
+  Calls: bigint = 0n
+  TotalTime: bigint = 0n
 }
 
 export enum ProfileTypes {
