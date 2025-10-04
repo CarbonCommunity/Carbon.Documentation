@@ -35,7 +35,7 @@ export class BinaryReader {
 
   double(): number {
     const v = this.view.getFloat64(this.offset, true);
-    this.offset += 4;
+    this.offset += 8;
     return v;
   }
 
