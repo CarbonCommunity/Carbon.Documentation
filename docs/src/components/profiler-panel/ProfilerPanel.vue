@@ -93,6 +93,9 @@ const selectedAssembly = ref<AssemblyName | null>(null)
   </div>
 </template>
 
-<style>
-
+<style scoped>
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.05) transparent;
+}
 </style>
