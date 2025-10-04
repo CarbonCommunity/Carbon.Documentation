@@ -1,36 +1,54 @@
 <script lang="ts" setup>
 import { computed, ref } from 'vue'
 import { AssemblyName, loadProfile, currentProfile, ProfileTypes } from './ProfilerPanel.SaveLoad';
+import { Plus } from 'lucide-vue-next'
 const sortedAssemblies = computed(() => {
-  return currentProfile.value
-    ? [...currentProfile.value.Assemblies].sort((a, b) => {
-        return Number(b.Calls) - Number(a.Calls)
-      })
-    : []
+  if (!currentProfile.value) return []
+  return [...currentProfile.value.Assemblies]
+    .filter(a => {
+      return !assemblyFilter.value || 
+        a.Name?.DisplayName.toLowerCase().includes(assemblyFilter.value.toLowerCase())
+    })
+    .sort((a, b) => Number(b.Calls) - Number(a.Calls))
 })
+
 const sortedCalls = computed(() => {
-  return currentProfile.value
-    ? [...currentProfile.value.Calls.filter(c => c.AssemblyName == selectedAssembly.value)]
-    : []
+  if (!currentProfile.value) return []
+  return currentProfile.value.Calls
+    .filter(c => {
+      return selectedAssembly.value && c.AssemblyName === selectedAssembly.value
+    })
+    .filter(c => {
+      return !callFilter.value || 
+        c.MethodName.toLowerCase().includes(callFilter.value.toLowerCase())
+    })
+    .sort((a, b) => Number(b.Calls) - Number(a.Calls))
 })
 const selectedAssembly = ref<AssemblyName | null>(null)
+const assemblyFilter = ref<string | null>(null)
+const callFilter = ref<string | null>(null)
 </script>
 
 <template>
-  <div class="w-full h-full flex flex-col">
+  <div class="w-full h-full flex flex-col px-[200px] ">
     <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-      <h2 class="text-lg font-semibold">Profiler Panel</h2>
+      <h2 class="text-lg font-semibold select-none">Profiler Panel</h2>
       <div class="flex space-x-2">
-        <input type="file" @change="loadProfile" id="fileInput" />
-        <button class="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600">Action 2</button>
+          <div class="relative">
+          <input id="fileInput" type="file" accept=".cprf" @change="loadProfile" class="hidden"/>
+          <label for="fileInput" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded cursor-pointer font-medium transition">
+            <Plus :size="17"/>
+            Load Profile
+          </label>
+        </div>
       </div>
     </div>
     <div class="flex h-full pl-5 gap-x-5">
       <!-- Assemblies -->
-      <div class="flex-1 pl-[200px] py-5 text-white basis-1/2 min-w-0 overflow-y-auto">
+      <div v-if="currentProfile" class="flex-1 py-5 text-white basis-1/2 min-w-0 overflow-y-auto">
         <h2 class="text-lg font-semibold mb-2">ASSEMBLIES ({{ currentProfile?.Assemblies.length.toLocaleString() }}):</h2>
-        <input type="text" placeholder="Search..." class="w-full mb-3 p-2 bg-gray-800 text-gray-200 border-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500"/>
-        <div v-if="currentProfile" class="space-y-1">
+        <input type="text" placeholder="Search..." v-model="assemblyFilter" class="w-full mb-3 p-2 bg-gray-800 text-gray-200 border-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500"/>
+        <div class="space-y-1">
           <div class="overflow-auto h-screen">
             <div v-for="(assembly, i) in sortedAssemblies"
               :key="i"
@@ -62,15 +80,18 @@ const selectedAssembly = ref<AssemblyName | null>(null)
                 </div>
               </div>
             </div>
+            <div v-if="sortedAssemblies.length == 0" class="text-center text-sm text-blue-200/30">
+              No available assemblies
+            </div>
           </div>
         </div>
       </div>
 
       <!-- Calls -->
-      <div class="flex-1 pr-[200px] py-5 text-white basis-1/2 min-w-0 overflow-y-auto">
+      <div v-if="currentProfile" class="flex-1 py-5 text-white basis-1/2 min-w-0 overflow-y-auto">
         <h2 class="text-lg font-semibold mb-2">CALLS ({{ currentProfile?.Calls.length.toLocaleString() }}):</h2>
-        <input type="text" placeholder="Search..." class="w-full mb-3 p-2 bg-gray-800 text-gray-200 border-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500"/>
-        <div v-if="currentProfile" class="space-y-1">
+        <input type="text" placeholder="Search..." v-model="callFilter" class="w-full mb-3 p-2 bg-gray-800 text-gray-200 border-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500"/>
+        <div class="space-y-1">
           <div class="overflow-auto h-screen">
             <div v-for="(call, i) in sortedCalls" :key="i" class="flex justify-between items-center bg-gray-800/20 hover:bg-gray-700 text-white px-2 py-1 cursor-pointer">
               <div class="flex flex-col">
@@ -84,8 +105,15 @@ const selectedAssembly = ref<AssemblyName | null>(null)
                 <span class="text-xs">{{ call.TotalAlloc / 1000n }} B total | {{ call.OwnAlloc / 1000n }} B own</span>
               </div>
             </div>
+            <div v-if="sortedCalls.length == 0" class="text-center text-sm text-blue-200/30">
+              No available calls
+            </div>
            </div>
         </div>
+      </div>
+
+      <div v-if="currentProfile == null" class="w-screen text-center pt-[50px] text-blue-300/30 select-none">
+        No profile selected. Press on <strong class="text-blue-300/60">+ Load Profile</strong> to get started!
       </div>
 
     </div>
