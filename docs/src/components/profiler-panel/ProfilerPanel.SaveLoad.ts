@@ -40,24 +40,45 @@ export function load(reader: BinaryReader) : Profile | null {
 }
 
 export class Profile {
-  Protocol = 0
-  Duration = 0
-  IsCompared = false
-  Comparison = { 
+  Protocol: number = 0
+  Duration: number = 0
+  IsCompared: boolean = false
+  Comparison: Comparison = { 
     Duration: 0
-  } as Comparison
+  }
   Assemblies: Assembly[] = []
 }
 
 export class Comparison {
-  Duration = 0
+  Duration: number = 0
 }
 
 export class Assembly {
   TotalTime: bigint = 0n
-  TotalTimePercentage = 0
-  TotalExceptions = 0
-  Calls = 0
-  Alloc = 0
-  Comparison = {} as Comparison
+  TotalTimePercentage: number = 0
+  TotalExceptions: number = 0
+  Calls: number = 0
+  Alloc: number = 0
+  Comparison: Comparison = {
+    Duration: 0
+  }
+}
+
+export class AssemblyName {
+  Name: string = ''
+  DisplayName: string = ''
+  DisplayNameNonIncrement: string = ''
+  ProfileType: ProfileTypes = ProfileTypes.Assembly
+
+  getDisplayName (isCompared: boolean) : string {
+    return isCompared ? this.DisplayNameNonIncrement : this.DisplayName 
+  }
+}
+
+export enum ProfileTypes {
+  Assembly = 0,
+  Plugin = 1,
+  Module = 2,
+  Extension = 3,
+  Harmony = 4
 }
