@@ -50,6 +50,34 @@ export function load(reader: BinaryReader) : Profile | null {
       Alloc: reader.int32() as Difference
     }
     profile.Assemblies.push(record)
+    profile.AssemblyNames.push(record.Name)
+  }
+
+  const callsLength = reader.int32()
+  for (let i = 0; i < callsLength; i++) {
+    const record = {} as Call
+    record.TotalTime = reader.uint64()
+    record.TotalTimePercentage = reader.double()
+    record.OwnTime = reader.uint64()
+    record.OwnTimePercentage = reader.double()
+    record.Calls = reader.uint64()
+    record.TotalAlloc = reader.uint64()
+    record.OwnAlloc = reader.uint64()
+    record.TotalExceptions = reader.uint64()
+    record.OwnExceptions = reader.uint64()
+    record.MethodName = reader.bstring()
+    record.AssemblyName = profile.AssemblyNames[reader.int32()]
+    record.Comparison = {
+      IsCompared: reader.bool(),
+      TotalTime: reader.int32(),
+      OwnTime: reader.int32(),
+      Calls: reader.int32(),
+      TotalAlloc: reader.int32(),
+      OwnAlloc: reader.int32(),
+      TotalExceptions: reader.int32(),
+      OwnExceptions: reader.int32()
+    }
+    profile.Calls.push(record)
   }
 
   return profile
@@ -63,7 +91,8 @@ export class Profile {
     Duration: Difference.None
   }
   Assemblies: Assembly[] = []
-  
+  AssemblyNames: AssemblyName[] = []
+  Calls: Call[] = []
 }
 
 export class ProfileSampleComparison {
@@ -97,6 +126,32 @@ export class AssemblyName {
   getDisplayName (isCompared: boolean) : string {
     return isCompared ? this.DisplayNameNonIncrement : this.DisplayName 
   }
+}
+
+export class Call {
+  TotalTime: bigint = 0n
+  TotalTimePercentage: number = 0
+  OwnTime: bigint = 0n
+  OwnTimePercentage: number = 0
+  Calls: bigint = 0n
+  TotalAlloc: bigint = 0n
+  OwnAlloc: bigint = 0n
+  TotalExceptions: bigint = 0n
+  OwnExceptions: bigint = 0n
+  MethodName: string = ''
+  AssemblyName: AssemblyName | null = null
+  Comparison = new CallComparison()
+}
+
+export class CallComparison {
+  IsCompared: boolean = false
+  TotalTime: Difference = Difference.None
+  OwnTime: Difference = Difference.None
+  Calls: Difference = Difference.None
+  TotalAlloc: Difference = Difference.None
+  OwnAlloc: Difference = Difference.None
+  TotalExceptions: Difference = Difference.None
+  OwnExceptions: Difference = Difference.None
 }
 
 export enum ProfileTypes {
