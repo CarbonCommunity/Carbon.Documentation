@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { computed, ref } from 'vue'
 import { AssemblyName, loadProfile, currentProfile, ProfileTypes } from './ProfilerPanel.SaveLoad';
-import { Plus } from 'lucide-vue-next'
+import { Minus, Plus } from 'lucide-vue-next'
 const sortedAssemblies = computed(() => {
   if (!currentProfile.value) return []
   return [...currentProfile.value.Assemblies]
@@ -27,6 +27,10 @@ const sortedCalls = computed(() => {
 const selectedAssembly = ref<AssemblyName | null>(null)
 const assemblyFilter = ref<string | null>(null)
 const callFilter = ref<string | null>(null)
+const assemblyOptions = ['Name', 'Time', 'Calls', 'Memory', 'Exceptions']
+const assemblySort = ref<string | null>('Time')
+const callOptions = ['Method', 'Calls', 'Time (Total)', 'Time (Own)', 'Memory (Total)', 'Memory (Own)', 'Exceptions (Total)', 'Exceptions (Own)']
+const callSort = ref<string | null>('Calls')
 </script>
 
 <template>
@@ -34,20 +38,34 @@ const callFilter = ref<string | null>(null)
     <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
       <h2 class="text-lg font-semibold select-none">Profiler Panel</h2>
       <div class="flex space-x-2">
-          <div class="relative">
+        <div v-if="!currentProfile" class="relative">
           <input id="fileInput" type="file" accept=".cprf" @change="loadProfile" class="hidden"/>
-          <label for="fileInput" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded cursor-pointer font-medium transition">
+          <label for="fileInput" class="select-none inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded cursor-pointer font-medium transition">
             <Plus :size="17"/>
             Load Profile
           </label>
         </div>
+        <div v-if="currentProfile" class="relative">
+          <button id="fileInput" accept=".cprf" @click="currentProfile = null" class="hidden"></button>
+          <label for="fileInput" class="select-none inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded cursor-pointer font-medium transition">
+            <Minus :size="17"/>
+            Clear
+          </label>
+        </div>
       </div>
     </div>
-    <div class="flex h-full pl-5 gap-x-5">
+    <div class="flex pl-5 h-full gap-x-5">
       <!-- Assemblies -->
-      <div v-if="currentProfile" class="flex-1 py-5 text-white basis-1/2 min-w-0 overflow-y-auto">
-        <h2 class="text-lg font-semibold mb-2">ASSEMBLIES ({{ currentProfile?.Assemblies.length.toLocaleString() }}):</h2>
-        <input type="text" placeholder="Search..." v-model="assemblyFilter" class="w-full mb-3 p-2 bg-gray-800 text-gray-200 border-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500"/>
+      <div v-if="currentProfile" class="flex-1 py-5 basis-1/2 min-w-0 overflow-y-auto">
+        <h2 class="select-none text-lg font-semibold mb-2">ASSEMBLIES ({{ currentProfile?.Assemblies.length.toLocaleString() }}) <span class="text-blue-300/40" v-if="currentProfile?.Assemblies.length != sortedAssemblies.length"> — {{ sortedAssemblies.length.toLocaleString() }} filtered</span></h2>
+        <div class="flex">
+          <input type="text" placeholder="Search..." v-model="assemblyFilter" class="w-full mb-3 p-2 bg-gray-800 text-gray-200 border-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500"/>
+          <div class="w-[75px] mb-3 p-2 bg-gray-800 text-gray-200 border-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500">
+            <select v-model="assemblySort" class="bg-gray-800 text-center text-sm text-blue-300/60 border border-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500">
+              <option v-for="option in assemblyOptions" :key="option" :value="option">{{ option }}</option>
+            </select>
+          </div>
+        </div>
         <div class="space-y-1">
           <div class="overflow-auto h-screen">
             <div v-for="(assembly, i) in sortedAssemblies"
@@ -86,11 +104,18 @@ const callFilter = ref<string | null>(null)
           </div>
         </div>
       </div>
-
       <!-- Calls -->
       <div v-if="currentProfile" class="flex-1 py-5 text-white basis-1/2 min-w-0 overflow-y-auto">
-        <h2 class="text-lg font-semibold mb-2">CALLS ({{ currentProfile?.Calls.length.toLocaleString() }}):</h2>
-        <input type="text" placeholder="Search..." v-model="callFilter" class="w-full mb-3 p-2 bg-gray-800 text-gray-200 border-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500"/>
+        <h2 class="select-none text-lg font-semibold mb-2">CALLS ({{ currentProfile?.Calls.length.toLocaleString() }}) <span class="text-blue-300/40" v-if="currentProfile?.Calls.length != sortedCalls.length"> — {{ sortedCalls.length.toLocaleString() }} filtered</span></h2>
+        <div class="flex">
+          <input type="text" placeholder="Search..." v-model="callFilter" class="w-full mb-3 p-2 bg-gray-800 text-gray-200 border-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500"/>
+          <div class="w-[75px] flex text-sm mb-3 p-2 bg-gray-800 text-gray-200 border-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500">
+            Sort:
+            <select v-model="callSort" class="bg-gray-800 text-center text-sm text-blue-300/60 border border-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500">
+              <option v-for="option in callOptions" :key="option" :value="option">{{ option }}</option>
+            </select>
+          </div>
+        </div>
         <div class="space-y-1">
           <div class="overflow-auto h-screen">
             <div v-for="(call, i) in sortedCalls" :key="i" class="flex justify-between items-center bg-gray-800/20 hover:bg-gray-700 text-white px-2 py-1 cursor-pointer">
@@ -111,13 +136,11 @@ const callFilter = ref<string | null>(null)
            </div>
         </div>
       </div>
-
       <div v-if="currentProfile == null" class="w-screen text-center pt-[50px] text-blue-300/30 select-none">
         No profile selected. Press on <strong class="text-blue-300/60">+ Load Profile</strong> to get started!
       </div>
 
     </div>
-
   </div>
 </template>
 
