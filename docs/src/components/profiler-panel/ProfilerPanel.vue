@@ -91,6 +91,7 @@ const callOptions = ['Method', 'Calls', 'Time (Total)', 'Time (Own)', 'Memory (T
 const callSort = ref<string | null>('Calls')
 const calmColor = '#3882d1'
 const intenseColor = '#d13b38'
+const niceColor = '#60a848'
 
 function getAssemblyPercentage(assembly: Assembly) : number {
   if(currentProfile.value == null || currentProfile.value.Assemblies.length == 0) {
@@ -181,7 +182,7 @@ function lerpColor(color1: string, color2: string, t: number): string {
 
 <template>
   <div class="w-full h-full flex flex-col px-[10px] ">
-    <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+    <div class="mx-10 flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
       <h2 class="text-lg font-semibold select-none">Profiler Panel</h2>
       <div class="flex space-x-2">
         <div v-if="!currentProfile" class="relative">
@@ -200,7 +201,7 @@ function lerpColor(color1: string, color2: string, t: number): string {
         </div>
       </div>
     </div>
-    <div class="flex h-full gap-x-5">
+    <div class="mx-10 flex gap-x-5">
       <!-- Assemblies -->
       <div v-if="currentProfile" class="flex-1 py-5 basis-1/2 min-w-0 overflow-y-auto">
         <h2 class="select-none text-lg font-semibold mb-2">ASSEMBLIES ({{ currentProfile?.Assemblies.length.toLocaleString() }}) <span class="text-blue-300/40" v-if="currentProfile?.Assemblies.length != sortedAssemblies.length"> — {{ sortedAssemblies.length.toLocaleString() }} found</span></h2>
@@ -213,7 +214,7 @@ function lerpColor(color1: string, color2: string, t: number): string {
             </select>
           </div>
         </div>
-        <div class="overflow-auto h-screen space-y-1">
+        <div class="h-[1000px] overflow-auto space-y-1">
           <div v-for="(assembly, i) in sortedAssemblies" :key="i" class="flex relative z-10 items-center justify-between bg-gray-800/20 hover:bg-gray-700 text-white cursor-pointer" @click="selectedAssembly = selectedAssembly == assembly.Name ? null : assembly.Name">
             <div class="absolute inset-0 opacity-70" :style="{ width: `${getAssemblyPercentage(assembly)}%`, backgroundColor: lerpColor(calmColor, intenseColor, getAssemblyPercentage(assembly) / 100) }"></div>
             <div v-if="selectedAssembly == assembly.Name" class="w-[5px] bg-red-600 self-stretch z-50"></div>
@@ -253,10 +254,10 @@ function lerpColor(color1: string, color2: string, t: number): string {
             </select>
           </div>
         </div>
-        <div class="overflow-auto h-screen space-y-1">
+        <div class="h-[1000px] overflow-auto space-y-1">
           <div v-for="(call, i) in sortedCalls" :key="i" class="flex relative z-10 justify-between items-center bg-gray-800/20 hover:bg-gray-700 text-white px-2 py-1 cursor-pointer">
             <div class="flex justify-between">
-              <div class="absolute inset-0 opacity-70" :style="{ width: `${getCallPercentage(call)}%`, backgroundColor: lerpColor(calmColor, intenseColor, getCallPercentage(call) / 100) }"></div>
+              <div class="absolute inset-0 opacity-70" :style="{ width: `${getCallPercentage(call)}%`, backgroundColor: lerpColor(niceColor, intenseColor, getCallPercentage(call) / 100) }"></div>
               <div class="flex flex-col z-50">
                 <span class="font-semibold text-sm leading-tight">{{ call.MethodName }}</span>
                 <span class="text-xs text-gray-100/70">
@@ -277,11 +278,10 @@ function lerpColor(color1: string, color2: string, t: number): string {
       <div v-if="currentProfile == null" class="w-screen text-center pt-[50px] text-blue-300/30 select-none">
         No profile selected. Press on <strong class="text-blue-300/60">+ Load Profile</strong> to get started!
       </div>
-
     </div>
 
-    <div v-if="currentProfile" class="flex relative z-10 items-center justify-between bg-gray-800/20 text-white cursor-pointer" >
-      <div class="absolute inset-0 opacity-70" :style="{ width: `100%`, backgroundColor: calmColor }"></div>
+    <div v-if="currentProfile" class="mx-10 flex relative z-10 items-center justify-between bg-gray-800/20 text-white cursor-pointer" >
+      <div class="absolute inset-0 opacity-70" :style="{ width: `100%`, backgroundColor: niceColor }"></div>
       <div class="w-[5px] bg-red-600 self-stretch z-50"></div>
       <div class="flex justify-between w-full px-2 py-1 z-50">
         <div class="flex flex-col">
@@ -295,7 +295,7 @@ function lerpColor(color1: string, color2: string, t: number): string {
     </div>
 
     <!-- Memory -->
-    <div v-if="currentProfile" class="flex-1 py-5 basis-1/2 min-w-0 overflow-y-auto">
+    <div v-if="currentProfile" class="mx-10 flex-1 py-5 basis-1/2 min-w-0 overflow-y-auto">
       <h2 class="select-none text-lg font-semibold mb-2">MEMORY ({{ currentProfile?.Memory.length.toLocaleString() }}) <span class="text-blue-300/40" v-if="currentProfile?.Memory.length != sortedMemory.length"> — {{ sortedMemory.length.toLocaleString() }} found</span></h2>
       <div class="flex mb-3 select-none">
         <input type="text" placeholder="Search..." v-model="memoryFilter" class="text-sm w-full p-2 bg-gray-800/50 focus:bg-gray-800 text-gray-200 border-gray-700"/>
