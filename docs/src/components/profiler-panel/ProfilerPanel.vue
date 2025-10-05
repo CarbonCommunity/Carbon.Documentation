@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { computed, ref } from 'vue'
-import { AssemblyName, loadProfile, currentProfile, ProfileTypes } from './ProfilerPanel.SaveLoad';
+import { AssemblyName, loadProfile, currentProfile, ProfileTypes, Assembly, Call } from './ProfilerPanel.SaveLoad';
 import { Minus, Plus } from 'lucide-vue-next'
 const sortedAssemblies = computed(() => {
   if (!currentProfile.value) return []
@@ -31,6 +31,45 @@ const assemblyOptions = ['Name', 'Time', 'Calls', 'Memory', 'Exceptions']
 const assemblySort = ref<string | null>('Time')
 const callOptions = ['Method', 'Calls', 'Time (Total)', 'Time (Own)', 'Memory (Total)', 'Memory (Own)', 'Exceptions (Total)', 'Exceptions (Own)']
 const callSort = ref<string | null>('Calls')
+const calmColor = '#3882d1'
+const intenseColor = '#d13b38'
+
+function getAssemblyPercentage(assembly: Assembly) : number {
+  if(currentProfile.value == null || currentProfile.value.Assemblies.length == 0) {
+    return 0
+  }
+  const firstAssembly = sortedAssemblies.value[0]
+  return (Number(assembly.Calls) / Number(firstAssembly.Calls)) * 100
+}
+
+function getCallPercentage(call: Call) : number {
+  if(currentProfile.value == null || currentProfile.value.Calls.length == 0) {
+    return 0
+  }
+  const firstCall = sortedCalls.value[0]
+  return (Number(call.Calls) / Number(firstCall.Calls)) * 100
+}
+function lerpColor(color1: string, color2: string, t: number): string {
+  t = Math.min(1, Math.max(0, t))
+
+  const c1 = parseInt(color1.slice(1), 16)
+  const c2 = parseInt(color2.slice(1), 16)
+
+  const r1 = (c1 >> 16) & 0xff
+  const g1 = (c1 >> 8) & 0xff
+  const b1 = c1 & 0xff
+
+  const r2 = (c2 >> 16) & 0xff
+  const g2 = (c2 >> 8) & 0xff
+  const b2 = c2 & 0xff
+
+  const r = Math.round(r1 + (r2 - r1) * t)
+  const g = Math.round(g1 + (g2 - g1) * t)
+  const b = Math.round(b1 + (b2 - b1) * t)
+
+  return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`
+}
+
 </script>
 
 <template>
@@ -40,14 +79,14 @@ const callSort = ref<string | null>('Calls')
       <div class="flex space-x-2">
         <div v-if="!currentProfile" class="relative">
           <input id="fileInput" type="file" accept=".cprf" @change="loadProfile" class="hidden"/>
-          <label for="fileInput" class="select-none inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded cursor-pointer font-medium transition">
+          <label for="fileInput" class="select-none inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 cursor-pointer font-medium transition">
             <Plus :size="17"/>
             Load Profile
           </label>
         </div>
         <div v-if="currentProfile" class="relative">
           <button id="fileInput" accept=".cprf" @click="currentProfile = null" class="hidden"></button>
-          <label for="fileInput" class="select-none inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded cursor-pointer font-medium transition">
+          <label for="fileInput" class="select-none inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 cursor-pointer font-medium transition">
             <Minus :size="17"/>
             Clear
           </label>
@@ -63,45 +102,35 @@ const callSort = ref<string | null>('Calls')
           <div class="flex px-5 p-2 gap-x-2 text-blue-300/30 text-sm bg-gray-800/50 hover:bg-gray-800">
             Sort:
             <select v-model="assemblySort" class="select-all text-blue-300/60 font-semibold bg-transparent text-left border border-gray-700/0 hover:text-blue-300 hover:cursor-pointer">
-              <option class="bg-gray-800 text-blue-300/60" v-for="option in assemblyOptions" :key="option" :value="option">{{ option }}</option>
+              <option class="bg-gray-800 text-blue-300/60 p-2" v-for="option in assemblyOptions" :key="option" :value="option">{{ option }}</option>
             </select>
           </div>
         </div>
-        <div class="space-y-1">
-          <div class="overflow-auto h-screen">
-            <div v-for="(assembly, i) in sortedAssemblies"
-              :key="i"
-              class="flex items-center justify-between bg-gray-800/20 hover:bg-gray-700 text-white cursor-pointer"
-              @click="selectedAssembly = selectedAssembly == assembly.Name ? null : assembly.Name">
-
-              <div v-if="selectedAssembly == assembly.Name" class="w-[5px] bg-red-600 self-stretch"></div>
-
-              <!-- Main content (left + right sections) -->
-              <div class="flex justify-between w-full px-2 py-1">
-                <!-- Left side -->
-                <div class="flex flex-col">
-                  <span class="font-semibold text-sm leading-tight">{{ assembly.Name?.DisplayName }}</span>
-                  <span class="text-xs text-gray-100/70">
-                    {{ assembly.getTotalTime() }} ({{ assembly.TotalTimePercentage.toFixed(1) }}%) |
-                    {{ (assembly.Alloc / 1000n).toLocaleString() }} KB |
-                    {{ assembly.TotalExceptions.toLocaleString() }} excep.
-                  </span>
-                </div>
-
-                <!-- Right side -->
-                <div class="flex flex-col items-end text-right text-gray-100/70">
-                  <span class="uppercase text-xs font-semibold opacity-80">
-                    {{ ProfileTypes[assembly.Name?.ProfileType] }}
-                  </span>
-                  <span class="text-xs font-bold">
-                    {{ assembly.Calls.toLocaleString() }} calls
-                  </span>
-                </div>
+        <div class="overflow-auto h-screen space-y-1">
+          <div v-for="(assembly, i) in sortedAssemblies" :key="i" class="flex relative z-10 items-center justify-between bg-gray-800/20 hover:bg-gray-700 text-white cursor-pointer" @click="selectedAssembly = selectedAssembly == assembly.Name ? null : assembly.Name">
+            <div class="absolute inset-0 opacity-70" :style="{ width: `${getAssemblyPercentage(assembly)}%`, backgroundColor: lerpColor(calmColor, intenseColor, getAssemblyPercentage(assembly) / 100) }"></div>
+            <div v-if="selectedAssembly == assembly.Name" class="w-[5px] bg-red-600 self-stretch z-50"></div>
+            <div class="flex justify-between w-full px-2 py-1 z-50">
+              <div class="flex flex-col">
+                <span class="font-semibold text-sm leading-tight">{{ assembly.Name?.DisplayName }}</span>
+                <span class="text-xs text-gray-100/70">
+                  {{ assembly.getTotalTime() }} ({{ assembly.TotalTimePercentage.toFixed(1) }}%) |
+                  {{ (assembly.Alloc / 1000n).toLocaleString() }} KB |
+                  {{ assembly.TotalExceptions.toLocaleString() }} excep.
+                </span>
+              </div>
+              <div class="flex flex-col items-end text-right text-gray-100/70">
+                <span class="uppercase text-xs font-semibold opacity-80">
+                  {{ ProfileTypes[assembly.Name?.ProfileType] }}
+                </span>
+                <span class="text-xs font-bold">
+                  {{ assembly.Calls.toLocaleString() }} calls
+                </span>
               </div>
             </div>
-            <div v-if="sortedAssemblies.length == 0" class="text-center text-sm text-blue-200/30">
-              No available assemblies
-            </div>
+          </div>
+          <div v-if="sortedAssemblies.length == 0" class="text-center text-sm text-blue-200/30">
+            No available assemblies
           </div>
         </div>
       </div>
@@ -117,24 +146,25 @@ const callSort = ref<string | null>('Calls')
             </select>
           </div>
         </div>
-        <div class="space-y-1">
-          <div class="overflow-auto h-screen">
-            <div v-for="(call, i) in sortedCalls" :key="i" class="flex justify-between items-center bg-gray-800/20 hover:bg-gray-700 text-white px-2 py-1 cursor-pointer">
-              <div class="flex flex-col">
+        <div class="overflow-auto h-screen space-y-1">
+          <div v-for="(call, i) in sortedCalls" :key="i" class="flex relative z-10 justify-between items-center bg-gray-800/20 hover:bg-gray-700 text-white px-2 py-1 cursor-pointer">
+            <div class="flex justify-between">
+              <div class="absolute inset-0 opacity-70" :style="{ width: `${getCallPercentage(call)}%`, backgroundColor: lerpColor(calmColor, intenseColor, getCallPercentage(call) / 100) }"></div>
+              <div class="flex flex-col z-50">
                 <span class="font-semibold text-sm leading-tight">{{ call.MethodName }}</span>
                 <span class="text-xs text-gray-100/70">
                   {{ call.getTotalTime() }} ({{ call.TotalTimePercentage.toFixed(1) }}%) | {{ call.getOwnTime() }} ({{ call.OwnTimePercentage.toFixed(1) }}%) | {{ call.TotalExceptions.toLocaleString() }} total / {{ call.OwnExceptions.toLocaleString() }} own excep.
                 </span>
               </div>
-              <div class="flex flex-col items-end text-right text-gray-100/70">
-                <span class="text-xs opacity-80"><strong>{{ call.Calls.toLocaleString() }}</strong> calls</span>
-                <span class="text-xs">{{ call.TotalAlloc / 1000n }} B total | {{ call.OwnAlloc / 1000n }} B own</span>
-              </div>
             </div>
-            <div v-if="sortedCalls.length == 0" class="text-center text-sm text-blue-200/30">
-              No available calls
+            <div class="flex flex-col items-end text-right text-gray-100/70 z-50">
+              <span class="text-xs opacity-80"><strong>{{ call.Calls.toLocaleString() }}</strong> calls</span>
+              <span class="text-xs">{{ call.TotalAlloc / 1000n }} B total | {{ call.OwnAlloc / 1000n }} B own</span>
             </div>
-           </div>
+          </div>
+          <div v-if="sortedCalls.length == 0" class="text-center text-sm text-blue-200/30">
+            No available calls
+          </div>
         </div>
       </div>
       <div v-if="currentProfile == null" class="w-screen text-center pt-[50px] text-blue-300/30 select-none">
