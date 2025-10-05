@@ -180,7 +180,7 @@ function lerpColor(color1: string, color2: string, t: number): string {
 </script>
 
 <template>
-  <div class="w-full h-full flex flex-col px-[200px] ">
+  <div class="w-full h-full flex flex-col px-[10px] ">
     <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
       <h2 class="text-lg font-semibold select-none">Profiler Panel</h2>
       <div class="flex space-x-2">
@@ -200,7 +200,7 @@ function lerpColor(color1: string, color2: string, t: number): string {
         </div>
       </div>
     </div>
-    <div class="flex pl-5 h-full gap-x-5">
+    <div class="flex h-full gap-x-5">
       <!-- Assemblies -->
       <div v-if="currentProfile" class="flex-1 py-5 basis-1/2 min-w-0 overflow-y-auto">
         <h2 class="select-none text-lg font-semibold mb-2">ASSEMBLIES ({{ currentProfile?.Assemblies.length.toLocaleString() }}) <span class="text-blue-300/40" v-if="currentProfile?.Assemblies.length != sortedAssemblies.length"> — {{ sortedAssemblies.length.toLocaleString() }} found</span></h2>
