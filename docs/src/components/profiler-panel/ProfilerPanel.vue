@@ -9,7 +9,21 @@ const sortedAssemblies = computed(() => {
       return !assemblyFilter.value || 
         a.Name?.DisplayName.toLowerCase().includes(assemblyFilter.value.toLowerCase())
     })
-    .sort((a, b) => Number(b.Calls) - Number(a.Calls))
+    .sort((a, b) => {
+      switch(assemblySort.value) {
+        case "Name":
+          return a.Name?.DisplayName.localeCompare(b.Name?.DisplayName)
+        case "Time":
+          return Number(b.TotalTime) - Number(a.TotalTime)
+        case "Calls":
+          return Number(b.Calls) - Number(a.Calls)
+        case "Memory":
+          return Number(b.Alloc) - Number(a.Alloc)
+        case "Exceptions":
+          return Number(b.TotalExceptions) - Number(a.TotalExceptions)
+      }
+      return 0
+    })
 })
 
 const sortedCalls = computed(() => {
@@ -22,7 +36,27 @@ const sortedCalls = computed(() => {
       return !callFilter.value || 
         c.MethodName.toLowerCase().includes(callFilter.value.toLowerCase())
     })
-    .sort((a, b) => Number(b.Calls) - Number(a.Calls))
+    .sort((a, b) => {
+      switch(callSort.value) {
+        case "Method":
+          return a.MethodName.localeCompare(b.MethodName)
+        case "Calls":
+          return Number(b.Calls) - Number(a.Calls)
+        case "Time (Total)":
+          return Number(b.TotalTime) - Number(a.TotalTime)
+        case "Time (Own)":
+          return Number(b.OwnTime) - Number(a.OwnTime)
+        case "Memory (Total)":
+          return Number(b.TotalAlloc) - Number(a.TotalAlloc)
+        case "Memory (Own)":
+          return Number(b.OwnAlloc) - Number(a.OwnAlloc)
+        case "Exceptions (Total)":
+          return Number(b.TotalExceptions) - Number(a.TotalExceptions)
+        case "Exceptions (Own)":
+          return Number(b.OwnExceptions) - Number(a.OwnExceptions)
+      }
+      return 0
+    })
 })
 const selectedAssembly = ref<AssemblyName | null>(null)
 const assemblyFilter = ref<string | null>(null)
@@ -39,7 +73,20 @@ function getAssemblyPercentage(assembly: Assembly) : number {
     return 0
   }
   const firstAssembly = sortedAssemblies.value[0]
-  return (Number(assembly.Calls) / Number(firstAssembly.Calls)) * 100
+
+  switch(assemblySort.value) {
+    case "Name":
+      return 0
+    case "Time":
+      return (Number(assembly.TotalTime) / Number(firstAssembly.TotalTime)) * 100
+    case "Calls":
+      return (Number(assembly.Calls) / Number(firstAssembly.Calls)) * 100
+    case "Memory":
+      return (Number(assembly.Alloc) / Number(firstAssembly.Alloc)) * 100
+    case "Exceptions":
+      return (Number(assembly.TotalExceptions) / Number(firstAssembly.TotalExceptions)) * 100
+  }
+  return 0
 }
 
 function getCallPercentage(call: Call) : number {
@@ -47,7 +94,25 @@ function getCallPercentage(call: Call) : number {
     return 0
   }
   const firstCall = sortedCalls.value[0]
-  return (Number(call.Calls) / Number(firstCall.Calls)) * 100
+  switch(callSort.value) {
+    case "Method":
+      return 0
+    case "Calls":
+      return (Number(call.Calls) / Number(firstCall.Calls)) * 100
+    case "Time (Total)":
+      return (Number(call.TotalTime) / Number(firstCall.TotalTime)) * 100
+    case "Time (Own)":
+      return (Number(call.OwnTime) / Number(firstCall.OwnTime)) * 100
+    case "Memory (Total)":
+      return (Number(call.TotalAlloc) / Number(firstCall.TotalAlloc)) * 100
+    case "Memory (Own)":
+      return (Number(call.OwnAlloc) / Number(firstCall.OwnAlloc)) * 100
+    case "Exceptions (Total)":
+      return (Number(call.TotalExceptions) / Number(firstCall.TotalExceptions)) * 100
+    case "Exceptions (Own)":
+      return (Number(call.OwnExceptions) / Number(firstCall.OwnExceptions)) * 100
+  }
+  return 0
 }
 function lerpColor(color1: string, color2: string, t: number): string {
   t = Math.min(1, Math.max(0, t))
