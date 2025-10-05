@@ -261,7 +261,7 @@ function lerpColor(color1: string, color2: string, t: number): string {
               <div class="flex flex-col z-50">
                 <span class="font-semibold text-sm leading-tight">{{ call.MethodName }}</span>
                 <span class="text-xs text-gray-100/70">
-                  {{ call.getTotalTime() }} ({{ call.TotalTimePercentage.toFixed(1) }}%) | {{ call.getOwnTime() }} ({{ call.OwnTimePercentage.toFixed(1) }}%) | {{ call.TotalExceptions.toLocaleString() }} total / {{ call.OwnExceptions.toLocaleString() }} own excep.
+                  {{ call.getTotalTime() }} total ({{ call.TotalTimePercentage.toFixed(1) }}%) | {{ call.getOwnTime() }} own ({{ call.OwnTimePercentage.toFixed(1) }}%) | {{ call.TotalExceptions.toLocaleString() }} total / {{ call.OwnExceptions.toLocaleString() }} own excep.
                 </span>
               </div>
             </div>
