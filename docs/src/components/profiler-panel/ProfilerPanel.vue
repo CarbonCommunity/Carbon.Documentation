@@ -201,6 +201,21 @@ function lerpColor(color1: string, color2: string, t: number): string {
         </div>
       </div>
     </div>
+
+    <div v-if="currentProfile" class="mx-10 flex relative z-10 items-center justify-between bg-gray-800/20 text-white cursor-pointer" >
+      <div class="absolute inset-0 opacity-70" :style="{ width: `100%`, backgroundColor: niceColor }"></div>
+      <div class="w-[5px] bg-red-600 self-stretch z-50"></div>
+      <div class="flex justify-between w-full px-2 py-1 z-50">
+        <div class="flex flex-col">
+          <span class="font-semibold text-sm leading-tight">GC</span>
+          <span class="text-xs text-gray-100/70">
+            {{ currentProfile?.GC.Calls.toLocaleString() }} calls |
+            {{ currentProfile?.GC.getTotalTime() }}
+          </span>
+        </div>
+      </div>
+    </div>
+
     <div class="mx-10 flex gap-x-5">
       <!-- Assemblies -->
       <div v-if="currentProfile" class="flex-1 py-5 basis-1/2 min-w-0 overflow-y-auto">
@@ -279,21 +294,6 @@ function lerpColor(color1: string, color2: string, t: number): string {
         No profile selected. Press on <strong class="text-blue-300/60">+ Load Profile</strong> to get started!
       </div>
     </div>
-
-    <div v-if="currentProfile" class="mx-10 flex relative z-10 items-center justify-between bg-gray-800/20 text-white cursor-pointer" >
-      <div class="absolute inset-0 opacity-70" :style="{ width: `100%`, backgroundColor: niceColor }"></div>
-      <div class="w-[5px] bg-red-600 self-stretch z-50"></div>
-      <div class="flex justify-between w-full px-2 py-1 z-50">
-        <div class="flex flex-col">
-          <span class="font-semibold text-sm leading-tight">GC</span>
-          <span class="text-xs text-gray-100/70">
-            {{ currentProfile?.GC.Calls.toLocaleString() }} calls |
-            {{ currentProfile?.GC.getTotalTime() }}
-          </span>
-        </div>
-      </div>
-    </div>
-
     <!-- Memory -->
     <div v-if="currentProfile" class="mx-10 flex-1 py-5 basis-1/2 min-w-0 overflow-y-auto">
       <h2 class="select-none text-lg font-semibold mb-2">MEMORY ({{ currentProfile?.Memory.length.toLocaleString() }}) <span class="text-blue-300/40" v-if="currentProfile?.Memory.length != sortedMemory.length"> — {{ sortedMemory.length.toLocaleString() }} found</span></h2>
