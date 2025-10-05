@@ -98,10 +98,9 @@ export function load(reader: BinaryReader) : Profile | null {
     profile.Memory.push(record)
   }
 
-  profile.GC = {
-    Calls: reader.uint64(),
-    TotalTime: reader.uint64()
-  }
+  profile.GC = new GC()
+  profile.GC.Calls = reader.uint64()
+  profile.GC.TotalTime = reader.uint64()
   return profile
 }
 
@@ -228,6 +227,18 @@ export class MemoryComparison {
 export class GC {
   Calls: bigint = 0n
   TotalTime: bigint = 0n
+
+  TotalTimeMsStr: string = ''
+
+  total_time_ms() : bigint {
+    return this.TotalTime / 1000n;
+  }  
+
+  getTotalTime(): string {
+    if (this.TotalTimeMsStr) return this.TotalTimeMsStr
+    const totalTimeMs = this.total_time_ms()
+    return this.TotalTimeMsStr = totalTimeMs < 10 ? `${this.TotalTime.toLocaleString()}μs` : `${totalTimeMs.toLocaleString()}ms`
+  }
 }
 
 export enum ProfileTypes {

@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { computed, ref } from 'vue'
-import { AssemblyName, loadProfile, currentProfile, ProfileTypes, Assembly, Call } from './ProfilerPanel.SaveLoad';
+import { AssemblyName, loadProfile, currentProfile, ProfileTypes, Assembly, Call, Memory } from './ProfilerPanel.SaveLoad';
 import { Minus, Plus } from 'lucide-vue-next'
 const sortedAssemblies = computed(() => {
   if (!currentProfile.value) return []
@@ -58,11 +58,35 @@ const sortedCalls = computed(() => {
       return 0
     })
 })
+
+const sortedMemory = computed(() => {
+  if (!currentProfile.value) return []
+  return [...currentProfile.value.Memory]
+    .filter(a => {
+      return !memoryFilter.value || 
+        a.ClassName.toLowerCase().includes(memoryFilter.value.toLowerCase())
+    })
+    .sort((a, b) => {
+      switch(memorySort.value) {
+        case "Type":
+          return a.ClassName.localeCompare(b.ClassName)
+        case "Allocations":
+          return Number(b.Allocations) - Number(a.Allocations)
+        case "Memory":
+          return Number(b.TotalAllocSize) - Number(a.TotalAllocSize)
+      }
+      return 0
+    })
+})
+
 const selectedAssembly = ref<AssemblyName | null>(null)
 const assemblyFilter = ref<string | null>(null)
 const callFilter = ref<string | null>(null)
+const memoryFilter = ref<string | null>(null)
 const assemblyOptions = ['Name', 'Time', 'Calls', 'Memory', 'Exceptions']
 const assemblySort = ref<string | null>('Time')
+const memoryOptions = ['Type', 'Allocations', 'Memory']
+const memorySort = ref<string | null>('Allocations')
 const callOptions = ['Method', 'Calls', 'Time (Total)', 'Time (Own)', 'Memory (Total)', 'Memory (Own)', 'Exceptions (Total)', 'Exceptions (Own)']
 const callSort = ref<string | null>('Calls')
 const calmColor = '#3882d1'
@@ -114,6 +138,24 @@ function getCallPercentage(call: Call) : number {
   }
   return 0
 }
+
+function getMemoryPercentage(memory: Memory) : number {
+  if(currentProfile.value == null || currentProfile.value.Memory.length == 0) {
+    return 0
+  }
+  const firstMemory = sortedMemory.value[0]
+
+  switch(memorySort.value) {
+    case "Type":
+      return 0
+    case "Allocations":
+      return (Number(memory.Allocations) / Number(firstMemory.Allocations)) * 100
+    case "Memory":
+      return (Number(memory.TotalAllocSize) / Number(firstMemory.TotalAllocSize)) * 100
+  }
+  return 0
+}
+
 function lerpColor(color1: string, color2: string, t: number): string {
   t = Math.min(1, Math.max(0, t))
 
@@ -236,6 +278,56 @@ function lerpColor(color1: string, color2: string, t: number): string {
         No profile selected. Press on <strong class="text-blue-300/60">+ Load Profile</strong> to get started!
       </div>
 
+    </div>
+
+    <div v-if="currentProfile" class="flex relative z-10 items-center justify-between bg-gray-800/20 text-white cursor-pointer" >
+      <div class="absolute inset-0 opacity-70" :style="{ width: `100%`, backgroundColor: calmColor }"></div>
+      <div class="w-[5px] bg-red-600 self-stretch z-50"></div>
+      <div class="flex justify-between w-full px-2 py-1 z-50">
+        <div class="flex flex-col">
+          <span class="font-semibold text-sm leading-tight">GC</span>
+          <span class="text-xs text-gray-100/70">
+            {{ currentProfile?.GC.Calls.toLocaleString() }} calls |
+            {{ currentProfile?.GC.getTotalTime() }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Memory -->
+    <div v-if="currentProfile" class="flex-1 py-5 basis-1/2 min-w-0 overflow-y-auto">
+      <h2 class="select-none text-lg font-semibold mb-2">MEMORY ({{ currentProfile?.Memory.length.toLocaleString() }}) <span class="text-blue-300/40" v-if="currentProfile?.Memory.length != sortedMemory.length"> — {{ sortedMemory.length.toLocaleString() }} found</span></h2>
+      <div class="flex mb-3 select-none">
+        <input type="text" placeholder="Search..." v-model="memoryFilter" class="text-sm w-full p-2 bg-gray-800/50 focus:bg-gray-800 text-gray-200 border-gray-700"/>
+        <div class="flex px-5 p-2 gap-x-2 text-blue-300/30 text-sm bg-gray-800/50 hover:bg-gray-800">
+          Sort:
+          <select v-model="memorySort" class="select-all text-blue-300/60 font-semibold bg-transparent text-left border border-gray-700/0 hover:text-blue-300 hover:cursor-pointer">
+            <option class="bg-gray-800 text-blue-300/60 p-2" v-for="option in memoryOptions" :key="option" :value="option">{{ option }}</option>
+          </select>
+        </div>
+      </div>
+      <div class="overflow-auto h-screen space-y-1">
+        <div v-for="(memory, i) in sortedMemory" :key="i" class="flex relative z-10 items-center justify-between bg-gray-800/20 hover:bg-gray-700 text-white cursor-pointer">
+          <div class="absolute inset-0 opacity-70" :style="{ width: `${getMemoryPercentage(memory)}%`, backgroundColor: lerpColor(calmColor, intenseColor, getMemoryPercentage(memory) / 100) }"></div>
+          <div class="flex justify-between w-full px-2 py-1 z-50">
+            <div class="flex flex-col">
+              <span class="font-semibold text-sm leading-tight">{{ memory.ClassName }}</span>
+              <span class="text-xs text-gray-100/70">
+                {{ (memory.Allocations / 1000n).toLocaleString() }} allocated |
+                {{ (memory.TotalAllocSize / 1000n).toLocaleString() }} KB total
+              </span>
+            </div>
+            <div class="flex flex-col items-end text-right text-gray-100/70">
+              <span class="uppercase text-xs font-semibold opacity-80">
+                {{ memory.InstanceSize }} B
+              </span>
+            </div>
+          </div>
+        </div>
+        <div v-if="sortedAssemblies.length == 0" class="text-center text-sm text-blue-200/30">
+          No available assemblies
+        </div>
+      </div>
     </div>
   </div>
 </template>
