@@ -187,14 +187,14 @@ function lerpColor(color1: string, color2: string, t: number): string {
       <div class="flex space-x-2">
         <div v-if="!currentProfile" class="relative">
           <input id="fileInput" type="file" accept=".cprf" @change="loadProfile" class="hidden"/>
-          <label for="fileInput" class="select-none inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 cursor-pointer font-medium transition">
+          <label for="fileInput" class="select-none inline-flex items-center gap-2 bg-[#60a848]/75 hover:bg-[#60a848] text-white px-4 py-2 cursor-pointer font-medium">
             <Plus :size="17"/>
             Load Profile
           </label>
         </div>
         <div v-if="currentProfile" class="relative">
           <button id="fileInput" accept=".cprf" @click="currentProfile = null" class="hidden"></button>
-          <label for="fileInput" class="select-none inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 cursor-pointer font-medium transition">
+          <label for="fileInput" class="select-none inline-flex items-center gap-2 bg-[#d13b38]/75 hover:bg-[#d13b38] text-white px-4 py-2 cursor-pointer font-medium">
             <Minus :size="17"/>
             Clear
           </label>
