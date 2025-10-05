@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { AssemblyName, loadProfile, currentProfile, ProfileTypes, Assembly, Call, Memory } from './ProfilerPanel.SaveLoad';
 import { Minus, Plus } from 'lucide-vue-next'
+
 const sortedAssemblies = computed(() => {
   if (!currentProfile.value) return []
   return [...currentProfile.value.Assemblies]
@@ -92,6 +93,8 @@ const callSort = ref<string | null>('Calls')
 const calmColor = '#3882d1'
 const intenseColor = '#d13b38'
 const niceColor = '#60a848'
+const tabs = ['Calls', 'Memory']
+const currentTab = ref<number>(0)
 
 function getAssemblyPercentage(assembly: Assembly) : number {
   if(currentProfile.value == null || currentProfile.value.Assemblies.length == 0) {
@@ -186,36 +189,21 @@ function lerpColor(color1: string, color2: string, t: number): string {
       <h2 class="text-lg font-semibold select-none">Profiler Panel</h2>
       <div class="flex space-x-2">
         <div v-if="!currentProfile" class="relative">
-          <input id="fileInput" type="file" accept=".cprf" @change="loadProfile" class="hidden"/>
-          <label for="fileInput" class="select-none inline-flex items-center gap-2 bg-[#60a848]/75 hover:bg-[#60a848] text-white px-4 py-2 cursor-pointer font-medium">
+          <input id="loadProfile" type="file" accept=".cprf" @change="loadProfile" class="hidden"/>
+          <label for="loadProfile" class="select-none inline-flex items-center gap-2 bg-[#60a848]/75 hover:bg-[#60a848] text-white px-4 py-2 cursor-pointer font-medium">
             <Plus :size="17"/>
             Load Profile
           </label>
         </div>
         <div v-if="currentProfile" class="relative">
-          <button id="fileInput" accept=".cprf" @click="currentProfile = null" class="hidden"></button>
-          <label for="fileInput" class="select-none inline-flex items-center gap-2 bg-[#d13b38]/75 hover:bg-[#d13b38] text-white px-4 py-2 cursor-pointer font-medium">
+          <button id="clearProfile" accept=".cprf" @click="currentProfile = null" class="hidden"></button>
+          <label for="clearProfile" class="select-none inline-flex items-center gap-2 bg-[#d13b38]/75 hover:bg-[#d13b38] text-white px-4 py-2 cursor-pointer font-medium">
             <Minus :size="17"/>
             Clear
           </label>
         </div>
       </div>
     </div>
-
-    <div v-if="currentProfile" class="mx-10 flex relative z-10 items-center justify-between bg-gray-800/20 text-white cursor-pointer" >
-      <div class="absolute inset-0 opacity-70" :style="{ width: `100%`, backgroundColor: niceColor }"></div>
-      <div class="w-[5px] bg-red-600 self-stretch z-50"></div>
-      <div class="flex justify-between w-full px-2 py-1 z-50">
-        <div class="flex flex-col">
-          <span class="font-semibold text-sm leading-tight">GC</span>
-          <span class="text-xs text-gray-100/70">
-            {{ currentProfile?.GC.Calls.toLocaleString() }} calls |
-            {{ currentProfile?.GC.getTotalTime() }}
-          </span>
-        </div>
-      </div>
-    </div>
-
     <div class="mx-10 flex gap-x-5">
       <!-- Assemblies -->
       <div v-if="currentProfile" class="flex-1 py-5 basis-1/2 min-w-0 overflow-y-auto">
@@ -257,7 +245,7 @@ function lerpColor(color1: string, color2: string, t: number): string {
           </div>
         </div>
       </div>
-      <!-- Calls -->
+      <!-- Calls / Memory-->
       <div v-if="currentProfile" class="flex-1 py-5 basis-1/2 min-w-0 overflow-y-auto">
         <h2 class="select-none text-lg font-semibold mb-2">CALLS ({{ currentProfile?.Calls.length.toLocaleString() }}) <span class="text-blue-300/40" v-if="currentProfile?.Calls.length != sortedCalls.length"> — {{ sortedCalls.length.toLocaleString() }} found</span></h2>
         <div class="flex mb-3 select-none">
@@ -290,43 +278,56 @@ function lerpColor(color1: string, color2: string, t: number): string {
           </div>
         </div>
       </div>
-      <div v-if="currentProfile == null" class="w-screen text-center pt-[50px] text-blue-300/30 select-none">
-        No profile selected. Press on <strong class="text-blue-300/60">+ Load Profile</strong> to get started!
-      </div>
-    </div>
-    <!-- Memory -->
-    <div v-if="currentProfile" class="mx-10 flex-1 py-5 basis-1/2 min-w-0 overflow-y-auto">
-      <h2 class="select-none text-lg font-semibold mb-2">MEMORY ({{ currentProfile?.Memory.length.toLocaleString() }}) <span class="text-blue-300/40" v-if="currentProfile?.Memory.length != sortedMemory.length"> — {{ sortedMemory.length.toLocaleString() }} found</span></h2>
-      <div class="flex mb-3 select-none">
-        <input type="text" placeholder="Search..." v-model="memoryFilter" class="text-sm w-full p-2 bg-gray-800/50 focus:bg-gray-800 text-gray-200 border-gray-700"/>
-        <div class="flex px-5 p-2 gap-x-2 text-blue-300/30 text-sm bg-gray-800/50 hover:bg-gray-800">
-          Sort:
-          <select v-model="memorySort" class="select-all text-blue-300/60 font-semibold bg-transparent text-left border border-gray-700/0 hover:text-blue-300 hover:cursor-pointer">
-            <option class="bg-gray-800 text-blue-300/60 p-2" v-for="option in memoryOptions" :key="option" :value="option">{{ option }}</option>
-          </select>
+      <!-- Memory -->
+      <div v-if="currentProfile" class="flex-1 py-5 basis-1/2 min-w-0 overflow-y-auto">
+        <h2 class="select-none text-lg font-semibold mb-2">MEMORY ({{ currentProfile?.Memory.length.toLocaleString() }}) <span class="text-blue-300/40" v-if="currentProfile?.Memory.length != sortedMemory.length"> — {{ sortedMemory.length.toLocaleString() }} found</span></h2>
+        <div class="flex mb-3 select-none">
+          <input type="text" placeholder="Search..." v-model="memoryFilter" class="text-sm w-full p-2 bg-gray-800/50 focus:bg-gray-800 text-gray-200 border-gray-700"/>
+          <div class="flex px-5 p-2 gap-x-2 text-blue-300/30 text-sm bg-gray-800/50 hover:bg-gray-800">
+            Sort:
+            <select v-model="memorySort" class="select-all text-blue-300/60 font-semibold bg-transparent text-left border border-gray-700/0 hover:text-blue-300 hover:cursor-pointer">
+              <option class="bg-gray-800 text-blue-300/60 p-2" v-for="option in memoryOptions" :key="option" :value="option">{{ option }}</option>
+            </select>
+          </div>
         </div>
-      </div>
-      <div class="overflow-auto h-screen space-y-1">
-        <div v-for="(memory, i) in sortedMemory" :key="i" class="flex relative z-10 items-center justify-between bg-gray-800/20 hover:bg-gray-700 text-white cursor-pointer">
-          <div class="absolute inset-0 opacity-70" :style="{ width: `${getMemoryPercentage(memory)}%`, backgroundColor: lerpColor(calmColor, intenseColor, getMemoryPercentage(memory) / 100) }"></div>
+        <div class="flex mb-3 relative z-10 items-center justify-between bg-gray-800/20 text-white cursor-pointer" >
+          <div class="absolute inset-0 opacity-70" :style="{ width: `100%`, backgroundColor: niceColor }"></div>
+          <div class="w-[5px] bg-red-600 self-stretch z-50"></div>
           <div class="flex justify-between w-full px-2 py-1 z-50">
             <div class="flex flex-col">
-              <span class="font-semibold text-sm leading-tight">{{ memory.ClassName }}</span>
+              <span class="font-semibold text-sm leading-tight">GC</span>
               <span class="text-xs text-gray-100/70">
-                {{ (memory.Allocations / 1000n).toLocaleString() }} allocated |
-                {{ (memory.TotalAllocSize / 1000n).toLocaleString() }} KB total
-              </span>
-            </div>
-            <div class="flex flex-col items-end text-right text-gray-100/70">
-              <span class="uppercase text-xs font-semibold opacity-80">
-                {{ memory.InstanceSize }} B
+                {{ currentProfile?.GC.Calls.toLocaleString() }} calls |
+                {{ currentProfile?.GC.getTotalTime() }}
               </span>
             </div>
           </div>
         </div>
-        <div v-if="sortedAssemblies.length == 0" class="text-center text-sm text-blue-200/30">
-          No available assemblies
+        <div class="h-[940px] overflow-auto space-y-1">
+          <div v-for="(memory, i) in sortedMemory" :key="i" class="flex relative z-10 items-center justify-between bg-gray-800/20 hover:bg-gray-700 text-white cursor-pointer">
+            <div class="absolute inset-0 opacity-70" :style="{ width: `${getMemoryPercentage(memory)}%`, backgroundColor: lerpColor(calmColor, intenseColor, getMemoryPercentage(memory) / 100) }"></div>
+            <div class="flex justify-between w-full px-2 py-1 z-50">
+              <div class="flex flex-col">
+                <span class="font-semibold text-sm leading-tight">{{ memory.ClassName }}</span>
+                <span class="text-xs text-gray-100/70">
+                  {{ (memory.Allocations / 1000n).toLocaleString() }} allocated |
+                  {{ (memory.TotalAllocSize / 1000n).toLocaleString() }} KB total
+                </span>
+              </div>
+              <div class="flex flex-col items-end text-right text-gray-100/70">
+                <span class="uppercase text-xs font-semibold opacity-80">
+                  {{ memory.InstanceSize }} B
+                </span>
+              </div>
+            </div>
+          </div>
+          <div v-if="sortedAssemblies.length == 0" class="text-center text-sm text-blue-200/30">
+            No available assemblies
+          </div>
         </div>
+      </div>
+      <div v-if="currentProfile == null" class="w-screen text-center pt-[50px] text-blue-300/30 select-none">
+        No profile selected. Press on <strong class="text-blue-300/60">+ Load Profile</strong> to get started!
       </div>
     </div>
   </div>
