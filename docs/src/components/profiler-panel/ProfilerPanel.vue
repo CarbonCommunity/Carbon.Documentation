@@ -57,12 +57,13 @@ const callSort = ref<string | null>('Calls')
     <div class="flex pl-5 h-full gap-x-5">
       <!-- Assemblies -->
       <div v-if="currentProfile" class="flex-1 py-5 basis-1/2 min-w-0 overflow-y-auto">
-        <h2 class="select-none text-lg font-semibold mb-2">ASSEMBLIES ({{ currentProfile?.Assemblies.length.toLocaleString() }}) <span class="text-blue-300/40" v-if="currentProfile?.Assemblies.length != sortedAssemblies.length"> — {{ sortedAssemblies.length.toLocaleString() }} filtered</span></h2>
-        <div class="flex">
-          <input type="text" placeholder="Search..." v-model="assemblyFilter" class="w-full mb-3 p-2 bg-gray-800 text-gray-200 border-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500"/>
-          <div class="w-[75px] mb-3 p-2 bg-gray-800 text-gray-200 border-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500">
-            <select v-model="assemblySort" class="bg-gray-800 text-center text-sm text-blue-300/60 border border-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500">
-              <option v-for="option in assemblyOptions" :key="option" :value="option">{{ option }}</option>
+        <h2 class="select-none text-lg font-semibold mb-2">ASSEMBLIES ({{ currentProfile?.Assemblies.length.toLocaleString() }}) <span class="text-blue-300/40" v-if="currentProfile?.Assemblies.length != sortedAssemblies.length"> — {{ sortedAssemblies.length.toLocaleString() }} found</span></h2>
+        <div class="flex mb-3 select-none">
+          <input type="text" placeholder="Search..." v-model="assemblyFilter" class="text-sm w-full p-2 bg-gray-800/50 focus:bg-gray-800 text-gray-200 border-gray-700"/>
+          <div class="flex px-5 p-2 gap-x-2 text-blue-300/30 text-sm bg-gray-800/50 hover:bg-gray-800">
+            Sort:
+            <select v-model="assemblySort" class="select-all text-blue-300/60 font-semibold bg-transparent text-left border border-gray-700/0 hover:text-blue-300 hover:cursor-pointer">
+              <option class="bg-gray-800 text-blue-300/60" v-for="option in assemblyOptions" :key="option" :value="option">{{ option }}</option>
             </select>
           </div>
         </div>
@@ -105,14 +106,14 @@ const callSort = ref<string | null>('Calls')
         </div>
       </div>
       <!-- Calls -->
-      <div v-if="currentProfile" class="flex-1 py-5 text-white basis-1/2 min-w-0 overflow-y-auto">
-        <h2 class="select-none text-lg font-semibold mb-2">CALLS ({{ currentProfile?.Calls.length.toLocaleString() }}) <span class="text-blue-300/40" v-if="currentProfile?.Calls.length != sortedCalls.length"> — {{ sortedCalls.length.toLocaleString() }} filtered</span></h2>
-        <div class="flex">
-          <input type="text" placeholder="Search..." v-model="callFilter" class="w-full mb-3 p-2 bg-gray-800 text-gray-200 border-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500"/>
-          <div class="w-[75px] flex text-sm mb-3 p-2 bg-gray-800 text-gray-200 border-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500">
+      <div v-if="currentProfile" class="flex-1 py-5 basis-1/2 min-w-0 overflow-y-auto">
+        <h2 class="select-none text-lg font-semibold mb-2">CALLS ({{ currentProfile?.Calls.length.toLocaleString() }}) <span class="text-blue-300/40" v-if="currentProfile?.Calls.length != sortedCalls.length"> — {{ sortedCalls.length.toLocaleString() }} found</span></h2>
+        <div class="flex mb-3 select-none">
+          <input type="text" placeholder="Search..." v-model="callFilter" class="text-sm w-full p-2 bg-gray-800/50 focus:bg-gray-800 text-gray-200 border-gray-700"/>
+          <div class="flex px-5 p-2 gap-x-2 text-blue-300/30 text-sm bg-gray-800/50 hover:bg-gray-800">
             Sort:
-            <select v-model="callSort" class="bg-gray-800 text-center text-sm text-blue-300/60 border border-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500">
-              <option v-for="option in callOptions" :key="option" :value="option">{{ option }}</option>
+            <select v-model="callSort" class="select-all text-blue-300/60 font-semibold bg-transparent text-left border border-gray-700/0 hover:text-blue-300 hover:cursor-pointer">
+              <option class="bg-gray-800 text-blue-300/60" v-for="option in callOptions" :key="option" :value="option">{{ option }}</option>
             </select>
           </div>
         </div>
