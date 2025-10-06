@@ -2,6 +2,7 @@ import { BinaryReader } from '@/utils/BinaryReader';
 import { ref } from 'vue';
 import pako from 'pako'
 
+export const selectedAssembly = ref<AssemblyName | null>(null)
 export const currentProfile = ref<Profile | null>(null)
 export function loadProfile(event: Event) {
   const target = event.target as HTMLInputElement
@@ -14,7 +15,7 @@ export function loadProfile(event: Event) {
       const unzipped = pako.ungzip(e.target.result as ArrayBuffer)
       const reader = new BinaryReader(unzipped.buffer);
       const profile = load(reader)
-      currentProfile.value = profile      
+      currentProfile.value = profile     
       console.log(profile)
     }
   }
@@ -51,6 +52,10 @@ export function load(reader: BinaryReader) : Profile | null {
     }
     profile.Assemblies.push(record)
     profile.AssemblyNames.push(record.Name)
+
+    setTimeout(() => {
+      selectedAssembly.value = profile.Assemblies.sort((a, b) => Number(b.Calls) - Number(a.Calls))[0].Name
+    }, 10);
   }
 
   const callsLength = reader.int32()

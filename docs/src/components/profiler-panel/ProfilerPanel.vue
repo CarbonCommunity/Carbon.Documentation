@@ -2,7 +2,7 @@
 import { computed, ref, onMounted } from 'vue'
 import { Minus, Plus } from 'lucide-vue-next'
 import pako from 'pako'
-import { AssemblyName, loadProfile, currentProfile, ProfileTypes, Assembly, Call, Memory, load } from './ProfilerPanel.SaveLoad';
+import { loadProfile, currentProfile, ProfileTypes, Assembly, Call, Memory, load, selectedAssembly } from './ProfilerPanel.SaveLoad';
 import { base64ToU8 } from '../control-panel/ControlPanel.Profiler';
 import { BinaryReader } from '@/utils/BinaryReader';
 
@@ -83,7 +83,6 @@ const sortedMemory = computed(() => {
     })
 })
 
-const selectedAssembly = ref<AssemblyName | null>(null)
 const assemblyFilter = ref<string | null>(null)
 const callFilter = ref<string | null>(null)
 const memoryFilter = ref<string | null>(null)
@@ -192,6 +191,7 @@ onMounted(() => {
   const unzipped = pako.ungzip(buffer.buffer as ArrayBuffer)
   const reader = new BinaryReader(unzipped.buffer);
   currentProfile.value = load(reader)
+  
   contextName.value = localStorage.getItem('currentProfileName')
   localStorage.removeItem('currentProfile')
   localStorage.removeItem('currentProfileName')
@@ -289,8 +289,8 @@ onMounted(() => {
               <span class="text-xs">{{ call.TotalAlloc / 1000n }} B total | {{ call.OwnAlloc / 1000n }} B own</span>
             </div>
           </div>
-          <div v-if="sortedCalls.length == 0" class="text-center text-sm text-blue-200/30">
-            No available calls
+          <div v-if="sortedCalls.length == 0" class="text-center text-sm text-blue-200/30 select-none">
+            No available calls.<br>Update the filter or select an <strong class="!text-blue-300/40"><- Assembly</strong>.
           </div>
         </div>
       </div>
