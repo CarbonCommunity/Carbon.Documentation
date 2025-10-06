@@ -543,6 +543,7 @@ export class Server {
       this.ProfileState.IsProfiling = read.bool()
       this.ProfileState.IsEnabled = read.bool()
       this.ProfileState.HasCrashed = read.bool()
+      this.ProfileState.Duration = read.float()
     })
   }
 
@@ -938,6 +939,7 @@ export class ProfileState {
   IsProfiling: boolean = false
   IsEnabled: boolean = false
   HasCrashed: boolean = false
+  Duration = ref<number>(0)
 }
 
 export class ProfileFlags {

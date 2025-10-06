@@ -20,16 +20,18 @@ export function toggleProfile(cancel: boolean) {
   if(server == null) {
     return
   }
+  
   server.sendCall('ProfilesToggle', cancel, 
     server.ProfileFlags.CallMemory, 
     server.ProfileFlags.AdvancedMemory,
     server.ProfileFlags.Timings, 
     server.ProfileFlags.Calls, 
     server.ProfileFlags.GCEvents)
-    
-  setInterval(() => {
+
+  setTimeout(() => {
     server.sendCall('ProfilesState')
     server.sendCall('ProfilesList')
+    server.ProfileState.Duration = 0
   }, 400);
 }
 
