@@ -274,17 +274,17 @@ onMounted(() => {
           </div>
         </div>
         <div class="h-[1000px] overflow-auto space-y-1">
-          <div v-for="(call, i) in sortedCalls" :key="i" class="flex relative z-10 justify-between items-center bg-gray-800/20 hover:bg-gray-700 text-white px-2 py-1 cursor-pointer">
+          <div v-for="(call, i) in sortedCalls" :key="i" class="flex relative gap-x-2 z-10 justify-between items-center bg-gray-800/20 hover:bg-gray-700 text-white px-2 py-1 cursor-pointer">
             <div class="flex justify-between">
               <div class="absolute inset-0 opacity-70" :style="{ width: `${getCallPercentage(call)}%`, backgroundColor: lerpColor(niceColor, intenseColor, getCallPercentage(call) / 100) }"></div>
               <div class="flex flex-col z-50">
-                <span class="font-semibold text-sm leading-tight">{{ call.MethodName }}</span>
+                <span class="font-semibold text-sm leading-tight" style="overflow-wrap: anywhere;">{{ call.MethodName }}</span>
                 <span class="text-xs text-gray-100/70">
                   {{ call.getTotalTime() }} total ({{ call.TotalTimePercentage.toFixed(1) }}%) | {{ call.getOwnTime() }} own ({{ call.OwnTimePercentage.toFixed(1) }}%) | {{ call.TotalExceptions.toLocaleString() }} total / {{ call.OwnExceptions.toLocaleString() }} own excep.
                 </span>
               </div>
             </div>
-            <div class="flex flex-col items-end text-right text-gray-100/70 z-50">
+            <div class="flex flex-col items-end text-right text-gray-100/70 z-50" style="min-width: max-content;">
               <span class="text-xs opacity-80"><strong>{{ call.Calls.toLocaleString() }}</strong> calls</span>
               <span class="text-xs">{{ call.TotalAlloc / 1000n }} B total | {{ call.OwnAlloc / 1000n }} B own</span>
             </div>
@@ -322,15 +322,15 @@ onMounted(() => {
         <div class="h-[940px] overflow-auto space-y-1">
           <div v-for="(memory, i) in sortedMemory" :key="i" class="flex relative z-10 items-center justify-between bg-gray-800/20 hover:bg-gray-700 text-white cursor-pointer">
             <div class="absolute inset-0 opacity-70" :style="{ width: `${getMemoryPercentage(memory)}%`, backgroundColor: lerpColor(calmColor, intenseColor, getMemoryPercentage(memory) / 100) }"></div>
-            <div class="flex justify-between w-full px-2 py-1 z-50">
+            <div class="flex justify-between w-full px-2 py-1 z-50 gap-x-2">
               <div class="flex flex-col">
-                <span class="font-semibold text-sm leading-tight">{{ memory.ClassName }}</span>
+                <span class="font-semibold text-sm leading-tight" style="overflow-wrap: anywhere;">{{ memory.ClassName }}</span>
                 <span class="text-xs text-gray-100/70">
                   {{ (memory.Allocations / 1000n).toLocaleString() }} allocated |
                   {{ (memory.TotalAllocSize / 1000n).toLocaleString() }} KB total
                 </span>
               </div>
-              <div class="flex flex-col items-end text-right text-gray-100/70">
+              <div class="flex flex-col items-end text-right text-gray-100/70" style="min-width: max-content;">
                 <span class="uppercase text-xs font-semibold opacity-80">
                   {{ memory.InstanceSize }} B
                 </span>
