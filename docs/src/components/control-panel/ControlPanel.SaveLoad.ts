@@ -3,6 +3,7 @@ import { BinaryWriter } from '@/utils/BinaryWriter'
 import MD5 from 'crypto-js/md5'
 import { ref, shallowRef } from 'vue'
 import { message, tryFocusChat } from './ControlPanel.Chat'
+import { ProfileFile, files as ProfilerFiles, clearFiles as ClearProfileFiles, u8ToBase64, base64ToU8 } from './ControlPanel.Profiler'
 import { command, commandIndex, tryFocusLogs } from './ControlPanel.Console'
 import { resetEntities } from './ControlPanel.Entities'
 import { activeSlot, beltSlots, clearInventory, hideInventory, mainSlots, wearSlots } from './ControlPanel.Inventory'
@@ -173,6 +174,8 @@ function exportToJson(): string {
       case 'CommandCallbacks':
       case 'RpcCallbacks':
       case 'RpcPermissions':
+      case 'ProfileFiles':
+      case 'ProfileState':
       case 'Logs':
       case 'Chat':
       case 'Rpcs':
@@ -228,6 +231,7 @@ function importFromJson(data: string) {
         localServer.ChatColor = server.ChatColor == null ? '#af5' : server.ChatColor
         localServer.CachedHostname = server.CachedHostname
         localServer.CommandHistory = server.CommandHistory ?? []
+        localServer.ProfileFlags = server.ProfileFlags ?? new ProfileFlags()
         addServer(localServer)
       })
 
@@ -286,6 +290,9 @@ export class Server {
   PlayerInfo: any | null = null
   HeaderImage = ''
   Description = ''
+  ProfileFiles: ProfileFile[] = []
+  ProfileState = new ProfileState()
+  ProfileFlags = new ProfileFlags()
   CommandCallbacks: Record<number, (...args: unknown[]) => void> = {}
   RpcCallbacks: Record<number, (...args: unknown[]) => void> = {}
   RpcPermissions: any | null = []
@@ -312,6 +319,7 @@ export class Server {
     this.CommandCallbacks = {}
     this.RpcCallbacks = {}
     this.RpcPermissions = {}
+    this.ProfileFiles = []
 
     if (selectedServer.value == this) {
       hideInventory()
@@ -472,7 +480,6 @@ export class Server {
     this.setRpc('ChatTail', (read) => {
       const messages = []
       const messageCount = read.int32()
-      console.log(messageCount)
       for (let i = 0; i < messageCount; i++) {
         messages.push({
           Channel: read.int32(),
@@ -512,6 +519,30 @@ export class Server {
       this.RpcPermissions['entities_edit'] = read.bool()
       this.RpcPermissions['permissions_view'] = read.bool()
       this.RpcPermissions['permissions_edit'] = read.bool()
+    })
+    this.setRpc('ProfilesList', (read) => {
+      ClearProfileFiles()
+      const fileCount = read.int32()
+      for (let i = 0; i < fileCount; i++) {
+        const file = new ProfileFile()
+        file.FilePath = read.string()
+        file.FileName = read.string()
+        file.Size = read.int64()
+        file.LastWriteTime = read.int32()
+        this.ProfileFiles.push(file)
+      }
+    })
+    this.setRpc('ProfilesLoad', (read) => {
+      const name = read.string()
+      const data = read.bytes(read.int32())
+      localStorage.setItem('currentProfileName', `${name} — ${this.CachedHostname}`)
+      localStorage.setItem('currentProfile', u8ToBase64(data))
+      window.open('/tools/profiler-panel', '_blank', 'noopener,noreferrer');
+    })
+    this.setRpc('ProfilesState', (read) => {
+      this.ProfileState.IsProfiling = read.bool()
+      this.ProfileState.IsEnabled = read.bool()
+      this.ProfileState.HasCrashed = read.bool()
     })
   }
 
@@ -737,6 +768,9 @@ export class Server {
           case 'string':
             write.string(value as string)
             break
+          case 'boolean':
+            write.bool(value as boolean)
+            break
         }
       }
       this.Socket?.send(write.toArrayBuffer())
@@ -898,4 +932,18 @@ export class Server {
       save()
     }
   }
+}
+
+export class ProfileState {
+  IsProfiling: boolean = false
+  IsEnabled: boolean = false
+  HasCrashed: boolean = false
+}
+
+export class ProfileFlags {
+  CallMemory: boolean = true
+  AdvancedMemory: boolean = true
+  Timings: boolean = true
+  Calls: boolean = true
+  GCEvents: boolean = true
 }

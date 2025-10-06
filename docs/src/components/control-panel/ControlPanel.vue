@@ -38,6 +38,7 @@ import ConsoleTab from './ControlPanel.Tabs.Console.vue'
 import EntitiesTab from './ControlPanel.Tabs.Entities.vue'
 import PermissionsTab from './ControlPanel.Tabs.Permissions.vue'
 import PlayersTab from './ControlPanel.Tabs.Players.vue'
+import ProfilerTab from './ControlPanel.Tabs.Profiler.vue'
 
 let timerSwitch: ReturnType<typeof setTimeout> = null!
 
@@ -72,6 +73,11 @@ const subTabs = [
     Description: 'Search and inspect any entities on the server.',
     IsDisabled: () => !selectedServer.value?.hasPermission('entities_view'),
   },
+  {
+    Name: 'Profiler',
+    Description: 'Investigate and identify server issues.',
+    IsDisabled: () => !selectedServer.value?.hasPermission('profiler_view'),
+  }
 ]
 
 onMounted(() => {
@@ -324,6 +330,9 @@ onUnmounted(() => {
       <div v-else-if="selectedSubTab == 5" style="overflow: auto">
         <EntitiesTab />
       </div>
+      <div v-else-if="selectedSubTab == 6" style="overflow: auto">
+        <ProfilerTab />
+      </div>
     </div>
     <div v-if="!selectedServer" style="color: var(--category-misc); font-size: small; text-align: center; user-select: none">
       <p>No server selected</p>
@@ -408,6 +417,8 @@ onUnmounted(() => {
 }
 
 .r-send-button {
+  display: flex;
+  gap: 5px;
   text-decoration: auto;
   font-family: monospace;
   color: var(--category-misc);
