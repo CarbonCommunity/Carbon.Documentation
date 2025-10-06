@@ -174,6 +174,7 @@ function exportToJson(): string {
       case 'CommandCallbacks':
       case 'RpcCallbacks':
       case 'RpcPermissions':
+      case 'ProfileFiles':
       case 'Logs':
       case 'Chat':
       case 'Rpcs':
@@ -287,6 +288,7 @@ export class Server {
   PlayerInfo: any | null = null
   HeaderImage = ''
   Description = ''
+  ProfileFiles: ProfileFile[] = []
   CommandCallbacks: Record<number, (...args: unknown[]) => void> = {}
   RpcCallbacks: Record<number, (...args: unknown[]) => void> = {}
   RpcPermissions: any | null = []
@@ -313,6 +315,7 @@ export class Server {
     this.CommandCallbacks = {}
     this.RpcCallbacks = {}
     this.RpcPermissions = {}
+    this.ProfileFiles = []
 
     if (selectedServer.value == this) {
       hideInventory()
@@ -522,13 +525,13 @@ export class Server {
         file.FileName = read.string()
         file.Size = read.int64()
         file.LastWriteTime = read.int32()
-        ProfilerFiles.value.push(file)
+        this.ProfileFiles.push(file)
       }
     })
     this.setRpc('ProfilesLoad', (read) => {
       const name = read.string()
       const data = read.bytes(read.int32())
-      localStorage.setItem('currentProfileName', name)
+      localStorage.setItem('currentProfileName', `${name} — ${this.CachedHostname}`)
       localStorage.setItem('currentProfile', u8ToBase64(data))
       window.open('/tools/profiler-panel', '_blank', 'noopener,noreferrer');
     })

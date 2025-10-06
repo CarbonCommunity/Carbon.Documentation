@@ -1,8 +1,4 @@
-import { ref } from 'vue'
 import { selectedServer } from './ControlPanel.SaveLoad'
-
-export const files = ref<ProfileFile[]>([])
-
 
 export class ProfileFile {
   FilePath: string = ''
@@ -12,11 +8,19 @@ export class ProfileFile {
 }
 
 export function clearFiles() {
-  files.value.every(_ => files.value.shift())
+  selectedServer.value?.ProfileFiles.splice(0)
 }
 
 export function loadProfile(profile: ProfileFile) {
   selectedServer.value?.sendCall('ProfilesLoad', profile.FilePath)
+}
+
+export function deleteProfile(profile: ProfileFile) {
+  const confirmDelete = window.confirm(`Are you sure you want to delete that profile?`)
+  if (confirmDelete) {
+    selectedServer.value?.sendCall('ProfilesDelete', profile.FilePath)
+    selectedServer.value?.sendCall('ProfilesList')
+  }
 }
 
 export function u8ToBase64(u8: Uint8Array): string {

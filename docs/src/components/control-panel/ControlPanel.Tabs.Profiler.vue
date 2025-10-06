@@ -1,11 +1,10 @@
 <script lang="ts" setup>
 import { Download, Trash2 } from 'lucide-vue-next'
-import { files, clearFiles, loadProfile } from './ControlPanel.Profiler'
+import { deleteProfile, loadProfile } from './ControlPanel.Profiler'
 import { selectedServer } from './ControlPanel.SaveLoad'
 import { onMounted } from 'vue'
 
 onMounted (() => {
-  clearFiles()
   selectedServer.value?.sendCall('ProfilesList')
 })
 </script>
@@ -20,7 +19,7 @@ onMounted (() => {
         <th class="vp-doc th">Actions</th>
       </tr>
     </thead>
-    <tr v-for="file in files" :key="file.FilePath">
+    <tr v-for="file in selectedServer?.ProfileFiles" :key="file.FilePath">
       <td class="vp-doc td">
         {{ file.FileName }}
       </td>
@@ -31,8 +30,8 @@ onMounted (() => {
         {{ new Date(file.LastWriteTime * 1000).toLocaleDateString() }} {{ new Date(file.LastWriteTime * 1000).toLocaleTimeString() }}
       </td>
       <td class="vp-doc td flex gap-x-2">
-        <button v-if="selectedServer?.hasPermission('profiler_load')" class="r-send-button !text-green-400 !bg-green-800/20 hover:!bg-green-800/80 hover:!text-green-200" @click="loadProfile(file)"><Download size="20"/> Load</button>
-        <button v-if="selectedServer?.hasPermission('profiler_edit')" class="r-send-button !text-red-400 !bg-red-800/20 hover:!bg-red-800/80 hover:!text-red-200" @click=""><Trash2 size="20"/> Delete</button>
+        <button v-if="selectedServer?.hasPermission('profiler_load')" class="r-send-button !text-green-400 !bg-green-800/20 hover:!bg-green-800/80 hover:!text-green-200" @click="loadProfile(file)"><Download :size=20 /> Load</button>
+        <button v-if="selectedServer?.hasPermission('profiler_edit')" class="r-send-button !text-red-400 !bg-red-800/20 hover:!bg-red-800/80 hover:!text-red-200" @click="deleteProfile(file)"><Trash2 :size=20 /> Delete</button>
       </td>
     </tr>
   </table>
