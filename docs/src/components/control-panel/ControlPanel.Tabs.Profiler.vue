@@ -6,6 +6,7 @@ import { onMounted } from 'vue'
 
 onMounted (() => {
   selectedServer.value?.sendCall('ProfilesList')
+  selectedServer.value?.sendCall('ProfilesState')
 })
 </script>
 
