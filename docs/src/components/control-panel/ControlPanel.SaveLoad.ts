@@ -231,6 +231,7 @@ function importFromJson(data: string) {
         localServer.ChatColor = server.ChatColor == null ? '#af5' : server.ChatColor
         localServer.CachedHostname = server.CachedHostname
         localServer.CommandHistory = server.CommandHistory ?? []
+        localServer.ProfileFlags = server.ProfileFlags ?? new ProfileFlags()
         addServer(localServer)
       })
 
@@ -291,6 +292,7 @@ export class Server {
   Description = ''
   ProfileFiles: ProfileFile[] = []
   ProfileState = new ProfileState()
+  ProfileFlags = new ProfileFlags()
   CommandCallbacks: Record<number, (...args: unknown[]) => void> = {}
   RpcCallbacks: Record<number, (...args: unknown[]) => void> = {}
   RpcPermissions: any | null = []
@@ -539,6 +541,8 @@ export class Server {
     })
     this.setRpc('ProfilesState', (read) => {
       this.ProfileState.IsProfiling = read.bool()
+      this.ProfileState.IsEnabled = read.bool()
+      this.ProfileState.HasCrashed = read.bool()
     })
   }
 
@@ -932,4 +936,14 @@ export class Server {
 
 export class ProfileState {
   IsProfiling: boolean = false
+  IsEnabled: boolean = false
+  HasCrashed: boolean = false
+}
+
+export class ProfileFlags {
+  CallMemory: boolean = true
+  AdvancedMemory: boolean = true
+  Timings: boolean = true
+  Calls: boolean = true
+  GCEvents: boolean = true
 }

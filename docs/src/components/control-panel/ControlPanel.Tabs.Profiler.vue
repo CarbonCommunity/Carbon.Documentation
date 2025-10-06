@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { Download, Play, Square, Trash2 } from 'lucide-vue-next'
 import { deleteProfile, loadProfile, toggleProfile} from './ControlPanel.Profiler'
-import { selectedServer } from './ControlPanel.SaveLoad'
+import { selectedServer, save } from './ControlPanel.SaveLoad'
 import { onMounted } from 'vue'
 
 onMounted (() => {
@@ -11,10 +11,26 @@ onMounted (() => {
 </script>
 
 <template>
-  <div v-if="selectedServer?.hasPermission('profiler_edit')" class="flex pb-5 text-sm">
-    <button v-if="!selectedServer.ProfileState.IsProfiling" class="r-send-button !text-green-400 !bg-green-800/20 hover:!bg-green-800/80 hover:!text-green-200" @click="toggleProfile(false)"><Play :size=18 /> Start Profile</button>
-    <button v-if="selectedServer.ProfileState.IsProfiling" class="r-send-button !text-slate-400 !bg-slate-500/20 hover:!bg-slate-500/80 hover:!text-slate-200" @click="toggleProfile(false)"><Square :size=18 /> End Profile</button>
-    <button v-if="selectedServer.ProfileState.IsProfiling" class="r-send-button !text-red-400 !bg-red-800/20 hover:!bg-red-800/80 hover:!text-red-200" @click="toggleProfile(true)"><Square :size=18 /> Cancel</button>
+  <div v-if="selectedServer?.hasPermission('profiler_edit')">
+    <div class="flex pb-5 text-sm gap-x-1 items-center" v-if="selectedServer.ProfileState.IsEnabled && !selectedServer.ProfileState.HasCrashed">
+      <button v-if="!selectedServer.ProfileState.IsProfiling" class="r-send-button !text-green-400 !bg-green-800/20 hover:!bg-green-800/80 hover:!text-green-200" @click="toggleProfile(false)"><Play :size=18 /> Start Profile</button>
+      <button v-if="selectedServer.ProfileState.IsProfiling" class="r-send-button !text-slate-400 !bg-slate-500/20 hover:!bg-slate-500/80 hover:!text-slate-200" @click="toggleProfile(false)"><Square :size=18 /> End Profile</button>
+      <button v-if="selectedServer.ProfileState.IsProfiling" class="r-send-button !text-red-400 !bg-red-800/20 hover:!bg-red-800/80 hover:!text-red-200" @click="toggleProfile(true)"><Square :size=18 /> Cancel</button>
+      <span class="flex ml-1 gap-x-1 bg-black/10 p-2">
+        <div class="r-send-button !text-blue-400/50 !bg-red-800/0">FLAGS:</div>
+        <button :class="[ 'r-send-button !animate-none !transition-none hover:bg-blue-800/20', selectedServer.ProfileFlags.CallMemory ? '!bg-blue-800/50 !text-blue-400' : '!bg-blue-800/10 !text-blue-400/50' ]" @click="selectedServer.ProfileFlags.CallMemory = !selectedServer.ProfileFlags.CallMemory; save()">Call Memory</button>
+        <button :class="[ 'r-send-button !animate-none !transition-none hover:bg-blue-800/20', selectedServer.ProfileFlags.AdvancedMemory ? '!bg-blue-800/50 !text-blue-400' : '!bg-blue-800/10 !text-blue-400/50' ]" @click="selectedServer.ProfileFlags.AdvancedMemory = !selectedServer.ProfileFlags.AdvancedMemory; save()">Advanced Memory</button>
+        <button :class="[ 'r-send-button !animate-none !transition-none hover:bg-blue-800/20', selectedServer.ProfileFlags.Timings ? '!bg-blue-800/50 !text-blue-400' : '!bg-blue-800/10 !text-blue-400/50' ]" @click="selectedServer.ProfileFlags.Timings = !selectedServer.ProfileFlags.Timings; save()">Timings</button>
+        <button :class="[ 'r-send-button !animate-none !transition-none hover:bg-blue-800/20', selectedServer.ProfileFlags.Calls ? '!bg-blue-800/50 !text-blue-400' : '!bg-blue-800/10 !text-blue-400/50' ]" @click="selectedServer.ProfileFlags.Calls = !selectedServer.ProfileFlags.Calls; save()">Calls</button>
+        <button :class="[ 'r-send-button !animate-none !transition-none hover:bg-blue-800/20', selectedServer.ProfileFlags.GCEvents ? '!bg-blue-800/50 !text-blue-400' : '!bg-blue-800/10 !text-blue-400/50' ]" @click="selectedServer.ProfileFlags.GCEvents = !selectedServer.ProfileFlags.GCEvents; save()">GC Events</button>
+      </span>
+    </div>
+    <div class="flex pb-5 text-sm gap-x-1 items-center" v-if="!selectedServer.ProfileState.IsEnabled || selectedServer.ProfileState.HasCrashed">
+      <button class="r-send-button select-none !text-red-400 !bg-red-800/20">
+        <span v-if="selectedServer.ProfileState.HasCrashed">PROFILER CRASHED</span>
+        <span v-if="!selectedServer.ProfileState.HasCrashed">PROFILER DISABLED</span>
+      </button>
+    </div>
   </div>
   <table tabindex="0" class="vp-doc table">
     <thead>

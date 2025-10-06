@@ -16,10 +16,20 @@ export function loadProfile(profile: ProfileFile) {
 }
 
 export function toggleProfile(cancel: boolean) {
-  selectedServer.value?.sendCall('ProfilesToggle', cancel)
+  const server = selectedServer.value
+  if(server == null) {
+    return
+  }
+  server.sendCall('ProfilesToggle', cancel, 
+    server.ProfileFlags.CallMemory, 
+    server.ProfileFlags.AdvancedMemory,
+    server.ProfileFlags.Timings, 
+    server.ProfileFlags.Calls, 
+    server.ProfileFlags.GCEvents)
+    
   setInterval(() => {
-    selectedServer.value?.sendCall('ProfilesState')
-    selectedServer.value?.sendCall('ProfilesList')
+    server.sendCall('ProfilesState')
+    server.sendCall('ProfilesList')
   }, 400);
 }
 
