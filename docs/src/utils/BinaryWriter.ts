@@ -68,6 +68,10 @@ export class BinaryWriter {
     this.offset += src.length;
   }
 
+  bool(value: boolean): void {
+    this.byte(value ? 1 : 0)
+  }
+
   string(value: string, length?: number): void {
     const bytes = this.encoder.encode(value);
 

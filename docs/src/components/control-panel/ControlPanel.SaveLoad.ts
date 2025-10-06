@@ -175,6 +175,7 @@ function exportToJson(): string {
       case 'RpcCallbacks':
       case 'RpcPermissions':
       case 'ProfileFiles':
+      case 'ProfileState':
       case 'Logs':
       case 'Chat':
       case 'Rpcs':
@@ -289,6 +290,7 @@ export class Server {
   HeaderImage = ''
   Description = ''
   ProfileFiles: ProfileFile[] = []
+  ProfileState = new ProfileState()
   CommandCallbacks: Record<number, (...args: unknown[]) => void> = {}
   RpcCallbacks: Record<number, (...args: unknown[]) => void> = {}
   RpcPermissions: any | null = []
@@ -535,6 +537,9 @@ export class Server {
       localStorage.setItem('currentProfile', u8ToBase64(data))
       window.open('/tools/profiler-panel', '_blank', 'noopener,noreferrer');
     })
+    this.setRpc('ProfilesState', (read) => {
+      this.ProfileState.IsProfiling = read.bool()
+    })
   }
 
   readInventory(read: any, inventory: any) {
@@ -759,6 +764,9 @@ export class Server {
           case 'string':
             write.string(value as string)
             break
+          case 'boolean':
+            write.bool(value as boolean)
+            break
         }
       }
       this.Socket?.send(write.toArrayBuffer())
@@ -920,4 +928,8 @@ export class Server {
       save()
     }
   }
+}
+
+export class ProfileState {
+  IsProfiling: boolean = false
 }

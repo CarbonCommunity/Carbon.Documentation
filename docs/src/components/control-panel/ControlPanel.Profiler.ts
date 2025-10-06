@@ -15,6 +15,14 @@ export function loadProfile(profile: ProfileFile) {
   selectedServer.value?.sendCall('ProfilesLoad', profile.FilePath)
 }
 
+export function toggleProfile(cancel: boolean) {
+  selectedServer.value?.sendCall('ProfilesToggle', cancel)
+  setInterval(() => {
+    selectedServer.value?.sendCall('ProfilesState')
+    selectedServer.value?.sendCall('ProfilesList')
+  }, 400);
+}
+
 export function deleteProfile(profile: ProfileFile) {
   const confirmDelete = window.confirm(`Are you sure you want to delete that profile?`)
   if (confirmDelete) {
