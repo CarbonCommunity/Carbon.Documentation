@@ -1,7 +1,10 @@
 <script lang="ts" setup>
-import { computed, ref } from 'vue'
-import { AssemblyName, loadProfile, currentProfile, ProfileTypes, Assembly, Call, Memory } from './ProfilerPanel.SaveLoad';
+import { computed, ref, onMounted } from 'vue'
 import { Minus, Plus } from 'lucide-vue-next'
+import pako from 'pako'
+import { AssemblyName, loadProfile, currentProfile, ProfileTypes, Assembly, Call, Memory, load } from './ProfilerPanel.SaveLoad';
+import { base64ToU8 } from '../control-panel/ControlPanel.Profiler';
+import { BinaryReader } from '@/utils/BinaryReader';
 
 const sortedAssemblies = computed(() => {
   if (!currentProfile.value) return []
@@ -93,6 +96,7 @@ const callSort = ref<string | null>('Calls')
 const calmColor = '#3882d1'
 const intenseColor = '#d13b38'
 const niceColor = '#60a848'
+const contextName = ref<string | null>(null)
 
 function getAssemblyPercentage(assembly: Assembly) : number {
   if(currentProfile.value == null || currentProfile.value.Assemblies.length == 0) {
@@ -179,12 +183,26 @@ function lerpColor(color1: string, color2: string, t: number): string {
   return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`
 }
 
+onMounted(() => {
+  var pendingProfile = localStorage.getItem('currentProfile')
+  if(!pendingProfile) {
+    return
+  }
+  const buffer = base64ToU8(pendingProfile)
+  const unzipped = pako.ungzip(buffer.buffer as ArrayBuffer)
+  const reader = new BinaryReader(unzipped.buffer);
+  currentProfile.value = load(reader)
+  contextName.value = localStorage.getItem('currentProfileName')
+  localStorage.removeItem('currentProfile')
+  localStorage.removeItem('currentProfileName')
+})
+
 </script>
 
 <template>
   <div class="w-full h-full flex flex-col px-[10px] ">
     <div class="mx-10 flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-      <h2 class="text-lg font-semibold select-none">Profiler Panel</h2>
+      <h2 class="text-lg font-semibold select-none">Profiler Panel <span class="text-blue-300/40" v-if="contextName"> — {{ contextName }}</span></h2>
       <div class="flex space-x-2">
         <div v-if="!currentProfile" class="relative">
           <input id="loadProfile" type="file" accept=".cprf" @change="loadProfile" class="hidden"/>
@@ -210,7 +228,7 @@ function lerpColor(color1: string, color2: string, t: number): string {
           <input type="text" placeholder="Search..." v-model="assemblyFilter" class="text-sm w-full p-2 bg-gray-800/50 focus:bg-gray-800 text-gray-200 border-gray-700"/>
           <div class="flex px-5 p-2 gap-x-2 text-blue-300/30 text-sm bg-gray-800/50 hover:bg-gray-800">
             Sort:
-            <select v-model="assemblySort" class="select-all text-blue-300/60 font-semibold bg-transparent text-left border border-gray-700/0 hover:text-blue-300 hover:cursor-pointer">
+            <select v-model="assemblySort" class="select-all uppercase text-blue-300/60 font-semibold bg-transparent text-left border border-gray-700/0 hover:text-blue-300 hover:cursor-pointer">
               <option class="bg-gray-800 text-blue-300/60 p-2" v-for="option in assemblyOptions" :key="option" :value="option">{{ option }}</option>
             </select>
           </div>
@@ -245,12 +263,12 @@ function lerpColor(color1: string, color2: string, t: number): string {
       </div>
       <!-- Calls / Memory-->
       <div v-if="currentProfile" class="flex-1 py-5 basis-1/2 min-w-0 overflow-y-auto">
-        <h2 class="select-none text-lg font-semibold mb-2">CALLS ({{ currentProfile?.Calls.length.toLocaleString() }}) <span class="text-blue-300/40" v-if="currentProfile?.Calls.length != sortedCalls.length"> — {{ sortedCalls.length.toLocaleString() }} found for {{ selectedAssembly?.DisplayName }}</span></h2>
+        <h2 class="select-none text-lg font-semibold mb-2">CALLS ({{ currentProfile?.Calls.length.toLocaleString() }}) <span class="text-blue-300/40" v-if="currentProfile?.Calls.length != sortedCalls.length"> — {{ sortedCalls.length.toLocaleString() }} found</span></h2>
         <div class="flex mb-3 select-none">
           <input type="text" placeholder="Search..." v-model="callFilter" class="text-sm w-full p-2 bg-gray-800/50 focus:bg-gray-800 text-gray-200 border-gray-700"/>
           <div class="flex px-5 p-2 gap-x-2 text-blue-300/30 text-sm bg-gray-800/50 hover:bg-gray-800">
             Sort:
-            <select v-model="callSort" class="select-all text-blue-300/60 font-semibold bg-transparent text-left border border-gray-700/0 hover:text-blue-300 hover:cursor-pointer">
+            <select v-model="callSort" class="select-all uppercase text-blue-300/60 font-semibold bg-transparent text-left border border-gray-700/0 hover:text-blue-300 hover:cursor-pointer">
               <option class="bg-gray-800 text-blue-300/60" v-for="option in callOptions" :key="option" :value="option">{{ option }}</option>
             </select>
           </div>
@@ -278,12 +296,12 @@ function lerpColor(color1: string, color2: string, t: number): string {
       </div>
       <!-- Memory -->
       <div v-if="currentProfile" class="ml-5 flex-1 py-5 basis-1/2 min-w-0 overflow-y-auto">
-        <h2 class="select-none text-lg font-semibold mb-2">MEMORY ({{ currentProfile?.Memory.length.toLocaleString() }}) <span class="text-blue-300/40" v-if="currentProfile?.Memory.length != sortedMemory.length"> — {{ sortedMemory.length.toLocaleString() }} found</span></h2>
+        <h2 class="select-none text-lg font-semibold mb-2 text-blue-300/50">MEMORY ({{ currentProfile?.Memory.length.toLocaleString() }}) <span class="text-blue-300/40" v-if="currentProfile?.Memory.length != sortedMemory.length"> — {{ sortedMemory.length.toLocaleString() }} found</span></h2>
         <div class="flex mb-3 select-none">
           <input type="text" placeholder="Search..." v-model="memoryFilter" class="text-sm w-full p-2 bg-gray-800/50 focus:bg-gray-800 text-gray-200 border-gray-700"/>
           <div class="flex px-5 p-2 gap-x-2 text-blue-300/30 text-sm bg-gray-800/50 hover:bg-gray-800">
             Sort:
-            <select v-model="memorySort" class="select-all text-blue-300/60 font-semibold bg-transparent text-left border border-gray-700/0 hover:text-blue-300 hover:cursor-pointer">
+            <select v-model="memorySort" class="select-all uppercase text-blue-300/60 font-semibold bg-transparent text-left border border-gray-700/0 hover:text-blue-300 hover:cursor-pointer">
               <option class="bg-gray-800 text-blue-300/60 p-2" v-for="option in memoryOptions" :key="option" :value="option">{{ option }}</option>
             </select>
           </div>

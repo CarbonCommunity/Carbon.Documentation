@@ -1,7 +1,6 @@
 import { BinaryReader } from '@/utils/BinaryReader';
 import { ref } from 'vue';
 import pako from 'pako'
-import ProfilerPanel from './ProfilerPanel.vue'
 
 export const currentProfile = ref<Profile | null>(null)
 export function loadProfile(event: Event) {

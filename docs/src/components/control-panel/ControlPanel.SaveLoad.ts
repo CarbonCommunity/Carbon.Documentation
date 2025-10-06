@@ -3,6 +3,7 @@ import { BinaryWriter } from '@/utils/BinaryWriter'
 import MD5 from 'crypto-js/md5'
 import { ref, shallowRef } from 'vue'
 import { message, tryFocusChat } from './ControlPanel.Chat'
+import { ProfileFile, files as ProfilerFiles, clearFiles as ClearProfileFiles, u8ToBase64, base64ToU8 } from './ControlPanel.Profiler'
 import { command, commandIndex, tryFocusLogs } from './ControlPanel.Console'
 import { resetEntities } from './ControlPanel.Entities'
 import { activeSlot, beltSlots, clearInventory, hideInventory, mainSlots, wearSlots } from './ControlPanel.Inventory'
@@ -472,7 +473,6 @@ export class Server {
     this.setRpc('ChatTail', (read) => {
       const messages = []
       const messageCount = read.int32()
-      console.log(messageCount)
       for (let i = 0; i < messageCount; i++) {
         messages.push({
           Channel: read.int32(),
@@ -512,6 +512,25 @@ export class Server {
       this.RpcPermissions['entities_edit'] = read.bool()
       this.RpcPermissions['permissions_view'] = read.bool()
       this.RpcPermissions['permissions_edit'] = read.bool()
+    })
+    this.setRpc('ProfilesList', (read) => {
+      ClearProfileFiles()
+      const fileCount = read.int32()
+      for (let i = 0; i < fileCount; i++) {
+        const file = new ProfileFile()
+        file.FilePath = read.string()
+        file.FileName = read.string()
+        file.Size = read.int64()
+        file.LastWriteTime = read.int32()
+        ProfilerFiles.value.push(file)
+      }
+    })
+    this.setRpc('ProfilesLoad', (read) => {
+      const name = read.string()
+      const data = read.bytes(read.int32())
+      localStorage.setItem('currentProfileName', name)
+      localStorage.setItem('currentProfile', u8ToBase64(data))
+      window.open('/tools/profiler-panel', '_blank', 'noopener,noreferrer');
     })
   }
 

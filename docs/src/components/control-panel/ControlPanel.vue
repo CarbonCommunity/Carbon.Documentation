@@ -417,6 +417,8 @@ onUnmounted(() => {
 }
 
 .r-send-button {
+  display: flex;
+  gap: 5px;
   text-decoration: auto;
   font-family: monospace;
   color: var(--category-misc);
