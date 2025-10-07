@@ -339,60 +339,6 @@ export class Server {
 
   registerCommands() {
     this.CommandCallbacks = {}
-
-    this.setCommand('MoveInventoryItem', () => {})
-
-    this.setCommand('SendPlayerInventory', (data: any) => {
-      clearInventory()
-      try {
-        activeSlot.value = data.value.ActiveSlot
-        data.value.Main.forEach((item: any) => {
-          if (item.Position == -1 || item.Position >= mainSlots.value.length) {
-            return
-          }
-          const slot = mainSlots.value[item.Position]
-          slot.ShortName = item.ShortName
-          slot.ItemId = item.ItemId
-          slot.Amount = item.Amount
-          slot.Condition = item.Condition
-          slot.MaxCondition = item.MaxCondition
-          slot.ConditionNormalized = item.ConditionNormalized
-          slot.HasCondition = item.HasCondition
-        })
-        data.value.Belt.forEach((item: any) => {
-          if (item.Position == -1 || item.Position >= beltSlots.value.length) {
-            return
-          }
-          const slot = beltSlots.value[item.Position]
-          slot.ShortName = item.ShortName
-          slot.ItemId = item.ItemId
-          slot.Amount = item.Amount
-          slot.Condition = item.Condition
-          slot.MaxCondition = item.MaxCondition
-          slot.ConditionNormalized = item.ConditionNormalized
-          slot.HasCondition = item.HasCondition
-        })
-        data.value.Wear.forEach((item: any) => {
-          if (item.Position == -1 || item.Position >= wearSlots.value.length) {
-            return
-          }
-          const slot = wearSlots.value[item.Position]
-          slot.ShortName = item.ShortName
-          slot.ItemId = item.ItemId
-          slot.Amount = item.Amount
-          slot.Condition = item.Condition
-          slot.MaxCondition = item.MaxCondition
-          slot.ConditionNormalized = item.ConditionNormalized
-          slot.HasCondition = item.HasCondition
-        })
-      } catch (e) {
-        console.error(e)
-      }
-    })
-
-    this.setCommand('TestCall', (data) => {
-      console.log(data)
-    })
   }
 
   registerRpcs() {
@@ -655,9 +601,7 @@ export class Server {
         this.sendCall('AccountPermissions')
       } else {
         this.sendCommand('serverinfo', 2)
-        this.sendCommand('playerlist', 6)
         this.sendCommand('console.tail', 7)
-        this.sendCommand('chat.tail', 8)
         this.sendCommand('c.version', 3)
         this.sendCommand('server.headerimage', 4)
         this.sendCommand('server.description', 5)

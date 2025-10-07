@@ -51,7 +51,7 @@ const subTabs = [
   {
     Name: 'Chat',
     Description: 'All the chatter going on the server.',
-    IsDisabled: () => !selectedServer.value?.hasPermission('chat_view'),
+    IsDisabled: () => !selectedServer.value?.Bridge || !selectedServer.value?.hasPermission('chat_view'),
   },
   {
     Name: 'Information',
@@ -61,22 +61,22 @@ const subTabs = [
     Name: 'Players',
     Description: 'A list of players or something like that.',
     ExtraData: (selectedServer: Server) => `(${selectedServer?.PlayerInfo?.length})`,
-    IsDisabled: () => !selectedServer.value?.hasPermission('players_view'),
+    IsDisabled: () => !selectedServer.value?.Bridge || !selectedServer.value?.hasPermission('players_view'),
   },
   {
     Name: 'Permissions',
     Description: "Good ol' permissions.",
-    IsDisabled: () => !selectedServer.value?.hasPermission('permissions_view'),
+    IsDisabled: () => !selectedServer.value?.Bridge || !selectedServer.value?.hasPermission('permissions_view'),
   },
   {
     Name: 'Entities',
     Description: 'Search and inspect any entities on the server.',
-    IsDisabled: () => !selectedServer.value?.hasPermission('entities_view'),
+    IsDisabled: () => !selectedServer.value?.Bridge || !selectedServer.value?.hasPermission('entities_view'),
   },
   {
     Name: 'Profiler',
     Description: 'Investigate and identify server issues.',
-    IsDisabled: () => !selectedServer.value?.hasPermission('profiler_view'),
+    IsDisabled: () => !selectedServer.value?.Bridge || !selectedServer.value?.hasPermission('profiler_view'),
   }
 ]
 
