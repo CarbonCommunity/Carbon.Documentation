@@ -462,6 +462,11 @@ export class Server {
           Health: read.float()
         })
       }
+      this.PlayerInfo?.forEach((player: any) => {
+        if (!(player.Address in geoFlagCache.value)) {
+          fetchGeolocation(player.Address)
+        }
+      })
       const sleeperCount = read.int32()
       for (let i = 0; i < sleeperCount; i++) {
         this.SleeperInfo.push({
@@ -478,11 +483,6 @@ export class Server {
           Health: read.float()
         })
       }
-      this.PlayerInfo?.forEach((player: any) => {
-        if (!(player.Address in geoFlagCache.value)) {
-          fetchGeolocation(player.Address)
-        }
-      })
     })
     this.setRpc('ConsoleTail', (read) => {
       const logs = []
