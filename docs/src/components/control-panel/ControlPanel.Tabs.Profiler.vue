@@ -38,6 +38,7 @@ onUnmounted(() => {
         <button :class="[ 'r-send-button !animate-none !transition-none hover:bg-blue-800/20', selectedServer.ProfileFlags.Timings ? '!bg-blue-800/50 !text-blue-400' : '!bg-blue-800/10 !text-blue-400/50' ]" @click="selectedServer.ProfileFlags.Timings = !selectedServer.ProfileFlags.Timings; save()">Timings</button>
         <button :class="[ 'r-send-button !animate-none !transition-none hover:bg-blue-800/20', selectedServer.ProfileFlags.Calls ? '!bg-blue-800/50 !text-blue-400' : '!bg-blue-800/10 !text-blue-400/50' ]" @click="selectedServer.ProfileFlags.Calls = !selectedServer.ProfileFlags.Calls; save()">Calls</button>
         <button :class="[ 'r-send-button !animate-none !transition-none hover:bg-blue-800/20', selectedServer.ProfileFlags.GCEvents ? '!bg-blue-800/50 !text-blue-400' : '!bg-blue-800/10 !text-blue-400/50' ]" @click="selectedServer.ProfileFlags.GCEvents = !selectedServer.ProfileFlags.GCEvents; save()">GC Events</button>
+        <button :class="[ 'r-send-button !animate-none !transition-none hover:bg-blue-800/20', selectedServer.ProfileFlags.StackWalkAllocations ? '!bg-blue-800/50 !text-blue-400' : '!bg-blue-800/10 !text-blue-400/50' ]" @click="selectedServer.ProfileFlags.StackWalkAllocations = !selectedServer.ProfileFlags.StackWalkAllocations; save()">StackWalk Allocations</button>
       </span>
     </div>
     <div class="flex pb-5 text-sm gap-x-1 items-center" v-if="!selectedServer.ProfileState.IsEnabled || selectedServer.ProfileState.HasCrashed">

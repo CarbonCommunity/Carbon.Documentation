@@ -26,7 +26,8 @@ export function toggleProfile(cancel: boolean) {
     server.ProfileFlags.AdvancedMemory,
     server.ProfileFlags.Timings, 
     server.ProfileFlags.Calls, 
-    server.ProfileFlags.GCEvents)
+    server.ProfileFlags.GCEvents, 
+    server.ProfileFlags.StackWalkAllocations)
 
   setTimeout(() => {
     server.sendCall('ProfilesState')
