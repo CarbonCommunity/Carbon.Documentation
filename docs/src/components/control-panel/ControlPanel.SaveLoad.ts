@@ -3,11 +3,12 @@ import { BinaryWriter } from '@/utils/BinaryWriter'
 import MD5 from 'crypto-js/md5'
 import { ref, shallowRef } from 'vue'
 import { message, tryFocusChat } from './ControlPanel.Chat'
-import { ProfileFile, files as ProfilerFiles, clearFiles as ClearProfileFiles, u8ToBase64, base64ToU8 } from './ControlPanel.Profiler'
+import { ProfileFile, clearFiles as ClearProfileFiles, u8ToBase64 } from './ControlPanel.Profiler'
 import { command, commandIndex, tryFocusLogs } from './ControlPanel.Console'
 import { resetEntities } from './ControlPanel.Entities'
 import { activeSlot, beltSlots, clearInventory, hideInventory, mainSlots, wearSlots } from './ControlPanel.Inventory'
 import { refreshPermissions } from './ControlPanel.Tabs.Permissions.vue'
+import { loadingProfile, loadingToggle } from './ControlPanel.Profiler'
 
 export const selectedServer = ref<Server | null>(null)
 export const selectedSubTab = shallowRef<number>(0)
@@ -538,12 +539,14 @@ export class Server {
       localStorage.setItem('currentProfileName', `${name} — ${this.CachedHostname}`)
       localStorage.setItem('currentProfile', u8ToBase64(data))
       window.open('/tools/profiler-panel', '_blank', 'noopener,noreferrer');
+      loadingProfile.value = null
     })
     this.setRpc('ProfilesState', (read) => {
       this.ProfileState.IsProfiling = read.bool()
       this.ProfileState.IsEnabled = read.bool()
       this.ProfileState.HasCrashed = read.bool()
       this.ProfileState.Duration = read.float()
+      loadingToggle.value = null
     })
   }
 
@@ -948,4 +951,5 @@ export class ProfileFlags {
   Timings: boolean = true
   Calls: boolean = true
   GCEvents: boolean = true
+  StackWalkAllocations: boolean = true
 }

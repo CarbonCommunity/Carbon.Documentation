@@ -1,4 +1,8 @@
 import { selectedServer } from './ControlPanel.SaveLoad'
+import { ref } from 'vue'
+
+export const loadingProfile = ref<ProfileFile | null>(null)
+export const loadingToggle = ref<number | null>(null)
 
 export class ProfileFile {
   FilePath: string = ''
@@ -12,15 +16,17 @@ export function clearFiles() {
 }
 
 export function loadProfile(profile: ProfileFile) {
+  loadingProfile.value = profile
   selectedServer.value?.sendCall('ProfilesLoad', profile.FilePath)
 }
 
-export function toggleProfile(cancel: boolean) {
+export function toggleProfile(cancel: boolean, mode: number) {
   const server = selectedServer.value
   if(server == null) {
     return
   }
   
+  loadingToggle.value = mode
   server.sendCall('ProfilesToggle', cancel, 
     server.ProfileFlags.CallMemory, 
     server.ProfileFlags.AdvancedMemory,
