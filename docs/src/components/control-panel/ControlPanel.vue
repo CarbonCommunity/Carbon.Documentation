@@ -265,7 +265,7 @@ onUnmounted(() => {
 
       <div v-for="(tab, index) in subTabs" :key="index">
         <div v-if="selectedSubTab == index" class="m-4 text-xs text-slate-500">
-          <span>{{ tab.Description }}</span>
+          <span class="select-none">{{ tab.Description }}</span>
         </div>
       </div>
 

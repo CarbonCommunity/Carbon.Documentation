@@ -135,6 +135,9 @@ export function selectServer(server: Server) {
   resetEntities()
   tryFocusLogs(true)
   tryFocusChat(true)
+
+  server.sendCall('ProfilesState')
+  server.sendCall('ProfilesList')
 }
 
 export function findServer(address: string): Server {
