@@ -130,7 +130,7 @@ export function refreshPermissions() {
       </thead>
       <tr v-for="group in groupInfo?.Groups" :key="group">
         <td class="vp-doc td">
-          <button class="r-send-button" :class="'r-send-button ' + (group == selectedGroup ? 'toggled' : null)" @click="selectGroup(group, false)">
+          <button class="r-send-button justify-self-center" :class="'r-send-button ' + (group == selectedGroup ? 'toggled' : null)" @click="selectGroup(group, false)">
             <span class="text-neutral-400">{{ group }}</span>
           </button>
         </td>
@@ -145,7 +145,7 @@ export function refreshPermissions() {
       </thead>
       <tr v-for="plugin in groupInfo?.Plugins" :key="plugin.Plugin.Name">
         <td class="vp-doc td">
-          <button class="r-send-button" :class="'r-send-button ' + (plugin == selectedHookable ? 'toggled' : null)" @click="selectHookable(plugin)">
+          <button class="r-send-button justify-self-center" :class="'r-send-button ' + (plugin == selectedHookable ? 'toggled' : null)" @click="selectHookable(plugin)">
             <span class="text-neutral-400">{{ plugin.Plugin.Name }}</span>
           </button>
         </td>
@@ -155,7 +155,7 @@ export function refreshPermissions() {
       </tr>
       <tr v-for="module in groupInfo?.Modules" :key="module.Module.Name">
         <td class="vp-doc td">
-          <button class="r-send-button" :class="'r-send-button ' + (module == selectedHookable ? 'toggled' : null)" @click="selectHookable(module)">
+          <button class="r-send-button justify-self-center" :class="'r-send-button ' + (module == selectedHookable ? 'toggled' : null)" @click="selectHookable(module)">
             <span class="text-neutral-400">{{ module.Module.Name }}</span>
           </button>
         </td>
@@ -170,14 +170,14 @@ export function refreshPermissions() {
       <tr>
         <td>
           <span>
-            <button class="r-send-button" @click="togglePermission('grantall')"><span class="text-neutral-400">Grant All</span></button>
-            <button class="r-send-button" @click="togglePermission('revokeall')"><span class="text-neutral-400">Revoke All</span></button>
+            <button class="r-send-button justify-self-center" @click="togglePermission('grantall')"><span class="text-neutral-400">Grant All</span></button>
+            <button class="r-send-button justify-self-center" @click="togglePermission('revokeall')"><span class="text-neutral-400">Revoke All</span></button>
           </span>
         </td>
       </tr>
       <tr v-for="permission in selectedHookable.Permissions" :key="permission">
         <td class="vp-doc td content-center">
-          <button :class="'r-send-button ' + (groupHasPermission(permission) ? 'toggled' : null)" @click="togglePermission(permission)">
+          <button :class="[ 'r-send-button justify-self-center', (groupHasPermission(permission) ? 'toggled' : null) ]" @click="togglePermission(permission)">
             <span class="text-neutral-400">{{ permission }}</span>
           </button>
         </td>
