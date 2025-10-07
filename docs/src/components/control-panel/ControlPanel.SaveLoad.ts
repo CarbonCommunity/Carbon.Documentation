@@ -172,6 +172,7 @@ function exportToJson(): string {
       case 'ServerInfo':
       case 'CarbonInfo':
       case 'PlayerInfo':
+      case 'SleeperInfo':
       case 'HeaderImage':
       case 'Description':
       case 'CommandCallbacks':
@@ -291,6 +292,7 @@ export class Server {
   ServerInfo: any | null = null
   CarbonInfo: any | null = null
   PlayerInfo: any | null = null
+  SleeperInfo: any | null = null
   HeaderImage = ''
   Description = ''
   ProfileFiles: ProfileFile[] = []
@@ -302,6 +304,10 @@ export class Server {
   ChatUsername = 'SERVER'
   ChatUserId = '0'
   ChatColor = '#af5'
+
+  getAllPlayers() {
+    return this.PlayerInfo?.concat(this.SleeperInfo)
+  }
 
   hasPermission(permission: string) {
     if (permission in this.RpcPermissions) {
@@ -439,6 +445,7 @@ export class Server {
     })
     this.setRpc('Players', (read) => {
       this.PlayerInfo = []
+      this.SleeperInfo = []
       const playerCount = read.int32()
       for (let i = 0; i < playerCount; i++) {
         this.PlayerInfo.push({
@@ -452,9 +459,30 @@ export class Server {
           ViolationLevel: read.float(),
           CurrentLevel: read.int32(),
           UnspentXp: read.int32(),
-          Health: read.float(),
+          Health: read.float()
         })
       }
+      const sleeperCount = read.int32()
+      for (let i = 0; i < sleeperCount; i++) {
+        this.SleeperInfo.push({
+          SteamID: read.uint64(),
+          OwnerSteamID: read.uint64(),
+          DisplayName: read.string(),
+          Ping: read.int32(),
+          Address: read.string(),
+          EntityId: read.uint64(),
+          ConnectedSeconds: read.int32(),
+          ViolationLevel: read.float(),
+          CurrentLevel: read.int32(),
+          UnspentXp: read.int32(),
+          Health: read.float()
+        })
+      }
+      this.PlayerInfo?.forEach((player: any) => {
+        if (!(player.Address in geoFlagCache.value)) {
+          fetchGeolocation(player.Address)
+        }
+      })
     })
     this.setRpc('ConsoleTail', (read) => {
       const logs = []

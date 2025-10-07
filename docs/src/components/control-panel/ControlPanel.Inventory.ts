@@ -55,15 +55,13 @@ export function showInventory(playerId: number) {
   selectedServer.value.fetchInventory(playerId)
 
   const looper = () => {
-    if (!selectedServer.value.PlayerInfo.find((player) => player.SteamID == playerId)) {
+    if (!(selectedServer.value.PlayerInfo.concat(selectedServer.value.SleeperInfo)).find((player) => player.SteamID == playerId)) {
       hideInventory()
       return
     }
-
-    timerInvRefresh = setTimeout(looper, 1000)
     selectedServer.value.fetchInventory(playerId)
   }
-  timerInvRefresh = setTimeout(looper, 1000)
+  timerInvRefresh = setInterval(looper, 1000);
 }
 
 export function hideInventory() {

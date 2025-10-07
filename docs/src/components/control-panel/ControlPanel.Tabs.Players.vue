@@ -50,41 +50,52 @@ function refreshPlayers() {
 </script>
 
 <template>
-  <table tabindex="0" class="vp-doc table">
-    <thead>
+  <table tabindex="0" class="w-full border-collapse text-sm text-slate-300 overflow-hidden shadow-[0_0_10px_rgba(0,0,0,0.3)] backdrop-blur-sm">
+    <thead class="bg-slate-800/70 text-slate-200 text-xs uppercase tracking-wider">
       <tr>
-        <th class="vp-doc th"></th>
-        <th class="vp-doc th">Player</th>
-        <th class="vp-doc th text-center">Health</th>
-        <th class="vp-doc th">Connected</th>
-        <th class="vp-doc th text-center">Actions</th>
+        <th class="px-3 py-2 w-[100px]">Ping</th>
+        <th class="px-3 py-2 text-left">Player <span class="opacity-30">({{ selectedServer?.PlayerInfo?.length }} online, {{ selectedServer?.SleeperInfo?.length }} sleeping)</span></th>
+        <th class="px-3 py-2 text-center">Health</th>
+        <th class="px-3 py-2 text-left">Connected</th>
+        <th class="px-3 py-2 text-center">Actions</th>
       </tr>
     </thead>
-    <tr v-for="player in selectedServer?.PlayerInfo" :key="player.SteamID">
-      <td class="vp-doc td">
-        <span style="display: flex; gap: 5px" class="ml-2 text-xs text-slate-400"
-          ><img :src="geoFlagCache[player.Address]" class="size-4" /> {{ player.Ping }}ms</span
-        >
-      </td>
-      <td class="vp-doc td">
-        <strong>{{ player.DisplayName }}</strong>
-        <span class="text-xs text-slate-400"
-          >[<a style="color: inherit; display: inline-flex" :href="'http://steamcommunity.com/profiles/' + player.SteamID" target="_blank"
-            >{{ player.SteamID }} <ExternalLink class="mx-1" :size="12" /> </a
-          >]</span
-        >
-      </td>
-      <td style="position: relative">
-        <div :style="'position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: #41642da6; width: ' + player.Health + '%'"></div>
-        <div style="opacity: 50%; font-size: smaller">{{ player.Health.toFixed(1) }}</div>
-      </td>
-      <td class="vp-doc td">
-        <span class="text-xs text-slate-400">{{ formatDuration(player.ConnectedSeconds) }}</span>
-      </td>
-      <td class="vp-doc td">
-        <button v-if="selectedServer?.hasPermission('players_inventory')" class="r-send-button" @click="showInventory(player.SteamID)">Inventory</button>
-      </td>
-    </tr>
+    <tbody class="">
+      <tr v-for="player in selectedServer?.getAllPlayers()" :key="player.SteamID" 
+        :class="[ 'group transition-colors duration-200 border-t border-slate-800/50', player.Ping == -1 ? 'bg-red-400/5 opacity-60' : '' ]">
+        <td class="px-3 py-2 text-xs text-slate-400 items-center text-center">
+          <div class="flex justify-self-center gap-2">
+            <img :src="geoFlagCache[player.Address]" class="w-4 h-4 rounded-sm shadow-sm" />
+            <span v-if="player.Ping != -1" class="font-mono">{{ player.Ping }}ms</span>
+          </div>
+        </td>
+        <td class="px-3 py-2 flex flex-col">
+          <strong class="text-slate-200 group-hover:text-white transition">
+            {{ player.DisplayName }}
+          </strong>
+          <a :href="'https://steamcommunity.com/profiles/' + player.SteamID" target="_blank" class="text-xs text-slate-500 hover:text-blue-400 flex items-center gap-1 mt-[1px]">
+            <ExternalLink :size="12" /> {{ player.SteamID }}
+          </a>
+        </td>
+        <td class="px-3 py-2 relative text-center">
+          <div class="absolute left-0 top-0 h-full rounded-sm bg-green-600/20 transition-all duration-300" :style="{ width: player.Health + '%' }"></div>
+          <span class="relative z-10 font-mono text-xs text-slate-200">
+            {{ player.Health.toFixed(1) }}
+          </span>
+        </td>
+        <td class="px-3 py-2 text-xs text-slate-400 font-mono">
+          <span v-if="player.Ping != -1">{{ formatDuration(player.ConnectedSeconds) }}</span>
+        </td>
+        <td class="px-3 py-2 text-center">
+          <button
+            v-if="selectedServer?.hasPermission('players_inventory')"
+            class="px-2 py-1.5 text-xs bg-blue-800/30 hover:bg-blue-700/60 text-blue-300 hover:text-blue-100 transition-all shadow-sm"
+            @click="showInventory(player.SteamID)">
+            Inventory
+          </button>
+        </td>
+      </tr>
+    </tbody>
   </table>
 
   <div v-if="activeInventory" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click="hideInventory()">
@@ -98,26 +109,14 @@ function refreshPlayers() {
       <div class="items-center" style="justify-items: center">
         <div class="inventory-grid">
           <div v-for="slot in mainSlots" :key="slot.Position" class="slot" @dragover.prevent @drop="handleDrop(slot)">
-            <img
-              v-if="slot.hasItem()"
-              class="slot-img"
-              :src="`https://cdn.carbonmod.gg/items/${slot.ShortName}.png`"
-              draggable="true"
-              @dragstart="handleDrag(slot)"
-            />
+            <img v-if="slot.hasItem()" class="slot-img" :src="`https://cdn.carbonmod.gg/items/${slot.ShortName}.png`" draggable="true" @dragstart="handleDrag(slot)" />
             <span v-if="slot.hasItem() && slot.Amount > 1" class="slot-amount">x{{ slot.Amount }}</span>
             <div v-if="slot.hasItem() && slot.HasCondition" class="slot-condition" :style="'height: ' + slot.ConditionNormalized * 100 + '%;'"></div>
           </div>
         </div>
         <div class="inventory-grid-clothing mt-5">
           <div v-for="slot in wearSlots" :key="slot.Position" class="slot" @dragover.prevent @drop="handleDrop(slot)">
-            <img
-              v-if="slot.hasItem()"
-              class="slot-img"
-              :src="`https://cdn.carbonmod.gg/items/${slot.ShortName}.png`"
-              draggable="true"
-              @dragstart="handleDrag(slot)"
-            />
+            <img v-if="slot.hasItem()" class="slot-img" :src="`https://cdn.carbonmod.gg/items/${slot.ShortName}.png`" draggable="true" @dragstart="handleDrag(slot)" />
             <span v-if="slot.hasItem() && slot.Amount > 1" class="slot-amount">x{{ slot.Amount }}</span>
             <div v-if="slot.hasItem() && slot.HasCondition" class="slot-condition" :style="'height: ' + slot.ConditionNormalized * 100 + '%;'"></div>
           </div>
@@ -125,25 +124,13 @@ function refreshPlayers() {
         <div class="inventory-grid mt-5">
           <div v-for="slot in beltSlots" :key="slot.Position" class="slot" @dragover.prevent @drop="handleDrop(slot)">
             <div v-if="activeSlot == slot.Position" class="slot-active"></div>
-            <img
-              v-if="slot.hasItem()"
-              class="slot-img"
-              :src="`https://cdn.carbonmod.gg/items/${slot.ShortName}.png`"
-              draggable="true"
-              @dragstart="handleDrag(slot)"
-            />
+            <img v-if="slot.hasItem()" class="slot-img" :src="`https://cdn.carbonmod.gg/items/${slot.ShortName}.png`" draggable="true" @dragstart="handleDrag(slot)" />
             <span v-if="slot.hasItem() && slot.Amount > 1" class="slot-amount">x{{ slot.Amount }}</span>
             <div v-if="slot.hasItem() && slot.HasCondition" class="slot-condition" :style="'height: ' + slot.ConditionNormalized * 100 + '%;'"></div>
           </div>
         </div>
         <div :class="'inventory-grid-tools cols-' + (selectedServer?.hasPermission('console_input') ? '5' : '2') +  ' mt-5 items-center justify-center opacity-50'">
-          <div
-            v-for="slot in toolSlots"
-            :key="slot.Position"
-            class="slot-tool"
-            @dragover.prevent
-            @drop="handleDrop(slot)"
-          >
+          <div v-for="slot in toolSlots" :key="slot.Position" class="slot-tool" @dragover.prevent @drop="handleDrop(slot)">
             <span v-if="slot.Container == 10" class="select-none justify-items-center text-xs opacity-50"><ArrowUpFromDot /> Drop</span>
             <span v-if="slot.Container == 11" class="select-none justify-items-center text-xs opacity-50"><Trash2 /> Discard</span>
           </div>
