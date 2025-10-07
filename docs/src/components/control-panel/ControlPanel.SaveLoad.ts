@@ -154,7 +154,6 @@ export function selectSubTab(index: number) {
     case 0:
       tryFocusLogs(true)
       break
-
     case 1:
       tryFocusChat(true)
       break
@@ -476,7 +475,7 @@ export class Server {
         Time: read.int32(),
       }
       this.appendLog(log.Message as string)
-      tryFocusLogs(true)
+      tryFocusLogs()
     })
     this.setRpc('ChatTail', (read) => {
       const messages = []
@@ -506,7 +505,7 @@ export class Server {
           Time: read.int32()
       }
       this.appendChat(message)
-      tryFocusChat(true)
+      tryFocusChat()
     })
     this.setRpc('AccountPermissions', (read) => {
       this.RpcPermissions['console_view'] = read.bool()
@@ -900,9 +899,7 @@ export class Server {
     }
     channel = channel.toUpperCase()
 
-    this.Chat.push(
-      `<span class="text-zinc-500 text-xs">${new Date(message.Time * 1000).toLocaleTimeString()}\t ${channel} \t</span> <a style="color: ${message.Color}" href="http://steamcommunity.com/profiles/${message.UserId}" target="_blank">${message.Username}</a>: ${message.Message}`
-    )
+    this.Chat.push( `<span class="text-zinc-500 text-xs">${new Date(message.Time * 1000).toLocaleTimeString()}\t ${channel} \t</span> <a style="color: ${message.Color}" href="http://steamcommunity.com/profiles/${message.UserId}" target="_blank">${message.Username}</a>: ${message.Message}`)
   }
 
   selectHistory(up: boolean) {
