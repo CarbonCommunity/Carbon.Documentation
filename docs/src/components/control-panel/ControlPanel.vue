@@ -257,9 +257,8 @@ onUnmounted(() => {
           v-show="tab.IsDisabled == null || !tab.IsDisabled()"
           @click="selectSubTab(index)"
           :class="['r-button', { toggled: selectedSubTab == index }]"
-          style="color: var(--docsearch-footer-background); font-size: small"
-        >
-          {{ tab.Name }} {{ tab.ExtraData != null ? tab.ExtraData(selectedServer) : null }}
+          style="color: var(--docsearch-footer-background); font-size: small">
+          <span class="select-none">{{ tab.Name }} {{ tab.ExtraData != null ? tab.ExtraData(selectedServer) : null }}</span>
         </button>
       </div>
 
