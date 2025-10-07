@@ -9,6 +9,10 @@ export class ProfileFile {
   FileName: string = ''
   Size: bigint = 0n
   LastWriteTime: number = 0
+  IsValid: boolean = false
+  IsCompared: boolean = false
+  Protocol: number = 0
+  Duration: number = 0
 }
 
 export function clearFiles() {

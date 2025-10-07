@@ -7,6 +7,15 @@ import { onMounted, onUnmounted, ref } from 'vue'
 
 const timeout = ref<any | null>(null)
 
+function formatDuration(seconds: number): string {
+  const hrs = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  const secs = Math.floor(seconds % 60);
+
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  return `${pad(hrs)}:${pad(mins)}:${pad(secs)}`;
+}
+
 onMounted (() => {
   selectedServer.value?.sendCall('ProfilesList')
   selectedServer.value?.sendCall('ProfilesState')
@@ -52,21 +61,29 @@ onUnmounted(() => {
   <table tabindex="0" class="vp-doc table">
     <thead>
       <tr>
+        <th class="vp-doc th text-right">Protocol</th>
         <th class="vp-doc th">Profile</th>
-        <th class="vp-doc th text-center">Size</th>
+        <th class="vp-doc th text-center">Duration</th>
         <th class="vp-doc th">Created</th>
-        <th class="vp-doc th">Actions</th>
+        <th class="vp-doc th text-center">Size</th>
+        <th class="vp-doc th text-center">Actions</th>
       </tr>
     </thead>
     <tr v-for="file in selectedServer?.ProfileFiles" :key="file.FilePath">
+      <td :class="[ 'vp-doc td text-right', file.IsValid ? 'text-green-300/75' : 'text-red-400/50' ]">
+        {{ file.Protocol }}
+      </td>
       <td class="vp-doc td">
         {{ file.FileName }}
       </td>
-      <td style="position: relative">
-        {{ (new Number(file.Size / 1000n)).toLocaleString() }} KB
+      <td class="vp-doc td text-center text-white/60">
+        {{ formatDuration(file.Duration) }}
       </td>
-      <td class="vp-doc td">
+      <td class="vp-doc td text-white/60">
         {{ new Date(file.LastWriteTime * 1000).toLocaleDateString() }} {{ new Date(file.LastWriteTime * 1000).toLocaleTimeString() }}
+      </td>
+      <td class="text-center text-white/60">
+        {{ (new Number(file.Size / 1000n)).toLocaleString() }} KB
       </td>
       <td class="vp-doc td flex gap-x-2">
         <button v-if="selectedServer?.hasPermission('profiler_load')" class="r-send-button !text-green-400 !bg-green-800/20 hover:!bg-green-800/80 hover:!text-green-200" @click="loadProfile(file)"><Loader2 v-if="loadingProfile == file" class="animate-spin" :size="20" /> <Download v-if="loadingProfile != file" :size=20 /> Load</button>

@@ -529,6 +529,10 @@ export class Server {
         file.FileName = read.string()
         file.Size = read.int64()
         file.LastWriteTime = read.int32()
+        file.IsValid = read.bool()
+        file.Protocol = read.int32()
+        file.Duration = read.float()
+        file.IsCompared = read.bool()
         this.ProfileFiles.push(file)
       }
     })
