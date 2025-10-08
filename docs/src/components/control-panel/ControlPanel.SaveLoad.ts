@@ -416,7 +416,6 @@ export class Server {
       for (let i = 0; i < sleeperCount; i++) {
         this.SleeperInfo.push(this.readPlayer(read))
       }
-      console.log(this.PlayerInfo)
     })
     this.setRpc('ConsoleTail', (read) => {
       const logs = []
