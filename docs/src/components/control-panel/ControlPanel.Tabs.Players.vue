@@ -5,6 +5,7 @@ import { geoFlagCache, selectedServer } from './ControlPanel.SaveLoad'
 import { ref, onMounted, computed } from 'vue'
 import { fetchItems } from '@/api/metadata/rust/items'
 
+const playerSearch = ref<string>('')
 const selectedItemOption = ref('bleach')
 const selectedItemAmount = ref(1)
 const selectedItemSearch = ref('')
@@ -61,7 +62,17 @@ function refreshPlayers() {
       </tr>
     </thead>
     <tbody class="">
-      <tr v-for="player in selectedServer?.getAllPlayers()" :key="player.SteamID" 
+      <tr>
+        <td></td>
+        <td>
+          <input type="text" v-model="playerSearch"  placeholder="Search player..."
+            class="w-64 px-3 py-1.5 bg-slate-800/40 border border-slate-700/60
+                  text-sm text-slate-200 placeholder:text-slate-500
+                  focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40
+                  transition-all duration-200 hover:bg-slate-700/50 shadow-inner"/>        
+        </td>
+      </tr>
+      <tr v-for="player in selectedServer?.getAllPlayers()?.filter(x => !playerSearch || x.DisplayName.toLowerCase().includes(playerSearch.toLowerCase()))" :key="player.SteamID" 
         :class="[ 'group transition-colors duration-200 border-t border-slate-800/50', player.Ping == -1 ? 'bg-red-400/5 opacity-60' : '' ]">
         <td class="px-3 py-2 text-xs text-slate-400 items-center text-center">
           <div class="flex justify-self-center gap-2">
@@ -73,7 +84,7 @@ function refreshPlayers() {
           <strong class="text-slate-200 group-hover:text-white transition">
             {{ player.DisplayName }}
           </strong>
-          <a :href="'https://steamcommunity.com/profiles/' + player.SteamID" target="_blank" class="text-xs text-slate-500 hover:text-blue-400 flex items-center gap-1 mt-[1px]">
+          <a :href="'https://steamcommunity.com/profiles/' + player.SteamID" target="_blank" class="text-xs max-w-fit text-slate-500 hover:text-blue-400 flex items-center gap-1 mt-[1px]">
             <ExternalLink :size="12" /> {{ player.SteamID }}
           </a>
         </td>
