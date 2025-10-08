@@ -77,9 +77,9 @@ function refreshPlayers() {
       <tr v-for="player in selectedServer?.getAllPlayers()?.filter(x => !playerSearch || x.DisplayName.toLowerCase().includes(playerSearch.toLowerCase()))" :key="player.SteamID" 
         :class="[ 'group transition-colors duration-200 border-t border-slate-800/50', player.Ping == -1 ? 'bg-red-400/5 opacity-60' : '' ]">
         <td class="px-3 py-2 text-xs text-slate-400 items-center text-center">
-          <div class="flex justify-self-center gap-2">
+          <div v-if="player.Ping != -1" class="flex justify-self-center gap-2">
             <img :src="geoFlagCache[player.Address]" class="w-4 h-4 rounded-sm shadow-sm" />
-            <span v-if="player.Ping != -1" class="font-mono">{{ player.Ping }}ms</span>
+            <span class="font-mono">{{ player.Ping }}ms</span>
           </div>
         </td>
         <td class="px-3 py-2 flex flex-col">
