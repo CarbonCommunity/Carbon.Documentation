@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ExternalLink, ArrowUpFromDot, Trash2 } from 'lucide-vue-next'
+import { ExternalLink, ArrowUpFromDot, Trash2, Crown } from 'lucide-vue-next'
 import { showInventory, hideInventory, activeInventory, handleDrop, handleDrag, activeSlot, mainSlots, wearSlots, beltSlots, toolSlots } from './ControlPanel.Inventory'
 import { geoFlagCache, selectedServer } from './ControlPanel.SaveLoad'
 import { ref, onMounted, computed } from 'vue'
@@ -83,8 +83,8 @@ function refreshPlayers() {
           </div>
         </td>
         <td class="px-3 py-2 flex flex-col">
-          <strong class="text-slate-200 group-hover:text-white transition">
-            {{ player.DisplayName }}
+          <strong class="text-slate-200 group-hover:text-white transition flex gap-x-1">
+            <Crown class="opacity-25" v-if="player.TeamLeader == player.SteamID" :size="17"/>{{ player.DisplayName }}
           </strong>
           <a :href="'https://steamcommunity.com/profiles/' + player.SteamID" target="_blank" class="text-xs max-w-fit text-slate-500 hover:text-blue-400 flex items-center gap-1 mt-[1px]">
             <ExternalLink :size="12" /> {{ player.SteamID }}
@@ -101,7 +101,7 @@ function refreshPlayers() {
             <p v-for="member in player.Team" :key="member">
               <span v-if="member != player.SteamID" class="flex gap-x-2 justify-self-center">
                 <a :href="'https://steamcommunity.com/profiles/' + member" target="_blank" class="text-xs max-w-fit  text-slate-500 hover:text-blue-400 flex gap-1 mt-[1px]">
-                  <strong>{{ selectedServer?.getPlayer(member)?.DisplayName ?? member }}</strong> 
+                  <Crown v-if="player.TeamLeader == member" :size="13"/> <strong>{{ selectedServer?.getPlayer(member)?.DisplayName ?? member }}</strong> 
                   <ExternalLink :size="12" /> {{ member }}
                 </a>
               </span>

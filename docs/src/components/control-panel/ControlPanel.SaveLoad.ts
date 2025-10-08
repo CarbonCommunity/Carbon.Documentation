@@ -535,6 +535,7 @@ export class Server {
     player.HasTeam = read.bool()
     if(player.HasTeam) {
       player.Team = []
+      player.TeamLeader = read.uint64()
       const teamLength = read.int32()
       for (let i = 0; i < teamLength; i++) {
         player.Team.push(read.uint64())
