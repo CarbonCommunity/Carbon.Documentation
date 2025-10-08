@@ -309,6 +309,21 @@ export class Server {
     return this.PlayerInfo?.concat(this.SleeperInfo)
   }
 
+  getPlayer(steamId: bigint) {
+    for (let i = 0; i < this.PlayerInfo.length; i++) {
+      const player = this.PlayerInfo[i];
+      if(player.SteamID == steamId) {
+        return player
+      }
+    }
+    for (let i = 0; i < this.SleeperInfo.length; i++) {
+      const player = this.SleeperInfo[i];
+      if(player.SteamID == steamId) {
+        return player
+      }
+    }
+  }
+
   hasPermission(permission: string) {
     if (permission in this.RpcPermissions) {
       return this.RpcPermissions[permission]
@@ -342,10 +357,6 @@ export class Server {
   }
 
   registerRpcs() {
-    this.setRpc('Test', (read) => {
-      console.log(read.string())
-      console.log(read.int32())
-    })
     this.setRpc('ServerInfo', (read) => {
       this.ServerInfo = {
         Hostname: read.string(),
@@ -394,19 +405,7 @@ export class Server {
       this.SleeperInfo = []
       const playerCount = read.int32()
       for (let i = 0; i < playerCount; i++) {
-        this.PlayerInfo.push({
-          SteamID: read.uint64(),
-          OwnerSteamID: read.uint64(),
-          DisplayName: read.string(),
-          Ping: read.int32(),
-          Address: read.string(),
-          EntityId: read.uint64(),
-          ConnectedSeconds: read.int32(),
-          ViolationLevel: read.float(),
-          CurrentLevel: read.int32(),
-          UnspentXp: read.int32(),
-          Health: read.float()
-        })
+        this.PlayerInfo.push(this.readPlayer(read))
       }
       this.PlayerInfo?.forEach((player: any) => {
         if (!(player.Address in geoFlagCache.value)) {
@@ -415,20 +414,9 @@ export class Server {
       })
       const sleeperCount = read.int32()
       for (let i = 0; i < sleeperCount; i++) {
-        this.SleeperInfo.push({
-          SteamID: read.uint64(),
-          OwnerSteamID: read.uint64(),
-          DisplayName: read.string(),
-          Ping: read.int32(),
-          Address: read.string(),
-          EntityId: read.uint64(),
-          ConnectedSeconds: read.int32(),
-          ViolationLevel: read.float(),
-          CurrentLevel: read.int32(),
-          UnspentXp: read.int32(),
-          Health: read.float()
-        })
+        this.SleeperInfo.push(this.readPlayer(read))
       }
+      console.log(this.PlayerInfo)
     })
     this.setRpc('ConsoleTail', (read) => {
       const logs = []
@@ -528,6 +516,31 @@ export class Server {
       this.ProfileState.Duration = read.float()
       loadingToggle.value = null
     })
+  }
+
+  readPlayer(read: any) {
+    const player = {
+      SteamID: read.uint64(),
+      OwnerSteamID: read.uint64(),
+      DisplayName: read.string(),
+      Ping: read.int32(),
+      Address: read.string(),
+      EntityId: read.uint64(),
+      ConnectedSeconds: read.int32(),
+      ViolationLevel: read.float(),
+      CurrentLevel: read.int32(),
+      UnspentXp: read.int32(),
+      Health: read.float()
+    }
+    player.HasTeam = read.bool()
+    if(player.HasTeam) {
+      player.Team = []
+      const teamLength = read.int32()
+      for (let i = 0; i < teamLength; i++) {
+        player.Team.push(read.uint64())
+      }
+    }
+    return player
   }
 
   readInventory(read: any, inventory: any) {
