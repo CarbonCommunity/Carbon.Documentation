@@ -14,5 +14,10 @@ export function loadPlugin(plugin: string) {
   selectedServer.value?.sendCall('PluginsLoad', plugin)
   setTimeout(() => {
     selectedServer.value?.sendCall('Plugins')
-  }, 750);
+  }, 500);
+}
+
+export function refreshPlugins() {
+  pluginThinking.value = 'refresh'
+  selectedServer.value?.sendCall('Plugins')
 }

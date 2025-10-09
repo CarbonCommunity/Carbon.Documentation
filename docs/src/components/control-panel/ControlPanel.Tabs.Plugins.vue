@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { selectedServer } from './ControlPanel.SaveLoad';
 import { ref } from 'vue';
-import { unloadPlugin, loadPlugin, pluginThinking } from './ControlPanel.Plugins';
+import { unloadPlugin, loadPlugin, refreshPlugins, pluginThinking } from './ControlPanel.Plugins';
 import { Loader2 } from 'lucide-vue-next'
 
 const pluginSearch = ref<string>('')
@@ -16,16 +16,23 @@ const pluginSearch = ref<string>('')
         <th class="px-3 py-2 text-center">Actions</th>
       </tr>
     </thead>
-    <tbody class="">
+    <tbody>
       <tr>
         <td>
         </td>
         <td>
-          <input type="text" v-model="pluginSearch"  placeholder="Search plugin..."
+          <input type="text" v-model="pluginSearch" placeholder="Search plugin..."
             class="w-64 px-3 py-1.5 bg-slate-800/40 border border-slate-700/60
                   text-sm text-slate-200 placeholder:text-slate-500
                   focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40
                   transition-all duration-200 hover:bg-slate-700/50 shadow-inner"/>
+          <button class="w-64 px-3 max-w-fit py-1.5 bg-slate-800/40 border border-slate-700/60
+                  text-sm hover:text-slate-200 text-slate-500
+                  focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40
+                  transition-all duration-200 hover:bg-slate-700/50 shadow-inner" @click="refreshPlugins()">
+            <span v-if="pluginThinking == 'refresh'"><Loader2 class="animate-spin" :size="14" /></span>
+            <span v-else>Refresh</span>
+          </button>
         </td>
       </tr>
       <tr v-for="plugin in selectedServer?.PluginsInfo?.sort((a, b) => a.Name.localeCompare(b.Name)).filter((x: any) => !pluginSearch || x.Name.toLowerCase().includes(pluginSearch.toLowerCase()))" :key="plugin.FileName" 
