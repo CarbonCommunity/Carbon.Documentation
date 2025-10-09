@@ -9,6 +9,7 @@ import { resetEntities } from './ControlPanel.Entities'
 import { activeSlot, beltSlots, clearInventory, hideInventory, mainSlots, wearSlots } from './ControlPanel.Inventory'
 import { refreshPermissions } from './ControlPanel.Tabs.Permissions.vue'
 import { loadingProfile, loadingToggle } from './ControlPanel.Profiler'
+import { pluginThinking } from './ControlPanel.Plugins'
 
 export const selectedServer = ref<Server | null>(null)
 export const selectedSubTab = shallowRef<number>(0)
@@ -173,6 +174,7 @@ function exportToJson(): string {
       case 'CarbonInfo':
       case 'PlayerInfo':
       case 'SleeperInfo':
+      case 'PluginsInfo':
       case 'HeaderImage':
       case 'Description':
       case 'CommandCallbacks':
@@ -293,6 +295,7 @@ export class Server {
   CarbonInfo: any | null = null
   PlayerInfo: any | null = null
   SleeperInfo: any | null = null
+  PluginsInfo: any | null = null
   HeaderImage = ''
   Description = ''
   ProfileFiles: ProfileFile[] = []
@@ -515,6 +518,50 @@ export class Server {
       this.ProfileState.Duration = read.float()
       loadingToggle.value = null
     })
+    this.setRpc('Plugins', (read) => {
+      this.PluginsInfo = []
+      const pluginsLength = read.int32()
+      for (let i = 0; i < pluginsLength; i++) {
+        this.PluginsInfo.push({
+          Name: read.string(),
+          FileName: read.string(),
+          Version: read.string(),
+          Author: read.string(),
+          Description: read.string()
+        })
+      }
+      const unloadedPluginsLength = read.int32()
+      for (let i = 0; i < unloadedPluginsLength; i++) {
+        this.PluginsInfo.push({
+          Name: read.string(),
+          Version: "UNLOADED",
+          Author: '',
+          IsUnloaded: true
+        })
+      }
+      const failedPluginsLength = read.int32()
+      for (let i = 0; i < failedPluginsLength; i++) {
+        const plugin = {
+          Name: read.string(),
+          Version: "FAILED"
+        }
+        const errorLength = read.int32()
+        plugin.Errors = []
+        plugin.Description = ''
+        for (let e = 0; e < errorLength; e++) {
+          const error = {
+            Message: read.string(),
+            Number: read.string(),
+            Column: read.int32(),
+            Line: read.int32()
+          }
+          plugin.Errors.push(error)
+          plugin.Description += ` ${error.Message} @ line ${error.Line} (${error.Number})<br>`
+        }   
+        this.PluginsInfo.push(plugin)
+      }
+      pluginThinking.value = '' 
+    })
   }
 
   readPlayer(read: any) {
@@ -609,6 +656,7 @@ export class Server {
         this.sendCall('ServerDescription')
         this.sendCall('ServerHeaderImage')
         this.sendCall('Players')
+        this.sendCall('Plugins')
         this.sendCall('ConsoleTail', 200)
         this.sendCall('ChatTail', 200)
         this.sendCall('AccountPermissions')
