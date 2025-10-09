@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { selectedServer } from './ControlPanel.SaveLoad';
 import { ref } from 'vue';
-import { unloadPlugin, loadPlugin, refreshPlugins, pluginThinking } from './ControlPanel.Plugins';
+import { unloadPlugin, loadPlugin, refreshPlugins, reloadPlugin, pluginThinking } from './ControlPanel.Plugins';
 import { Loader2 } from 'lucide-vue-next'
 
 const pluginSearch = ref<string>('')
@@ -45,21 +45,30 @@ const pluginSearch = ref<string>('')
           <span class="max-w-fit">{{ plugin.Name }}</span>
           <p v-html="plugin.Description" class="max-w-fit text-slate-400/50 text-[12px]"></p>
         </td>
-        <td class="px-3 py-2 text-xs text-slate-400 font-mono text-center">
-          <button
-            v-if="selectedServer?.hasPermission('plugins_edit') && !plugin.IsUnloaded && !plugin.Errors"
-            class="px-2 py-1.5 text-xs bg-red-800/30 hover:bg-red-700/60 text-red-300 hover:text-red-100 transition-all shadow-sm"
-            @click="unloadPlugin(plugin.FileName)">
-            <span v-if="pluginThinking == plugin.Name || pluginThinking == plugin.FileName"><Loader2 class="animate-spin" :size="16" /></span>
-            <span v-else>Unload</span>
-          </button>
-          <button
-            v-if="selectedServer?.hasPermission('plugins_edit') && plugin.IsUnloaded || plugin.Errors"
-            class="px-2 py-1.5 text-xs bg-green-800/30 hover:bg-green-700/60 text-green-300 hover:text-green-100 transition-all shadow-sm"
-            @click="loadPlugin(plugin.Name)">
-            <span v-if="pluginThinking == plugin.Name || pluginThinking == plugin.FileName"><Loader2 class="animate-spin" :size="16" /></span>
-            <span v-else>Load</span>
-          </button>
+        <td class="px-3 py-2 text-xs text-slate-400 text-center">
+          <span v-if="(pluginThinking == plugin.Name || pluginThinking == plugin.FileName)" class="inline-flex">
+            <Loader2 class="animate-spin" :size="16" />
+          </span>
+          <div v-else class="gap-2 inline-flex">
+            <button
+              v-if="selectedServer?.hasPermission('plugins_edit') && !plugin.IsUnloaded && !plugin.Errors"
+              class="px-2 py-1.5 text-xs bg-red-800/30 hover:bg-red-700/60 text-red-300 hover:text-red-100 transition-all shadow-sm"
+              @click="unloadPlugin(plugin.FileName)">
+              Unload
+            </button>
+            <button
+              v-if="selectedServer?.hasPermission('plugins_edit') && !plugin.IsUnloaded && !plugin.Errors"
+              class="px-2 py-1.5 text-xs bg-blue-800/30 hover:bg-blue-700/60 text-blue-300 hover:text-blue-100 transition-all shadow-sm"
+              @click="reloadPlugin(plugin.Name)">
+              Reload
+            </button>
+            <button
+              v-if="selectedServer?.hasPermission('plugins_edit') && plugin.IsUnloaded || plugin.Errors"
+              class="px-2 py-1.5 text-xs bg-green-800/30 hover:bg-green-700/60 text-green-300 hover:text-green-100 transition-all shadow-sm"
+              @click="loadPlugin(plugin.Name)">
+              Load
+            </button>
+          </div>
         </td>
       </tr>
     </tbody>
