@@ -102,7 +102,7 @@ function refreshPlayers() {
               <span v-if="member != player.SteamID" class="flex gap-x-2 justify-self-center">
                 <a :href="'https://steamcommunity.com/profiles/' + member" target="_blank" class="text-xs max-w-fit  text-slate-500 hover:text-blue-400 flex gap-1 mt-[1px]">
                   <Crown v-if="player.TeamLeader == member" :size="13"/> <strong>{{ selectedServer?.getPlayer(member)?.DisplayName ?? member }}</strong> 
-                  <ExternalLink :size="12" /> {{ member }}
+                  <ExternalLink :size="12" />
                 </a>
               </span>
             </p>
