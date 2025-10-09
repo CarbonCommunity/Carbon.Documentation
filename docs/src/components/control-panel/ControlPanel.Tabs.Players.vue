@@ -92,7 +92,7 @@ function refreshPlayers() {
         </td>
         <td class="text-center text-slate-400/50">
           <button
-            v-if="player.HasTeam && viewTeam != player.SteamID"
+            v-if="player.HasTeam && player.Team.length > 1 && viewTeam != player.SteamID"
             class="px-2 py-1.5 text-xs bg-blue-800/30 hover:bg-blue-700/60 text-blue-300 hover:text-blue-100 transition-all shadow-sm"
             @click="viewTeam = player.SteamID">
             View Team
