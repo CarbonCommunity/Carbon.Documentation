@@ -13,19 +13,6 @@ const selectedItemSearch = ref('')
 const itemOptions: any = []
 const isOpen = ref<boolean>(false)
 
-function formatDuration(seconds: number) {
-  const hrs = Math.floor(seconds / 3600)
-  const mins = Math.floor((seconds % 3600) / 60)
-  const secs = Math.floor(seconds % 60)
-
-  const parts = []
-  if (hrs > 0) parts.push(`${hrs}h`)
-  if (mins > 0) parts.push(`${mins}m`)
-  if (secs > 0 || parts.length === 0) parts.push(`${secs}s`)
-
-  return parts.join(' ')
-}
-
 function giveItem() {
   selectedServer.value?.sendCommand(`inventory.giveto ${activeInventory.value} ${selectedItemOption.value} ${selectedItemAmount.value}`, 1)
 }
@@ -115,7 +102,7 @@ function refreshPlayers() {
           </span>
         </td>
         <td class="px-3 py-2 text-xs text-slate-400 font-mono">
-          <span v-if="player.Ping != -1">{{ formatDuration(player.ConnectedSeconds) }}</span>
+          <span v-if="player.Ping != -1">{{ selectedServer?.formatDuration(player.ConnectedSeconds) }}</span>
         </td>
         <td class="px-3 py-2 text-center">
           <button

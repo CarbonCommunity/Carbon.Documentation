@@ -308,6 +308,30 @@ export class Server {
   ChatUserId = '0'
   ChatColor = '#af5'
 
+  formatDuration(seconds: number) {
+    const hrs = Math.floor(seconds / 3600)
+    const mins = Math.floor((seconds % 3600) / 60)
+    const secs = Math.floor(seconds % 60)
+
+    const parts = []
+    if (hrs > 0) parts.push(`${hrs}h`)
+    if (mins > 0) parts.push(`${mins}m`)
+    if (secs > 0 || parts.length === 0) parts.push(`${secs}s`)
+
+    return parts.join(' ')
+  }
+
+  formatBytes(bytes: number, decimals = 2) {
+    if (bytes === 0) return '0 B'
+
+    const k = 1024
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    const value = bytes / Math.pow(k, i)
+
+    return `${parseFloat(value.toFixed(decimals))} ${sizes[i]}`
+  }
+
   getDescription() {
     return this.Description.replaceAll('\\n', '<br>')
   }

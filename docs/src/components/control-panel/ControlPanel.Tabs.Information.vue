@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import { command, consoleContainer } from './ControlPanel.Console'
 import { selectedServer } from './ControlPanel.SaveLoad'
 </script>
 
@@ -29,11 +28,19 @@ import { selectedServer } from './ControlPanel.SaveLoad'
     </div>
     <div class="r-settings-input-group">
       <span class="r-settings-input-label" style="user-select: none">Uptime</span>
-      <p type="text" class="r-settings-custom-input transparent">{{ selectedServer?.ServerInfo.Uptime.toLocaleString() }} </p>
+      <p type="text" class="r-settings-custom-input transparent">{{ selectedServer?.formatDuration(selectedServer?.ServerInfo.Uptime) }} </p>
     </div>
     <div class="r-settings-input-group">
-      <span class="r-settings-input-label" style="user-select: none">Performance</span>
-      <p type="text" class="r-settings-custom-input transparent">{{ selectedServer?.ServerInfo.Framerate.toLocaleString() }} FPS, </p>
+      <span class="r-settings-input-label" style="user-select: none">Memory Usage</span>
+      <p type="text" class="r-settings-custom-input transparent">{{ selectedServer?.ServerInfo.MemoryUsageSystem.toLocaleString() }} MB [{{ selectedServer?.ServerInfo.Collections.toLocaleString() }} GC]</p>
+    </div>
+    <div class="r-settings-input-group">
+      <span class="r-settings-input-label" style="user-select: none">Network</span>
+      <p type="text" class="r-settings-custom-input transparent">{{ selectedServer?.ServerInfo.NetworkIn.toLocaleString() }} B/s in, {{ selectedServer?.ServerInfo.NetworkOut.toLocaleString() }} B/s out</p>
+    </div>
+    <div class="r-settings-input-group">
+      <span class="r-settings-input-label" style="user-select: none">Frame Rate</span>
+      <p type="text" class="r-settings-custom-input transparent">{{ selectedServer?.ServerInfo.Framerate.toLocaleString() }} FPS</p>
     </div>
     <div class="r-settings-input-group">
       <span class="r-settings-input-label" style="user-select: none">Entities</span>
