@@ -32,11 +32,11 @@ import { selectedServer } from './ControlPanel.SaveLoad'
     </div>
     <div class="r-settings-input-group">
       <span class="r-settings-input-label" style="user-select: none">Memory Usage</span>
-      <p type="text" class="r-settings-custom-input transparent">{{ selectedServer?.ServerInfo.MemoryUsageSystem.toLocaleString() }} MB [{{ selectedServer?.ServerInfo.Collections.toLocaleString() }} GC]</p>
+      <p type="text" class="r-settings-custom-input transparent">{{ selectedServer?.ServerInfo.Memory }} MB [{{ selectedServer?.ServerInfo.Collections.toLocaleString() }} GC]</p>
     </div>
     <div class="r-settings-input-group">
       <span class="r-settings-input-label" style="user-select: none">Network</span>
-      <p type="text" class="r-settings-custom-input transparent">{{ selectedServer?.ServerInfo.NetworkIn.toLocaleString() }} B/s in, {{ selectedServer?.ServerInfo.NetworkOut.toLocaleString() }} B/s out</p>
+      <p type="text" class="r-settings-custom-input transparent">{{ selectedServer?.formatBytes(selectedServer?.ServerInfo.NetworkIn) }}/s in, {{ selectedServer?.formatBytes(selectedServer?.ServerInfo.NetworkOut) }}/s out</p>
     </div>
     <div class="r-settings-input-group">
       <span class="r-settings-input-label" style="user-select: none">Frame Rate</span>
