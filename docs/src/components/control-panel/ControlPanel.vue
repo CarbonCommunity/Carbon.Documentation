@@ -47,12 +47,12 @@ const subTabs = [
   {
     Name: 'Console',
     Description: 'An RCon based console displaying all log output sent by the server and allows sending commands to the server.',
-    IsDisabled: () => !selectedServer.value?.hasPermission('console_view'),
+    IsDisabled: () => !selectedServer.value?.hasPermission('console_view')
   },
   {
     Name: 'Chat',
     Description: 'All the chatter going on the server.',
-    IsDisabled: () => !selectedServer.value?.Bridge || !selectedServer.value?.hasPermission('chat_view'),
+    IsDisabled: () => !selectedServer.value?.hasPermission('chat_view')
   },
   {
     Name: 'Information',
@@ -62,28 +62,28 @@ const subTabs = [
     Name: 'Players',
     Description: 'A list of players or something like that.',
     ExtraData: (selectedServer: Server) => `(${selectedServer?.PlayerInfo?.length})`,
-    IsDisabled: () => !selectedServer.value?.Bridge || !selectedServer.value?.hasPermission('players_view'),
+    IsDisabled: () => !selectedServer.value?.Bridge || !selectedServer.value?.hasPermission('players_view')
   },
   {
     Name: 'Permissions',
     Description: "Good ol' permissions.",
-    IsDisabled: () => !selectedServer.value?.Bridge || !selectedServer.value?.hasPermission('permissions_view'),
+    IsDisabled: () => !selectedServer.value?.Bridge || !selectedServer.value?.hasPermission('permissions_view')
   },
   {
     Name: 'Entities',
     Description: 'Search and inspect any entities on the server.',
-    IsDisabled: () => !selectedServer.value?.Bridge || !selectedServer.value?.hasPermission('entities_view'),
+    IsDisabled: () => !selectedServer.value?.Bridge || !selectedServer.value?.hasPermission('entities_view')
   },
   {
     Name: 'Profiler',
     Description: 'Investigate and identify server issues.',
-    IsDisabled: () => !selectedServer.value?.Bridge || !selectedServer.value?.hasPermission('profiler_view'),
+    IsDisabled: () => !selectedServer.value?.Bridge || !selectedServer.value?.hasPermission('profiler_view')
   },
   {
     Name: 'Plugins',
     Description: 'Manage and load all available plugins on your server.',
     ExtraData: (selectedServer: Server) => `(${selectedServer?.PluginsInfo?.length})`,
-    IsDisabled: () => !selectedServer.value?.Bridge || !selectedServer.value?.hasPermission('plugins_view'),
+    IsDisabled: () => !selectedServer.value?.Bridge || !selectedServer.value?.hasPermission('plugins_view')
   }
 ]
 
