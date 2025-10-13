@@ -308,6 +308,10 @@ export class Server {
   ChatUserId = '0'
   ChatColor = '#af5'
 
+  getDescription() {
+    return this.Description.replaceAll('\\n', '<br>')
+  }
+
   getAllPlayers() : any[] {
     return this.PlayerInfo?.concat(this.SleeperInfo)
   }
