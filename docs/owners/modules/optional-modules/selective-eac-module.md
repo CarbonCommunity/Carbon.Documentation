@@ -10,7 +10,7 @@ offline developer environments.
 
 ## Overview
 
-![SelectiveEAC Module](/misc/selectiveeac_a.webp)
+![SelectiveEAC Module](/misc/selectiveeac_a.webp){width=1640px height=502px}
 
 - **Class Name:** `SelectiveEACModule`
 - **Enabled by default:** No

@@ -123,6 +123,13 @@
           "type": "boolean"
         },
         {
+          "title": "Show 'Join Us'?",
+          "description": "Should we show 'Join Us' section with the 'Read More' list on this post?",
+          "name": "showjoinus",
+          "default": "true",
+          "type": "boolean"
+        },
+        {
           "title": "Header",
           "description": "The background header image of the blog post. Recommended a higher resolution image, and make it WEBP.",
           "name": "header",

@@ -9,7 +9,7 @@ around a central point, improving performance and relevance.
 
 ## Overview
 
-![CircularNetworking Module](/misc/circularnetworking_a.webp)
+![CircularNetworking Module](/misc/circularnetworking_a.webp){width=1640px height=502px}
 
 - **Class Name:** `CircularNetworkingModule`
 - **Enabled by default:** No

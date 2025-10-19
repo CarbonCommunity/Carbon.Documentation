@@ -8,7 +8,7 @@ description: Overview of Carbon modules—lightweight features built into Carbon
 Carbon modules are similar to plugins but are built directly into Carbon. They provide a lightweight way to add common
 functionality, such as managing players or increasing stack sizes.
 
-![Modules Tab](/misc/modules_a.webp)
+![Modules Tab](/misc/modules_a.webp){width=1640px height=502px}
 
 ## Core Modules
 

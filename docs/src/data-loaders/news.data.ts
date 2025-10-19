@@ -15,7 +15,6 @@ export default createContentLoader([
   '/news/**/*.md', 
   '/tutorials/**/*.md'
 ], {
-  render: true,
   transform(rawData) {
     return rawData
       .map((x): NewsPost => {

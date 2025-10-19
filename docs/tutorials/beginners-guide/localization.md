@@ -22,7 +22,7 @@ collectionid: 3
 ---
 
 <NewsSectionTitle text="Introduction" author="bubbafett5611"/>
-<NewsSection>
+<NewsSection marginless>
 
 When you release plugins to the public, it is a good idea to have the plugin support localization. Luckily, supporting message customization and multiple languages is extremely easy to do!
 
@@ -38,7 +38,7 @@ This tutorial assumes you know the following:
 </NewsSection>
 
 <NewsSectionSubtitle text="What are Lang Files?"/>
-<NewsSection>
+<NewsSection marginless>
 
 Lang files are JSON files created by both Carbon and Oxide to allow plugins to support multiple languages in their messages to users. This allows for greater customization and accessability.
 
@@ -62,7 +62,7 @@ Lang also supports string replacement, allowing you to send users dynamic messag
 
 </NewsSection>
 <NewsSectionSubtitle text="Creating Lang Files!"/>
-<NewsSection>
+<NewsSection marginless>
 
 When a plugin loads, it calls the method `LoadDefaultMessages()` from the `Plugin` class. So, to create our first lang files we have to override this method with our own. Since lang relies on dictionaries, we need to make sure we are using `System.Collections.Generic` to make them available to us.
 
@@ -222,7 +222,7 @@ Congratulations! You have create a fully functional localized plugin, you can re
 
 </NewsSection>
 <NewsSectionSubtitle text="Full Example Plugin!"/>
-<NewsSection>
+<NewsSection marginless>
 
 You can find my full example plugin below!
 

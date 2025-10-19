@@ -22,7 +22,7 @@ collectionid: 2
 ---
 
 <NewsSectionTitle text="Introduction" author="bubbafett5611"/>
-<NewsSection>
+<NewsSection marginless>
 
 If you ever want to add a configurable option to your plugin, it might be tempting to simply define a field at the top of your code and call it done. However, if you plan to share your plugin publicly or expect others to modify its settings, it's best to use a configuration file instead.
 
@@ -38,7 +38,7 @@ This tutorial assumes you know the following:
 </NewsSection>
 
 <NewsSectionSubtitle text="What are Configuration Files?"/>
-<NewsSection>
+<NewsSection marginless>
 
 Configuration files for Carbon and Oxide are saved in JSON format at `carbon/configs/plugin_name.json` or `oxide/config/plugin_name.json`. These files allow server owners to customize plugin behavior by adjusting various settings specific to each plugin.
 
@@ -58,7 +58,7 @@ Configuration files for Carbon and Oxide are saved in JSON format at `carbon/con
 </NewsSection>
 
 <NewsSectionSubtitle text="Creating your Class!"/>
-<NewsSection>
+<NewsSection marginless>
 
 Let’s say we want to create a plugin that sends a message when a player with a specific permission connects, but we also want the server owner to be able to configure that permission. That’s easy to do!
 
@@ -140,7 +140,7 @@ We create this instance so that we can **store and access** the loaded configura
 </NewsSection>
 
 <NewsSectionSubtitle text="Config File Management"/>
-<NewsSection>
+<NewsSection marginless>
 
 The first thing you’ll want to do when managing your config file is ensure that a new one is created if none exists. This is especially important when your plugin is first loaded or if the config has been deleted or corrupted. To handle this, we override the `LoadDefaultConfig()` method. This method is called automatically by the plugin system when a config file is missing. In our implementation, we simply return a new instance of the `Configuration` class using a lambda expression.
 
@@ -234,7 +234,7 @@ Let’s walk through how to read from your config and add values later when the 
 
 </NewsSection>
 <NewsSectionSubtitle text="Reading the Config"/>
-<NewsSection>
+<NewsSection marginless>
 
 Let’s start by listening to the `Init()` hook, which runs when the plugin is initialized. In this method, we’ll register the permission defined in the config so it can be used elsewhere in the plugin. To keep things organized, we’ll wrap this logic in a `#region` called **Hooks**.
 
@@ -285,7 +285,7 @@ But what happens if you want to add more configuration options after the config 
 </NewsSection>
 
 <NewsSectionSubtitle text="Updating the Config"/>
-<NewsSection>
+<NewsSection marginless>
 
 Let's go through updating the config, but first we need to add the new option into the `Configuration` class. I am going to create an `IsEnabled` bool field that will be used to see if the plugin even checks the permission or not. I will also update the version number to show that the plugin was updated.
 
@@ -356,7 +356,7 @@ Awesome! You did it! Now, lets put it together in a full plugin!
 </NewsSection>
 
 <NewsSectionSubtitle text="Putting it all together!"/>
-<NewsSection>
+<NewsSection marginless>
 
 Now let's wrap this up in a nice neat little bow! In this tutorial, we created a config class, learned how to create, save, and load the config, and how to update the config as the plugin grows!
 
@@ -441,7 +441,7 @@ public class ConfigExample : RustPlugin
 </NewsSection>
 
 <NewsSectionSubtitle text="Thanks!"/>
-<NewsSection>
+<NewsSection marginless>
 
 This tutorial was made possible thanks to awesome community members who offered help and support!
 

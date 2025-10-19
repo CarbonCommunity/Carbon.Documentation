@@ -6,4 +6,5 @@ export const store = {
   miniSearch: shallowRef<MiniSearch | null>(null),
   useBasicSearch: shallowRef<boolean>(false),
   chosenCategory: shallowRef('All'),
+  dlcOnly: shallowRef<boolean>(false),
 }

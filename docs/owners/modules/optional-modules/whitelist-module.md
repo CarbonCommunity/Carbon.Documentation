@@ -9,7 +9,7 @@ messages.
 
 ## Overview
 
-![Whitelist Module](/misc/whitelist_a.webp)
+![Whitelist Module](/misc/whitelist_a.webp){width=1640px height=502px}
 
 - **Class Name:** `WhitelistModule`
 - **Enabled by default:** No

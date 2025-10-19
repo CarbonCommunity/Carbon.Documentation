@@ -9,7 +9,7 @@ types.
 
 ## Overview
 
-![Modal](/misc/modal_a.webp)
+![Modal](/misc/modal_a.webp){width=1640px height=502px}
 
 - **Class Name:** `ModalModule`
 - **Enabled by default:** Yes

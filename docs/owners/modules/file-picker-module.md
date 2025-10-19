@@ -9,7 +9,7 @@ primarily used by plugins that need user interaction with the server’s file sy
 
 ## Overview
 
-![File Picker](/misc/filepicker_a.webp)
+![File Picker](/misc/filepicker_a.webp){width=1640px height=502px}
 
 - **Class Name:** `FileModule`
 - **Enabled by default:** Yes

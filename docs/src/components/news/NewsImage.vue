@@ -1,10 +1,14 @@
 <template>
-  <img class="news-image w-full h-auto object-contain" :src="props.src"/>
+  <div :style="{ height: props.h }" class="flex items-center justify-center overflow-hidden active:overflow-visible">
+    <img class="news-image w-full h-auto object-contain" :src="props.src" :style="{ '--y': props.y }"/>
+  </div>
 </template>
 
 <script setup lang="ts">
 interface Props {
   src: string;
+  h?: string;
+  y?: string;
 }
 
 const props = defineProps<Props>()
@@ -13,7 +17,8 @@ const props = defineProps<Props>()
 <style scoped>
 .news-image {
   filter: saturate(0);
-  transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateY(var(--y, 0));
+  transition: transform 150ms cubic-bezier(0.4, 0, 0.2, 1);
   transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .news-image:hover {
@@ -21,7 +26,7 @@ const props = defineProps<Props>()
 }
 .news-image:active {
   filter: saturate(1.2);
-  transform: scale(1.75);
+  transform: translateY(var(--y, 0)) scale(1.75);
   position: relative;
   z-index: 99999;
 }

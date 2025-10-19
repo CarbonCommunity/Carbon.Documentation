@@ -9,7 +9,7 @@ includes UI feedback, sound effects, and permission-controlled behavior.
 
 ## Overview
 
-![Vanish Module](/misc/vanish_a.webp)
+![Vanish Module](/misc/vanish_a.webp){width=1640px height=502px}
 
 - **Class Name:** `VanishModule`
 - **Enabled by default:** No

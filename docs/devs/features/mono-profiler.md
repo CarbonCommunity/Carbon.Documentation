@@ -3,6 +3,10 @@ title: Profiler (Mono)
 description: A high-speed, lightweight Mono profiler written in Rust, designed to profile game assemblies, Carbon, plugins, modules & extensions at high depth.
 ---
 
+<script setup lang="ts">
+import CarbonButton from '@/components/CarbonButton.vue'
+</script>
+
 # Profiler (Mono)
 
 A high-speed, lightweight Mono profiler written in Rust, designed to profile game assemblies, Carbon,
@@ -17,7 +21,7 @@ You can export all profiles made using it to JSON, CSV or Proto, which you can v
 
 ## Introduction
 
-![Mono Profiler Header](/misc/mono-profiler-header.webp)
+![Mono Profiler Header](/misc/mono-profiler-header.webp){width=1640px height=502px}
 
 The Mono Profiler is a Carbon built-in feature, offering high performance and convenience, making it ideal for profiling
 the game, plugins, and more - efficiently.

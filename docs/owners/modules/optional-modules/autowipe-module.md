@@ -8,7 +8,7 @@ using a configurable wipe list and cron expressions. It can trigger commands and
 
 ## Overview
 
-![AutoWipe Module](/misc/autowipe_a.webp)
+![AutoWipe Module](/misc/autowipe_a.webp){width=1640px height=502}
 
 - **Class Name:** `AutoWipeModule`
 - **Enabled by default:** No

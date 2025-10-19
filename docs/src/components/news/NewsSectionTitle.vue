@@ -56,8 +56,9 @@ onMounted(() => {
   text-decoration: underline;
 }
 .news-text-section {
-  margin-top: 150px;
+  margin-top: 200px;
   font-weight: 900 !important;
+  font-size: 38px;
   text-transform: uppercase;
   color: white;
 }
@@ -68,11 +69,11 @@ onMounted(() => {
 .news-text-section-author-name {
   color: inherit;
   text-decoration: none;
-  transition-duration: 150ms;
-  font-weight: 800;
+  transition-duration: 0ms;
 }
 .news-text-section-author-name:hover {
-  color: var(--c-carbon-3);
-  text-decoration: none;
+  color: rgba(255, 255, 255, 1);
+  text-decoration: underline;
+  text-decoration-color: var(--vp-c-brand-1);
 }
 </style>

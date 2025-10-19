@@ -9,7 +9,7 @@ interactive and animated UI component that allows players to visually select col
 
 ## Overview
 
-![Color Picker](/misc/colorpicker_a.webp)
+![Color Picker](/misc/colorpicker_a.webp){width=1640px height=502px}
 
 - **Class Name:** `ColorPickerModule`
 - **Enabled by default:** Yes

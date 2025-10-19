@@ -55,15 +55,13 @@ export function showInventory(playerId: number) {
   selectedServer.value.fetchInventory(playerId)
 
   const looper = () => {
-    if (!selectedServer.value.PlayerInfo.find((player) => player.SteamID == playerId)) {
+    if (!(selectedServer.value.PlayerInfo.concat(selectedServer.value.SleeperInfo)).find((player) => player.SteamID == playerId)) {
       hideInventory()
       return
     }
-
-    timerInvRefresh = setTimeout(looper, 1000)
     selectedServer.value.fetchInventory(playerId)
   }
-  timerInvRefresh = setTimeout(looper, 1000)
+  timerInvRefresh = setInterval(looper, 1000);
 }
 
 export function hideInventory() {
@@ -78,8 +76,7 @@ export function handleDrag(slot: Slot) {
 }
 
 export function handleDrop(slot: Slot) {
-  // MoveInventoryItem
-  selectedServer.value.sendRpc(3553623853, activeInventory.value, draggedSlot.value?.Container, draggedSlot.value?.Position, slot.Container, slot.Position)
+  selectedServer.value.sendCall("MoveInventoryItem", activeInventory.value, draggedSlot.value?.Container, draggedSlot.value?.Position, slot.Container, slot.Position)
   selectedServer.value.fetchInventory(activeInventory.value)
   draggedSlot.value = null
 }

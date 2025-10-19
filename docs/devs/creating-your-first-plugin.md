@@ -1,4 +1,8 @@
-# <CarbonIcons icon="filepenline" /> Creating Your First Plugin
+<script setup lang="ts">
+import { FilePenLineIcon, StarIcon } from 'lucide-vue-next'
+</script>
+
+# <FilePenLineIcon class="carbon-icon" /> Creating Your First Plugin
 
 If you’re looking at creating Oxide-compatible plugins, it’s as easy as you’ve always known it.
 It uses the same syntax, naming and formatting as regular Oxide plugins.
@@ -21,7 +25,7 @@ public class MyPlugin : RustPlugin
 
 :::
 
-## <CarbonIcons icon="star" /> CarbonPlugin
+## <StarIcon class="carbon-icon" /> CarbonPlugin
 
 If you’re looking to create Carbon-only plugins, which **extend** the functionality of regular Oxide plugins and provide
 additional tools to ease development, you can use `CarbonPlugin` as your base class.

@@ -9,14 +9,15 @@ const features = [
     { name: 'Self Updating', desc: 'Carbon automatically updates the edition it\'s running (production, staging, etc.) without requiring any additional work. For example, on Rust wipe day, all you have to do is ensure that your Rust server is validated and updated, then booting it, Carbon will automatically self-patch for that Rust version.', carbon: true, oxide: false },
     { name: 'Remote Hook Updates', desc: 'On server boot, Carbon is looking to download the most recent updates for Oxide and Community hooks without requiring a full Carbon update. If there are hook failure patches (which usually doesn\'t happen), look for announcements in our Discord server, then just reboot the server to get the hook updates.', carbon: true, oxide: false },
     { name: 'Profiler', desc: 'Carbon has a built in profiler designed to profile performance of anything you wanna track (Rust, Unity, System, plugins, modules, extensions, you name it).', link: '/devs/features/mono-profiler', carbon: true, oxide: false },
-    { name: 'Harmony 2.0', desc: 'For the longest time, Rust used the outdated Harmony 1.0 which meant that Oxide was also using that outdated version in plugins. Carbon has always ran Harmony 2.0, then only fairly recently Facepunch updated Rust\'s Harmony version to 2.0, by proxy on Oxide also.', carbon: true, oxide: true },
+    { name: 'SQLite Permissions', desc: 'This brand new system is purely designed to increase overall server performance and reduce unnecessary overhead initially caused by Oxide\'s design.', carbon: true, oxide: false, link: '/news/carbon/sql-permissions' },
     { name: 'Regular Updates', desc: 'Since the birth of Carbon (27th of August 2022), we\'ve consistently released updates addressing issues, compatibility, QoL and implemented great ideas the community has contributed to the project with.', link: '/references/release-notes', carbon: true, oxide: false },
+    { name: 'Harmony 2.0', desc: 'For the longest time, Rust used the outdated Harmony 1.0 which meant that Oxide was also using that outdated version in plugins. Carbon has always ran Harmony 2.0, then only fairly recently Facepunch updated Rust\'s Harmony version to 2.0, by proxy on Oxide also.', carbon: true, oxide: true },
     { name: 'Regularly Maintained', desc: 'Carbon and Oxide have at least one thing in common; making sure the framework functions when Rust releases updates.', carbon: true, oxide: true }
 ]
 </script>
 
 # Oxide Porting
-![Oxide Porting](/misc/oxide-to-carbon.webp)
+![Oxide Porting](/misc/oxide-to-carbon.webp){width=1640px height=502px}
 
 An in-depth understanding of the necessary changes that are done when you're transferring your Oxide server over to Carbon.
 

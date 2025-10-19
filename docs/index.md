@@ -4,7 +4,7 @@ layout: home
 hero:
   name: "Carbon"
   text: "Modding Framework"
-  tagline: A self-updating & lightweight mod loader for Rust running latest C# and Harmony for the best performance, fully compatible with Oxide.
+  tagline: A drop-in replacement for Oxide featuring self-updating, SQL permissions and an in-game interface to install, update and configure plugins.
   actions:
     - theme: brand
       text: Get Carbon
@@ -19,6 +19,9 @@ hero:
     - theme: alt
       text: Hooks
       link: /references/hooks
+    - theme: alt
+      text: Join Discord
+      link: https://discord.gg/carbonmod
 
 features:
   - title: High Performance
@@ -28,10 +31,10 @@ features:
     details: We have made it very easy to make the switch from Oxide to Carbon by keeping the folder/plugin structure the same. <a class="textLink" href="/owners/oxide-porting">Learn more</a>
     icon: 🎯
   - title: Scalability
-    details: Carbon super lightweight by only providing the very essential hooks needed, keeping things vanilla when there are no changes made by plugins.
+    details: Carbon is super lightweight by only providing the very essential hooks needed, keeping things vanilla when there are no changes made by plugins.
     icon: ⚖️
   - title: Permissions
-    details: We have created a more optimized modular permission system that allows for users to create their own serializers. <a class="textLink" href="/devs/features/permissions">Learn more</a>
+    details: We have created a more optimized modular permission system that allows users to create their own serializers. <a class="textLink" href="/devs/features/permissions">Learn more</a>
     icon: ⚙️
   - title: Dynamic Hooks
     details: Hooks are loaded dynamically to ensure only the hooks used by plugins are loaded. This eliminates a ton of redundant calls and will improve performance. <a class="textLink" href="/references/hooks">Learn more</a>
@@ -47,7 +50,7 @@ import { onMounted } from 'vue'
 
 onMounted(() => {
   const rnd = Math.random()
-  if (rnd > 1.1169 / 100) {
+  if (rnd > 0.1169 / 100) {
     return
   }
   const walker = document.createTreeWalker(
@@ -245,10 +248,11 @@ const contributorMembers = [
     ]
   },
   {
-    avatar: '/team/Raichu.webp',
+    avatar: '/team/Raichu.gif',
     name: 'Raichu',
     title: 'Bug Finder',
     links: [
+      { icon: 'github', link: 'https://github.com/RaichuTD' },
       { icon: 'cf', link: 'https://codefling.com/Raichu' }
     ]
   }

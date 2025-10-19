@@ -8,7 +8,7 @@ It supports both global and per-item configuration, and applies changes dynamica
 
 ## Overview
 
-![StackManager Module](/misc/stackmanager_a.webp)
+![StackManager Module](/misc/stackmanager_a.webp){width=1640px height=502px}
 
 - **Class Name:** `StackManagerModule`
 - **Enabled by default:** No

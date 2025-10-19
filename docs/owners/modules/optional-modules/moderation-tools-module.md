@@ -8,7 +8,7 @@ permission-based access control.
 
 ## Overview
 
-![ModerationTools Module](/misc/moderationtools_a.webp)
+![ModerationTools Module](/misc/moderationtools_a.webp){width=1640px height=502px}
 
 - **Class Name:** `ModerationToolsModule`
 - **Enabled by default:** No

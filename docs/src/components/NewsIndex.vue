@@ -48,7 +48,7 @@ const firstPost = shallowRef<NewsPost | null>(!frontmatter.value.tags?.includes(
       <a class="relative inline-block" :href="firstPost.url">
         <div class="mx-auto mt-72 flex max-w-screen-lg md:flex-row flex-col">
           <div class="flex flex-col items-center">
-            <img class="max-w-[500px] transform justify-self-center transition-transform duration-200 hover:scale-105" :src="firstPost.frontmatter.logo" />
+            <img class="max-w-[500px] transform justify-self-center transition-transform duration-200 hover:scale-105" width="1424px" height="709px" :src="firstPost.frontmatter.logo" />
           </div>
           <div>
             <div class="mb-5 text-left text-5xl font-black uppercase">
@@ -78,8 +78,8 @@ const firstPost = shallowRef<NewsPost | null>(!frontmatter.value.tags?.includes(
     <div v-for="post in searchResults" :key="post.url" class="transform transition-transform duration-200 hover:scale-105">
       <a class="relative inline-block font-extrabold no-underline" :href="post.url">
         <div class="transform">
-          <img class="opacity-25 blur" :src="post.frontmatter.header" />
-          <img class="absolute left-0 top-0 h-full w-full object-contain" :src="post.frontmatter.logo" />
+          <img :class="[{'blur': post.frontmatter.logo }, 'opacity-25']" width="1424px" height="709px" :src="post.frontmatter.header" />
+          <img v-if="post.frontmatter.logo" class="absolute left-0 top-0 h-full w-full object-contain" width="1424px" height="709px" :src="post.frontmatter.logo" />
         </div>
         <div class="mt-5">
           <div class="mb-3 block uppercase">

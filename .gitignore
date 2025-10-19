@@ -1,6 +1,7 @@
 obj
 bin
 .idea
+.env
 
 # Tools
 Steam

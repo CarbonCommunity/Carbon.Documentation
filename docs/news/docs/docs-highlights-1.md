@@ -89,12 +89,12 @@ Carbon's integrated **Server Browser** puts the entire Rust multiplayer landscap
 </NewsSection>
 
 <NewsSectionTitle text="Control Panel"/>
-<NewsSection>
+<NewsSection marginless>
 High-fidelity WebRcon based control panel allowing you to manage players, entities, permissions and more, straight from your browser! Get started <a href="../../tools/control-panel" target="_blank">here</a>!
 </NewsSection>
 
 <NewsImage src="/news/controlp-1-showcase.png"/>
-<NewsSection>
+<NewsSection marginless>
 Everything that's happening is in-browser and <strong>does not</strong> make any requests to any third-party servers (including ours).
 
 <NewsSectionSubtitle text="Connections"/>
@@ -105,7 +105,7 @@ All servers and overall data is stored in your browser Local Storage.
 
 <NewsSectionSubtitle text="Player and Inventory Management"/>
 <NewsImage src="/news/controlp-2-showcase.png"/>
-<NewsSection>
+<NewsSection marginless>
 Under the <strong>Players</strong> tab, you can inspect active players on the server, as well as preview and manage their inventories. Yes, manage. You can drag and drop items in their inventories, or even give them items.
 </NewsSection>
 
@@ -115,18 +115,20 @@ Under the <strong>Players</strong> tab, you can inspect active players on the se
     <NewsImage src="/news/controlp-4-showcase.png"/>
 </NewsImageGrid>
 
-<NewsSection>
+<NewsSection marginless>
 Use the <strong>Entities</strong> tab to search for any entities active on the server and manage general properties, like position, health, and manage players' metabolism stats and more!
 </NewsSection>
 
 <NewsSectionSubtitle text="Permission Management"/>
 <NewsImage src="/news/controlp-5-showcase.png"/>
-<NewsSection>
+<NewsSection marginless>
 Manage permissions for plugins and modues straight from the control panel!
 </NewsSection>
 
 <NewsSectionSubtitle text="Chatting"/>
 <NewsImage src="/news/controlp-6-showcase.png"/>
-<NewsSection>
+<NewsSection marginless>
 Preview and interact with people chatting on your server, all within the Control Panel! (Clicking on player names opens up their Steam profile)
 </NewsSection>
+
+<NewsReleaseNotes version="2.0.196"/>

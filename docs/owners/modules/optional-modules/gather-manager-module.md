@@ -8,7 +8,7 @@ dynamically based on source type-like pickups, quarries, dispensers, and more.
 
 ## Overview
 
-![GatherManager Module](/misc/gathermanager_a.webp)
+![GatherManager Module](/misc/gathermanager_a.webp){width=1640px height=502px}
 
 - **Class Name:** `GatherManagerModule`
 - **Enabled by default:** No

@@ -1,9 +1,15 @@
+import { BinaryReader } from '@/utils/BinaryReader'
+import { BinaryWriter } from '@/utils/BinaryWriter'
+import MD5 from 'crypto-js/md5'
 import { ref, shallowRef } from 'vue'
-import { command, commandIndex, tryFocusLogs } from './ControlPanel.Console'
 import { message, tryFocusChat } from './ControlPanel.Chat'
+import { ProfileFile, clearFiles as ClearProfileFiles, u8ToBase64 } from './ControlPanel.Profiler'
+import { command, commandIndex, tryFocusLogs } from './ControlPanel.Console'
+import { resetEntities } from './ControlPanel.Entities'
 import { activeSlot, beltSlots, clearInventory, hideInventory, mainSlots, wearSlots } from './ControlPanel.Inventory'
 import { refreshPermissions } from './ControlPanel.Tabs.Permissions.vue'
-import { resetEntities } from './ControlPanel.Entities'
+import { loadingProfile, loadingToggle } from './ControlPanel.Profiler'
+import { pluginThinking } from './ControlPanel.Plugins'
 
 export const selectedServer = ref<Server | null>(null)
 export const selectedSubTab = shallowRef<number>(0)
@@ -32,6 +38,18 @@ enum LogType {
   Report = 4,
   ClientPerf = 5,
   Subscription = 6,
+}
+
+export const md5 = (s: string) => String(md5FirstUint32LE(s))
+
+export function md5FirstUint32LE(str: string): number {
+  const wa = MD5(str)
+  const w0 = wa.words[0] | 0
+  const b0 = (w0 >>> 24) & 0xff
+  const b1 = (w0 >>> 16) & 0xff
+  const b2 = (w0 >>> 8) & 0xff
+  const b3 = w0 & 0xff
+  return (b0 | (b1 << 8) | (b2 << 16) | (b3 << 24)) >>> 0
 }
 
 export async function fetchGeolocation(ip: string) {
@@ -118,6 +136,9 @@ export function selectServer(server: Server) {
   resetEntities()
   tryFocusLogs(true)
   tryFocusChat(true)
+
+  server.sendCall('ProfilesState')
+  server.sendCall('ProfilesList')
 }
 
 export function findServer(address: string): Server {
@@ -133,11 +154,10 @@ export function selectSubTab(index: number) {
   localStorage.setItem('rcon-subtab', index.toString())
   save()
 
-  switch(index) {
+  switch (index) {
     case 0:
       tryFocusLogs(true)
       break
-
     case 1:
       tryFocusChat(true)
       break
@@ -153,8 +173,15 @@ function exportToJson(): string {
       case 'ServerInfo':
       case 'CarbonInfo':
       case 'PlayerInfo':
+      case 'SleeperInfo':
+      case 'PluginsInfo':
       case 'HeaderImage':
       case 'Description':
+      case 'CommandCallbacks':
+      case 'RpcCallbacks':
+      case 'RpcPermissions':
+      case 'ProfileFiles':
+      case 'ProfileState':
       case 'Logs':
       case 'Chat':
       case 'Rpcs':
@@ -180,6 +207,19 @@ export function importSave() {
   }
 }
 
+export function shiftServer(index: number, before: boolean) {
+  const list = servers.value
+  if (!list || index < 0 || index >= list.length) {
+    return
+  }
+  const newIndex = before ? index - 1 : index + 1
+  if (newIndex < 0 || newIndex >= list.length) {
+    return
+  }
+
+  [list[index], list[newIndex]] = [list[newIndex], list[index]]
+}
+
 function importFromJson(data: string) {
   try {
     if (data) {
@@ -189,9 +229,15 @@ function importFromJson(data: string) {
         }
         const localServer = createServer(server.Address, server.Password)
         localServer.AutoConnect = server.AutoConnect
+        localServer.WideScreen = server.WideScreen
+        localServer.Bridge = server.Bridge
         localServer.Secure = server.Secure
+        localServer.ChatUsername = server.ChatUsername == null ? 'SERVER' : server.ChatUsername
+        localServer.ChatUserId = server.ChatUserId
+        localServer.ChatColor = server.ChatColor == null ? '#af5' : server.ChatColor
         localServer.CachedHostname = server.CachedHostname
         localServer.CommandHistory = server.CommandHistory ?? []
+        localServer.ProfileFlags = server.ProfileFlags ?? new ProfileFlags()
         addServer(localServer)
       })
 
@@ -238,7 +284,9 @@ export class Server {
   Chat: string[] = []
   CommandHistory: string[] = []
   AutoConnect = false
+  WideScreen = false
   Secure = false
+  Bridge = false
   CachedHostname = ''
   IsConnected = false
   IsConnecting = false
@@ -246,9 +294,73 @@ export class Server {
   ServerInfo: any | null = null
   CarbonInfo: any | null = null
   PlayerInfo: any | null = null
+  SleeperInfo: any | null = null
+  PluginsInfo: any | null = null
   HeaderImage = ''
   Description = ''
-  Rpcs: Record<number, (...args: unknown[]) => void> = {}
+  ProfileFiles: ProfileFile[] = []
+  ProfileState = new ProfileState()
+  ProfileFlags = new ProfileFlags()
+  CommandCallbacks: Record<number, (...args: unknown[]) => void> = {}
+  RpcCallbacks: Record<number, (...args: unknown[]) => void> = {}
+  RpcPermissions: any | null = []
+  ChatUsername = 'SERVER'
+  ChatUserId = '0'
+  ChatColor = '#af5'
+
+  formatDuration(seconds: number) {
+    const hrs = Math.floor(seconds / 3600)
+    const mins = Math.floor((seconds % 3600) / 60)
+    const secs = Math.floor(seconds % 60)
+
+    const parts = []
+    if (hrs > 0) parts.push(`${hrs}h`)
+    if (mins > 0) parts.push(`${mins}m`)
+    if (secs > 0 || parts.length === 0) parts.push(`${secs}s`)
+
+    return parts.join(' ')
+  }
+
+  formatBytes(bytes: number, decimals = 2) {
+    if (bytes === 0) return '0 B'
+
+    const k = 1024
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    const value = bytes / Math.pow(k, i)
+
+    return `${parseFloat(value.toFixed(decimals))} ${sizes[i]}`
+  }
+
+  getDescription() {
+    return this.Description.replaceAll('\\n', '<br>')
+  }
+
+  getAllPlayers() : any[] {
+    return this.PlayerInfo?.concat(this.SleeperInfo)
+  }
+
+  getPlayer(steamId: bigint) {
+    for (let i = 0; i < this.PlayerInfo.length; i++) {
+      const player = this.PlayerInfo[i];
+      if(player.SteamID == steamId) {
+        return player
+      }
+    }
+    for (let i = 0; i < this.SleeperInfo.length; i++) {
+      const player = this.SleeperInfo[i];
+      if(player.SteamID == steamId) {
+        return player
+      }
+    }
+  }
+
+  hasPermission(permission: string) {
+    if (permission in this.RpcPermissions) {
+      return this.RpcPermissions[permission]
+    }
+    return true
+  }
 
   clear() {
     this.IsConnecting = false
@@ -259,6 +371,10 @@ export class Server {
     this.HeaderImage = ''
     this.Description = ''
     this.Socket = null
+    this.CommandCallbacks = {}
+    this.RpcCallbacks = {}
+    this.RpcPermissions = {}
+    this.ProfileFiles = []
 
     if (selectedServer.value == this) {
       hideInventory()
@@ -267,64 +383,275 @@ export class Server {
     }
   }
 
+  registerCommands() {
+    this.CommandCallbacks = {}
+  }
+
   registerRpcs() {
-    this.Rpcs = {}
-
-    // MoveInventoryItem
-    this.Rpcs[3553623853] = () => {}
-
-    // SendPlayerInventory
-    this.Rpcs[1739174796] = (data: any) => {
+    this.setRpc('ServerInfo', (read) => {
+      this.ServerInfo = {
+        Hostname: read.string(),
+        MaxPlayers: read.int32(),
+        Players: read.int32(),
+        Queued: read.int32(),
+        Joining: read.int32(),
+        ReservedSlots: read.int32(),
+        EntityCount: read.int32(),
+        GameTime: read.string(),
+        Uptime: read.int32(),
+        Map: read.string(),
+        Framerate: read.float(),
+        Memory: read.int32(),
+        MemoryUsageSystem: read.int32(),
+        Collections: read.int32(),
+        NetworkIn: read.int32(),
+        NetworkOut: read.int32(),
+        Restarting: read.bool(),
+        SaveCreatedTime: read.string(),
+        Version: read.int32(),
+        Protocol: read.string(),
+      } as const
+      this.CachedHostname = this.ServerInfo.Hostname
+    })
+    this.setRpc('CarbonInfo', (read) => {
+      this.CarbonInfo = {
+        Message: read.string(),
+      }
+    })
+    this.setRpc('ServerDescription', (read) => {
+      this.Description = read.string()
+    })
+    this.setRpc('ServerHeaderImage', (read) => {
+      this.HeaderImage = read.string()
+    })
+    this.setRpc('SendPlayerInventory', (read) => {
       clearInventory()
-      try {
-        activeSlot.value = data.Value.ActiveSlot
-        data.Value.Main.forEach((item: any) => {
-          if (item.Position == -1 || item.Position >= mainSlots.value.length) {
-            return
-          }
-          const slot = mainSlots.value[item.Position]
-          slot.ShortName = item.ShortName
-          slot.ItemId = item.ItemId
-          slot.Amount = item.Amount
-          slot.Condition = item.Condition
-          slot.MaxCondition = item.MaxCondition
-          slot.ConditionNormalized = item.ConditionNormalized
-          slot.HasCondition = item.HasCondition
+      activeSlot.value = read.int32()
+      this.readInventory(read, mainSlots)
+      this.readInventory(read, beltSlots)
+      this.readInventory(read, wearSlots)
+    })
+    this.setRpc('Players', (read) => {
+      this.PlayerInfo = []
+      this.SleeperInfo = []
+      const playerCount = read.int32()
+      for (let i = 0; i < playerCount; i++) {
+        this.PlayerInfo.push(this.readPlayer(read))
+      }
+      this.PlayerInfo?.forEach((player: any) => {
+        if (!(player.Address in geoFlagCache.value)) {
+          fetchGeolocation(player.Address)
+        }
+      })
+      const sleeperCount = read.int32()
+      for (let i = 0; i < sleeperCount; i++) {
+        this.SleeperInfo.push(this.readPlayer(read))
+      }
+    })
+    this.setRpc('ConsoleTail', (read) => {
+      const logs = []
+      const logCount = read.int32()
+      for (let i = 0; i < logCount; i++) {
+        logs.push({
+          Message: read.string(),
+          Type: read.string(),
+          Time: read.int32(),
         })
-        data.Value.Belt.forEach((item: any) => {
-          if (item.Position == -1 || item.Position >= beltSlots.value.length) {
-            return
-          }
-          const slot = beltSlots.value[item.Position]
-          slot.ShortName = item.ShortName
-          slot.ItemId = item.ItemId
-          slot.Amount = item.Amount
-          slot.Condition = item.Condition
-          slot.MaxCondition = item.MaxCondition
-          slot.ConditionNormalized = item.ConditionNormalized
-          slot.HasCondition = item.HasCondition
+      }
+      logs.forEach((log: any) => {
+        this.appendLog(log.Message as string)
+      })
+      tryFocusLogs(true)
+    })
+    this.setRpc('ConsoleLog', (read) => {
+      const log = {
+        Message: read.string(),
+        Type: read.string(),
+        Time: read.int32(),
+      }
+      this.appendLog(log.Message as string)
+      tryFocusLogs()
+    })
+    this.setRpc('ChatTail', (read) => {
+      const messages = []
+      const messageCount = read.int32()
+      for (let i = 0; i < messageCount; i++) {
+        messages.push({
+          Channel: read.int32(),
+          Message: read.string(),
+          UserId: read.string(),
+          Username: read.string(),
+          Color: read.string(),
+          Time: read.int32()
         })
-        data.Value.Wear.forEach((item: any) => {
-          if (item.Position == -1 || item.Position >= wearSlots.value.length) {
-            return
-          }
-          const slot = wearSlots.value[item.Position]
-          slot.ShortName = item.ShortName
-          slot.ItemId = item.ItemId
-          slot.Amount = item.Amount
-          slot.Condition = item.Condition
-          slot.MaxCondition = item.MaxCondition
-          slot.ConditionNormalized = item.ConditionNormalized
-          slot.HasCondition = item.HasCondition
+      }
+      messages.forEach((log: any) => {
+        this.appendChat(log)
+      })
+      tryFocusChat(true)
+    })
+    this.setRpc('ChatLog', (read) => {
+      const message = {
+          Channel: read.int32(),
+          Message: read.string(),
+          UserId: read.string(),
+          Username: read.string(),
+          Color: read.string(),
+          Time: read.int32()
+      }
+      this.appendChat(message)
+      tryFocusChat()
+    })
+    this.setRpc('AccountPermissions', (read) => {
+      this.RpcPermissions['console_view'] = read.bool()
+      this.RpcPermissions['console_input'] = read.bool()
+      this.RpcPermissions['chat_view'] = read.bool()
+      this.RpcPermissions['chat_input'] = read.bool()
+      this.RpcPermissions['players_view'] = read.bool()
+      this.RpcPermissions['players_ip'] = read.bool()
+      this.RpcPermissions['players_inventory'] = read.bool()
+      this.RpcPermissions['entities_view'] = read.bool()
+      this.RpcPermissions['entities_edit'] = read.bool()
+      this.RpcPermissions['permissions_view'] = read.bool()
+      this.RpcPermissions['permissions_edit'] = read.bool()
+      this.RpcPermissions['profiler_view'] = read.bool()
+      this.RpcPermissions['profiler_load'] = read.bool()
+      this.RpcPermissions['profiler_edit'] = read.bool()
+      this.RpcPermissions['plugins_view'] = read.bool()
+      this.RpcPermissions['plugins_edit'] = read.bool()
+    })
+    this.setRpc('ProfilesList', (read) => {
+      ClearProfileFiles()
+      const fileCount = read.int32()
+      for (let i = 0; i < fileCount; i++) {
+        const file = new ProfileFile()
+        file.FilePath = read.string()
+        file.FileName = read.string()
+        file.Size = read.int64()
+        file.LastWriteTime = read.int32()
+        file.IsValid = read.bool()
+        file.Protocol = read.int32()
+        file.Duration = read.float()
+        file.IsCompared = read.bool()
+        this.ProfileFiles.push(file)
+      }
+    })
+    this.setRpc('ProfilesLoad', (read) => {
+      const name = read.string()
+      const data = read.bytes(read.int32())
+      localStorage.setItem('currentProfileName', `${name} — ${this.CachedHostname}`)
+      localStorage.setItem('currentProfile', u8ToBase64(data))
+      window.open('/tools/profiler-panel', '_blank', 'noopener,noreferrer');
+      loadingProfile.value = null
+    })
+    this.setRpc('ProfilesState', (read) => {
+      this.ProfileState.IsProfiling = read.bool()
+      this.ProfileState.IsEnabled = read.bool()
+      this.ProfileState.HasCrashed = read.bool()
+      this.ProfileState.Duration = read.float()
+      loadingToggle.value = null
+    })
+    this.setRpc('Plugins', (read) => {
+      this.PluginsInfo = []
+      const pluginsLength = read.int32()
+      for (let i = 0; i < pluginsLength; i++) {
+        this.PluginsInfo.push({
+          Name: read.string(),
+          FileName: read.string(),
+          Version: read.string(),
+          Author: read.string(),
+          Description: read.string()
         })
-      } catch (e) {
-        console.error(e)
+      }
+      const unloadedPluginsLength = read.int32()
+      for (let i = 0; i < unloadedPluginsLength; i++) {
+        this.PluginsInfo.push({
+          Name: read.string(),
+          Version: "UNLOADED",
+          Author: '',
+          IsUnloaded: true
+        })
+      }
+      const failedPluginsLength = read.int32()
+      for (let i = 0; i < failedPluginsLength; i++) {
+        const plugin = {
+          Name: read.string(),
+          Version: "FAILED"
+        }
+        const errorLength = read.int32()
+        plugin.Errors = []
+        plugin.Description = ''
+        for (let e = 0; e < errorLength; e++) {
+          const error = {
+            Message: read.string(),
+            Number: read.string(),
+            Column: read.int32(),
+            Line: read.int32()
+          }
+          plugin.Errors.push(error)
+          plugin.Description += ` ${error.Message} @ line ${error.Line} (${error.Number})<br>`
+        }   
+        this.PluginsInfo.push(plugin)
+      }
+      pluginThinking.value = '' 
+    })
+  }
+
+  readPlayer(read: any) {
+    const player = {
+      SteamID: read.uint64(),
+      OwnerSteamID: read.uint64(),
+      DisplayName: read.string(),
+      Ping: read.int32(),
+      Address: read.string(),
+      EntityId: read.uint64(),
+      ConnectedSeconds: read.int32(),
+      ViolationLevel: read.float(),
+      CurrentLevel: read.int32(),
+      UnspentXp: read.int32(),
+      Health: read.float()
+    }
+    player.HasTeam = read.bool()
+    if(player.HasTeam) {
+      player.Team = []
+      player.TeamLeader = read.uint64()
+      const teamLength = read.int32()
+      for (let i = 0; i < teamLength; i++) {
+        player.Team.push(read.uint64())
       }
     }
+    return player
+  }
 
-    // TestCall
-    this.Rpcs[951948318] = (data) => {
-      console.log(data)
+  readInventory(read: any, inventory: any) {
+    const count = read.int32()
+    for (let i = 0; i < count; i++) {
+      const item = this.readItem(read)
+      const position = item.Position
+      if (position == -1 || position >= inventory.value.length) {
+        continue
+      }
+      const slot = inventory.value[position]
+      slot.ItemId = item.ItemId
+      slot.ShortName = item.ShortName
+      slot.Amount = item.Amount
+      slot.MaxCondition = item.MaxCondition
+      slot.Condition = item.Condition
+      slot.ConditionNormalized = item.ConditionNormalized
+      slot.HasCondition = item.HasCondition
+    }
+  }
+
+  readItem(read: BinaryReader) {
+    return {
+      ItemId: read.int32(),
+      ShortName: read.string(),
+      Amount: read.int32(),
+      Position: read.int32(),
+      MaxCondition: read.float(),
+      Condition: read.float(),
+      ConditionNormalized: read.float(),
+      HasCondition: read.bool(),
     }
   }
 
@@ -345,21 +672,34 @@ export class Server {
     }
 
     this.Socket = new WebSocket((this.Secure ? 'wss' : 'ws') + '://' + this.Address + '/' + this.Password)
+    if (this.Bridge) {
+      this.Socket.binaryType = 'arraybuffer'
+    }
     this.IsConnecting = true
 
     this.Socket.onopen = () => {
       this.IsConnecting = false
       this.IsConnected = true
 
+      this.registerCommands()
       this.registerRpcs()
-      this.sendCommand('serverinfo', 2)
-      this.sendCommand('playerlist', 6)
-      this.sendCommand('console.tail', 7)
-      this.sendCommand('chat.tail', 8)
-      this.sendCommand('c.version', 3)
-      this.sendCommand('server.headerimage', 4)
-      this.sendCommand('server.description', 5)
-      this.sendRpc(951948318, 'Ping sentence!')
+      if (this.Bridge) {
+        this.sendCall('ServerInfo')
+        this.sendCall('CarbonInfo')
+        this.sendCall('ServerDescription')
+        this.sendCall('ServerHeaderImage')
+        this.sendCall('Players')
+        this.sendCall('Plugins')
+        this.sendCall('ConsoleTail', 200)
+        this.sendCall('ChatTail', 200)
+        this.sendCall('AccountPermissions')
+      } else {
+        this.sendCommand('serverinfo', 2)
+        this.sendCommand('console.tail', 7)
+        this.sendCommand('c.version', 3)
+        this.sendCommand('server.headerimage', 4)
+        this.sendCommand('server.description', 5)
+      }
     }
     this.Socket.onclose = () => {
       this.clear()
@@ -368,44 +708,57 @@ export class Server {
       this.UserConnected = false
     }
     this.Socket.onmessage = (event) => {
-      const resp: CommandResponse = JSON.parse(event.data)
-
-      try {
-        let isJson = false
-        let jsonData = null
-
+      if (this.Bridge) {
+        let bytes: Uint8Array
+        if (event.data instanceof ArrayBuffer) {
+          bytes = new Uint8Array(event.data)
+        }
+        const read = new BinaryReader(event.data)
+        switch (read.int32()) {
+          case 0:
+            if (this.onIdentifiedRpc(read)) {
+              return
+            }
+            break
+        }
+      } else {
+        const resp: CommandResponse = JSON.parse(event.data)
         try {
-          jsonData = JSON.parse(resp.Message)
-          isJson = true
+          let isJson = false
+          let jsonData = null
+
+          try {
+            jsonData = JSON.parse(resp.Message)
+            isJson = true
+          } catch {
+            /* empty */
+          }
+
+          if (this.onIdentifiedCommand(resp.Identifier, jsonData ?? resp)) {
+            return
+          }
         } catch {
           /* empty */
         }
 
-        if (this.onIdentifiedCommand(resp.Identifier, jsonData ?? resp)) {
+        const match = resp.Message.match(/^\[CHAT\]\s+(.+?)\[(\d+)\]\s+:\s+(.+)$/)
+        if (match) {
+          this.appendChat({
+            Username: match[1],
+            UserId: match[2],
+            Message: match[3],
+          })
           return
         }
-      } catch {
-        /* empty */
-      }
 
-      const match = resp.Message.match(/^\[CHAT\]\s+(.+?)\[(\d+)\]\s+:\s+(.+)$/)
-      if(match) {
-        this.appendChat({
-          Username: match[1],
-          UserId: match[2],
-          Message: match[3]
-        })
-        return
+        this.appendLog(resp.Message)
+        tryFocusLogs()
       }
-
-      this.appendLog(resp.Message)
-      tryFocusLogs()
     }
   }
 
   fetchInventory(playerId: number) {
-    // SendPlayerInventory
-    this.sendRpc(1739174796, playerId)
+    this.sendCall('SendPlayerInventory', playerId)
   }
 
   sendCommand(input: string, id: number = 1) {
@@ -413,12 +766,16 @@ export class Server {
       return
     }
 
-    if (this.Socket && this.IsConnected) {
-      const packet: CommandSend = {
-        Message: input,
-        Identifier: id,
+    if (this.Bridge) {
+      this.sendCall('ConsoleInput', input)
+    } else {
+      if (this.Socket && this.IsConnected) {
+        const packet: CommandSend = {
+          Message: input,
+          Identifier: id,
+        }
+        this.Socket.send(JSON.stringify(packet))
       }
-      this.Socket.send(JSON.stringify(packet))
     }
 
     if (input == command.value) {
@@ -435,19 +792,71 @@ export class Server {
   }
 
   sendMessage(input: string, clearMessage: boolean = true) {
-    this.sendCommand(`say ${input}`, 1)
-    this.Chat.push(`SERVER: ${input}`)
-    if(clearMessage) {
+    if(input.trim() == '') {
+      return
+    }
+    if(this.Bridge) {
+      this.sendCall('ChatInput', this.ChatUsername, input, this.ChatColor, this.ChatUserId)
+    } else { 
+      this.sendCommand(`say ${input}`, 1)
+    }
+    this.appendChat({
+      Message: input,
+      Username: this.ChatUsername,
+      UserId: this.ChatUserId,
+      Color: this.ChatColor,
+      Channel: 0,
+      Time: Math.floor(Date.now() / 1000)
+    })
+    if (clearMessage) {
       message.value = ''
     }
   }
 
-  sendRpc(id: number, ...args: unknown[]) {
-    for (let i = 0; i < args.length; i++) {
-      const arg = args[i]
-      args[i] = `"${arg}"`
+  getId(id: string): number {
+    const idPrefix = this.Bridge ? 'RPC' : 'CMD'
+    return Number.parseInt(md5(`${idPrefix}_${id}`))
+  }
+
+  setCommand(id: string, callback: (...args: unknown[]) => void) {
+    this.CommandCallbacks[this.getId(id)] = callback
+  }
+
+  setRpc(id: string, callback: (...args: unknown[]) => void) {
+    this.RpcCallbacks[this.getId(id)] = callback
+  }
+
+  sendCall(id: string, ...args: unknown[]) {
+    if (this.Bridge) {
+      const write = new BinaryWriter()
+      write.int32(0)
+      write.uint32(this.getId(id))
+      for (let i = 0; i < args.length; i++) {
+        const value = args[i]
+        const type = typeof value
+        switch (type) {
+          case 'bigint':
+            write.uint64(value as bigint)
+            break
+          case 'number':
+            write.int32(value as number)
+            break
+          case 'string':
+            write.string(value as string)
+            break
+          case 'boolean':
+            write.bool(value as boolean)
+            break
+        }
+      }
+      this.Socket?.send(write.toArrayBuffer())
+    } else {
+      for (let i = 0; i < args.length; i++) {
+        const arg = args[i]
+        args[i] = `"${arg}"`
+      }
+      this.sendCommand(`c.webpanel.cmd ${this.getId(id)} ${args.join(' ')}`, 100)
     }
-    this.sendCommand(`c.webrcon.rpc ${id} ${args.join(' ')}`, 100)
   }
 
   onIdentifiedCommand(id: number, data: any) {
@@ -492,10 +901,10 @@ export class Server {
         this.Description = data.Message.toString().split(' ').slice(1, 1000).join(' ').replace(/['"]/g, '')
         break
       case 100: {
-        // c.webrcon.rpc
-        const rpcId = Number(data.RpcId)
-        if (rpcId in this.Rpcs) {
-          this.Rpcs[rpcId](data)
+        // c.webpanel.cmd
+        const rpcId = Number(data.rpcId)
+        if (rpcId in this.CommandCallbacks) {
+          this.CommandCallbacks[rpcId](data)
         }
         break
       }
@@ -504,8 +913,26 @@ export class Server {
     return true
   }
 
+  onIdentifiedRpc(read: BinaryReader): boolean {
+    const rpcId = read.uint32()
+    if (rpcId in this.RpcCallbacks) {
+      this.RpcCallbacks[rpcId](read)
+    }
+    return true
+  }
+
   toggleAutoConnect() {
     this.AutoConnect = !this.AutoConnect
+    save()
+  }
+
+  toggleWideScreen() {
+    this.WideScreen = !this.WideScreen
+    save()
+  }
+
+  toggleBridge() {
+    this.Bridge = !this.Bridge
     save()
   }
 
@@ -519,7 +946,33 @@ export class Server {
   }
 
   appendChat(message: any) {
-    this.Chat.push(`<a style="color: ${message.Color}" href="http://steamcommunity.com/profiles/${message.UserId}" target="_blank">${message.Username}</a>: ${message.Message}`)
+    let channel = ""
+    switch (message.Channel) {
+      case 0:
+        channel = "Global"
+        break
+      case 1:
+        channel = "Team"
+        break
+      case 2:
+        channel = "Server"
+        break
+      case 3:
+        channel = "Cards"
+        break
+      case 4:
+        channel = "Local"
+        break
+      case 5:
+        channel = "Clan"
+        break
+      case 6:
+        channel = "ExternalDM"
+        break
+    }
+    channel = channel.toUpperCase()
+
+    this.Chat.push( `<span class="text-zinc-500 text-xs">${new Date(message.Time * 1000).toLocaleTimeString()}\t ${channel} \t</span> <a style="color: ${message.Color}" href="http://steamcommunity.com/profiles/${message.UserId}" target="_blank">${message.Username}</a>: ${message.Message}`)
   }
 
   selectHistory(up: boolean) {
@@ -553,4 +1006,20 @@ export class Server {
       save()
     }
   }
+}
+
+export class ProfileState {
+  IsProfiling: boolean = false
+  IsEnabled: boolean = false
+  HasCrashed: boolean = false
+  Duration = ref<number>(0)
+}
+
+export class ProfileFlags {
+  CallMemory: boolean = true
+  AdvancedMemory: boolean = true
+  Timings: boolean = true
+  Calls: boolean = true
+  GCEvents: boolean = true
+  StackWalkAllocations: boolean = true
 }

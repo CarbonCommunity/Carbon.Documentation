@@ -29,8 +29,9 @@ const references = [
 
 const tools = [
   { text: 'Control Panel (RCon)', link: '/tools/control-panel/' },
+  { text: 'Profiler Panel', link: '/tools/profiler-panel/' },
   { text: 'Server Browser', link: '/tools/server-browser/' },
-  { text: 'Changelog Generator', link: '/tools/changelog-generator/' },
+  { text: 'Changelog Generator', link: '/tools/changelog-generator/' }
 ]
 
 const siteDescription = 'A fully up-to-date documentation of all things: Carbon, Rust references and somewhat Oxide.'

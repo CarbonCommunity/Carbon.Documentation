@@ -20,7 +20,7 @@ collectionid: 1
 ---
 
 <NewsSectionTitle text="Introduction" author="bubbafett5611"/>
-<NewsSection>
+<NewsSection marginless>
 
 So, you decided you want to make your own plugin. Welcome! We can help you get started, and build a foundation that will get your feet under you, for now at least.
 
@@ -34,7 +34,7 @@ This tutorial assumes you know the following:
 </NewsSection>
 
 <NewsSectionSubtitle text="Let's get started!"/>
-<NewsSection>
+<NewsSection marginless>
 
 Alright, let's get some things out of the way first. You need to setup a development environment, no matter if you are making an Oxide or Carbon plugin you can follow the instructions on [this page](https://carbonmod.gg/devs/creating-your-project) since is compatible with Oxide. You can also checkout this [Oxide Doc](https://docs.oxidemod.com/guides/developers/development-environment) for Oxide specific information.
 
@@ -76,7 +76,7 @@ public class MyFirstPlugin : CarbonPlugin
 At this point, you have the minimum required to be considered a plugin by both frameworks. This, however, is useless in it's current state. Let's fix that.
 </NewsSection>
 <NewsSectionSubtitle text="Do a flip!"/>
-<NewsSection>
+<NewsSection marginless>
 
 So at this point, we have namespace created for our plugin, the metadata, and the class all setup but the class is empty. We need to make it do something, so I am going to make our plugin send a message when the plugin loads.
 

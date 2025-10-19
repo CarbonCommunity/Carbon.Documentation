@@ -1,6 +1,7 @@
 {
   "devDependencies": {
     "@eslint/js": "^9.27.0",
+    "@types/crypto-js": "^4.2.2",
     "@types/node": "^22.14.0",
     "autoprefixer": "^9.8.8",
     "eslint": "^9.27.0",
@@ -24,9 +25,11 @@
   },
   "dependencies": {
     "@vueuse/core": "^13.0.0",
-    "lucide-vue-next": "^0.525.0",
+    "crypto-js": "^4.2.0",
+    "lucide-vue-next": "^0.544.0",
     "markdown-it": "^14.1.0",
     "minisearch": "^7.1.2",
+    "pako": "^2.1.0",
     "vue-draggable-plus": "^0.6.0"
   },
   "type": "module"

@@ -1,7 +1,22 @@
 <script lang="ts" setup>
-import { ArrowUpFromDot, CodeXml, Dot, ExternalLink, HardDriveDownload, Plus, RotateCcw, Save, Shield, Trash2, Wifi, X } from 'lucide-vue-next'
+import {
+  Antenna,
+  ArrowLeft,
+  ArrowRight,
+  CodeXml,
+  Dot,
+  Expand,
+  ExternalLink,
+  HardDriveDownload,
+  Plus,
+  RotateCcw,
+  Save,
+  Shield,
+  Wifi,
+  X
+} from 'lucide-vue-next'
 import { onMounted, onUnmounted } from 'vue'
-import { Slot, activeInventory, activeSlot, beltSlots, handleDrag, handleDrop, hideInventory, mainSlots, toolSlots, wearSlots } from './ControlPanel.Inventory'
+import { Slot, beltSlots, mainSlots, toolSlots, wearSlots } from './ControlPanel.Inventory'
 import {
   Server,
   addServer,
@@ -16,41 +31,60 @@ import {
   selectedServer,
   selectedSubTab,
   servers,
+  shiftServer,
 } from './ControlPanel.SaveLoad'
-import { selectedEntity, stopEditingEntity } from './ControlPanel.Entities'
-import ConsoleTab from './ControlPanel.Tabs.Console.vue'
 import ChatTab from './ControlPanel.Tabs.Chat.vue'
+import ConsoleTab from './ControlPanel.Tabs.Console.vue'
+import EntitiesTab from './ControlPanel.Tabs.Entities.vue'
 import PermissionsTab from './ControlPanel.Tabs.Permissions.vue'
 import PlayersTab from './ControlPanel.Tabs.Players.vue'
-import EntitiesTab from './ControlPanel.Tabs.Entities.vue'
+import ProfilerTab from './ControlPanel.Tabs.Profiler.vue'
+import PluginsTab from './ControlPanel.Tabs.Plugins.vue'
+import InformationTab from './ControlPanel.Tabs.Information.vue'
 
 let timerSwitch: ReturnType<typeof setTimeout> = null!
 
 const subTabs = [
   {
     Name: 'Console',
-    Description: 'An RCon based console displaying all log output sent by the server and allows sending commands to the server.'
+    Description: 'An RCon based console displaying all log output sent by the server and allows sending commands to the server.',
+    IsDisabled: () => !selectedServer.value?.hasPermission('console_view')
   },
   {
     Name: 'Chat',
-    Description: 'All the chatter going on the server.'
+    Description: 'All the chatter going on the server.',
+    IsDisabled: () => !selectedServer.value?.hasPermission('chat_view')
   },
   {
     Name: 'Information',
-    Description: 'Useful info about the server activity and various other options.'
+    Description: 'Useful info about the server activity and various other options.',
   },
   {
     Name: 'Players',
     Description: 'A list of players or something like that.',
     ExtraData: (selectedServer: Server) => `(${selectedServer?.PlayerInfo?.length})`,
+    IsDisabled: () => !selectedServer.value?.Bridge || !selectedServer.value?.hasPermission('players_view')
   },
   {
     Name: 'Permissions',
-    Description: "Good ol' permissions."
+    Description: "Good ol' permissions.",
+    IsDisabled: () => !selectedServer.value?.Bridge || !selectedServer.value?.hasPermission('permissions_view')
   },
   {
     Name: 'Entities',
-    Description: "Search and inspect any entities on the server."
+    Description: 'Search and inspect any entities on the server.',
+    IsDisabled: () => !selectedServer.value?.Bridge || !selectedServer.value?.hasPermission('entities_view')
+  },
+  {
+    Name: 'Profiler',
+    Description: 'Investigate and identify server issues.',
+    IsDisabled: () => !selectedServer.value?.Bridge || !selectedServer.value?.hasPermission('profiler_view')
+  },
+  {
+    Name: 'Plugins',
+    Description: 'Manage and load all available plugins on your server.',
+    ExtraData: (selectedServer: Server) => `(${selectedServer?.PluginsInfo?.length})`,
+    IsDisabled: () => !selectedServer.value?.Bridge || !selectedServer.value?.hasPermission('plugins_view')
   }
 ]
 
@@ -65,9 +99,13 @@ onMounted(() => {
         server.connect()
         return
       }
-      server.sendCommand('serverinfo', 2)
-      server.sendCommand('playerlist', 6)
-      server.sendCommand('server.description', 5)
+      if (!server.Bridge) {
+        server.sendCommand('serverinfo', 2)
+        server.sendCommand('playerlist', 6)
+      } else {
+        server.sendCall('ServerInfo')
+        server.sendCall('Players')
+      }
     })
   }
 
@@ -112,23 +150,29 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="mx-auto space-y-0 px-4 py-8 md:container lg:px-6 xl:px-8 2xl:px-20">
+  <div :class="['mx-auto space-y-0 px-4 py-8', !selectedServer?.WideScreen ? 'md:container lg:px-6 xl:px-8 2xl:px-20' : '']">
     <div class="r-list">
-      <button v-for="server in servers" :key="server.Address" :class="['r-button', { toggled: server == selectedServer }]" @click="selectServer(server)">
-        <Dot
-          :size="45"
-          :style="'margin: -10px; color: ' + (server.IsConnecting ? 'yellow' : server.IsConnected ? 'green' : 'red') + '; filter: blur(1.5px);'"
-        />
-        <div class="grid">
-          <p>
-            <strong>{{ !server.CachedHostname ? 'Unknown' : server.CachedHostname }}</strong>
-          </p>
-          <p style="font-size: 12px; color: var(--vp-badge-info-text)">{{ server.Address }}</p>
-        </div>
-      </button>
+      <div class="flex" v-for="server in servers" :key="server.Address">
+        <button :class="['r-button', { toggled: server == selectedServer }]" @click="selectServer(server)">
+          <Dot
+            :size="45"
+            :style="'margin: -10px; color: ' + (server.IsConnecting ? 'yellow' : server.IsConnected ? 'green' : 'red') + '; filter: blur(1.5px);'"
+          />
+          <div class="grid">
+            <p>
+              <strong>{{ !server.CachedHostname ? 'Unknown' : server.CachedHostname }}</strong>
+            </p>
+            <p style="font-size: 12px; color: var(--vp-badge-info-text)">{{ server.Address }}</p>
+          </div>
+        </button>
+      </div>
       <button class="r-button" @click="addServer(createServer('', ''), true)">
         <Plus />
       </button>
+      <div class="flex flex-col text-xs" v-if="selectedServer">
+        <button class="r-button" @click="shiftServer(servers.findIndex((s) => s == selectedServer), true)"><ArrowLeft :size="18" /></button>
+        <button class="r-button" @click="shiftServer(servers.findIndex((s) => s == selectedServer), false)"><ArrowRight :size="18" /></button>
+      </div>
       <div class="grid gap-y-0 text-xs">
         <button class="r-button" @click="importSave()"><HardDriveDownload :size="14" /> Import Clipboard</button>
         <button class="r-button" @click="exportSave()"><Save :size="14" /> Export Clipboard</button>
@@ -138,7 +182,7 @@ onUnmounted(() => {
     <div v-if="selectedServer" class="r-settings" style="margin-top: 15px">
       <div class="r-settings-input-group">
         <span class="r-settings-input-label" style="user-select: none">Address</span>
-        <input v-model="selectedServer.Address" type="text" class="r-settings-custom-input" placeholder="localhost:28507" />
+        <input v-model="selectedServer.Address" type="text" class="r-settings-custom-input placeholder:text-[#8D8D8D]" placeholder="localhost:28507" />
       </div>
       <div class="r-settings-input-group">
         <span class="r-settings-input-label" style="user-select: none">Password</span>
@@ -152,6 +196,15 @@ onUnmounted(() => {
           :style="'color: ' + (!selectedServer?.IsConnected ? 'var(--docsearch-footer-background);' : 'var(--c-carbon-3);') + 'font-size: small;'"
         >
           <Wifi :size="20" /> {{ selectedServer?.IsConnected ? 'Disconnect' : 'Connect' }}
+        </button>
+        <button
+          class="r-button"
+          :disabled="selectedServer.IsConnecting || selectedServer.IsConnected"
+          @click="selectedServer.toggleBridge()"
+          :class="['r-button', { toggled: selectedServer.Bridge }]"
+          style="color: var(--docsearch-footer-background); font-size: small"
+        >
+          <Antenna :size="20" /> Bridge
         </button>
         <button class="r-button" @click="(e) => deleteServer(selectedServer, e)" style="color: var(--docsearch-footer-background); font-size: small">
           <X :size="20" /> Delete
@@ -174,16 +227,24 @@ onUnmounted(() => {
         </button>
         <a
           class="r-button"
-          href="https://github.com/CarbonCommunity/Carbon.Documentation/blob/main/docs/.vitepress/components/ControlPanel.vue"
+          href="https://github.com/CarbonCommunity/Carbon.Documentation/blob/main/docs/src/components/control-panel/ControlPanel.vue"
           target="_blank"
           style="color: var(--docsearch-footer-background); font-size: small"
         >
           <CodeXml :size="20" /> Source <ExternalLink :size="13" />
         </a>
+        <button
+          class="r-button"
+          @click="selectedServer.toggleWideScreen()"
+          :class="['r-button', { toggled: selectedServer.WideScreen }]"
+          style="color: var(--docsearch-footer-background); font-size: small"
+        >
+          <Expand :size="20" />
+        </button>
       </div>
     </div>
 
-    <div v-if="isUsingHttps()" class="r-settings text-xs" style="margin-top: 15px; opacity: 75%">
+    <div v-if="isUsingHttps()" v-show="!selectedServer?.IsConnected" class="r-settings text-xs" style="margin-top: 15px; opacity: 75%">
       <p style="text-align: center">
         You're currently using Control Panel in HTTPS mode.
         <br />
@@ -201,17 +262,17 @@ onUnmounted(() => {
           v-for="(tab, index) in subTabs"
           :key="index"
           class="r-button"
+          v-show="tab.IsDisabled == null || !tab.IsDisabled()"
           @click="selectSubTab(index)"
           :class="['r-button', { toggled: selectedSubTab == index }]"
-          style="color: var(--docsearch-footer-background); font-size: small"
-        >
-          {{ tab.Name }} {{ tab.ExtraData != null ? tab.ExtraData(selectedServer) : null }}
+          style="color: var(--docsearch-footer-background); font-size: small">
+          <span class="select-none">{{ tab.Name }} {{ tab.ExtraData != null ? tab.ExtraData(selectedServer) : null }}</span>
         </button>
       </div>
 
       <div v-for="(tab, index) in subTabs" :key="index">
         <div v-if="selectedSubTab == index" class="m-4 text-xs text-slate-500">
-          <span>{{ tab.Description }}</span>
+          <span class="select-none">{{ tab.Description }}</span>
         </div>
       </div>
 
@@ -222,50 +283,7 @@ onUnmounted(() => {
         <ChatTab />
       </div>
       <div v-else-if="selectedSubTab == 2">
-        <div class="r-settings-input-group">
-          <span class="r-settings-input-label" style="user-select: none">Host</span>
-          <p type="text" class="r-settings-custom-input transparent">{{ selectedServer.ServerInfo.Hostname }}</p>
-        </div>
-        <div class="r-settings-input-group">
-          <span class="r-settings-input-label" style="user-select: none">Description</span>
-          <div type="text" class="r-settings-custom-input transparent" style="white-space: break-spaces" v-html="selectedServer.Description"></div>
-        </div>
-        <div style="display: flex">
-          <div class="r-settings-input-group">
-            <span class="r-settings-input-label" style="user-select: none">Header</span>
-            <img v-if="selectedServer.HeaderImage" :src="selectedServer.HeaderImage" width="300" />
-            <p v-else class="text-xs text-slate-400">No header available</p>
-          </div>
-        </div>
-        <div style="display: flex">
-          <div class="r-settings-input-group">
-            <span class="r-settings-input-label" style="user-select: none">Players</span>
-            <p type="text" class="r-settings-custom-input transparent">
-              {{ selectedServer.ServerInfo.Players }} / {{ selectedServer.ServerInfo.MaxPlayers }} — {{ selectedServer.ServerInfo.Queued }} queued,
-              {{ selectedServer.ServerInfo.Joining }} joining
-            </p>
-          </div>
-          <div class="r-settings-input-group">
-            <span class="r-settings-input-label" style="user-select: none">Entities</span>
-            <p type="text" class="r-settings-custom-input transparent">{{ selectedServer.ServerInfo.EntityCount.toLocaleString() }}</p>
-          </div>
-          <div class="r-settings-input-group">
-            <span class="r-settings-input-label" style="user-select: none">Map</span>
-            <p type="text" class="r-settings-custom-input transparent">{{ selectedServer.ServerInfo.Map }}</p>
-          </div>
-          <div class="r-settings-input-group">
-            <span class="r-settings-input-label" style="user-select: none">Version</span>
-            <p type="text" class="r-settings-custom-input transparent">{{ selectedServer.ServerInfo.Protocol }}</p>
-          </div>
-        </div>
-        <div style="display: flex">
-          <div class="r-settings-input-group">
-            <span class="r-settings-input-label" style="user-select: none">Carbon</span>
-            <p type="text" class="r-settings-custom-input transparent">
-              {{ selectedServer.CarbonInfo == null ? 'Not found' : selectedServer.CarbonInfo.Message.split(' ').slice(0, 2).join(' ') }}
-            </p>
-          </div>
-        </div>
+        <InformationTab />
       </div>
       <div v-else-if="selectedSubTab == 3" style="overflow: auto">
         <PlayersTab />
@@ -275,6 +293,12 @@ onUnmounted(() => {
       </div>
       <div v-else-if="selectedSubTab == 5" style="overflow: auto">
         <EntitiesTab />
+      </div>
+      <div v-else-if="selectedSubTab == 6" style="overflow: auto">
+        <ProfilerTab />
+      </div>
+      <div v-else-if="selectedSubTab == 7" style="overflow: auto">
+        <PluginsTab />
       </div>
     </div>
     <div v-if="!selectedServer" style="color: var(--category-misc); font-size: small; text-align: center; user-select: none">
@@ -290,6 +314,7 @@ onUnmounted(() => {
   overflow: scroll;
   flex-flow: wrap;
   scrollbar-width: none;
+  min-height: 72px;
 }
 
 .r-settings {
@@ -359,6 +384,8 @@ onUnmounted(() => {
 }
 
 .r-send-button {
+  display: flex;
+  gap: 5px;
   text-decoration: auto;
   font-family: monospace;
   color: var(--category-misc);

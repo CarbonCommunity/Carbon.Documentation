@@ -9,7 +9,7 @@ directly to allow date-based inputs from players.
 
 ## Overview
 
-![Date Picker](/misc/datepicker_a.webp)
+![Date Picker](/misc/datepicker_a.webp){width=1640px height=502px}
 
 - **Class Name:** `DatePickerModule`
 - **Enabled by default:** Yes

@@ -49,14 +49,14 @@ To gain access to the Admin panel for the first time:
 
 ## Carbon Tab
 
-![Carbon Tab](/misc/admin_a.webp)
+![Carbon Tab](/misc/admin_a.webp){width=1640px height=502px}
 
 The Carbon tab comes with a variety of options and information about the live server, as well as Carbon configurations
 that be modified on the fly.
 
 ## Players Tab
 
-![Players Tab](/misc/admin_b.webp)
+![Players Tab](/misc/admin_b.webp){width=1640px height=502px}
 
 It's a simplified and straight-forward tab that displays all active and inactive players from the server. You may also
 search them using the search bar. This tab also acts as an interface to do common actions with your players that you
@@ -64,7 +64,7 @@ would expect out of an admin panel like banning, viewing inventories, healing pl
 
 ## Entities Tab
 
-![Entities Tab](/misc/admin_c.webp)
+![Entities Tab](/misc/admin_c.webp){width=1640px height=502px}
 
 Comes with a lot of filtering and searching options for specific entity type or names in the world. Inspecting entities
 will allow you to teleport to their positions, or you're teleporting them to yours, spectating or changing flags (doors
@@ -73,7 +73,7 @@ of players.
 
 ## Permissions Tab
 
-![Permissions Tab](/misc/admin_d.webp)
+![Permissions Tab](/misc/admin_d.webp){width=1640px height=502px}
 
 It's a very straight-forward and similar implementation
 to [Permissions Manager](https://codefling.com/plugins/permissions-manager) from Codefling. It allows you to grant or
@@ -82,13 +82,13 @@ inherited permissions.
 
 ## Modules Tab
 
-![Modules Tab](/misc/admin_e.webp)
+![Modules Tab](/misc/admin_e.webp){width=1640px height=502px}
 
 A generic and global place where you can modify module configs, save or load, or enable and disable modules on the fly.
 
 ## Plugins Tab
 
-![Plugins Tab](/misc/admin_f.webp)
+![Plugins Tab](/misc/admin_f.webp){width=1640px height=502px}
 
 This tab is disabled by default, but it's a tab that allows you to browse, download and edit configs straight into the
 UI of any free plugin or plugin that you own from Codefling and uMod. It comes with rich filtering features, very fast
