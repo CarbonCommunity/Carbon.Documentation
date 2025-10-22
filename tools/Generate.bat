@@ -13,7 +13,7 @@ if "%TAG%" EQU "production" (
 )
 
 if "%2" EQU "" (
-	set BRANCH=release
+	set BRANCH=public
 ) else (
 	set BRANCH=%2
 )
