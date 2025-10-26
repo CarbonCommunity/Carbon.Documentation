@@ -96,7 +96,7 @@ function refreshPlayers() {
           </div>  
         </td>
         <td class="px-3 py-2 relative text-center">
-          <div class="absolute left-0 top-0 h-full rounded-sm bg-green-600/20 transition-all duration-300" :style="{ width: player.Health + '%' }"></div>
+          <div class="absolute left-0 top-0 h-full rounded-sm bg-green-600/20 transition-all duration-300" :style="{ width: (player.Health > 100 ? 100 : player.Health) + '%' }"></div>
           <span class="relative z-10 font-mono text-xs text-slate-200">
             {{ player.Health.toFixed(1) }}
           </span>
