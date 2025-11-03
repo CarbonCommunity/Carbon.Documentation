@@ -36,7 +36,7 @@ const props = defineProps<{
 </script>
 
 <template>
-  <div class="items-center" style="justify-items: center">
+  <div class="place-items-center">
     <div class="inventory-grid">
       <div v-for="slot in mainSlots" :key="slot.Position" class="slot" @dragover.prevent @drop="handleDrop(slot)">
         <img v-if="slot.hasItem()" class="slot-img" :src="`https://cdn.carbonmod.gg/items/${slot.ShortName}.png`" draggable="true" @dragstart="handleDrag(slot)" />
