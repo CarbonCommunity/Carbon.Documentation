@@ -1,36 +1,14 @@
 <script lang="ts" setup>
-import { ExternalLink, ArrowUpFromDot, Trash2, Crown } from 'lucide-vue-next'
-import { showInventory, hideInventory, activeInventory, handleDrop, handleDrag, activeSlot, mainSlots, wearSlots, beltSlots, toolSlots } from './ControlPanel.Inventory'
+import { ExternalLink, Crown } from 'lucide-vue-next'
+import { showInventory } from './ControlPanel.Inventory'
 import { geoFlagCache, selectedServer } from './ControlPanel.SaveLoad'
-import { ref, onMounted, computed } from 'vue'
-import { fetchItems } from '@/api/metadata/rust/items'
+import { ref, onMounted } from 'vue'
 
 const playerSearch = ref<string>('')
 const viewTeam = ref<bigint>()
-const selectedItemOption = ref('bleach')
-const selectedItemAmount = ref(1)
-const selectedItemSearch = ref('')
-const itemOptions: any = []
-const isOpen = ref<boolean>(false)
-
-function giveItem() {
-  selectedServer.value?.sendCommand(`inventory.giveto ${activeInventory.value} ${selectedItemOption.value} ${selectedItemAmount.value}`, 1)
-}
-
-const filteredOptions = computed(() => {
-  const q = selectedItemSearch.value.toLowerCase()
-  return itemOptions.filter((opt: any) => opt.value.toLowerCase().includes(q) || opt.label.toLowerCase().includes(q))
-})
 
 onMounted(async () => {
   refreshPlayers()
-  const { data } = await fetchItems()
-  data.forEach(item => {
-    itemOptions.push({ 
-      value: item.ShortName,
-      label: item.DisplayName
-    })
-  });
 })
 
 function refreshPlayers() {
@@ -115,70 +93,6 @@ function refreshPlayers() {
       </tr>
     </tbody>
   </table>
-
-  <div v-if="activeInventory" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click="hideInventory()">
-    <div class="mx-4 w-full max-w-lg rounded-lg bg-white p-6 dark:bg-gray-800" @click.stop>
-      <div class="mb-4 flex items-center justify-between">
-        <h3 class="text-xl font-bold"></h3>
-        <button @click="hideInventory()" class="text-gray-500 hover:text-gray-700">
-          <X :size="20" />
-        </button>
-      </div>
-      <div class="items-center" style="justify-items: center">
-        <div class="inventory-grid">
-          <div v-for="slot in mainSlots" :key="slot.Position" class="slot" @dragover.prevent @drop="handleDrop(slot)">
-            <img v-if="slot.hasItem()" class="slot-img" :src="`https://cdn.carbonmod.gg/items/${slot.ShortName}.png`" draggable="true" @dragstart="handleDrag(slot)" />
-            <span v-if="slot.hasItem() && slot.Amount > 1" class="slot-amount">x{{ slot.Amount }}</span>
-            <div v-if="slot.hasItem() && slot.HasCondition" class="slot-condition" :style="'height: ' + slot.ConditionNormalized * 100 + '%;'"></div>
-          </div>
-        </div>
-        <div class="inventory-grid-clothing mt-5">
-          <div v-for="slot in wearSlots" :key="slot.Position" class="slot" @dragover.prevent @drop="handleDrop(slot)">
-            <img v-if="slot.hasItem()" class="slot-img" :src="`https://cdn.carbonmod.gg/items/${slot.ShortName}.png`" draggable="true" @dragstart="handleDrag(slot)" />
-            <span v-if="slot.hasItem() && slot.Amount > 1" class="slot-amount">x{{ slot.Amount }}</span>
-            <div v-if="slot.hasItem() && slot.HasCondition" class="slot-condition" :style="'height: ' + slot.ConditionNormalized * 100 + '%;'"></div>
-          </div>
-        </div>
-        <div class="inventory-grid mt-5">
-          <div v-for="slot in beltSlots" :key="slot.Position" class="slot" @dragover.prevent @drop="handleDrop(slot)">
-            <div v-if="activeSlot == slot.Position" class="slot-active"></div>
-            <img v-if="slot.hasItem()" class="slot-img" :src="`https://cdn.carbonmod.gg/items/${slot.ShortName}.png`" draggable="true" @dragstart="handleDrag(slot)" />
-            <span v-if="slot.hasItem() && slot.Amount > 1" class="slot-amount">x{{ slot.Amount }}</span>
-            <div v-if="slot.hasItem() && slot.HasCondition" class="slot-condition" :style="'height: ' + slot.ConditionNormalized * 100 + '%;'"></div>
-          </div>
-        </div>
-        <div :class="'inventory-grid-tools cols-' + (selectedServer?.hasPermission('console_input') ? '5' : '2') +  ' mt-5 items-center justify-center opacity-50'">
-          <div v-for="slot in toolSlots" :key="slot.Position" class="slot-tool" @dragover.prevent @drop="handleDrop(slot)">
-            <span v-if="slot.Container == 10" class="select-none justify-items-center text-xs opacity-50"><ArrowUpFromDot /> Drop</span>
-            <span v-if="slot.Container == 11" class="select-none justify-items-center text-xs opacity-50"><Trash2 /> Discard</span>
-          </div>
-          <div v-if="selectedServer?.hasPermission('console_input')" class="slot-tool w-52 justify-items-center text-xs">
-            <div class="grid">
-              <div class="flex">
-                <input class="w-6 text-center" v-model="selectedItemAmount"/><span class="content-center">x</span>
-                <div class="relative w-full">
-                  <input
-                    type="text"
-                    v-model="selectedItemSearch"
-                    @focus="isOpen = true"
-                    @focusout="isOpen = false"
-                    placeholder="Select an item..."
-                    class="bg-transparent border rounded px-2 py-1 w-full" />
-
-                  <ul v-if="isOpen && filteredOptions?.length" class="absolute mt-1 z-10 w-full max-h-64 overflow-auto border rounded bg-black text-white">
-                    <li v-for="option in filteredOptions" :key="option.value" @mousedown.prevent="selectedItemSearch = selectedItemOption = option.value; isOpen = false" class="px-2 py-1 hover:bg-gray-700 cursor-pointer">
-                      <span class="flex"><img class="w-6" :src="`https://cdn.carbonmod.gg/items/${option.value}.png`"/> <span class="ml-2 content-center">{{ option.label }}</span></span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-              <button class="r-send-button w-full" @click="giveItem()">Give</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
 </template>
 
 <style scoped>

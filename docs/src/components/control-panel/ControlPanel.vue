@@ -305,19 +305,16 @@ onUnmounted(() => {
       <p>No server selected</p>
     </div>
   </div>
-  <div v-for="html in popups" v-bind:key="html">
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click="removePopup(html.props.id)">
-      <div class="mx-4 w-full max-w-lg rounded-lg bg-white p-6 dark:bg-gray-800" @click.stop>
-        <div class="mb-4 flex items-center justify-between">
-          <h3 class="text-xl font-bold"></h3>
-          <button @click="removePopup(html.props.id)" class="text-gray-500 hover:text-gray-700">
-            <X :size="20" />
-          </button>
-        </div>
-        <component :is="html.component" v-bind="html.props"/>
+  <div v-for="html in popups" v-bind:key="html" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click="removePopup(html.props.id)">
+    <div class="mx-4 w-full max-w-lg rounded-lg bg-white p-6 dark:bg-gray-800" @click.stop>
+      <div class="mb-4 flex items-center justify-between">
+        <h3 class="text-xl font-bold"></h3>
+        <button @click="removePopup(html.props.id)" class="text-gray-500 hover:text-gray-700">
+          <X :size="20" />
+        </button>
       </div>
+      <component :is="html.component" v-bind="html.props"/>
     </div>
-
   </div>
 </template>
 

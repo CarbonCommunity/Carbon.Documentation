@@ -286,7 +286,15 @@ export function addPopup(component: any, props?: Record<string, any>) {
   popups.value.push({ component, props: mergedProps })
 }
 
+export function getPopup(id: number) {
+  return popups.value.find(p => p.props.id === id)
+}
+
 export function removePopup(id: number) {
+  const popup = getPopup(id)
+  if(popup != null && popup.props.onClosed != null) {
+    popup.props.onClosed()
+  }
   popups.value = popups.value.filter(p => p.props.id !== id)
 }
 
