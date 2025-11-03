@@ -32,6 +32,7 @@ import {
   selectedSubTab,
   servers,
   shiftServer,
+  popups
 } from './ControlPanel.SaveLoad'
 import ChatTab from './ControlPanel.Tabs.Chat.vue'
 import ConsoleTab from './ControlPanel.Tabs.Console.vue'
@@ -147,6 +148,7 @@ onMounted(() => {
 onUnmounted(() => {
   clearTimeout(timerSwitch)
 })
+
 </script>
 
 <template>
@@ -156,8 +158,7 @@ onUnmounted(() => {
         <button :class="['r-button', { toggled: server == selectedServer }]" @click="selectServer(server)">
           <Dot
             :size="45"
-            :style="'margin: -10px; color: ' + (server.IsConnecting ? 'yellow' : server.IsConnected ? 'green' : 'red') + '; filter: blur(1.5px);'"
-          />
+            :style="'margin: -10px; color: ' + (server.IsConnecting ? 'yellow' : server.IsConnected ? 'green' : 'red') + '; filter: blur(1.5px);'"/>
           <div class="grid">
             <p>
               <strong>{{ !server.CachedHostname ? 'Unknown' : server.CachedHostname }}</strong>
@@ -193,8 +194,7 @@ onUnmounted(() => {
           class="r-button"
           :disabled="selectedServer.IsConnecting"
           @click="selectedServer.connect()"
-          :style="'color: ' + (!selectedServer?.IsConnected ? 'var(--docsearch-footer-background);' : 'var(--c-carbon-3);') + 'font-size: small;'"
-        >
+          :style="'color: ' + (!selectedServer?.IsConnected ? 'var(--docsearch-footer-background);' : 'var(--c-carbon-3);') + 'font-size: small;'">
           <Wifi :size="20" /> {{ selectedServer?.IsConnected ? 'Disconnect' : 'Connect' }}
         </button>
         <button
@@ -202,8 +202,7 @@ onUnmounted(() => {
           :disabled="selectedServer.IsConnecting || selectedServer.IsConnected"
           @click="selectedServer.toggleBridge()"
           :class="['r-button', { toggled: selectedServer.Bridge }]"
-          style="color: var(--docsearch-footer-background); font-size: small"
-        >
+          style="color: var(--docsearch-footer-background); font-size: small">
           <Antenna :size="20" /> Bridge
         </button>
         <button class="r-button" @click="(e) => deleteServer(selectedServer, e)" style="color: var(--docsearch-footer-background); font-size: small">
@@ -304,6 +303,20 @@ onUnmounted(() => {
     <div v-if="!selectedServer" style="color: var(--category-misc); font-size: small; text-align: center; user-select: none">
       <p>No server selected</p>
     </div>
+  </div>
+  <div v-for="html in popups" v-bind:key="html">
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click="hideInventory()">
+      <div class="mx-4 w-full max-w-lg rounded-lg bg-white p-6 dark:bg-gray-800" @click.stop>
+        <div class="mb-4 flex items-center justify-between">
+          <h3 class="text-xl font-bold"></h3>
+          <button @click="hideInventory()" class="text-gray-500 hover:text-gray-700">
+            <X :size="20" />
+          </button>
+        </div>
+        <component :is="html.component" v-bind="html.props"/>
+      </div>
+    </div>
+
   </div>
 </template>
 

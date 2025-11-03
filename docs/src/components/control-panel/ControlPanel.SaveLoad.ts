@@ -276,6 +276,12 @@ export function load() {
   }
 }
 
+export const popups = ref<any[]>([]) 
+
+export function addPopup(component: any, props?: Record<string, any>){
+  popups.value.push({ component: component, props: props })
+}
+
 export class Server {
   Address = ''
   Password = ''

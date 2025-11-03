@@ -1,4 +1,4 @@
-import { selectedServer } from './ControlPanel.SaveLoad';
+import { selectedServer, addPopup } from './ControlPanel.SaveLoad';
 import { ref } from 'vue';
 
 export const pluginThinking = ref<string>('')
@@ -32,4 +32,8 @@ export function reloadPlugin(plugin: string) {
 export function refreshPlugins() {
   pluginThinking.value = 'refresh'
   selectedServer.value?.sendCall('Plugins')
+}
+
+export async function pluginDetails(plugin: string) {
+  addPopup((await import(`@/components/control-panel/ControlPanel.Popup.PluginInfo.vue`)).default, { textie: 'yolao' })
 }
