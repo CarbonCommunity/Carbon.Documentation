@@ -276,10 +276,18 @@ export function load() {
   }
 }
 
+const nextPopupId = ref<number>(0)
+
 export const popups = ref<any[]>([]) 
 
-export function addPopup(component: any, props?: Record<string, any>){
-  popups.value.push({ component: component, props: props })
+export function addPopup(component: any, props?: Record<string, any>) {
+  const id = nextPopupId.value++
+  const mergedProps = { ...(props ?? {}), id }
+  popups.value.push({ component, props: mergedProps })
+}
+
+export function removePopup(id: number) {
+  popups.value = popups.value.filter(p => p.props.id !== id)
 }
 
 export class Server {

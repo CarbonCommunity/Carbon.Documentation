@@ -32,7 +32,8 @@ import {
   selectedSubTab,
   servers,
   shiftServer,
-  popups
+  popups,
+  removePopup
 } from './ControlPanel.SaveLoad'
 import ChatTab from './ControlPanel.Tabs.Chat.vue'
 import ConsoleTab from './ControlPanel.Tabs.Console.vue'
@@ -305,11 +306,11 @@ onUnmounted(() => {
     </div>
   </div>
   <div v-for="html in popups" v-bind:key="html">
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click="hideInventory()">
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click="removePopup(html.props.id)">
       <div class="mx-4 w-full max-w-lg rounded-lg bg-white p-6 dark:bg-gray-800" @click.stop>
         <div class="mb-4 flex items-center justify-between">
           <h3 class="text-xl font-bold"></h3>
-          <button @click="hideInventory()" class="text-gray-500 hover:text-gray-700">
+          <button @click="removePopup(html.props.id)" class="text-gray-500 hover:text-gray-700">
             <X :size="20" />
           </button>
         </div>
