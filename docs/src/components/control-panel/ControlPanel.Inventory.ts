@@ -51,10 +51,10 @@ export function clearInventory() {
 
 export const onInventoryUpdate = ref<any | null>(null)
 
-export async function showInventory(playerId: number) {
+export async function showInventory(playerId: number, displayName: string) {
   clearInventory()
   activeInventory.value = playerId
-  const props = { userId: playerId, onClosed: hideInventory, isLoading: ref<boolean>(true) }
+  const props = { title: 'Player Inventory', subtitle: 'Modify ' + displayName + '\'s inventory in real time, or give them items.', userId: playerId, onClosed: hideInventory, isLoading: ref<boolean>(true) }
   onInventoryUpdate.value = () => {
     props.isLoading.value = false
   }

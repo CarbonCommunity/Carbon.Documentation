@@ -36,7 +36,7 @@ export function refreshPlugins() {
 }
 
 export async function openPluginDetails(plugin: string) {
-  const props = { isLoading: ref<boolean>(true) }
+  const props = { title: 'Plugin Details', subtitle: 'In-depth information about ' + plugin + ' and its runtime performance.', isLoading: ref<boolean>(true) }
    selectedServer.value?.setRpc('PluginDetails', read => {
     pluginDetails.value = {}
     pluginDetails.value.name = plugin
