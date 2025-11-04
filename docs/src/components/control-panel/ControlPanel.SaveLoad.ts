@@ -6,7 +6,7 @@ import { message, tryFocusChat } from './ControlPanel.Chat'
 import { ProfileFile, clearFiles as ClearProfileFiles, u8ToBase64 } from './ControlPanel.Profiler'
 import { command, commandIndex, tryFocusLogs } from './ControlPanel.Console'
 import { resetEntities } from './ControlPanel.Entities'
-import { activeSlot, beltSlots, clearInventory, hideInventory, mainSlots, wearSlots } from './ControlPanel.Inventory'
+import { activeSlot, beltSlots, clearInventory, hideInventory, mainSlots, wearSlots, onInventoryUpdate } from './ControlPanel.Inventory'
 import { refreshPermissions } from './ControlPanel.Tabs.Permissions.vue'
 import { loadingProfile, loadingToggle } from './ControlPanel.Profiler'
 import { pluginThinking } from './ControlPanel.Plugins'
@@ -276,6 +276,28 @@ export function load() {
   }
 }
 
+const nextPopupId = ref<number>(0)
+
+export const popups = ref<any[]>([]) 
+
+export function addPopup(component: any, props?: Record<string, any>) {
+  const id = nextPopupId.value++
+  const mergedProps = { ...(props ?? {}), id }
+  popups.value.push({ component, props: mergedProps })
+}
+
+export function getPopup(id: number) {
+  return popups.value.find(p => p.props.id === id)
+}
+
+export function removePopup(id: number) {
+  const popup = getPopup(id)
+  if(popup != null && popup.props.onClosed != null) {
+    popup.props.onClosed()
+  }
+  popups.value = popups.value.filter(p => p.props.id !== id)
+}
+
 export class Server {
   Address = ''
   Password = ''
@@ -430,6 +452,7 @@ export class Server {
       this.readInventory(read, mainSlots)
       this.readInventory(read, beltSlots)
       this.readInventory(read, wearSlots)
+      onInventoryUpdate.value()
     })
     this.setRpc('Players', (read) => {
       this.PlayerInfo = []

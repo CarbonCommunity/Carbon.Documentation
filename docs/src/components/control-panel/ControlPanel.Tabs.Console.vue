@@ -26,7 +26,3 @@ import { selectedServer } from './ControlPanel.SaveLoad'
     <button @click="selectedServer?.sendCommand(command, 1)" class="r-send-button"><span style="user-select: none">Send</span></button>
   </div>
 </template>
-
-<style scoped>
-
-</style>

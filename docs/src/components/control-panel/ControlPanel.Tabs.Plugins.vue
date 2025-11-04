@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import { selectedServer } from './ControlPanel.SaveLoad';
 import { ref } from 'vue';
-import { unloadPlugin, loadPlugin, refreshPlugins, reloadPlugin, pluginThinking } from './ControlPanel.Plugins';
-import { Loader2 } from 'lucide-vue-next'
+import { unloadPlugin, loadPlugin, refreshPlugins, reloadPlugin, pluginThinking, openPluginDetails } from './ControlPanel.Plugins';
+import { Link, Loader2 } from 'lucide-vue-next'
 
 const pluginSearch = ref<string>('')
 </script>
@@ -39,10 +39,10 @@ const pluginSearch = ref<string>('')
         :class="[ 'group transition-colors duration-200 border-t border-slate-800/50', plugin.IsUnloaded || plugin.Errors ? 'bg-red-400/5 opacity-60' : '' ]">
         <td class="text-slate-400/75 text-right">
           <span class="max-w-fit">{{ plugin.Version }}</span><br>
-          <span class="max-w-fit text-slate-400/50 text-[12px]">{{ plugin.Author }}</span>
+          <span class="max-w-fit text-slate-400/50 text-[12px]"><a class="flex gap-1 items-center justify-end" :href="'https://codefling.com/search/?q=' + plugin.Author + '&quick=1&type=core_members'" target="_blank"> {{ plugin.Author }} <Link :size="10"/></a></span>
         </td>
         <td class="px-3 py-2">
-          <span class="max-w-fit">{{ plugin.Name }}</span>
+          <span class="max-w-fit"><a class="flex gap-1 align-middle items-center max-w-fit" :href="'https://codefling.com/search/?&q=' + plugin.Name + '&type=downloads_file&quick=1&nodes=2&search_and_or=and&sortby=relevancy'" target="_blank"> {{ plugin.Name }} <Link :size="14"/></a></span>
           <p v-html="plugin.Description" class="max-w-fit text-slate-400/50 text-[12px]"></p>
         </td>
         <td class="px-3 py-2 text-xs text-slate-400 text-center">
@@ -69,6 +69,12 @@ const pluginSearch = ref<string>('')
                 @click="loadPlugin(plugin.Name)">
                 Load
               </button>
+              <button
+                v-if="selectedServer?.hasPermission('plugins_edit') && !plugin.IsUnloaded && !plugin.Errors"
+                class="px-2 py-1.5 text-xs bg-green-800/30 hover:bg-green-700/60 text-green-300 hover:text-green-100 transition-all shadow-sm"
+                @click="openPluginDetails(plugin.Name)">
+                Details
+              </button>
             </div>
           </div>
         </td>
@@ -76,7 +82,3 @@ const pluginSearch = ref<string>('')
     </tbody>
   </table>
 </template>
-
-<style scoped>
-
-</style>
