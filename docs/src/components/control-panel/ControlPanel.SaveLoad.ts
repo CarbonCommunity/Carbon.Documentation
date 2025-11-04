@@ -6,7 +6,7 @@ import { message, tryFocusChat } from './ControlPanel.Chat'
 import { ProfileFile, clearFiles as ClearProfileFiles, u8ToBase64 } from './ControlPanel.Profiler'
 import { command, commandIndex, tryFocusLogs } from './ControlPanel.Console'
 import { resetEntities } from './ControlPanel.Entities'
-import { activeSlot, beltSlots, clearInventory, hideInventory, mainSlots, wearSlots } from './ControlPanel.Inventory'
+import { activeSlot, beltSlots, clearInventory, hideInventory, mainSlots, wearSlots, onInventoryUpdate } from './ControlPanel.Inventory'
 import { refreshPermissions } from './ControlPanel.Tabs.Permissions.vue'
 import { loadingProfile, loadingToggle } from './ControlPanel.Profiler'
 import { pluginThinking } from './ControlPanel.Plugins'
@@ -452,6 +452,7 @@ export class Server {
       this.readInventory(read, mainSlots)
       this.readInventory(read, beltSlots)
       this.readInventory(read, wearSlots)
+      onInventoryUpdate.value()
     })
     this.setRpc('Players', (read) => {
       this.PlayerInfo = []

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ExternalLink, Crown } from 'lucide-vue-next'
+import { ExternalLink, Crown, Link2 } from 'lucide-vue-next'
 import { showInventory } from './ControlPanel.Inventory'
 import { geoFlagCache, selectedServer } from './ControlPanel.SaveLoad'
 import { ref, onMounted } from 'vue'
@@ -14,6 +14,7 @@ onMounted(async () => {
 function refreshPlayers() {
   selectedServer.value?.sendCall("Players")
 }
+
 </script>
 
 <template>
@@ -51,14 +52,19 @@ function refreshPlayers() {
           <strong class="text-slate-200 group-hover:text-white transition flex gap-x-1">
             <Crown class="opacity-25" v-if="player.TeamLeader == player.SteamID" :size="17"/>{{ player.DisplayName }}
           </strong>
-          <a :href="'https://steamcommunity.com/profiles/' + player.SteamID" target="_blank" class="text-xs max-w-fit text-slate-500 hover:text-blue-400 flex items-center gap-1 mt-[1px]">
-            <ExternalLink :size="12" /> {{ player.SteamID }}
-          </a>
+          <span class="flex gap-2">
+            <a :href="'https://steamcommunity.com/profiles/' + player.SteamID" target="_blank" class="text-xs max-w-fit text-slate-500 hover:text-blue-400 flex items-center gap-1 mt-[1px]">
+              <ExternalLink :size="12" /> {{ player.SteamID }}
+            </a>
+            <a :href="'https://www.battlemetrics.com/rcon/players?filter%5Bsearch%5D=' + player.SteamID + '&filter%5Bservers%5D=false&filter%5BplayerFlags%5D=&sort=score&showServers=false&method=full'" target="_blank" class="text-xs max-w-fit text-slate-500 hover:text-blue-400 flex items-center gap-1 mt-[1px]">
+            <Link2 :size="12" /> Battlemetrics
+            </a>
+          </span>
         </td>
         <td class="text-center text-slate-400/50">
           <button
             v-if="player.HasTeam && player.Team.length > 1 && viewTeam != player.SteamID"
-            class="px-2 py-1.5 text-xs bg-blue-800/30 hover:bg-blue-700/60 text-blue-300 hover:text-blue-100 transition-all shadow-sm"
+            class="px-2 py-1.5 text-xs bg-blue-800/30 hover:bg-blue-700/60 text-blue-300 hover:text-blue-100 shadow-sm"
             @click="viewTeam = player.SteamID">
             View Team
           </button>
@@ -85,7 +91,7 @@ function refreshPlayers() {
         <td class="px-3 py-2 text-center">
           <button
             v-if="selectedServer?.hasPermission('players_inventory')"
-            class="px-2 py-1.5 text-xs bg-blue-800/30 hover:bg-blue-700/60 text-blue-300 hover:text-blue-100 transition-all shadow-sm"
+            class="px-2 py-1.5 text-xs bg-blue-800/30 hover:bg-blue-700/60 text-blue-300 hover:text-blue-100 shadow-sm"
             @click="showInventory(player.SteamID)">
             Inventory
           </button>

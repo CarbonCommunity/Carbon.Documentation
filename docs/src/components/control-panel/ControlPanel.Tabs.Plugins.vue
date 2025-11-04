@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { selectedServer } from './ControlPanel.SaveLoad';
 import { ref } from 'vue';
-import { unloadPlugin, loadPlugin, refreshPlugins, reloadPlugin, pluginThinking, pluginDetails } from './ControlPanel.Plugins';
+import { unloadPlugin, loadPlugin, refreshPlugins, reloadPlugin, pluginThinking, openPluginDetails } from './ControlPanel.Plugins';
 import { Loader2 } from 'lucide-vue-next'
 
 const pluginSearch = ref<string>('')
@@ -72,7 +72,7 @@ const pluginSearch = ref<string>('')
               <button
                 v-if="selectedServer?.hasPermission('plugins_edit') && !plugin.IsUnloaded && !plugin.Errors"
                 class="px-2 py-1.5 text-xs bg-green-800/30 hover:bg-green-700/60 text-green-300 hover:text-green-100 transition-all shadow-sm"
-                @click="pluginDetails(plugin.Name)">
+                @click="openPluginDetails(plugin.Name)">
                 Details
               </button>
             </div>

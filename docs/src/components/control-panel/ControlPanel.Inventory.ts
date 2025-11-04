@@ -49,10 +49,16 @@ export function clearInventory() {
   })
 }
 
+export const onInventoryUpdate = ref<any | null>(null)
+
 export async function showInventory(playerId: number) {
   clearInventory()
   activeInventory.value = playerId
-  addPopup((await import(`@/components/control-panel/ControlPanel.Popup.PlayerInventory.vue`)).default, { userId: playerId, onClosed: hideInventory })
+  const props = { userId: playerId, onClosed: hideInventory, isLoading: ref<boolean>(true) }
+  onInventoryUpdate.value = () => {
+    props.isLoading.value = false
+  }
+  addPopup((await import(`@/components/control-panel/ControlPanel.Popup.PlayerInventory.vue`)).default, props)
   selectedServer.value?.fetchInventory(playerId)
 
   const looper = () => {

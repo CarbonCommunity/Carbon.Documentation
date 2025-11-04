@@ -8,6 +8,7 @@ import {
   Expand,
   ExternalLink,
   HardDriveDownload,
+  Loader2,
   Plus,
   RotateCcw,
   Save,
@@ -306,14 +307,17 @@ onUnmounted(() => {
     </div>
   </div>
   <div v-for="html in popups" v-bind:key="html" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click="removePopup(html.props.id)">
-    <div class="mx-4 w-full max-w-lg rounded-lg bg-white p-6 dark:bg-gray-800" @click.stop>
-      <div class="mb-4 flex items-center justify-between">
+    <div class="mx-4 w-full max-w-fit rounded-lg bg-white p-6 dark:bg-gray-800" @click.stop>
+      <div v-if="!html.props.isLoading" class="mb-4 flex items-center justify-between">
         <h3 class="text-xl font-bold"></h3>
         <button @click="removePopup(html.props.id)" class="text-gray-500 hover:text-gray-700">
           <X :size="20" />
         </button>
       </div>
-      <component :is="html.component" v-bind="html.props"/>
+      <div v-if="html.props.isLoading">
+        <Loader2 class="animate-spin text-slate-500/50" :size="50" />
+      </div>
+      <component v-if="!html.props.isLoading" :is="html.component" v-bind="html.props" class="font-mono" />
     </div>
   </div>
 </template>
