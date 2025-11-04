@@ -307,7 +307,7 @@ onUnmounted(() => {
     </div>
   </div>
   <div v-for="html in popups" v-bind:key="html" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click="removePopup(html.props.id)">
-    <div class="mx-4 w-full max-w-fit rounded-lg bg-white p-6 dark:bg-gray-800" @click.stop>
+    <div class="mx-4 w-full max-w-fit bg-white p-6 dark:bg-gray-800" @click.stop>
       <div v-if="!html.props.isLoading" class="mb-4 flex items-center justify-between">
         <h3 class="text-xl font-bold"></h3>
         <button @click="removePopup(html.props.id)" class="text-gray-500 hover:text-gray-700">

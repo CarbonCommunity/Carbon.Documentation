@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { pluginDetails } from './ControlPanel.Plugins';
 import { selectedServer } from './ControlPanel.SaveLoad'
+import { Link, Link2 } from 'lucide-vue-next'
 </script>
 
 <template>
@@ -12,7 +13,8 @@ import { selectedServer } from './ControlPanel.SaveLoad'
         Name
       </td>
       <td class="info-value">
-        {{ pluginDetails?.name }}
+        <a class="flex gap-2 align-middle items-center" :href="'https://codefling.com/search/?&q=' + pluginDetails?.name + '&type=downloads_file&quick=1&nodes=2&search_and_or=and&sortby=relevancy'" target="_blank">{{ pluginDetails?.name }} <Link :size="14"/></a>
+        
       </td>
     </tr>
     <tr>
@@ -94,8 +96,8 @@ import { selectedServer } from './ControlPanel.SaveLoad'
       <tbody>
         <tr v-for="hook in pluginDetails?.hooks" :key="hook.name">
           <td class="info-value text-center">{{ hook?.id }}</td>
-          <td class="info-value">{{ hook?.name }}</td>
-          <td class="info-value">{{ hook?.fires == 0 ? '' : hook?.fires.toLocaleString() }}</td>
+          <td class="info-value"><a class="flex gap-2 align-middle items-center" :href="'../../references/hooks/?s=' + hook.name" target="_blank">{{ hook?.name }} <Link :size="14"/></a></td>
+          <td class="info-value text-center">{{ hook?.fires == 0 ? '' : hook?.fires.toLocaleString() }}</td>
           <td class="info-value text-center">{{ hook?.memoryUsage == 0 ? '' : selectedServer?.formatBytes(hook?.memoryUsage) }}</td>
           <td class="info-value text-center">{{ hook?.lagSpikes == 0 ? '' : hook?.lagSpikes.toLocaleString() }}</td>
           <td class="info-value text-center">{{ hook?.asyncOverloads.toLocaleString() }} / {{ hook?.debuggedOverloads.toLocaleString() }}</td>
