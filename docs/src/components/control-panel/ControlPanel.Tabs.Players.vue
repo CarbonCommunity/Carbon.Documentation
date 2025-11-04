@@ -92,7 +92,7 @@ function refreshPlayers() {
           <button
             v-if="selectedServer?.hasPermission('players_inventory')"
             class="px-2 py-1.5 text-xs bg-blue-800/30 hover:bg-blue-700/60 text-blue-300 hover:text-blue-100 shadow-sm"
-            @click="showInventory(player.SteamID)">
+            @click="showInventory(player.SteamID, player.DisplayName)">
             Inventory
           </button>
         </td>
