@@ -13,8 +13,7 @@ import { Link, Link2 } from 'lucide-vue-next'
         Name
       </td>
       <td class="info-value">
-        <a class="flex gap-2 align-middle items-center" :href="'https://codefling.com/search/?&q=' + pluginDetails?.name + '&type=downloads_file&quick=1&nodes=2&search_and_or=and&sortby=relevancy'" target="_blank">{{ pluginDetails?.name }} <Link :size="14"/></a>
-        
+        <a class="flex gap-1 align-middle items-center" :href="'https://codefling.com/search/?&q=' + pluginDetails?.name + '&type=downloads_file&quick=1&nodes=2&search_and_or=and&sortby=relevancy'" target="_blank">{{ pluginDetails?.name }} <Link :size="14"/></a> 
       </td>
     </tr>
     <tr>
@@ -96,7 +95,7 @@ import { Link, Link2 } from 'lucide-vue-next'
       <tbody>
         <tr v-for="hook in pluginDetails?.hooks" :key="hook.name">
           <td class="info-value text-center">{{ hook?.id }}</td>
-          <td class="info-value"><a class="flex gap-2 align-middle items-center" :href="'../../references/hooks/?s=' + hook.name" target="_blank">{{ hook?.name }} <Link :size="14"/></a></td>
+          <td class="info-value"><a class="flex gap-1 align-middle items-center" :href="'../../references/hooks/?s=' + hook.name" target="_blank">{{ hook?.name }} <Link :size="14"/></a></td>
           <td class="info-value text-center">{{ hook?.fires == 0 ? '' : hook?.fires.toLocaleString() }}</td>
           <td class="info-value text-center">{{ hook?.memoryUsage == 0 ? '' : selectedServer?.formatBytes(hook?.memoryUsage) }}</td>
           <td class="info-value text-center">{{ hook?.lagSpikes == 0 ? '' : hook?.lagSpikes.toLocaleString() }}</td>
