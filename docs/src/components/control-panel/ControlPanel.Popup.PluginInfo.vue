@@ -93,7 +93,7 @@ import { Link, Link2 } from 'lucide-vue-next'
       </thead>
 
       <tbody>
-        <tr v-for="hook in pluginDetails?.hooks" :key="hook.name">
+        <tr v-for="hook in pluginDetails?.hooks.sort((a, b) => b.fires - a.fires)" :key="hook.name">
           <td class="info-value text-center">{{ hook?.id }}</td>
           <td class="info-value"><a class="flex gap-1 align-middle items-center" :href="'../../references/hooks/?s=' + hook.name" target="_blank">{{ hook?.name }} <Link :size="14"/></a></td>
           <td class="info-value text-center">{{ hook?.fires == 0 ? '' : hook?.fires.toLocaleString() }}</td>
