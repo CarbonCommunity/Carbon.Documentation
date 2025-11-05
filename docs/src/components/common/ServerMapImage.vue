@@ -59,8 +59,7 @@
           <span class="absolute inset-0">
             <span v-if="showMapMarkers">
               <div v-for="(monument, idx) in props.server.MapInfo.monuments" :key="idx" class="absolute transition-transform" :style="{ transform: `translate(${(mapImage?.clientWidth ?? 0) * monument.x}px, ${(mapImage?.clientHeight ?? 0) * (1 - monument.y)}px)` }">
-                <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2  text-[7px] px-[3px] py-0.1 text-nowrap rounded bg-black/70 border border-white/10">
-                  {{ monument.label }}
+                <div v-html="monument.label" class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2  text-[7px] px-[3px] py-0.1 text-nowrap rounded bg-black/70 border border-white/10">
                 </div>
               </div>
             </span>
