@@ -89,13 +89,12 @@
     <div
       v-if="!isDetached && imgW"
       class="absolute left-3 bottom-3 rounded-2xl bg-black/60 backdrop-blur shadow-lg border border-white/10 overflow-hidden"
-      :style="panelStyle"
-    >
+      :style="panelStyle">
       <div class="flex items-center justify-between px-2 py-1.5">
         <button
           class="inline-flex items-center gap-2 text-sm font-medium px-2 py-1 rounded-lg hover:bg-white/5 active:bg-white/10"
           @click="areEntitiesExpanded = !areEntitiesExpanded">
-          <span class="i-lucide-activity" />
+          <Activity :size="14"/>
           Live Entities
           <span
             v-if="availableTypes?.length"
@@ -118,7 +117,7 @@
 </template>
 
 <script setup lang="ts">
-import { Expand, Loader2 } from 'lucide-vue-next'
+import { Activity, Expand, Loader2 } from 'lucide-vue-next'
 import { ref, reactive, onMounted, onBeforeUnmount, computed } from 'vue'
 import { addPopup, selectedServer } from '../control-panel/ControlPanel.SaveLoad'
 
@@ -133,7 +132,7 @@ function showLabel(idx: number, visible: boolean) {
 }
 const panelStyle = computed(() => {
   const expanded = areEntitiesExpanded.value
-  const w = expanded ? 350 : 190
+  const w = expanded ? 350 : 205
   const h = expanded ? '40%' : '40px'
   return {
     width: `${w}px`,
