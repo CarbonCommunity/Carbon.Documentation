@@ -58,19 +58,19 @@
         <span v-if="imgW" :style="{ minWidth: `${mapImage?.clientWidth}px`, minHeight: `${mapImage?.clientHeight}px` }">
           <span class="absolute inset-0">
             <span v-if="showMapMarkers">
-              <div v-for="(monument, idx) in props.server.MapInfo.monuments" :key="idx" class="absolute transition-transform" :style="{ transform: `translate(${(mapImage?.clientWidth ?? 0) * monument.x}px, ${(mapImage?.clientHeight ?? 0) * (1 - monument.y)}px)` }">
-                <div v-html="monument.label" class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2  text-[7px] px-[3px] py-0.1 text-nowrap rounded bg-black/70 border border-white/10">
+              <div v-for="(monument, idx) in selectedServer?.MapInfo?.monuments" :key="idx" class="absolute transition-transform" :style="{ transform: `translate(${(mapImage?.clientWidth ?? 0) * monument.x}px, ${(mapImage?.clientHeight ?? 0) * (1 - monument.y)}px)` }">
+                <div v-html="monument.label" class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[7px] px-[3px] py-0.1 text-nowrap rounded bg-black/70 border border-white/10">
                 </div>
               </div>
             </span>
-            <div v-for="(entity, idx) in props.server.MapInfo.entities" :key="idx" class="absolute transition-transform" :style="{ transform: `translate(${(mapImage?.clientWidth ?? 0) * entity.x}px, ${(mapImage?.clientHeight ?? 0) * (1 - entity.y)}px)` }">
+            <div v-for="(entity, idx) in selectedServer?.MapInfo?.entities" :key="idx" class="absolute transition-transform" :style="{ transform: `translate(${(mapImage?.clientWidth ?? 0) * entity.x}px, ${(mapImage?.clientHeight ?? 0) * (1 - entity.y)}px)` }">
               <span
                   @mouseover="showLabel(idx, true)"
                   @mouseout="showLabel(idx, false)">
                 <div v-if="entity.type == 0" class="entity-online"></div>
                 <div v-if="entity.type == 1" class="entity-offline"></div>
               </span>
-              <div :ref="el => labelRefs[idx] = el" class="absolute opacity-0 left-1/2 -top-3 -translate-x-1/2 transition-all -translate-y-1/2 text-[9px] px-[3px] py-0.1 rounded bg-black/70 border border-white/10">
+              <div :ref="el => labelRefs[idx] = el" class="absolute opacity-0 left-1/2 -top-3 -translate-x-1/2 transition-transform -translate-y-1/2 text-[9px] px-[3px] py-0.1 rounded bg-black/70 border border-white/10">
                 {{ entity.label }}
               </div>
             </div>
@@ -96,8 +96,8 @@
           <Activity :size="14"/>
           Live Entities
           <span
-            v-if="availableTypes?.length"
-            class="text-xs opacity-70">({{ availableTypes.length }})</span>
+            v-if="selectedServer?.MapInfo?.availableTypes?.length"
+            class="text-xs opacity-70">({{ selectedServer?.MapInfo?.availableTypes.length }})</span>
           <span
             class="ml-1 transition-transform"
             :class="areEntitiesExpanded ? 'rotate-180' : ''"
@@ -106,7 +106,7 @@
       </div>
       <div v-if="areEntitiesExpanded" class="px-2 pb-2 max-h-full ">
         <div class="grid grid-cols-2 gap-1.5 overflow-y-auto max-h-[100%] overflow-auto pr-1 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
-          <button  v-for="(type, i) in availableTypes" :key="`${i}-${type}`" class="chip" :class="selectedServer?.hasTrackedType(i) ? 'chip-on' : 'chip-off'" @click="selectedServer?.toggleTrackedType(i)">
+          <button  v-for="(type, i) in selectedServer?.MapInfo?.availableTypes" :key="`${i}-${type}`" class="chip" :class="selectedServer?.hasTrackedType(i) ? 'chip-on' : 'chip-off'" @click="selectedServer?.toggleTrackedType(i)">
             {{ type }}
           </button>
         </div>
@@ -138,7 +138,6 @@ const panelStyle = computed(() => {
     height: `${h}`,
   }
 })
-const availableTypes = computed(() => props.server?.MapInfo?.availableTypes ?? [])
 const areEntitiesExpanded = ref<boolean>(false)
 const showMapMarkers = ref<boolean>(true)
 const props = withDefaults(defineProps<{
@@ -151,7 +150,6 @@ const props = withDefaults(defineProps<{
   initialScale?: number
   zoomStep?: number
   wheelZoomSpeed?: number
-  server?: any
 }>(), {
   title: 'Live Map',
   subtitle: 'Server map with various live synchronized properties and entities.',
@@ -279,7 +277,6 @@ async function expand() {
     title: props.title,
     subtitle: props.subtitle,
     isFullscreen: true,
-    server: props.server,
     onClosed: () => {
       isDetached.value = false
     }

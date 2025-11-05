@@ -130,6 +130,7 @@ export function selectServer(server: Server) {
     return
   }
   commandIndex.value = 0
+  selectedServer.value?.clearMapEntityTracking()
   selectedServer.value = selectedServer.value == server ? null : server
   localStorage.setItem('rcon-lastserver', server.Address)
   refreshPermissions()
@@ -139,6 +140,11 @@ export function selectServer(server: Server) {
 
   server.sendCall('ProfilesState')
   server.sendCall('ProfilesList')
+
+  if(server.MapInfo == null) {
+    server.sendCall('LoadMapInfo')
+  }
+  server.startMapEntityTracking()
 }
 
 export function findServer(address: string): Server {
@@ -641,6 +647,7 @@ export class Server {
           y: read.float()
         })
       }
+      console.log('got map info')
     })
     this.setRpc('RequestMapEntities', read => {
       this.MapInfo.entities.length = 0
@@ -656,6 +663,7 @@ export class Server {
         entity.y = read.float()
         this.MapInfo.entities.push(entity)        
       }
+      console.log('got ent info')
     })
   }
 
