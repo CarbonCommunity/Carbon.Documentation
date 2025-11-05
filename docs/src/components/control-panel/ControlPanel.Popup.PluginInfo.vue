@@ -79,9 +79,9 @@ import { Link, Link2 } from 'lucide-vue-next'
     </tr>
   </table>
 
-  <div class="mt-5 max-h-96 overflow-y-auto overscroll-contain custom-scrollbar">
+  <div class="mt-5 max-h-96 overflow-y-auto overscroll-none custom-scrollbar">
     <table tabindex="0" class="table-auto w-full">
-      <thead class="bg-transparent bg-black/40 backdrop-blur-sm sticky text-left top-0 z-10">
+      <thead class=" bg-black/40 backdrop-blur-sm sticky text-left top-0 z-10">
         <tr>
           <th class="info-title text-center">ID</th>
           <th class="info-title">Hook Name</th>
