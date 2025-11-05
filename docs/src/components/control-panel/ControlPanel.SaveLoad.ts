@@ -175,6 +175,8 @@ function exportToJson(): string {
       case 'PlayerInfo':
       case 'SleeperInfo':
       case 'PluginsInfo':
+      case 'MapInfo':
+      case 'MapEntityUpdateInterval':
       case 'HeaderImage':
       case 'Description':
       case 'CommandCallbacks':
@@ -318,6 +320,8 @@ export class Server {
   PlayerInfo: any | null = null
   SleeperInfo: any | null = null
   PluginsInfo: any | null = null
+  MapInfo: any | null = null
+  MapEntityUpdateInterval: any | null = null
   HeaderImage = ''
   Description = ''
   ProfileFiles: ProfileFile[] = []
@@ -618,7 +622,68 @@ export class Server {
       }
       pluginThinking.value = '' 
     })
+    this.setRpc('LoadMapInfo', read => {
+      this.MapInfo = {
+        imageWidth: read.int32(),
+        imageHeight: read.int32(),
+        imageUrl: URL.createObjectURL(new Blob([read.bytes(read.int32())], { type: 'image/png' })),
+        worldSize: read.int32(),
+        trackedTypes: [],
+        availableTypes: Object.keys(MapEntityTypes).splice(Object.keys(MapEntityTypes).length / 2, Object.keys(MapEntityTypes).length),
+        entities: []
+      }
+    })
+    this.setRpc('RequestMapEntities', read => {
+      this.MapInfo.entities.length = 0
+      const entityCount = read.int32()
+      for (let i = 0; i < entityCount; i++) {
+        this.MapInfo.entities.push({
+          type: read.int32(),
+          x: read.float(),
+          y: read.float()
+        })        
+      }
+    })
   }
+
+  hasTrackedType(i: number) : boolean {
+    return this.MapInfo.trackedTypes.includes(i)
+  }
+
+  toggleTrackedType(i: number) {
+    this.MapInfo.entities.length = 0
+    if(!this.hasTrackedType(i)) {
+      this.MapInfo.trackedTypes.push(i)
+    } else {
+      this.MapInfo.trackedTypes = this.MapInfo.trackedTypes.filter(t => t !== i)
+    }
+    this.startMapEntityTracking()
+  }
+
+  startMapEntityTracking() {
+    this.clearMapEntityTracking()
+    this.MapEntityUpdateInterval = setInterval(() => {
+      if(this.MapInfo == null || this.MapInfo.trackedTypes == null) {
+        return
+      }
+      const write = new BinaryWriter()
+      write.int32(0)
+      write.uint32(this.getId('RequestMapEntities'))
+      write.int32(this.MapInfo.trackedTypes.length)
+      for (let i = 0; i < this.MapInfo.trackedTypes.length; i++) {
+        write.int32(this.MapInfo.trackedTypes[i])
+      }
+      this.Socket?.send(write.toArrayBuffer())
+    }, 1000);
+  }
+
+  clearMapEntityTracking() {
+    if(this.MapEntityUpdateInterval != null) {
+      clearInterval(this.MapEntityUpdateInterval)
+      this.MapEntityUpdateInterval = null
+    }
+  }
+  
 
   readPlayer(read: any) {
     const player = {
@@ -645,7 +710,7 @@ export class Server {
     }
     return player
   }
-
+  
   readInventory(read: any, inventory: any) {
     const count = read.int32()
     for (let i = 0; i < count; i++) {
@@ -1046,3 +1111,9 @@ export class ProfileFlags {
   GCEvents: boolean = true
   StackWalkAllocations: boolean = true
 }
+
+
+enum MapEntityTypes {
+  ActivePlayers = 0,
+  SleepingPlayers = 1
+} 
