@@ -630,18 +630,31 @@ export class Server {
         worldSize: read.int32(),
         trackedTypes: [],
         availableTypes: Object.keys(MapEntityTypes).splice(Object.keys(MapEntityTypes).length / 2, Object.keys(MapEntityTypes).length),
-        entities: []
+        entities: [],
+        monuments: []
+      }
+      const monumentCount = read.int32()
+      for (let i = 0; i < monumentCount; i++) {
+        this.MapInfo.monuments.push({
+          label: read.string(),
+          x: read.float(),
+          y: read.float()
+        })
       }
     })
     this.setRpc('RequestMapEntities', read => {
       this.MapInfo.entities.length = 0
       const entityCount = read.int32()
       for (let i = 0; i < entityCount; i++) {
-        this.MapInfo.entities.push({
-          type: read.int32(),
-          x: read.float(),
-          y: read.float()
-        })        
+        const entity = {}
+        entity.type = read.int32()
+        entity.entId = read.uint64()
+        if(read.bool()) {
+          entity.label = read.string()
+        }
+        entity.x = read.float()
+        entity.y = read.float()
+        this.MapInfo.entities.push(entity)        
       }
     })
   }

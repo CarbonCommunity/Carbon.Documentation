@@ -1,40 +1,118 @@
 <template>
-  <div class="zpi-container select-none">
-    <div v-if="!isDetached && imgW" class="zpi-controls inline-flex right-3 top-3">
-      <button @click="zoomAtCenter(1/zoomStep)">−</button>
-      <span>{{ Math.round(scale * 100) }}%</span>
-      <button @click="zoomAtCenter(zoomStep)">+</button>
-      <button @click="reset()">Reset</button>
-      <button v-if="!props.isFullscreen" @click="expand()"><Expand :size="18"/></button>
+  <div class="zpi-container select-none relative">
+    <!-- Top-right controls -->
+    <div
+      v-if="!isDetached && imgW"
+      class="zpi-controls absolute right-3 top-3 inline-flex items-center gap-2 rounded-2xl bg-black/60 backdrop-blur px-2 py-1 shadow-lg border border-white/10">
+      <button
+        class="zpi-btn"
+        title="Zoom Out"
+        aria-label="Zoom Out"
+        @click="zoomAtCenter(1/zoomStep)">−</button>
+
+      <span class="text-xs tabular-nums px-1.5 py-0.5 rounded bg-white/5 border border-white/10">
+        {{ Math.round(scale * 100) }}%
+      </span>
+
+      <button
+        class="zpi-btn"
+        title="Zoom In"
+        aria-label="Zoom In"
+        @click="zoomAtCenter(zoomStep)">+</button>
+
+      <button
+        class="zpi-btn !px-2"
+        title="Reset View"
+        aria-label="Reset View"
+        @click="reset()">Reset</button>
+
+      <button
+        v-if="!props.isFullscreen"
+        class="zpi-icon-btn"
+        title="Fullscreen"
+        aria-label="Fullscreen"
+        @click="expand()">
+        <Expand :size="18" />
+      </button>
+      
+      <button
+        :class="['zpi-btn !px-2', showMapMarkers ? 'opacity-100' : 'opacity-50']"
+        title="Map Markers"
+        aria-label="Display map markers"
+        @click="showMapMarkers = !showMapMarkers">Map Markers</button>
     </div>
-    <div v-if="!isDetached && imgW" :class="'zpi-controls left-3 bottom-2 w-[' + (areEntitiesExpanded ? '350px' : '250px') + '] h-[' + (areEntitiesExpanded ? '100px' : '150px') + ']'">
-      <div class="inline-flex m-2">
-        <button @click="areEntitiesExpanded = !areEntitiesExpanded">Live Entities</button>
-      </div>
-      <div v-if="areEntitiesExpanded">
-        <span class="grid">
-        <button :class="[selectedServer?.hasTrackedType(i) ? 'opacity-100' : 'opacity-50']" v-for="(type, i) in selectedServer?.MapInfo?.availableTypes" v-bind:key="i" @click="selectedServer?.toggleTrackedType(i)">{{ type }}</button>
-        </span>
-      </div>
-    </div>
+
     <div
       ref="container"
+      class="relative"
       @pointerdown="onPointerDown"
       @pointermove="onPointerMove"
       @pointerup="onPointerUp"
       @pointercancel="onPointerUp"
       @pointerleave="onPointerUp"
       @dblclick="reset">
-        <div v-if="!isDetached" class="zpi-image" :style="{ transform: `translate(${tx}px, ${ty}px) scale(${scale})` }">
-          <span v-if="imgW" :style="{ 'min-width': `${mapImage?.clientWidth}px`, 'min-height': `${mapImage?.clientHeight}px` }">
-            <span v-if="props.server?.MapInfo?.entities != null" class="grid absolute">
-              <div v-for="entity in props.server.MapInfo.entities" v-bind:key="entity" class="absolute" :style="{ transform: `translate(${mapImage?.clientWidth * entity.x}px, ${mapImage?.clientHeight * (1 - entity.y)}px)` }">
-              <div class="bg-[#d38f50] w-[5px] h-[5px]">{{ entity.type }} Player</div>
-            </div>
+      <div
+        v-if="!isDetached"
+        class="zpi-image transform-gpu"
+        :style="{ transform: `translate(${tx}px, ${ty}px) scale(${scale})` }">
+        <span v-if="imgW" :style="{ minWidth: `${mapImage?.clientWidth}px`, minHeight: `${mapImage?.clientHeight}px` }">
+          <span class="absolute inset-0">
+            <span v-if="showMapMarkers">
+              <div v-for="(monument, idx) in props.server.MapInfo.monuments" :key="idx" class="absolute transition-transform" :style="{ transform: `translate(${(mapImage?.clientWidth ?? 0) * monument.x}px, ${(mapImage?.clientHeight ?? 0) * (1 - monument.y)}px)` }">
+                <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2  text-[7px] px-[3px] py-0.1 text-nowrap rounded bg-black/70 border border-white/10">
+                  {{ monument.label }}
+                </div>
+              </div>
             </span>
+            <div v-for="(entity, idx) in props.server.MapInfo.entities" :key="idx" class="absolute transition-transform" :style="{ transform: `translate(${(mapImage?.clientWidth ?? 0) * entity.x}px, ${(mapImage?.clientHeight ?? 0) * (1 - entity.y)}px)` }">
+              <span
+                  @mouseover="showLabel(idx, true)"
+                  @mouseout="showLabel(idx, false)">
+                <div v-if="entity.type == 0" class="entity-online"></div>
+                <div v-if="entity.type == 1" class="entity-offline"></div>
+              </span>
+              <div :ref="el => labelRefs[idx] = el" class="absolute opacity-0 left-1/2 -top-3 -translate-x-1/2 transition-all -translate-y-1/2 text-[9px] px-[3px] py-0.1 rounded bg-black/70 border border-white/10">
+                {{ entity.label }}
+              </div>
+            </div>
           </span>
-          <img ref="mapImage" @load="onMapImageLoaded" :src="src" draggable="false" />
+        </span>
+        <img
+          ref="mapImage"
+          @load="onMapImageLoaded"
+          :src="src"
+          draggable="false"
+          class="select-none pointer-events-none"
+        />
+      </div>
+    </div>
+    <div
+      v-if="!isDetached && imgW"
+      class="absolute left-3 bottom-3 rounded-2xl bg-black/60 backdrop-blur shadow-lg border border-white/10 overflow-hidden"
+      :style="panelStyle"
+    >
+      <div class="flex items-center justify-between px-2 py-1.5">
+        <button
+          class="inline-flex items-center gap-2 text-sm font-medium px-2 py-1 rounded-lg hover:bg-white/5 active:bg-white/10"
+          @click="areEntitiesExpanded = !areEntitiesExpanded">
+          <span class="i-lucide-activity" />
+          Live Entities
+          <span
+            v-if="availableTypes?.length"
+            class="text-xs opacity-70">({{ availableTypes.length }})</span>
+          <span
+            class="ml-1 transition-transform"
+            :class="areEntitiesExpanded ? 'rotate-180' : ''"
+          >▾</span>
+        </button>
+      </div>
+      <div v-if="areEntitiesExpanded" class="px-2 pb-2 max-h-full ">
+        <div class="grid grid-cols-2 gap-1.5 overflow-y-auto max-h-[100%] overflow-auto pr-1 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
+          <button  v-for="(type, i) in availableTypes" :key="`${i}-${type}`" class="chip" :class="selectedServer?.hasTrackedType(i) ? 'chip-on' : 'chip-off'" @click="selectedServer?.toggleTrackedType(i)">
+            {{ type }}
+          </button>
         </div>
+      </div>
     </div>
   </div>
 </template>
@@ -46,7 +124,25 @@ import { addPopup, selectedServer } from '../control-panel/ControlPanel.SaveLoad
 
 type Point = { x: number; y: number }
 
+const labelRefs = ref<HTMLElement[]>([])
+function showLabel(idx: number, visible: boolean) {
+  const el = labelRefs.value[idx]
+  if (el) {
+    el.style.opacity = visible ? '1' : '0'
+  }
+}
+const panelStyle = computed(() => {
+  const expanded = areEntitiesExpanded.value
+  const w = expanded ? 350 : 190
+  const h = expanded ? '40%' : '40px'
+  return {
+    width: `${w}px`,
+    height: `${h}`,
+  }
+})
+const availableTypes = computed(() => props.server?.MapInfo?.availableTypes ?? [])
 const areEntitiesExpanded = ref<boolean>(false)
+const showMapMarkers = ref<boolean>(true)
 const props = withDefaults(defineProps<{
   title?: string
   subtitle?: string
@@ -182,6 +278,8 @@ function reset() {
 async function expand() {
   const windowProps = {
     src: props.src,
+    title: props.title,
+    subtitle: props.subtitle,
     isFullscreen: true,
     server: props.server,
     onClosed: () => {
@@ -255,5 +353,31 @@ defineExpose({ reset, zoomAtCenter })
 }
 .zpi-controls button:hover {
   background: rgba(255,255,255,0.16);
+}
+
+.entity-online {
+  @apply bg-[#74cc00] w-[6px] h-[6px] rounded-full ring-1 ring-black/50 shadow-md
+}
+
+.entity-offline {
+  @apply bg-[#dd24247c] w-[6px] h-[6px] rounded-full ring-1 ring-black/50 shadow-md
+}
+
+.zpi-btn {
+  @apply inline-flex items-center justify-center px-2.5 py-1.5 rounded-lg text-sm
+         bg-white/5 hover:bg-white/10 active:bg-white/20 border border-white/10;
+}
+.zpi-icon-btn {
+  @apply inline-flex items-center justify-center p-1.5 rounded-lg
+         bg-white/5 hover:bg-white/10 active:bg-white/20 border border-white/10;
+}
+.chip {
+  @apply text-xs px-2 py-1 rounded-lg border transition-opacity;
+}
+.chip-on {
+  @apply bg-emerald-500/20 border-emerald-400/40;
+}
+.chip-off {
+  @apply bg-white/5 border-white/10 opacity-60 hover:opacity-90;
 }
 </style>
