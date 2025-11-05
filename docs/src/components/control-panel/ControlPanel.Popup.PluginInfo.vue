@@ -104,7 +104,6 @@ import { Link, Link2 } from 'lucide-vue-next'
       </tbody>
     </table>
   </div>
-
 </div>
 </template>
 
