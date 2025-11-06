@@ -1169,8 +1169,16 @@ export class ProfileFlags {
   StackWalkAllocations: boolean = true
 }
 
+export function getMapEntityTypeName(type: number) {
+  switch(type) {
+    case MapEntityTypes.ActivePlayers:
+      return 'Online Players'
+    case MapEntityTypes.SleepingPlayers:
+      return 'Offline Players'
+  }
+}
 
-enum MapEntityTypes {
+export enum MapEntityTypes {
   ActivePlayers = 0,
   SleepingPlayers = 1
 } 

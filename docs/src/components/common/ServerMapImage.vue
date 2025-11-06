@@ -107,7 +107,7 @@
       <div v-if="areEntitiesExpanded" class="px-2 pb-2 max-h-full ">
         <div class="grid grid-cols-2 gap-1.5 overflow-y-auto max-h-[100%] overflow-auto pr-1 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
           <button  v-for="(type, i) in selectedServer?.MapInfo?.availableTypes" :key="`${i}-${type}`" class="chip" :class="selectedServer?.hasTrackedType(i) ? 'chip-on' : 'chip-off'" @click="selectedServer?.toggleTrackedType(i)">
-            {{ type }}
+            {{ getMapEntityTypeName(i) }} ({{ selectedServer?.MapInfo?.entities.filter(x => x.type == i).length }})
           </button>
         </div>
       </div>
@@ -118,7 +118,7 @@
 <script setup lang="ts">
 import { Activity, Expand, Loader2, Moon } from 'lucide-vue-next'
 import { ref, reactive, onMounted, onBeforeUnmount, computed } from 'vue'
-import { addPopup, save, selectedServer } from '../control-panel/ControlPanel.SaveLoad'
+import { addPopup, getMapEntityTypeName, MapEntityTypes, save, selectedServer } from '../control-panel/ControlPanel.SaveLoad'
 
 type Point = { x: number; y: number }
 
