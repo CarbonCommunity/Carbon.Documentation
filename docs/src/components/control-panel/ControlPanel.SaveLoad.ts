@@ -248,6 +248,7 @@ function importFromJson(data: string) {
         localServer.CachedHostname = server.CachedHostname
         localServer.CommandHistory = server.CommandHistory ?? []
         localServer.ProfileFlags = server.ProfileFlags ?? new ProfileFlags()
+        localServer.MapSettings = server.MapSettings
         addServer(localServer)
       })
 
@@ -328,6 +329,7 @@ export class Server {
   PlayerInfo: any | null = null
   SleeperInfo: any | null = null
   PluginsInfo: any | null = null
+  MapSettings: any = {}
   MapInfo: any | null = null
   MapEntityUpdateInterval: any | null = null
   HeaderImage = ''
@@ -636,7 +638,6 @@ export class Server {
         imageHeight: read.int32(),
         imageUrl: URL.createObjectURL(new Blob([read.bytes(read.int32())], { type: 'image/png' })),
         worldSize: read.int32(),
-        trackedTypes: [],
         availableTypes: Object.keys(MapEntityTypes).splice(Object.keys(MapEntityTypes).length / 2, Object.keys(MapEntityTypes).length),
         entities: [],
         monuments: []
@@ -649,13 +650,18 @@ export class Server {
           y: read.float()
         })
       }
+      if(this.MapSettings == null) {
+        this.MapSettings = {}
+      }
+      if(this.MapSettings.trackedTypes == null) {
+        this.MapSettings.trackedTypes = []
+      }
     })
     this.setRpc('RequestMapEntities', read => {
       if(performance.now() - timeSince.value > 20000) {
         timeSince.value = performance.now()
         this.MapInfo.entities.length = 0
       }
-
       const entityCount = read.int32()
       const batch = []
       for (let i = 0; i < entityCount; i++) {
@@ -669,6 +675,7 @@ export class Server {
         entity.y = read.float()
         batch.push(entity)
       }
+      this.MapInfo.hour = read.float()
 
       for (let i = 0; i < batch.length; i++) {
         const element = batch[i];
@@ -695,31 +702,32 @@ export class Server {
   }
 
   hasTrackedType(i: number) : boolean {
-    return this.MapInfo.trackedTypes.includes(i)
+    return this.MapSettings.trackedTypes.includes(i)
   }
 
   toggleTrackedType(i: number) {
     this.MapInfo.entities.length = 0
     if(!this.hasTrackedType(i)) {
-      this.MapInfo.trackedTypes.push(i)
+      this.MapSettings.trackedTypes.push(i)
     } else {
-      this.MapInfo.trackedTypes = this.MapInfo.trackedTypes.filter(t => t !== i)
+      this.MapSettings.trackedTypes = this.MapSettings.trackedTypes.filter(t => t !== i)
     }
     this.startMapEntityTracking()
+    save()
   }
 
   startMapEntityTracking() {
     this.clearMapEntityTracking()
     this.MapEntityUpdateInterval = setInterval(() => {
-      if(this.MapInfo == null || this.MapInfo.trackedTypes == null) {
+      if(this.MapInfo == null || this.MapSettings.trackedTypes == null) {
         return
       }
       const write = new BinaryWriter()
       write.int32(0)
       write.uint32(this.getId('RequestMapEntities'))
-      write.int32(this.MapInfo.trackedTypes.length)
-      for (let i = 0; i < this.MapInfo.trackedTypes.length; i++) {
-        write.int32(this.MapInfo.trackedTypes[i])
+      write.int32(this.MapSettings.trackedTypes.length)
+      for (let i = 0; i < this.MapSettings.trackedTypes.length; i++) {
+        write.int32(this.MapSettings.trackedTypes[i])
       }
       this.Socket?.send(write.toArrayBuffer())
     }, 1000);

@@ -34,12 +34,16 @@
         @click="expand()">
         <Expand :size="18" />
       </button>
-      
       <button
-        :class="['zpi-btn !px-2', showMapMarkers ? 'opacity-100' : 'opacity-50']"
+        :class="['zpi-btn !px-2', selectedServer?.MapSettings?.showMarkers ? 'opacity-100' : 'opacity-50']"
         title="Map Markers"
         aria-label="Display map markers"
-        @click="showMapMarkers = !showMapMarkers">Map Markers</button>
+        @click="toggleShowMarkers()">Map Markers</button>
+      <button
+        :class="['zpi-btn !px-2', selectedServer?.MapSettings?.nightMode ? 'opacity-100' : 'opacity-50']"
+        title="Map Markers"
+        aria-label="Display map markers"
+        @click="toggleNightMode()"><Moon :size="16"/></button>
     </div>
     <div
       ref="container"
@@ -50,13 +54,17 @@
       @pointercancel="onPointerUp"
       @pointerleave="onPointerUp"
       @dblclick="reset">
-      <div
-        v-if="!isDetached"
-        class="zpi-image transform-gpu"
-        :style="{ transform: `translate(${tx}px, ${ty}px) scale(${scale})` }">
+      <div v-if="!isDetached" class="zpi-image transform-gpu" :style="{ transform: `translate(${tx}px, ${ty}px) scale(${scale})` }">
+        <img
+          ref="mapImage"
+          @load="onMapImageLoaded"
+          :src="src"
+          draggable="false"
+          :style="[selectedServer?.MapSettings?.nightMode ? { filter: `brightness(${getMapBrightness})` } : '']"
+          class="select-none pointer-events-none"/>
         <span v-if="imgW" :style="{ minWidth: `${mapImage?.clientWidth}px`, minHeight: `${mapImage?.clientHeight}px` }">
           <span class="absolute inset-0">
-            <span v-if="showMapMarkers">
+            <span v-if="selectedServer?.MapSettings?.showMarkers">
               <div v-for="(monument, idx) in selectedServer?.MapInfo?.monuments" :key="idx" class="absolute transition-transform" :style="{ transform: `translate(${(mapImage?.clientWidth ?? 0) * monument.x}px, ${(mapImage?.clientHeight ?? 0) * (1 - monument.y)}px)` }">
                 <div v-html="monument.label" class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[7px] px-[3px] py-0.1 text-nowrap rounded bg-black/70 border border-white/10">
                 </div>
@@ -75,13 +83,6 @@
             </div>
           </span>
         </span>
-        <img
-          ref="mapImage"
-          @load="onMapImageLoaded"
-          :src="src"
-          draggable="false"
-          class="select-none pointer-events-none"
-        />
       </div>
     </div>
     <div
@@ -115,9 +116,9 @@
 </template>
 
 <script setup lang="ts">
-import { Activity, Expand, Loader2 } from 'lucide-vue-next'
+import { Activity, Expand, Loader2, Moon } from 'lucide-vue-next'
 import { ref, reactive, onMounted, onBeforeUnmount, computed } from 'vue'
-import { addPopup, selectedServer } from '../control-panel/ControlPanel.SaveLoad'
+import { addPopup, save, selectedServer } from '../control-panel/ControlPanel.SaveLoad'
 
 type Point = { x: number; y: number }
 
@@ -135,7 +136,6 @@ const panelStyle = computed(() => {
   }
 })
 const areEntitiesExpanded = ref<boolean>(false)
-const showMapMarkers = ref<boolean>(true)
 const props = withDefaults(defineProps<{
   title?: string
   subtitle?: string
@@ -158,16 +158,42 @@ const props = withDefaults(defineProps<{
 
 const container = ref<HTMLDivElement | null>(null)
 const mapImage = ref<HTMLDivElement | null>(null)
+const hour = ref<number>(0)
 const isDetached = ref<boolean>(false)
 const scale = ref(props.initialScale)
 const tx = ref(0)
 const ty = ref(0)
 const imgW = ref(0)
 const imgH = ref(0)
+const getMapBrightness = computed(() => {
+  return 0.3 + Math.cos(((hour.value - 12) / 24) * Math.PI * 2) * 0.35 + 0.35
+})
 
 const activePointers = reactive(new Map<number, Point>())
 let lastPanAt: Point | null = null
 let pinchStart = { distance: 0, midpoint: { x: 0, y: 0 }, scale: props.initialScale, tx: 0, ty: 0 }
+
+function toggleShowMarkers(){
+  if(selectedServer.value == null) {
+    return
+  }
+  if(selectedServer.value.MapSettings == null) {
+    selectedServer.value.MapSettings = {}
+  }
+  selectedServer.value.MapSettings.showMarkers = !selectedServer.value.MapSettings.showMarkers
+  save()
+}
+
+function toggleNightMode(){
+  if(selectedServer.value == null) {
+    return
+  }
+  if(selectedServer.value.MapSettings == null) {
+    selectedServer.value.MapSettings = {}
+  }
+  selectedServer.value.MapSettings.nightMode = !selectedServer.value.MapSettings.nightMode
+  save()
+}
 
 function clamp(v: number, min: number, max: number) {
   return Math.max(min, Math.min(max, v))
@@ -285,6 +311,10 @@ onMounted(() => {
   if (!container.value) return
   container.value.addEventListener('wheel', onWheel, { passive: false })
   reset()
+
+  setInterval(() => {
+    hour.value = selectedServer.value?.MapInfo?.hour
+  }, 1000);
 })
 onBeforeUnmount(() => {
   container.value?.removeEventListener('wheel', onWheel as any)
