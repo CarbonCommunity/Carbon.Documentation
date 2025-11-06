@@ -766,6 +766,7 @@ export class Server {
     save()
     this.UserConnected = true
     if (this.Socket != null) {
+      this.clearMapEntityTracking()
       this.Socket.close()
       this.Socket.onclose?.(
         new CloseEvent('close', {
