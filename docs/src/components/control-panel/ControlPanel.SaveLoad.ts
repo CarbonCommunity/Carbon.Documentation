@@ -647,7 +647,6 @@ export class Server {
           y: read.float()
         })
       }
-      console.log('got map info')
     })
     this.setRpc('RequestMapEntities', read => {
       this.MapInfo.entities.length = 0
@@ -663,7 +662,6 @@ export class Server {
         entity.y = read.float()
         this.MapInfo.entities.push(entity)        
       }
-      console.log('got ent info')
     })
   }
 

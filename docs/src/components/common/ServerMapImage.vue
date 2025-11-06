@@ -41,7 +41,6 @@
         aria-label="Display map markers"
         @click="showMapMarkers = !showMapMarkers">Map Markers</button>
     </div>
-
     <div
       ref="container"
       class="relative"
@@ -70,7 +69,7 @@
                 <div v-if="entity.type == 0" class="entity-online"></div>
                 <div v-if="entity.type == 1" class="entity-offline"></div>
               </span>
-              <div :ref="el => labelRefs[idx] = el" class="absolute opacity-0 left-1/2 -top-3 -translate-x-1/2 transition-transform -translate-y-1/2 text-[9px] px-[3px] py-0.1 rounded bg-black/70 border border-white/10">
+              <div v-if="labelRefs[idx]" class="absolute left-1/2 -top-3 -translate-x-1/2 transition-transform -translate-y-1/2 text-[9px] px-[3px] py-0.1 text-nowrap rounded bg-black/70 border border-white/10">
                 {{ entity.label }}
               </div>
             </div>
@@ -122,12 +121,9 @@ import { addPopup, selectedServer } from '../control-panel/ControlPanel.SaveLoad
 
 type Point = { x: number; y: number }
 
-const labelRefs = ref<HTMLElement[]>([])
+const labelRefs = ref<boolean[]>([])
 function showLabel(idx: number, visible: boolean) {
-  const el = labelRefs.value[idx]
-  if (el) {
-    el.style.opacity = visible ? '1' : '0'
-  }
+  labelRefs.value[idx] = visible
 }
 const panelStyle = computed(() => {
   const expanded = areEntitiesExpanded.value
