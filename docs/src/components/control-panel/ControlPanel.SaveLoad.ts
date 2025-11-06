@@ -112,6 +112,8 @@ export function isValidUrl(urlStr: string): boolean {
   }
 }
 
+const timeSince = ref<number>(performance.now())
+
 export function deleteServer(server: Server, e: MouseEvent) {
   const confirmDelete = e.shiftKey || window.confirm(`Are you sure you want to delete server "${server.Address}"?`)
   if (confirmDelete) {
@@ -649,8 +651,13 @@ export class Server {
       }
     })
     this.setRpc('RequestMapEntities', read => {
-      this.MapInfo.entities.length = 0
+      if(performance.now() - timeSince.value > 20000) {
+        timeSince.value = performance.now()
+        this.MapInfo.entities.length = 0
+      }
+
       const entityCount = read.int32()
+      const batch = []
       for (let i = 0; i < entityCount; i++) {
         const entity = {}
         entity.type = read.int32()
@@ -660,7 +667,29 @@ export class Server {
         }
         entity.x = read.float()
         entity.y = read.float()
-        this.MapInfo.entities.push(entity)        
+        batch.push(entity)
+      }
+
+      for (let i = 0; i < batch.length; i++) {
+        const element = batch[i];
+        const existentEntity = this.MapInfo.entities.find((x: any) => x.entId == element.entId)
+        if(existentEntity != null) {
+          if(existentEntity.label != element.label) {
+            existentEntity.label = element.label
+          }
+          if(existentEntity.type != element.type) {
+            existentEntity.type = element.type
+          }
+          if(existentEntity.x != element.x) {
+            existentEntity.x = element.x
+          }
+          if(existentEntity.y != element.y) {
+            existentEntity.y = element.y
+          }  
+        }
+        else {
+          this.MapInfo.entities.push(element)
+        }
       }
     })
   }

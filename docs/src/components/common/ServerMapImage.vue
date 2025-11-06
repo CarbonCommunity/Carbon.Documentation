@@ -62,7 +62,7 @@
                 </div>
               </div>
             </span>
-            <div v-for="(entity, idx) in selectedServer?.MapInfo?.entities" :key="idx" class="absolute transition-transform" :style="{ transform: `translate(${(mapImage?.clientWidth ?? 0) * entity.x}px, ${(mapImage?.clientHeight ?? 0) * (1 - entity.y)}px)` }">
+            <div v-for="(entity, idx) in selectedServer?.MapInfo?.entities" :key="entity.entId" class="absolute transition-transform" :style="{ transform: `translate(${(mapImage?.clientWidth ?? 0) * entity.x}px, ${(mapImage?.clientHeight ?? 0) * (1 - entity.y)}px)` }">
               <span
                   @mouseover="showLabel(idx, true)"
                   @mouseout="showLabel(idx, false)">
