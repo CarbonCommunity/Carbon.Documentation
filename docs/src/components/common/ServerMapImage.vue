@@ -329,7 +329,7 @@ onMounted(() => {
 
   setInterval(() => {
     hour.value = selectedServer.value?.MapInfo?.hour
-  }, 1000);
+  }, 100);
 })
 onBeforeUnmount(() => {
   container.value?.removeEventListener('wheel', onWheel as any)
