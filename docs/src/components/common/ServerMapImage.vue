@@ -93,7 +93,7 @@
         <button
           class="inline-flex items-center gap-2 text-sm font-medium px-2 py-1 rounded-lg hover:bg-white/5 active:bg-white/10"
           @click="areEntitiesExpanded = !areEntitiesExpanded">
-          <Activity :size="14"/>
+          <Activity class="animate-pulse" :size="14"/>
           Live Entities
           <span
             v-if="selectedServer?.MapInfo?.availableTypes?.length"
@@ -296,6 +296,7 @@ function reset() {
 async function expand() {
   const windowProps = {
     src: props.src,
+    live: true,
     title: props.title,
     subtitle: props.subtitle,
     isFullscreen: true,

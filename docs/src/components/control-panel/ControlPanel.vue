@@ -309,8 +309,11 @@ onUnmounted(() => {
   <div v-for="html in popups" v-bind:key="html" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click="removePopup(html.props.id)">
     <div class="mx-4 w-full max-w-fit bg-white p-6 dark:bg-gray-800" @click.stop>
       <div v-if="!html.props.isLoading" class="mb-4 flex items-center justify-between">
-        <span class="select-none">
-          <h3 class="text-x font-bold">{{ html.props.title }}</h3>
+        <span class="select-none ">
+          <span class="flex">
+            <Dot v-if="html.props.live" :size="45" :style="'margin: -10px; color: red; filter: blur(1.5px);'" class="animate-pulse"/>
+            <h3 class="text-x font-bold">{{ html.props.title }}</h3>
+          </span>
           <span class="text-sm text-slate-500">{{ html.props.subtitle }}</span>
         </span>
         <button @click="removePopup(html.props.id)" class="text-gray-500 hover:text-gray-700">
