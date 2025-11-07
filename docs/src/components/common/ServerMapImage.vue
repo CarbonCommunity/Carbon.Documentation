@@ -1,10 +1,13 @@
 <template>
   <div class="zpi-container select-none relative">
-    <!-- Top-right controls -->
     <div
       v-if="!isDetached && imgW"
       class="zpi-controls absolute right-3 top-3 inline-flex items-center gap-2 rounded-2xl bg-black/60 backdrop-blur px-2 py-1 shadow-lg border border-white/10">
-      <span class="zpi-btn">
+      <span 
+        class="zpi-btn"
+        title="Server Time"
+        aria-label="Server Time"
+      >
         {{
           selectedServer?.MapInfo
             ? `${Math.floor(selectedServer.MapInfo.hour)
@@ -52,8 +55,8 @@
         @click="toggleShowMarkers()">Map Markers</button>
       <button
         :class="['zpi-btn !px-2', selectedServer?.MapSettings?.nightMode ? 'opacity-100' : 'opacity-50']"
-        title="Map Markers"
-        aria-label="Display map markers"
+        title="Night Mode"
+        aria-label="Dim the map light when it's darker in the server"
         @click="toggleNightMode()"><Moon :size="16"/></button>
     </div>
     <div

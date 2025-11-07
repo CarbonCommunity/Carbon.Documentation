@@ -20,7 +20,7 @@ const props = defineProps<{
     :src="props.src"
     :initialScale="props.initialScale"
     :minScale=".5"
-    :maxScale="3.5"
+    :maxScale="5"
     :server="props.server"
     :isFullscreen="props.isFullscreen"/>
 </div>
