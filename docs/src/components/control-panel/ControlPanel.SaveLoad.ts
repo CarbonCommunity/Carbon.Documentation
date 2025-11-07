@@ -712,6 +712,7 @@ export class Server {
     } else {
       this.MapSettings.trackedTypes = this.MapSettings.trackedTypes.filter(t => t !== i)
     }
+    this.MapInfo.entities.length = 0
     this.startMapEntityTracking()
     save()
   }
