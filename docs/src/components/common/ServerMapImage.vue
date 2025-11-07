@@ -4,6 +4,17 @@
     <div
       v-if="!isDetached && imgW"
       class="zpi-controls absolute right-3 top-3 inline-flex items-center gap-2 rounded-2xl bg-black/60 backdrop-blur px-2 py-1 shadow-lg border border-white/10">
+      <span class="zpi-btn">
+        {{
+          selectedServer?.MapInfo
+            ? `${Math.floor(selectedServer.MapInfo.hour)
+              .toString()
+              .padStart(2, '0')}:${Math.floor((selectedServer.MapInfo.hour % 1) * 60)
+              .toString()
+              .padStart(2, '0')}`
+            : '--:--'
+        }}
+      </span>
       <button
         class="zpi-btn"
         title="Zoom Out"
