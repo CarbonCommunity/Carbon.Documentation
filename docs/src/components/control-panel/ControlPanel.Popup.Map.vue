@@ -15,7 +15,7 @@ const props = defineProps<{
 </script>
 
 <template>
-<div class="w-[75vw] h-[80vh]">
+<div class="w-[95vw] h-[85vh]">
   <ServerMapImage
     :src="props.src"
     :initialScale="props.initialScale"
