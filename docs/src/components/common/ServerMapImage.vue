@@ -126,6 +126,9 @@
         </div>
       </div>
     </div>
+    <div v-if="!imgW" class="relative w-full h-full -translate-x-[20px] -translate-y-[20px]">
+      <Loader2 class="animate-spin absolute left-1/2 top-1/2 text-white/10" :size="50" />
+    </div>
   </div>
 </template>
 
