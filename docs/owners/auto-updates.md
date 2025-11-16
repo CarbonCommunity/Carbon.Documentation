@@ -29,9 +29,9 @@ A formal explanation and in-depth understanding of all of the events that occur 
 :::
 
 ## Update Schedule
-We release production updates sually twice a month on the stable builds (Carbon `production` build for the `public` Rust branch), with follow-up hotfix patches when applicable. 
+We release production updates usually twice a month on the stable builds (Carbon `production` build for the `public` Rust branch), with follow-up hotfix patches when applicable. 
 
-We release the `production` build for the Rust wipe update 1 hour before the actual Rust server update drops, using the `release` branch to build against (it's the build that gets merged to `public` on the clock). 
+We release the `production` build for the Rust wipe update **1 hour** before the actual Rust server update drops, using the `release` branch to build against (it's the build that gets merged to `public` on the clock). 
 
 Our other beta builds get updated accordingly to Facepunch's progression in the development of said branches. For example, `staging` branch only begins to have significant changes necessary for Carbon to update to, roughly mid-month.
 
