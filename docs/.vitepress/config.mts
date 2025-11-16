@@ -92,7 +92,8 @@ export default defineConfig({
           text: 'Owners Documentation',
           collapsed: false,
           items: [
-            { text: 'Auto Updating', link: '/owners/auto-updating' },
+            { text: 'Auto Updates', link: '/owners/auto-updates' },
+            { text: 'Oxide Porting', link: '/owners/oxide-porting' },
             {
               text: 'Features',
               collapsed: true,
@@ -140,8 +141,7 @@ export default defineConfig({
               text: 'Hosting',
               collapsed: true,
               items: [{ text: 'Linux GSM', link: '/owners/linux-gsm' }],
-            },
-            { text: 'Oxide Porting', link: '/owners/oxide-porting' }
+            }
           ],
         },
         {
