@@ -108,7 +108,7 @@
           class="inline-flex items-center gap-2 text-sm font-medium px-2 py-1 rounded-lg hover:bg-white/5 active:bg-white/10"
           @click="areEntitiesExpanded = !areEntitiesExpanded">
           <Activity class="animate-pulse" :size="14"/>
-          Live Entities
+          Tracked Items
           <span
             v-if="selectedServer?.MapInfo?.availableTypes?.length"
             class="text-xs opacity-70">({{ selectedServer?.MapInfo?.availableTypes.length }})</span>

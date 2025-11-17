@@ -95,10 +95,18 @@ const mainMembers = [
   {
     avatar: '/team/Death.webp',
     name: 'Death',
-    title: 'Co-Producer',
+    title: 'Producer',
     links: [
       { icon: 'github', link: 'https://github.com/Deathicated' },
       { icon: 'cf', link: 'https://codefling.com/death' }
+    ]
+  },
+  {
+    avatar: '/team/evs-ptr.webp',
+    name: 'evs-ptr',
+    title: 'Developer',
+    links: [
+      { icon: 'github', link: 'https://github.com/evs-ptr' }
     ]
   },
   {
@@ -107,15 +115,6 @@ const mainMembers = [
     title: 'Moderator',
     links: [
       { icon: 'cf', link: 'https://codefling.com/mals' }
-    ]
-  },
-  {
-    avatar: '/team/Steenamaroo.webp',
-    name: 'Steenamaroo',
-    title: 'Emotional Support',
-    links: [
-      { icon: 'github', link: 'https://github.com/steenamaroo' },
-      { icon: 'cf', link: 'https://codefling.com/steenamaroo' }
     ]
   }
 ]
@@ -137,14 +136,6 @@ const docsMembers = [
     links: [
       { icon: 'github', link: 'https://github.com/purnellbp' },
       { icon: 'cf', link: 'https://codefling.com/goo_' }
-    ]
-  },
-  {
-    avatar: '/team/evs-ptr.webp',
-    name: 'evs-ptr',
-    title: 'Documentation',
-    links: [
-      { icon: 'github', link: 'https://github.com/evs-ptr' }
     ]
   }
 ]
@@ -258,6 +249,29 @@ const contributorMembers = [
   }
 ]
 
+const qaMembers = [
+  {
+    avatar: '/team/UKN.webp',
+    name: 'UKN',
+    title: 'Communication',
+  },
+  {
+    avatar: '/team/RustySpoon.webp',
+    name: 'RustySpoon',
+    title: 'Communication',
+  },
+  {
+    avatar: '/team/RAA.webp',
+    name: 'Rust Admin Academy',
+    title: 'Communication',
+  },
+  {
+    avatar: '/team/FP.webp',
+    name: 'Facepunch Studios',
+    title: 'Communication',
+  }
+]
+
 </script>
 
 <h1 style="padding-top: 40px;">Our Team</h1>
@@ -267,5 +281,8 @@ const contributorMembers = [
 <h2>Docs</h2>
 <VPTeamMembers size="small" :members=docsMembers />
 
-<h2>Contributor</h2>
+<h2>Contributors</h2>
 <VPTeamMembers size="small" :members=contributorMembers />
+
+<h2>QA & Special Thanks</h2>
+<VPTeamMembers size="small" :members=qaMembers />
