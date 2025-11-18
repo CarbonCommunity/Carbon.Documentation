@@ -103,7 +103,7 @@ const mainMembers = [
   },
   {
     avatar: '/team/evs-ptr.webp',
-    name: 'evs-ptr',
+    name: 'Evora',
     title: 'Developer',
     links: [
       { icon: 'github', link: 'https://github.com/evs-ptr' }
