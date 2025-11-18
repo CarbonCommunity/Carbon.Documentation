@@ -264,6 +264,9 @@ const qaMembers = [
     avatar: '/team/RAA.webp',
     name: 'Rust Admin Academy',
     title: 'Communication',
+    links: [
+      { icon: 'youtube', link: 'https://www.youtube.com/@srtbull' }
+    ]
   },
   {
     avatar: '/team/FP.webp',
