@@ -1,10 +1,11 @@
 <script lang="ts" setup>
 import { computed, ref, onMounted } from 'vue'
-import { Minus, Plus } from 'lucide-vue-next'
+import { Info, Minus, Plus, X } from 'lucide-vue-next'
 import pako from 'pako'
 import { loadProfile, currentProfile, ProfileTypes, Assembly, Call, Memory, load, selectedAssembly } from './ProfilerPanel.SaveLoad';
 import { base64ToU8 } from '../control-panel/ControlPanel.Profiler';
 import { BinaryReader } from '@/utils/BinaryReader';
+import { addPopup, popups, removePopup } from '../control-panel/ControlPanel.SaveLoad'
 
 const sortedAssemblies = computed(() => {
   if (!currentProfile.value) return []
@@ -197,6 +198,18 @@ onMounted(() => {
   localStorage.removeItem('currentProfileName')
 })
 
+async function openStats() {
+  const windowProps = {
+    profile: currentProfile,
+    title: "Profile Statistics",
+    subtitle: "Additional profile info and helpful stats for nerds.",
+    onClosed: () => {
+
+    }
+  }
+  console.log('eeeee')
+  addPopup((await import(`@/components/profiler-panel/ProfilerPanel.Popup.Stats.vue`)).default, windowProps)
+}
 </script>
 
 <template>
@@ -207,14 +220,19 @@ onMounted(() => {
         <div v-if="!currentProfile" class="relative">
           <input id="loadProfile" type="file" accept=".cprf" @change="loadProfile" class="hidden"/>
           <label for="loadProfile" class="select-none inline-flex items-center gap-2 bg-[#60a848]/75 hover:bg-[#60a848] text-white px-4 py-2 cursor-pointer font-medium">
-            <Plus :size="17"/>
+            <Plus :size="20"/>
             Load Profile
           </label>
         </div>
-        <div v-if="currentProfile" class="relative">
+        <div v-if="currentProfile" class="flex gap-x-2">
+          <button id="profileStats" @click="openStats" class="hidden"></button>
+          <label for="profileStats" class="select-none inline-flex items-center gap-2 bg-[#4f9401] hover:bg-[#8ad138] text-white px-4 py-2 cursor-pointer font-medium">
+            <Info :size="20"/>
+          </label>
+
           <button id="clearProfile" accept=".cprf" @click="currentProfile = null" class="hidden"></button>
           <label for="clearProfile" class="select-none inline-flex items-center gap-2 bg-[#d13b38]/75 hover:bg-[#d13b38] text-white px-4 py-2 cursor-pointer font-medium">
-            <Minus :size="17"/>
+            <X :size="20"/>
             Clear
           </label>
         </div>
@@ -345,6 +363,26 @@ onMounted(() => {
       <div v-if="currentProfile == null" class="w-screen text-center pt-[50px] text-blue-300/30 select-none">
         No profile selected. Press on <strong class="text-blue-300/60">+ Load Profile</strong> to get started!
       </div>
+    </div>
+  </div>
+  <div v-for="html in popups" v-bind:key="html" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click="removePopup(html.props.id)">
+    <div class="mx-4 w-full max-w-fit bg-white p-6 dark:bg-gray-800" @click.stop>
+      <div v-if="!html.props.isLoading" class="mb-4 flex items-center justify-between">
+        <span class="select-none ">
+          <span class="flex">
+            <Dot v-if="html.props.live" :size="45" :style="'margin: -10px; color: red; filter: blur(1.5px);'" class="animate-pulse"/>
+            <h3 class="text-x font-bold">{{ html.props.title }}</h3>
+          </span>
+          <span class="text-sm text-slate-500">{{ html.props.subtitle }}</span>
+        </span>
+        <button @click="removePopup(html.props.id)" class="text-gray-500 hover:text-gray-700">
+          <X :size="20" />
+        </button>
+      </div>
+      <div v-if="html.props.isLoading">
+        <Loader2 class="animate-spin text-slate-500/50" :size="50" />
+      </div>
+      <component v-if="!html.props.isLoading" :is="html.component" v-bind="html.props" class="font-mono" />
     </div>
   </div>
 </template>
