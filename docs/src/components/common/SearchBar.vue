@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useDebounceFn, useUrlSearchParams } from '@vueuse/core'
 import { ChevronDown, Search } from 'lucide-vue-next'
-import { onMounted, ref, watch } from 'vue'
+import { nextTick, onMounted, ref, watch } from 'vue'
 
 const debounceTimeout = 350
 
@@ -44,26 +44,28 @@ const debounceSearchValue = useDebounceFn(updateDebouncedSearch, debounceTimeout
 
 function handleUrlSearch(val: string) {
   const decoded = decodeSearchTerm(val)
+
   if (decoded && decoded != debouncedSearchValue.value) {
     updateDebouncedSearch(decoded)
   }
 }
 
-function updateParams(val: string | undefined) {
+async function updateParams(val: string | undefined) {
+
   if (val != undefined) {
+    await nextTick()
     params.s = encodeSearchTerm(val)
   }
 }
 
-watch(debouncedSearchValue, (newVal) => {
-  updateParams(newVal)
+watch(debouncedSearchValue, async (newVal) => {
+  await updateParams(newVal)
 })
 
 onMounted(() => {
   if (params.s) {
     handleUrlSearch(params.s.toString())
   }
-  updateParams(debouncedSearchValue.value)
 })
 </script>
 
