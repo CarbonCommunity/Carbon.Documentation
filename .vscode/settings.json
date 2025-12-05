@@ -1,12 +1,12 @@
 {
   "[markdown]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "prettier.prettier-vscode"
   },
   "[json][jsonc][css][html]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "prettier.prettier-vscode"
   },
   "[vue][javascript][typescript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.defaultFormatter": "prettier.prettier-vscode",
     "editor.tabSize": 2
   },
   "frontMatter.panel.openOnSupportedFile": false,
