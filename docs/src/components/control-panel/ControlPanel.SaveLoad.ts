@@ -195,6 +195,8 @@ function exportToJson(): string {
       case 'Logs':
       case 'Chat':
       case 'Rpcs':
+      case 'PendingRequest':
+      case 'LastGlobalCommandResult':
         return undefined
     }
     return value
@@ -215,6 +217,15 @@ export function importSave() {
       importFromJson(text)
     })
   }
+}
+
+export async function globalCommand() {
+  const props = { title: 'Global Command', subtitle: 'Execute a command on all online servers in the list.', isLoading: ref<boolean>(false) }
+  addPopup((await import(`@/components/control-panel/ControlPanel.Popup.GlobalCommand.vue`)).default, props)
+}
+
+export async function globalChatMessage() {
+  
 }
 
 export function shiftServer(index: number, before: boolean) {
@@ -249,6 +260,7 @@ function importFromJson(data: string) {
         localServer.CommandHistory = server.CommandHistory ?? []
         localServer.ProfileFlags = server.ProfileFlags ?? new ProfileFlags()
         localServer.MapSettings = server.MapSettings
+        localServer.LastGlobalCommand = server.LastGlobalCommand
         addServer(localServer)
       })
 
@@ -343,6 +355,9 @@ export class Server {
   ChatUsername = 'SERVER'
   ChatUserId = '0'
   ChatColor = '#af5'
+  PendingRequest = false
+  LastGlobalCommand = ''
+  LastGlobalCommandResult = ''
 
   formatDuration(seconds: number) {
     const hrs = Math.floor(seconds / 3600)
@@ -507,6 +522,10 @@ export class Server {
         Time: read.int32(),
       }
       this.appendLog(log.Message as string)
+      if(this.PendingRequest) {
+        this.LastGlobalCommandResult = log.Message
+        this.PendingRequest = false
+      }
       tryFocusLogs()
     })
     this.setRpc('ChatTail', (read) => {
