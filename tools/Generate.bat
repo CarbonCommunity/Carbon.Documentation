@@ -1,7 +1,7 @@
 @echo off
 
 if "%1" EQU "" (
-	set TAG=rustbeta_staging
+	set TAG=edge
 ) else (
 	set TAG=%1
 )
@@ -13,7 +13,7 @@ if "%TAG%" EQU "production" (
 )
 
 if "%2" EQU "" (
-	set BRANCH=staging
+	set BRANCH=public
 ) else (
 	set BRANCH=%2
 )
