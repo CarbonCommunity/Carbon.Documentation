@@ -3,15 +3,11 @@ import { onMounted, ref } from 'vue'
 import { save, servers } from './ControlPanel.SaveLoad'
 import { Check, X } from 'lucide-vue-next';
 
-const commandInput = ref<string>('');
+const messageInput = ref<string>('');
 
 const selectedServers = ref<string[]>([])
 
 onMounted(() => {
-  if(servers.value.length > 0) {
-    commandInput.value = servers.value[0].LastGlobalCommand
-  }
-
   selectedServers.value.length = 0
   for (let i = 0; i < servers.value.length; i++) {
     const server = servers.value[i];
@@ -19,11 +15,10 @@ onMounted(() => {
       selectedServers.value.push(server.Address)
     }
   }
-
 })
 
-function sendCommand() {
-  if(commandInput.value == '') {
+function sendMessage() {
+  if(messageInput.value == '') {
     return
   }
 
@@ -31,9 +26,7 @@ function sendCommand() {
     const server = servers.value[i];
     if(server.IsConnected && selectedServers.value.includes(server.Address)) {
       server.PendingRequest = true
-      server.LastGlobalCommandResult = 'Requesting..'
-      server.appendLog(`<span style="color: var(--category-misc);"><strong>></strong></span> ${commandInput.value}`)
-      server.sendCommand(server.LastGlobalCommand = commandInput.value)
+      server.sendMessage(messageInput.value)
     } else {
       server.LastGlobalCommandResult = ''
     }
@@ -42,7 +35,7 @@ function sendCommand() {
 }
 
 function clearLastCommand() {
-  if(commandInput.value == '') {
+  if(messageInput.value == '') {
     return
   }
 
@@ -51,7 +44,7 @@ function clearLastCommand() {
     server.LastGlobalCommand = ''
   }
   save()
-  commandInput.value = ''
+  messageInput.value = ''
 }
 
 function toggleServer(server: string) {
@@ -71,7 +64,7 @@ function toggleServer(server: string) {
             text-sm text-slate-200 placeholder:text-slate-500
             focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40
             transition-all duration-200 hover:bg-slate-700/50 shadow-inner" style="color: var(--category-misc);"><strong class="select-none px-2">></strong>
-        <input class="text-slate-400 w-full" type="text" v-model="commandInput"  placeholder="Type in the command..." @keyup.enter='sendCommand'/>
+        <input class="text-slate-400 w-full" type="text" v-model="messageInput"  placeholder="Type in the command..." @keyup.enter='sendMessage'/>
         <button @click="clearLastCommand"><X :size="19"/></button>
       </span>
   </div>

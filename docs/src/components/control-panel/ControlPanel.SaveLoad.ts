@@ -556,6 +556,9 @@ export class Server {
           Time: read.int32()
       }
       this.appendChat(message)
+      if(this.PendingRequest) {
+        this.PendingRequest = false
+      }
       tryFocusChat()
     })
     this.setRpc('AccountPermissions', (read) => {

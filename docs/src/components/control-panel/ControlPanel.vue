@@ -186,8 +186,8 @@ onUnmounted(() => {
           <button class="r-button" @click="exportSave()"><Save :size="14" /> Export Clipboard</button>
         </div>
         <div class="grid gap-y-0 text-xs">
-          <button class="r-button" :disabled="!selectedServer?.hasPermission('console_input')" @click="globalCommand()"><Terminal :size="14" /> Global Command</button>
-          <button class="r-button" :disabled="!selectedServer?.hasPermission('chat_input')" @click="globalChatMessage()"><Mail :size="14" /> Global Message</button>
+          <button class="r-button" @click="globalCommand()"><Terminal :size="14" /> Global Command</button>
+          <button class="r-button" @click="globalChatMessage()"><Mail :size="14" /> Global Message</button>
         </div>
       </div>
     </div>
