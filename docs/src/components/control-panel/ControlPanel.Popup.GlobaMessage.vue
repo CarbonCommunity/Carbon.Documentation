@@ -31,20 +31,9 @@ function sendMessage() {
       server.LastGlobalCommandResult = ''
     }
   }
-  save()
-}
 
-function clearLastCommand() {
-  if(messageInput.value == '') {
-    return
-  }
-
-  for (let i = 0; i < servers.value.length; i++) {
-    const server = servers.value[i];
-    server.LastGlobalCommand = ''
-  }
-  save()
   messageInput.value = ''
+  save()
 }
 
 function toggleServer(server: string) {
@@ -64,8 +53,7 @@ function toggleServer(server: string) {
             text-sm text-slate-200 placeholder:text-slate-500
             focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40
             transition-all duration-200 hover:bg-slate-700/50 shadow-inner" style="color: var(--category-misc);"><strong class="select-none px-2">></strong>
-        <input class="text-slate-400 w-full" type="text" v-model="messageInput"  placeholder="Type in the command..." @keyup.enter='sendMessage'/>
-        <button @click="clearLastCommand"><X :size="19"/></button>
+        <input class="text-slate-400 w-full" type="text" v-model="messageInput"  placeholder="Type in the message..." @keyup.enter='sendMessage'/>
       </span>
   </div>
 

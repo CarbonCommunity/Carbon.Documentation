@@ -225,7 +225,8 @@ export async function globalCommand() {
 }
 
 export async function globalChatMessage() {
-  
+  const props = { title: 'Global Chat Message', subtitle: 'Prints a message across all selected servers.', isLoading: ref<boolean>(false) }
+  addPopup((await import(`@/components/control-panel/ControlPanel.Popup.GlobaMessage.vue`)).default, props)
 }
 
 export function shiftServer(index: number, before: boolean) {
@@ -556,9 +557,6 @@ export class Server {
           Time: read.int32()
       }
       this.appendChat(message)
-      if(this.PendingRequest) {
-        this.PendingRequest = false
-      }
       tryFocusChat()
     })
     this.setRpc('AccountPermissions', (read) => {
@@ -965,6 +963,10 @@ export class Server {
     }
     if(this.Bridge) {
       this.sendCall('ChatInput', this.ChatUsername, input, this.ChatColor, this.ChatUserId)
+      if(this.PendingRequest) {
+        this.LastGlobalCommandResult = 'Delivered'
+        this.PendingRequest = false
+      }
     } else { 
       this.sendCommand(`say ${input}`, 1)
     }
