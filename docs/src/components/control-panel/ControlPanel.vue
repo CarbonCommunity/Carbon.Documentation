@@ -9,10 +9,12 @@ import {
   ExternalLink,
   HardDriveDownload,
   Loader2,
+  Mail,
   Plus,
   RotateCcw,
   Save,
   Shield,
+  Terminal,
   Wifi,
   X
 } from 'lucide-vue-next'
@@ -34,7 +36,9 @@ import {
   servers,
   shiftServer,
   popups,
-  removePopup
+  removePopup,
+  globalCommand,
+  globalChatMessage
 } from './ControlPanel.SaveLoad'
 import ChatTab from './ControlPanel.Tabs.Chat.vue'
 import ConsoleTab from './ControlPanel.Tabs.Console.vue'
@@ -176,9 +180,15 @@ onUnmounted(() => {
         <button class="r-button" @click="shiftServer(servers.findIndex((s) => s == selectedServer), true)"><ArrowLeft :size="18" /></button>
         <button class="r-button" @click="shiftServer(servers.findIndex((s) => s == selectedServer), false)"><ArrowRight :size="18" /></button>
       </div>
-      <div class="grid gap-y-0 text-xs">
-        <button class="r-button" @click="importSave()"><HardDriveDownload :size="14" /> Import Clipboard</button>
-        <button class="r-button" @click="exportSave()"><Save :size="14" /> Export Clipboard</button>
+      <div class="grid gap-y-0 text-xs ">
+        <div class="flex gap-y-0 text-xs">
+          <button class="r-button" title="Import Clipboard" @click="importSave()"><HardDriveDownload :size="16" /></button>
+          <button class="r-button" title="Export Clipboard" @click="exportSave()"><Save :size="16" /></button>
+        </div>
+        <div class="flex gap-y-0 text-xs">
+          <button class="r-button" title="Global Command" @click="globalCommand()"><Terminal class="text-green-300" :size="16" /></button>
+          <button class="r-button" title="Chat Command" @click="globalChatMessage()"><Mail class="text-green-300" :size="16" /></button>
+        </div>
       </div>
     </div>
 

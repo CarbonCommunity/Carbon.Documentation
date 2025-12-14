@@ -79,7 +79,7 @@ import { Link, Link2 } from 'lucide-vue-next'
     </tr>
   </table>
 
-  <div class="mt-5 max-h-96 overflow-y-auto overscroll-none custom-scrollbar">
+  <div class="mt-5 overflow-y-auto overscroll-none custom-scrollbar">
     <table tabindex="0" class="table-auto w-full">
       <thead class="backdrop-blur bg-slate-700/20 sticky text-left top-0 z-10">
         <tr>
