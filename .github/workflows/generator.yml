@@ -5,6 +5,7 @@ on:
 
 jobs:
   run:
+    name: Run Generator
     runs-on: ubuntu-latest
 
     steps:
@@ -16,12 +17,12 @@ jobs:
         run: |
           echo "version=$(curl -s -L 'https://api.carbonmod.gg/version?id=docs&token=${{secrets.VERSIONS_TOKEN}}')" >> $GITHUB_OUTPUT
 
-      - name: Process
+      - name: Generate
         shell: bash
         run: |
-          cd $GITHUB_WORKSPACE/tools
-          chmod +x generate.sh
-          ./generate.sh
+          cd tools
+          chmod +x Generate.sh
+          ./Generate.sh
 
       - name: Artifacts
         uses: actions/upload-artifact@v6
