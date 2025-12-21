@@ -62,16 +62,12 @@ source "carbon/tools/environment.sh"
 chmod +x RustDedicated
 
 ./RustDedicated -batchmode -nographics -logs -silent-crashes \
-    -server.hostname "Generator" \
-    -server.identity "generator" \
-    -server.saveinterval 400 \
-    -server.maxplayers 1 \
-    -chat.serverlog 1 \
-    -global.asyncwarmup 1 \
-    -global.skipassetwarmup_crashes 0 \
+    -server.hostname "Generator" -server.identity "generator" \
+    -server.saveinterval 400 -server.maxplayers 1 -chat.serverlog 1 \
+    -app.port 1- \
     -aimanager.nav_disable 1 \
-    +server.seed 123123 \
-    +server.worldsize 1500 \
+    -disable-server-occlusion -disable-server-occlusion-rocks -disableconsolelog -skipload -noconsole \
+    +server.level "CraggyIsland" -insecure \
     -logfile 2>&1
 
 exit 0
