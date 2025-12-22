@@ -5,6 +5,7 @@ import { Search } from 'lucide-vue-next'
 import { BinaryReader } from '@/utils/BinaryReader'
 import { useUrlSearchParams } from '@vueuse/core'
 
+const commitsPerLoad = 1000
 const searchInput = shallowRef<string>('')
 const searchResults = computed(() => {
   const input = searchInput.value.toLowerCase()
@@ -58,7 +59,7 @@ onMounted(async () => {
   <div class="min-h-screen pt-20 text-zinc-100">
     <div class="mx-auto w-full max-w-5xl px-6">
       <div>
-        <article v-for="(commit, i) in searchResults.splice(0, 500)" :key="i" class="grid overflow-auto grid-cols-[240px_1fr] gap-x-10 py-5 scale-100 duration-75 opacity-60 hover:scale-[1.01] hover:opacity-100">
+        <article v-for="(commit, i) in searchResults.splice(0, commitsPerLoad)" :key="i" class="grid overflow-auto grid-cols-[240px_1fr] gap-x-10 py-5 scale-100 duration-75 opacity-60 hover:scale-[1.01] hover:opacity-100">
           <div class="flex items-center justify-end gap-4">
             <div class="text-right">
               <a :href="commit.AuthorUrl" target="_blank" class="text-sm font-semibold text-emerald-400 !no-underline">
@@ -91,6 +92,13 @@ onMounted(async () => {
             </div>
           </div>
         </article>
+
+        <div v-if="searchResults.length > commitsPerLoad" class="text-center pt-5 text-sm text-slate-400/50">
+          <span class="select-none">
+            Displaying {{ commitsPerLoad.toLocaleString() }} commits...<br> 
+            {{ (searchResults.length - commitsPerLoad).toLocaleString() }} commits are ommited for performance purposes
+          </span>
+        </div>
       </div>
     </div>
   </div>
