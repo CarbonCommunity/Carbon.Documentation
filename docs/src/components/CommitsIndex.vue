@@ -8,6 +8,9 @@ import { useUrlSearchParams } from '@vueuse/core'
 const commitsPerLoad = 1000
 const searchInput = shallowRef<string>('')
 const searchResults = computed(() => {
+  if(searchInput.value == null || searchInput.value == '') {
+    return []
+  }
   const input = searchInput.value.toLowerCase()
   return searchData.value.filter(x => x.Message.toLowerCase().includes(input) || x.Repository.toLowerCase().includes(input) || x.AuthorName.toLowerCase().includes(input))
 })
