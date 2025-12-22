@@ -61,11 +61,16 @@ export class Commit {
       case 'ThePitereq':
       case 'kop7er':
       case 'Patrette':
+      case 'bubbafett5611':
         githubName = this.AuthorName
         break;
     }
     this.AuthorUrl = `https://github.com/${githubName}`
-    this.AuthorAvatar = `${this.AuthorUrl}.png`
+    if (githubName == '') {
+      this.AuthorAvatar = 'https://cdn.carbonmod.gg/content/default_profile.jpg'
+    } else {
+      this.AuthorAvatar = `${this.AuthorUrl}.png`
+    }
     return this
   }
 }
