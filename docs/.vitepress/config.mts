@@ -79,6 +79,7 @@ export default defineConfig({
       ]},
       { text: 'References', items: references },
       { text: 'Tools', items: tools },
+      { text: 'Commits', link: '/references/commits/' },
       { text: 'Release Notes', link: '/references/release-notes/' }
     ],
 
