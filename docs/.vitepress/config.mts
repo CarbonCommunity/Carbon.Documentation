@@ -207,7 +207,7 @@ export default defineConfig({
     footer: {
       message:
         "Released under the MIT License. Feel free to <a href='https://github.com/CarbonCommunity/Carbon.Documentation' target='_blank'>help us improve</a>!",
-      copyright: 'All trademarks referenced are the properties of their respective owners. © 2025 carbonmod.gg and codefling.com All rights reserved.',
+      copyright: 'All trademarks referenced are the properties of their respective owners. © 2026 carbonmod.gg and codefling.com All rights reserved.',
     },
 
     search: {
