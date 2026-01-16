@@ -85,6 +85,7 @@ import { Link, Link2 } from 'lucide-vue-next'
         <tr>
           <th class="info-title text-center">ID</th>
           <th class="info-title">Hook Name</th>
+          <th class="info-title text-center">Time</th>
           <th class="info-title text-center">Fires</th>
           <th class="info-title text-center">Memory Usage</th>
           <th class="info-title text-center">Lag Spikes</th>
@@ -96,6 +97,7 @@ import { Link, Link2 } from 'lucide-vue-next'
         <tr v-for="hook in pluginDetails?.hooks.sort((a, b) => b.fires - a.fires)" :key="hook.name">
           <td class="info-value text-center">{{ hook?.id }}</td>
           <td class="info-value"><a class="flex gap-1 align-middle items-center" :href="'../../references/hooks/?s=' + hook.name" target="_blank">{{ hook?.name }} <Link :size="14"/></a></td>
+          <td class="info-value text-center">{{ hook?.time == 0 ? '' : hook?.time.toFixed(1).toLocaleString() + "ms" }}</td>
           <td class="info-value text-center">{{ hook?.fires == 0 ? '' : hook?.fires.toLocaleString() }}</td>
           <td class="info-value text-center">{{ hook?.memoryUsage == 0 ? '' : selectedServer?.formatBytes(hook?.memoryUsage) }}</td>
           <td class="info-value text-center">{{ hook?.lagSpikes == 0 ? '' : hook?.lagSpikes.toLocaleString() }}</td>

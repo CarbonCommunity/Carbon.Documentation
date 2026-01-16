@@ -57,6 +57,7 @@ export async function openPluginDetails(plugin: string) {
       pluginDetails.value.hooks.push({
         name: read.string(),
         id: read.uint32(),
+        time: read.float(),
         fires: read.int32(),
         memoryUsage: read.int32(),
         lagSpikes: read.int32(),
