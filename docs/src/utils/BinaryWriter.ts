@@ -5,6 +5,9 @@ export class BinaryWriter {
   private offset = 0;
   private encoder = new TextEncoder();
 
+  static totalWrite: number = 0
+  static totalSent: number = 0
+
   constructor(initialCapacity = 1024) {
     this.buf = new ArrayBuffer(initialCapacity);
     this.view = new DataView(this.buf);
@@ -13,6 +16,7 @@ export class BinaryWriter {
 
   private ensure(extra: number) {
     const need = this.offset + extra;
+    BinaryWriter.totalWrite += extra
     if (need <= this.view.byteLength) return;
 
     let cap = this.view.byteLength || 1;

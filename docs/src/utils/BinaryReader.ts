@@ -9,6 +9,9 @@ export class BinaryReader {
     this.u8 = new Uint8Array(buffer);
   }
 
+  static totalRead: number = 0
+  static totalReceived: number = 0
+
   read7BitEncodedInt(): number {
     let count = 0;
     let shift = 0;
@@ -27,52 +30,61 @@ export class BinaryReader {
   int8(): number {
     const v = this.view.getInt8(this.offset);
     this.offset += 1;
+    BinaryReader.totalRead += 1
     return v;
   }
 
   uint8(): number {
     const v = this.view.getUint8(this.offset);
     this.offset += 1;
+    BinaryReader.totalRead += 1
     return v;
   }
 
   int32(): number {
     const v = this.view.getInt32(this.offset, true);
     this.offset += 4;
+    BinaryReader.totalRead += 4
     return v;
   }
 
   uint32(): number {
     const v = this.view.getUint32(this.offset, true);
     this.offset += 4;
+    BinaryReader.totalRead += 4
     return v;
   }
 
   float(): number {
     const v = this.view.getFloat32(this.offset, true);
     this.offset += 4;
+    BinaryReader.totalRead += 4
     return v;
   }
 
   int64(): bigint {
     const v = this.view.getBigInt64(this.offset, true);
     this.offset += 8;
+    BinaryReader.totalRead += 8
     return v;
   }
 
   double(): number {
     const v = this.view.getFloat64(this.offset, true);
     this.offset += 8;
+    BinaryReader.totalRead += 8
     return v;
   }
 
   uint64(): bigint {
     const v = this.view.getBigUint64(this.offset, true);
     this.offset += 8;
+    BinaryReader.totalRead += 8
     return v;
   }
 
   byte(): number {
+    BinaryReader.totalRead += 1
     return this.view.getUint8(this.offset++);
   }
 
@@ -80,6 +92,7 @@ export class BinaryReader {
     const end = this.offset + length;
     const slice = this.u8.subarray(this.offset, end);
     this.offset = end;
+    BinaryReader.totalRead += length
     return slice;
   }
 

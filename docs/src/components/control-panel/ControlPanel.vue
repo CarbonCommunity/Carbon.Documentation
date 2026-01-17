@@ -48,6 +48,7 @@ import PlayersTab from './ControlPanel.Tabs.Players.vue'
 import ProfilerTab from './ControlPanel.Tabs.Profiler.vue'
 import PluginsTab from './ControlPanel.Tabs.Plugins.vue'
 import InformationTab from './ControlPanel.Tabs.Information.vue'
+import StatsTab from './ControlPanel.Tabs.Stats.vue'
 
 let timerSwitch: ReturnType<typeof setTimeout> = null!
 
@@ -92,6 +93,11 @@ const subTabs = [
     Description: 'Manage and load all available plugins on your server.',
     ExtraData: (selectedServer: Server) => `(${selectedServer?.PluginsInfo?.length})`,
     IsDisabled: () => !selectedServer.value?.Bridge || !selectedServer.value?.hasPermission('plugins_view')
+  },
+  {
+    Name: 'Stats',
+    Description: 'General stats for nerds.',
+    IsDisabled: () => false
   }
 ]
 
@@ -310,6 +316,9 @@ onUnmounted(() => {
       </div>
       <div v-else-if="selectedSubTab == 7" style="overflow: auto">
         <PluginsTab />
+      </div>
+      <div v-else-if="selectedSubTab == 8" style="overflow: auto">
+        <StatsTab />
       </div>
     </div>
     <div v-if="!selectedServer" style="color: var(--category-misc); font-size: small; text-align: center; user-select: none">
