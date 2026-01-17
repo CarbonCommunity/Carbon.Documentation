@@ -879,6 +879,7 @@ export class Server {
         if (event.data instanceof ArrayBuffer) {
           bytes = new Uint8Array(event.data)
         }
+        BinaryReader.totalReceived++
         const read = new BinaryReader(event.data)
         switch (read.int32()) {
           case 0:
@@ -1020,6 +1021,7 @@ export class Server {
         }
       }
       this.Socket?.send(write.toArrayBuffer())
+      BinaryWriter.totalSent++
     } else {
       for (let i = 0; i < args.length; i++) {
         const arg = args[i]
