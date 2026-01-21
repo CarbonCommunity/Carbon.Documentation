@@ -12,7 +12,7 @@ const searchResults = computed(() => {
     return searchData.value
   }
   const input = searchInput.value.toLowerCase()
-  return searchData.value.filter(x => x.Message.toLowerCase().includes(input) || x.Repository.toLowerCase().includes(input) || x.AuthorName.toLowerCase().includes(input))
+  return searchData.value.filter(x => x.Message.toLowerCase().includes(input) || x.Repository.toLowerCase().includes(input) || x.AuthorName.toLowerCase().includes(input) || x.Changeset.includes(input))
 })
 const searchData = shallowRef<Commit[]>([])
 

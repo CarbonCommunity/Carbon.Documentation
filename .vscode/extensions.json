@@ -1,7 +1,7 @@
 {
   "recommendations": [
     "Vue.volar",
-    "prettier.prettier-vscode",
+    "esbenp.prettier-vscode",
     "bradlc.vscode-tailwindcss",
     "dbaeumer.vscode-eslint"
   ]
