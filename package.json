@@ -2,7 +2,7 @@
   "devDependencies": {
     "@eslint/js": "^9.27.0",
     "@types/crypto-js": "^4.2.2",
-    "@types/node": "^22.14.0",
+    "@types/node": "^24.10.9",
     "autoprefixer": "^9.8.8",
     "eslint": "^9.27.0",
     "eslint-config-prettier": "^10.1.5",
