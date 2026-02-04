@@ -65,17 +65,17 @@ Here's a run-through of what information you can see for specific entities:
   <NewsImage h="5" src="/news/hammer-buildrepair.webp"/>
 </NewsImageGrid>
 <NewsSectionSubtitle text="Movement"/>
-<video autoplay loop src="/news/hammer-move.mp4"></video>
+<video controls autoplay loop src="/news/hammer-move.mp4"></video>
 
 <NewsSectionSubtitle text="Player Configuration"/>
-<video autoplay loop src="/news/hammer-movesnapping.mp4"></video>
+<video controls autoplay loop src="/news/hammer-movesnapping.mp4"></video>
 <NewsImage src="/news/hammer-commands.webp"/>
 
 <NewsSectionSubtitle text="Interacts"/>
-<video autoplay loop src="/news/hammer-interacts.mp4"></video><br></br>
+<video controls autoplay loop src="/news/hammer-interacts.mp4"></video><br></br>
 
 <NewsSectionSubtitle text="UI Repositioning"/>
-<video autoplay loop src="/news/hammer-moveui.mp4"></video><br></br>
+<video controls autoplay loop src="/news/hammer-moveui.mp4"></video><br></br>
 
 </NewsSection>
 </NewsHeroSection>
