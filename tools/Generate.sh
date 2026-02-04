@@ -2,8 +2,8 @@
 
 set -e
 
-BRANCH="staging"
-TAG="rustbeta_staging"
+BRANCH="release"
+TAG="rustbeta_release"
 
 if [ "$TAG" == "production" ]; then
     BUILD="Release"
