@@ -59,11 +59,12 @@ public class CodeGen : CarbonPlugin
 		}
 	}
 
-
 	private static async ValueTask Generate()
 	{
 		try
 		{
+			Directory.CreateDirectory(Path.Combine("carbon", "results"));
+
 			Generate_Items();
 			Generate_Entities();
 			Generate_Prefabs();
@@ -76,6 +77,8 @@ public class CodeGen : CarbonPlugin
 			Generate_Rust_ConVars();
 			Generate_Rust_Commands();
 			Generate_Switches();
+
+			Logger.Log("GENERATOR DONE");
 		}
 		catch (Exception e)
 		{
@@ -85,7 +88,7 @@ public class CodeGen : CarbonPlugin
 
 	private static void Generate_Items()
 	{
-		var items = ItemManager.itemList.Select(Item.Parse<Item>).ToList();
+		var items = ItemManager.itemList.Select(x => Item.Parse<Item>(x, [])).ToList();
 
 		OsEx.File.Create(Path.Combine("carbon", "results", "items.json"), JsonConvert.SerializeObject(items, Formatting.Indented));
 	}
@@ -239,8 +242,8 @@ public class CodeGen : CarbonPlugin
 			blueprints.Add(new Blueprint
 			{
 				Ingredients = blueprint.ingredients
-					.Select(x => new Blueprint.Ingredient { Item = Item.Parse<Item>(x.itemDef), Amount = x.amount }).ToArray(),
-				Item = Item.Parse<Item>(blueprint.targetItem),
+					.Select(x => new Blueprint.Ingredient { Item = Item.Parse<Item>(x.itemDef, []), Amount = x.amount }).ToArray(),
+				Item = Item.Parse<Item>(blueprint.targetItem, []),
 				UserCraftable = blueprint.userCraftable,
 				Rarity = blueprint.rarity,
 				CraftAmount = blueprint.amountToCreate,
@@ -250,7 +253,7 @@ public class CodeGen : CarbonPlugin
 				NeedsSteamItem = blueprint.NeedsSteamItem,
 				NeedsSteamDLC = blueprint.NeedsSteamDLC,
 				Time = blueprint.time,
-				RequireUnlockedItem = blueprint.RequireUnlockedItem != null ? Item.Parse<Item>(blueprint.RequireUnlockedItem) : null,
+				RequireUnlockedItem = blueprint.RequireUnlockedItem != null ? Item.Parse<Item>(blueprint.RequireUnlockedItem, []) : null,
 			});
 		}
 
@@ -281,7 +284,7 @@ public class CodeGen : CarbonPlugin
 				{
 					table.Items = container.lootDefinition.items.Select(x =>
 					{
-						var item = Item.Parse<LootTable.RangeItem>(x.itemDef);
+						var item = Item.Parse<LootTable.RangeItem>(x.itemDef, []);
 						item.Amount = x.amount;
 						item.MaxAmount = x.maxAmount;
 
@@ -295,7 +298,7 @@ public class CodeGen : CarbonPlugin
 					{
 						Items = x.definition.items.Select(y =>
 						{
-							var item = Item.Parse<LootTable.RangeItem>(y.itemDef);
+							var item = Item.Parse<LootTable.RangeItem>(y.itemDef, []);
 							item.Amount = y.amount;
 							item.MaxAmount = y.maxAmount;
 
@@ -546,7 +549,7 @@ public class CodeGen : CarbonPlugin
 		public Ser_ItemModCompostable ItemMod_Compostable;
 		public Ser_ItemModFoodSpoiling ItemMod_FoodSpoiling;
 
-		public static T Parse<T>(ItemDefinition definition) where T : Item
+		public static T Parse<T>(ItemDefinition definition, HashSet<ItemDefinition> visitedDefinitions) where T : Item
 		{
 			var instance = Activator.CreateInstance<T>();
 
@@ -559,9 +562,12 @@ public class CodeGen : CarbonPlugin
 			instance.Flags = definition.flags;
 			instance.Category = definition.category;
 			instance.Rarity = definition.rarity;
-			if (definition.isRedirectOf != null)
+			if (definition.isRedirectOf != null && definition.isRedirectOf != definition)
 			{
-				instance.RedirectOf = Parse<T>(definition.isRedirectOf);
+				if (visitedDefinitions.Add(definition.isRedirectOf))
+				{
+					instance.RedirectOf = Parse<T>(definition.isRedirectOf, visitedDefinitions);
+				}
 			}
 
 			if (definition.steamDlc != null)
@@ -804,7 +810,7 @@ public class CodeGen : CarbonPlugin
 		public int ScrapRequired;
 		public int ScrapFromRecycle;
 		public int WorkbenchLevelRequired;
-		public Item RequireUnlockedItem;
+		public Item? RequireUnlockedItem;
 		public bool NeedsSteamItem;
 		public bool NeedsSteamDLC;
 
