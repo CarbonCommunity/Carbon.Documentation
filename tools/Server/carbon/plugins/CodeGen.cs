@@ -388,6 +388,7 @@ public class CodeGen : CarbonPlugin
 			researchHook.Source = hook.MethodSource;
 			names[hook.Name] = researchHook;
 		}
+
 		OsEx.File.Create(Path.Combine("carbon", "results", "hooks_research.json"), JsonConvert.SerializeObject(names, Formatting.Indented));
 		Logger.Log("Hook research done");
 	}
@@ -524,7 +525,7 @@ public class CodeGen : CarbonPlugin
 		return _builder.ToString();
 	}
 
-#endregion
+	#endregion
 
 	public class Item
 	{
