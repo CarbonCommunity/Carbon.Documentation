@@ -68,11 +68,8 @@ Here's a run-through of what information you can see for specific entities:
 <video autoplay loop src="/news/hammer-move.mp4"></video>
 
 <NewsSectionSubtitle text="Player Configuration"/>
-
-Each player has their own set of settings.
-
 <video autoplay loop src="/news/hammer-movesnapping.mp4"></video>
-  <NewsImage src="/news/hammer-commands.webp"/>
+<NewsImage src="/news/hammer-commands.webp"/>
 
 <NewsSectionSubtitle text="Interacts"/>
 <video autoplay loop src="/news/hammer-interacts.mp4"></video><br></br>
