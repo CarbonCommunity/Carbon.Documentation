@@ -220,5 +220,6 @@
   "frontMatter.framework.startCommand": "npx vitepress dev docs",
   "frontMatter.website.host": "http://localhost:5173",
   "frontMatter.content.publicFolder": "[[workspace]]/docs/public/",
-  "frontMatter.framework.id": "other"
+  "frontMatter.framework.id": "other",
+  "frontMatter.panel.openOnSupportedFile": false
 }
