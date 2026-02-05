@@ -237,15 +237,6 @@ const contributorMembers = [
       { icon: 'github', link: 'https://github.com/Whispers88' },
       { icon: 'cf', link: 'https://codefling.com/Whispers88' }
     ]
-  },
-  {
-    avatar: '/team/Raichu.gif',
-    name: 'Raichu',
-    title: 'Bug Finder',
-    links: [
-      { icon: 'github', link: 'https://github.com/RaichuTD' },
-      { icon: 'cf', link: 'https://codefling.com/Raichu' }
-    ]
   }
 ]
 
