@@ -2,8 +2,8 @@
 
 set -e
 
-BRANCH="staging"
-TAG="rustbeta_staging"
+BRANCH="public"
+TAG="edge"
 
 if [ "$TAG" == "production" ]; then
     BUILD="Release"
