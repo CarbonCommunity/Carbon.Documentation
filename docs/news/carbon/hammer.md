@@ -89,4 +89,16 @@ By default, you need to have Creative Mode enabled on your player, you can do so
 To activate the UI, you must hold a <b>Hammer</b> or <b>Garry's Mod Tool</b>. To use the Hammer UI without having Creative Mode enabled, players with moderator and/or admins can run `hammer.creativebypass 1` to bypass that behaviour.
 
 </NewsSection>
+<NewsSectionTitle text="Source" author="raulssorban"/>
+<NewsSection>
+
+Here's the entire source code: [<b>HammerModule</b>](https://github.com/CarbonCommunity/Carbon.Common/blob/develop/src/Carbon/Modules/HammerModule/HammerModule.cs)
+
+</NewsSection>
+<NewsSectionTitle text="Modding" author="raulssorban"/>
+<NewsSection>
+
+TBD
+
+</NewsSection>
 </NewsHeroSection>
