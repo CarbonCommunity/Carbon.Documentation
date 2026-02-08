@@ -62,15 +62,15 @@ import { Link, Link2 } from 'lucide-vue-next'
 
     <div class="mt-5">
       <table tabindex="0" class="w-full table-auto">
-        <thead class="bg-slate-700/20 text-left backdrop-blur">
+        <thead class="text-left backdrop-blur">
           <tr>
-            <th class="info-title sticky top-0 z-10 text-center">ID</th>
-            <th class="info-title sticky top-0 z-10">Hook Name</th>
-            <th class="info-title sticky top-0 z-10 text-center">Time</th>
-            <th class="info-title sticky top-0 z-10 text-center">Fires</th>
-            <th class="info-title sticky top-0 z-10 text-center">Memory Usage</th>
-            <th class="info-title sticky top-0 z-10 text-center">Lag Spikes</th>
-            <th class="info-title sticky top-0 z-10 text-center">Async / Debugged</th>
+            <th class="info-title sticky top-0 z-10 !bg-slate-700/40 text-center">ID</th>
+            <th class="info-title sticky top-0 z-10 !bg-slate-700/40">Hook Name</th>
+            <th class="info-title sticky top-0 z-10 !bg-slate-700/40 text-center">Time</th>
+            <th class="info-title sticky top-0 z-10 !bg-slate-700/40 text-center">Fires</th>
+            <th class="info-title sticky top-0 z-10 !bg-slate-700/40 text-center">Memory Usage</th>
+            <th class="info-title sticky top-0 z-10 !bg-slate-700/40 text-center">Lag Spikes</th>
+            <th class="info-title sticky top-0 z-10 !bg-slate-700/40 text-center">Async / Debugged</th>
           </tr>
         </thead>
 
