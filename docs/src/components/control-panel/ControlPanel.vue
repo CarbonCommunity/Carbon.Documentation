@@ -16,7 +16,7 @@ import {
   Shield,
   Terminal,
   Wifi,
-  X
+  X,
 } from 'lucide-vue-next'
 import { onMounted, onUnmounted } from 'vue'
 import { Slot, beltSlots, mainSlots, toolSlots, wearSlots } from './ControlPanel.Inventory'
@@ -38,7 +38,7 @@ import {
   popups,
   removePopup,
   globalCommand,
-  globalChatMessage
+  globalChatMessage,
 } from './ControlPanel.SaveLoad'
 import ChatTab from './ControlPanel.Tabs.Chat.vue'
 import ConsoleTab from './ControlPanel.Tabs.Console.vue'
@@ -56,12 +56,12 @@ const subTabs = [
   {
     Name: 'Console',
     Description: 'An RCon based console displaying all log output sent by the server and allows sending commands to the server.',
-    IsDisabled: () => !selectedServer.value?.hasPermission('console_view')
+    IsDisabled: () => !selectedServer.value?.hasPermission('console_view'),
   },
   {
     Name: 'Chat',
     Description: 'All the chatter going on the server.',
-    IsDisabled: () => !selectedServer.value?.hasPermission('chat_view')
+    IsDisabled: () => !selectedServer.value?.hasPermission('chat_view'),
   },
   {
     Name: 'Information',
@@ -71,34 +71,34 @@ const subTabs = [
     Name: 'Players',
     Description: 'A list of players or something like that.',
     ExtraData: (selectedServer: Server) => `(${selectedServer?.PlayerInfo?.length})`,
-    IsDisabled: () => !selectedServer.value?.Bridge || !selectedServer.value?.hasPermission('players_view')
+    IsDisabled: () => !selectedServer.value?.Bridge || !selectedServer.value?.hasPermission('players_view'),
   },
   {
     Name: 'Permissions',
     Description: "Good ol' permissions.",
-    IsDisabled: () => !selectedServer.value?.Bridge || !selectedServer.value?.hasPermission('permissions_view')
+    IsDisabled: () => !selectedServer.value?.Bridge || !selectedServer.value?.hasPermission('permissions_view'),
   },
   {
     Name: 'Entities',
     Description: 'Search and inspect any entities on the server.',
-    IsDisabled: () => !selectedServer.value?.Bridge || !selectedServer.value?.hasPermission('entities_view')
+    IsDisabled: () => !selectedServer.value?.Bridge || !selectedServer.value?.hasPermission('entities_view'),
   },
   {
     Name: 'Profiler',
     Description: 'Investigate and identify server issues.',
-    IsDisabled: () => !selectedServer.value?.Bridge || !selectedServer.value?.hasPermission('profiler_view')
+    IsDisabled: () => !selectedServer.value?.Bridge || !selectedServer.value?.hasPermission('profiler_view'),
   },
   {
     Name: 'Plugins',
     Description: 'Manage and load all available plugins on your server.',
     ExtraData: (selectedServer: Server) => `(${selectedServer?.PluginsInfo?.length})`,
-    IsDisabled: () => !selectedServer.value?.Bridge || !selectedServer.value?.hasPermission('plugins_view')
+    IsDisabled: () => !selectedServer.value?.Bridge || !selectedServer.value?.hasPermission('plugins_view'),
   },
   {
     Name: 'Stats',
     Description: 'General stats for nerds.',
-    IsDisabled: () => false
-  }
+    IsDisabled: () => false,
+  },
 ]
 
 onMounted(() => {
@@ -160,7 +160,6 @@ onMounted(() => {
 onUnmounted(() => {
   clearTimeout(timerSwitch)
 })
-
 </script>
 
 <template>
@@ -170,7 +169,8 @@ onUnmounted(() => {
         <button :class="['r-button', { toggled: server == selectedServer }]" @click="selectServer(server)">
           <Dot
             :size="45"
-            :style="'margin: -10px; color: ' + (server.IsConnecting ? 'yellow' : server.IsConnected ? 'green' : 'red') + '; filter: blur(1.5px);'"/>
+            :style="'margin: -10px; color: ' + (server.IsConnecting ? 'yellow' : server.IsConnected ? 'green' : 'red') + '; filter: blur(1.5px);'"
+          />
           <div class="grid">
             <p>
               <strong>{{ !server.CachedHostname ? 'Unknown' : server.CachedHostname }}</strong>
@@ -183,10 +183,30 @@ onUnmounted(() => {
         <Plus />
       </button>
       <div class="flex flex-col text-xs" v-if="selectedServer">
-        <button class="r-button" @click="shiftServer(servers.findIndex((s) => s == selectedServer), true)"><ArrowLeft :size="18" /></button>
-        <button class="r-button" @click="shiftServer(servers.findIndex((s) => s == selectedServer), false)"><ArrowRight :size="18" /></button>
+        <button
+          class="r-button"
+          @click="
+            shiftServer(
+              servers.findIndex((s) => s == selectedServer),
+              true
+            )
+          "
+        >
+          <ArrowLeft :size="18" />
+        </button>
+        <button
+          class="r-button"
+          @click="
+            shiftServer(
+              servers.findIndex((s) => s == selectedServer),
+              false
+            )
+          "
+        >
+          <ArrowRight :size="18" />
+        </button>
       </div>
-      <div class="grid gap-y-0 text-xs ">
+      <div class="grid gap-y-0 text-xs">
         <div class="flex gap-y-0 text-xs">
           <button class="r-button" title="Import Clipboard" @click="importSave()"><HardDriveDownload :size="16" /></button>
           <button class="r-button" title="Export Clipboard" @click="exportSave()"><Save :size="16" /></button>
@@ -212,7 +232,8 @@ onUnmounted(() => {
           class="r-button"
           :disabled="selectedServer.IsConnecting"
           @click="selectedServer.connect()"
-          :style="'color: ' + (!selectedServer?.IsConnected ? 'var(--docsearch-footer-background);' : 'var(--c-carbon-3);') + 'font-size: small;'">
+          :style="'color: ' + (!selectedServer?.IsConnected ? 'var(--docsearch-footer-background);' : 'var(--c-carbon-3);') + 'font-size: small;'"
+        >
           <Wifi :size="20" /> {{ selectedServer?.IsConnected ? 'Disconnect' : 'Connect' }}
         </button>
         <button
@@ -220,7 +241,8 @@ onUnmounted(() => {
           :disabled="selectedServer.IsConnecting || selectedServer.IsConnected"
           @click="selectedServer.toggleBridge()"
           :class="['r-button', { toggled: selectedServer.Bridge }]"
-          style="color: var(--docsearch-footer-background); font-size: small">
+          style="color: var(--docsearch-footer-background); font-size: small"
+        >
           <Antenna :size="20" /> Bridge
         </button>
         <button class="r-button" @click="(e) => deleteServer(selectedServer, e)" style="color: var(--docsearch-footer-background); font-size: small">
@@ -282,7 +304,8 @@ onUnmounted(() => {
           v-show="tab.IsDisabled == null || !tab.IsDisabled()"
           @click="selectSubTab(index)"
           :class="['r-button', { toggled: selectedSubTab == index }]"
-          style="color: var(--docsearch-footer-background); font-size: small">
+          style="color: var(--docsearch-footer-background); font-size: small"
+        >
           <span class="select-none">{{ tab.Name }} {{ tab.ExtraData != null ? tab.ExtraData(selectedServer) : null }}</span>
         </button>
       </div>
@@ -328,9 +351,9 @@ onUnmounted(() => {
   <div v-for="html in popups" v-bind:key="html" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click="removePopup(html.props.id)">
     <div class="mx-4 w-full max-w-fit bg-white p-6 dark:bg-gray-800" @click.stop>
       <div v-if="!html.props.isLoading" class="mb-4 flex items-center justify-between">
-        <span class="select-none ">
+        <span class="select-none">
           <span class="flex">
-            <Dot v-if="html.props.live" :size="45" :style="'margin: -10px; color: red; filter: blur(1.5px);'" class="animate-pulse"/>
+            <Dot v-if="html.props.live" :size="45" :style="'margin: -10px; color: red; filter: blur(1.5px);'" class="animate-pulse" />
             <h3 class="text-x font-bold">{{ html.props.title }}</h3>
           </span>
           <span class="text-sm text-slate-500">{{ html.props.subtitle }}</span>
@@ -342,7 +365,7 @@ onUnmounted(() => {
       <div v-if="html.props.isLoading">
         <Loader2 class="animate-spin text-slate-500/50" :size="50" />
       </div>
-      <component v-if="!html.props.isLoading" :is="html.component" v-bind="html.props" class="font-mono max-h-[85svh] overflow-y-auto" />
+      <component v-if="!html.props.isLoading" :is="html.component" v-bind="html.props" class="max-h-[85svh] overflow-y-auto font-mono" />
     </div>
   </div>
 </template>
