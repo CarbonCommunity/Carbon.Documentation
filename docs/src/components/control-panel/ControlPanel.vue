@@ -326,7 +326,7 @@ onUnmounted(() => {
     </div>
   </div>
   <div v-for="html in popups" v-bind:key="html" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click="removePopup(html.props.id)">
-    <div class="mx-4 w-full max-w-fit bg-white p-6 dark:bg-gray-800" @click.stop>
+    <div class="mx-4 w-full max-w-fit bg-white p-6 dark:bg-gray-800 max-h-[90svh] overflow-y-auto" @click.stop>
       <div v-if="!html.props.isLoading" class="mb-4 flex items-center justify-between">
         <span class="select-none ">
           <span class="flex">
