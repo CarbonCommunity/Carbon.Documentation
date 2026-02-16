@@ -18,4 +18,5 @@ Logs
 docs/.vitepress/cache
 docs/.vitepress/dist
 docs/.vitepress/.temp
+docs/public/rss.xml
 node_modules

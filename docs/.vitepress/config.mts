@@ -31,7 +31,7 @@ const tools = [
   { text: 'Control Panel (RCon)', link: '/tools/control-panel/' },
   { text: 'Profiler Panel', link: '/tools/profiler-panel/' },
   { text: 'Server Browser', link: '/tools/server-browser/' },
-  { text: 'Changelog Generator', link: '/tools/changelog-generator/' }
+  { text: 'Changelog Generator', link: '/tools/changelog-generator/' },
 ]
 
 const siteDescription = 'A fully up-to-date documentation of all things: Carbon, Rust references and somewhat Oxide.'
@@ -42,6 +42,7 @@ export default defineConfig({
   base: '/',
   head: [
     ['link', { rel: 'icon', href: '/favicon.ico' }],
+    ['link', { rel: 'alternate', type: 'application/rss+xml', title: 'Carbon News', href: '/rss.xml' }],
     ['meta', { name: 'viewport', content: 'width=device-width, initial-scale=1.0' }],
     ['meta', { property: 'og:site_name', content: 'Carbon Documentation' }],
     ['meta', { property: 'og:type', content: 'website' }],
@@ -73,14 +74,17 @@ export default defineConfig({
       { text: 'Home', link: '/' },
       { text: 'News', link: '/news' },
       { text: 'Tutorials', link: '/tutorials' },
-      { text: 'Documentation', items: [
-        { text: 'Owners', link: '/owners/getting-started' },
-        { text: 'Developers', link: '/devs/local-server-hosting' },
-      ]},
+      {
+        text: 'Documentation',
+        items: [
+          { text: 'Owners', link: '/owners/getting-started' },
+          { text: 'Developers', link: '/devs/local-server-hosting' },
+        ],
+      },
       { text: 'References', items: references },
       { text: 'Tools', items: tools },
       { text: 'Commits', link: '/references/commits/' },
-      { text: 'Release Notes', link: '/references/release-notes/' }
+      { text: 'Release Notes', link: '/references/release-notes/' },
     ],
 
     sidebar: {
@@ -142,7 +146,7 @@ export default defineConfig({
               text: 'Hosting',
               collapsed: true,
               items: [{ text: 'Linux GSM', link: '/owners/linux-gsm' }],
-            }
+            },
           ],
         },
         {
