@@ -6,14 +6,14 @@ logo: null
 author: Raul
 date: 2025-07-03T23:52:07.701Z
 tags:
-    - docs
-    - news
-    - server owners
+  - docs
+  - news
+  - server owners
 layout: news-layout
 category: news
 sidebar: false
 fmContentType: blogpost
 published: true
 showjoinus: false
+rss: false
 ---
-

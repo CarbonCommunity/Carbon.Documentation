@@ -20,6 +20,7 @@
   },
   "scripts": {
     "generate:rss": "node scripts/generate-rss.mjs",
+    "validate:rss": "node scripts/validate-rss.mjs",
     "predocs:build": "npm run generate:rss",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",

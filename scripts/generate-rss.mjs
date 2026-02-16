@@ -80,7 +80,7 @@ async function buildRss() {
     const content = await fs.readFile(markdownFile, 'utf8')
     const frontmatter = matter(content).data
 
-    if (frontmatter.published !== true || frontmatter.hidden === true || frontmatter.category !== 'news') {
+    if (frontmatter.published !== true || frontmatter.hidden === true || frontmatter.category !== 'news' || frontmatter.rss === false) {
       continue
     }
 

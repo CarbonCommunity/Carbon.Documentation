@@ -2,7 +2,7 @@ name: Deploy site to Pages
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
 
   workflow_dispatch:
 
@@ -34,6 +34,9 @@ jobs:
 
       - name: Install dependencies
         run: npm install
+
+      - name: Validate RSS feed
+        run: npm run validate:rss
 
       - name: Build with VitePress
         run: npm run docs:build
