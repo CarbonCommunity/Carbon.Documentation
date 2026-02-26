@@ -50,10 +50,10 @@ Here's a run-through of what information you can see for specific entities:
 - <b>Sleeping bag</b>: Shows person who's been Assigned To it 
 - <b>Quarry/Pumpjack</b>: Shows the resource static type it produces.
   - Toggling will iterate through all static types and update it in real time.
-- <b>Doors</b>: Shows the code and guest code number if there's a lock on it.
+- <b>Doors</b>: Shows the code and guest code number if there's a lock on it (when Show Extra is enabled).
 - <b>IO Entity</b>: Shows the current energy processed by the entity.
 - <b>Planter Boxes</b>: Shows the temperature of the growable plants in it in Celsius and Fahrenheit.
-- <b>Modular Cars</b>: Shows the code if there's a lock on it.
+- <b>Modular Cars</b>: Shows the code if there's a lock on it (when Show Extra is enabled).
 - <b>Vending Machine</b>: Toggling will flip the vending machine.
 - <b>Quarry Engine Switch</b>: Toggling turn the quarry switch on/off.
 - <b>Building Blocks</b>: Blocks that can be rotated will rotate upon toggling.
@@ -86,19 +86,13 @@ Here's a run-through of what information you can see for specific entities:
 
 By default, you need to have Creative Mode enabled on your player, you can do so using `togglecreativemodeuser myname 1`.
 
-To activate the UI, you must hold a <b>Hammer</b> or <b>Garry's Mod Tool</b>. To use the Hammer UI without having Creative Mode enabled, players with moderator and/or admins can run `hammer.creativebypass 1` to bypass that behaviour.
+To activate the UI, you must hold a <b>Hammer</b> or <b>Garry's Mod Tool</b>. To use the Hammer UI without having Creative Mode enabled, players with moderator and/or admins can run `hammer creativebypass 1` to bypass that behaviour. To use the UI without holding a hammer altogether, you can run `hammer hammerbypass 1`.
 
 </NewsSection>
 <NewsSectionTitle text="Source" author="raulssorban"/>
 <NewsSection>
 
 Here's the entire source code: [<b>HammerModule</b>](https://github.com/CarbonCommunity/Carbon.Common/blob/develop/src/Carbon/Modules/HammerModule/HammerModule.cs)
-
-</NewsSection>
-<NewsSectionTitle text="Modding" author="raulssorban"/>
-<NewsSection>
-
-TBD
 
 </NewsSection>
 </NewsHeroSection>
