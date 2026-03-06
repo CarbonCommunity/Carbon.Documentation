@@ -168,7 +168,7 @@ export default defineConfig({
                 { text: 'Conditionals', link: '/devs/features/conditionals' },
                 { text: 'Extensions', link: '/devs/features/extensions' },
                 { text: 'LUI (Lightweight UI)', link: '/devs/features/lightweight-ui' },
-                { text: 'Identifiable Custom Vitals', link: '/devs/features/identifiable-vitals' },
+                { text: 'Custom Vitals Manager', link: '/devs/features/custom-vitals-manager' },
                 { text: 'Modifiers', link: '/devs/features/modifiers' },
                 { text: 'Permissions', link: '/devs/features/permissions' },
                 { text: 'Profiler (Mono)', link: '/devs/features/mono-profiler' },
