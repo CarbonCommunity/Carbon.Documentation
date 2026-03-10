@@ -60,7 +60,7 @@ private void OnServerInitialized()
 
     // Add and immediately apply the shared vital to all players
     // expiry will automatically remove the global vital from all players 
-    CustomVitalManager.AddSharedVital(vital, expiry: 10);
+    globalVital = CustomVitalManager.AddSharedVital(vital, expiry: 10);
 }
 
 private void Unload()
@@ -106,6 +106,7 @@ private void OnServerInitialized()
         iconColor: Color.yellow.WithAlpha(.6f), 
         backgroundColor: Color.black.WithAlpha(.9f), 
         leftText: "Standing by...", leftTextColor: Color.white.WithAlpha(.6f));
+        
     playerVital = CustomVitalManager.AddVital(self, vital);
 }
 
