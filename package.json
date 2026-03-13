@@ -4,7 +4,7 @@
     "@types/crypto-js": "^4.2.2",
     "@types/node": "^24.10.9",
     "autoprefixer": "^9.8.8",
-    "eslint": "^9.27.0",
+    "eslint": "^10.0.3",
     "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-vue": "^10.1.0",
     "globals": "^17.4.0",
