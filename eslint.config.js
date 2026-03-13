@@ -21,4 +21,7 @@ export default defineConfig([
       'vue/require-v-for-key': 'warn',
     },
   },
+  {
+    ignores: ['docs/.vitepress/cache/**', 'docs/.vitepress/dist/**', 'docs/.vitepress/.temp/**', 'node_modules/**'],
+  },
 ])
