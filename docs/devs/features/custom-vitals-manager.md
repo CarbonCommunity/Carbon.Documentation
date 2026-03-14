@@ -146,19 +146,50 @@ private void sillygoosery(ConsoleSystem.Arg arg)
 Both Shared and Player vitals follow the same format for applying and sending updates to the designated targets. Highly recommended to have a look at the example above on how changing vital variables works.
 
 ## TimeLeft Formatting
-There is additional formatting you could use although some of it can become a little bit buggy.
 
-- `{timeleft:}`: 00:01:15 full time with colons hh:mm:ss
-- `{timeleft:mm}`: 01 minutes component
-- `{timeleft:ss}`: 15 seconds component
-- `{timeleft:ms}`: "115 minutes and seconds" component next to each other, counts down to 110 then switches(?) to just 19 which counts down to 0, then it changes to 059 and counts down to 010 then switches to 9 which counts down to 5 then gets removed
-- `{timeleft:mms}`: 0115 counts down to 0110 then switches to 019 which counts down to 010 then switches to 0055 which counts down, similar to above
-- `{timeleft:mss}` 115 counts down to 000 with 3 digits of padding, actually normal but no colon separating the minute and seconds component
-- `{timeleft:mmss}` 0115 counts down to 0000 with 4 digits of padding, also normal but no colon
+The `{timeleft:}` placeholder displays a countdown timer. With nothing after the colon, it defaults to `hh:mm:ss` format (e.g., `01:05:15`).
+
+### Format Tokens
+
+Each token is replaced with its corresponding time component. Double-letter tokens are zero-padded; single-letter tokens are not.
+
+| Token | Description |
+|-------|-------------|
+| `s` | Seconds, no padding |
+| `ss` | Seconds, zero-padded |
+| `m` | Minutes, no padding |
+| `mm` | Minutes, zero-padded |
+| `h` | Hours, no padding |
+| `hh` | Hours, zero-padded |
+| `d` | Days, no padding |
+| `dd`, `ddd`, ... | Days, padded to token width |
+
+Each component displays only its own unit- seconds up to 60, minutes up to 60, hours up to 24. Days can extend into the thousands.
+
+### Inserting Literal Characters
+
+Use `\\` to escape each literal character. For example, `\\:` inserts a colon and `\\m` inserts the letter "m". Spaces also need to be escaped.
+
+### Examples
+
+Using a remaining time of 1 day, 3 hours, 5 minutes, and 7 seconds
+
+| Format String | Output |
+|---------------|--------|
+| `{timeleft:}` | `03:05:07` |
+| `{timeleft:hh\\:mm\\:ss}` | `03:05:07` |
+| `{timeleft:h\\:mm\\:ss}` | `3:05:07` |
+| `{timeleft:mm\\:ss}` | `05:07` |
+| `{timeleft:m\\:ss}` | `5:07` |
+| `{timeleft:ss}` | `07` |
+| `{timeleft:s}` | `7` |
+| `{timeleft:m\\m\\ ss\\s}` | `5m 7s`|
+| `{timeleft:h\\h\\ mm\\m\\ ss\\s}` | `3h 5m 7s` |
+| `{timeleft:d\\d\\ hh\\h\\ mm\\m\\ ss\\s}` | `1d 3h 5m 7s` |
 
 :::info
-Adding additional colons, commas &/or periods between the `m`'s and `s`'s breaks the formatting.
-Using multiple `{timeleft:mm}:{timeleft:ss}` also breaks the formatting. 
+Placing tokens directly adjacent without an escaped separator (e.g., `ms`, `mms`) can cause unpredictable display behavior.
+Using multiple `{timeleft:}` placeholders in the same string (e.g., `{timeleft:mm}:{timeleft:ss}`) breaks the formatting. Use a single placeholder with escaped separators instead.
 
 Formatting list and info curated by [shaftAlex](https://github.com/shaftAlex).
 :::
