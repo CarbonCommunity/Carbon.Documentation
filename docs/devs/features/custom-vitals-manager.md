@@ -144,3 +144,21 @@ private void sillygoosery(ConsoleSystem.Arg arg)
 ## Updating Vitals
 
 Both Shared and Player vitals follow the same format for applying and sending updates to the designated targets. Highly recommended to have a look at the example above on how changing vital variables works.
+
+## TimeLeft Formatting
+There is additional formatting you could use although some of it can become a little bit buggy.
+
+- `{timeleft:}`: 00:01:15 full time with colons hh:mm:ss
+- `{timeleft:mm}`: 01 minutes component
+- `{timeleft:ss}`: 15 seconds component
+- `{timeleft:ms}`: "115 minutes and seconds" component next to each other, counts down to 110 then switches(?) to just 19 which counts down to 0, then it changes to 059 and counts down to 010 then switches to 9 which counts down to 5 then gets removed
+- `{timeleft:mms}`: 0115 counts down to 0110 then switches to 019 which counts down to 010 then switches to 0055 which counts down, similar to above
+- `{timeleft:mss}` 115 counts down to 000 with 3 digits of padding, actually normal but no colon separating the minute and seconds component
+- `{timeleft:mmss}` 0115 counts down to 0000 with 4 digits of padding, also normal but no colon
+
+:::info
+Adding additional colons, commas &/or periods between the `m`'s and `s`'s breaks the formatting.
+Using multiple `{timeleft:mm}:{timeleft:ss}` also breaks the formatting. 
+
+Formatting list and info curated by [shaftAlex](https://github.com/shaftAlex).
+:::
