@@ -67,6 +67,7 @@ export default defineConfig({
       md.use(tabsMarkdownPlugin)
     },
   },
+  appearance: 'force-dark',
   themeConfig: {
     logo: '/logos/carbon-logo-small.webp',
     outlineTitle: 'On this page',
