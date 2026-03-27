@@ -328,6 +328,7 @@ export class Server {
   Socket: WebSocket | null = null
   Logs: string[] = []
   Chat: string[] = []
+  LogsFilter: string | null = null
   CommandHistory: string[] = []
   AutoConnect = false
   WideScreen = false
@@ -512,7 +513,7 @@ export class Server {
         })
       }
       logs.forEach((log: any) => {
-        this.appendLog(log.Message as string)
+        this.appendLog(log.Message as string, new Date(log.Time * 1000))
       })
       tryFocusLogs(true)
     })
@@ -522,7 +523,7 @@ export class Server {
         Type: read.string(),
         Time: read.int32(),
       }
-      this.appendLog(log.Message as string)
+      this.appendLog(log.Message as string, new Date(log.Time * 1000))
       if(this.PendingRequest) {
         this.LastGlobalCommandResult = log.Message
         this.PendingRequest = false
@@ -918,7 +919,7 @@ export class Server {
           return
         }
 
-        this.appendLog(resp.Message)
+        this.appendLog(resp.Message, new Date(resp.Time * 1000))
         tryFocusLogs()
       }
     }
@@ -946,7 +947,7 @@ export class Server {
     }
 
     if (input == command.value) {
-      this.appendLog('<span style="color: var(--category-misc);"><strong>></strong></span> ' + input)
+      this.appendLog('<span style="color: var(--category-misc);"><strong>></strong></span> ' + input, new Date())
       command.value = ''
       commandIndex.value = 0
 
@@ -1050,7 +1051,7 @@ export class Server {
         break
       case 7: // console.tail
         data.forEach((log: any) => {
-          this.appendLog(log.Message as string)
+          this.appendLog(log.Message as string, log.Time * 1000)
         })
         tryFocusLogs(true)
         break
@@ -1113,8 +1114,8 @@ export class Server {
     save()
   }
 
-  appendLog(log: string) {
-    this.Logs.push(log)
+  appendLog(log: string, time: Date) {
+    this.Logs.push(`<span class="text-gray-600 text-xs select-none">${time.toLocaleTimeString()}  </span>${log}`)
   }
 
   appendChat(message: any) {
