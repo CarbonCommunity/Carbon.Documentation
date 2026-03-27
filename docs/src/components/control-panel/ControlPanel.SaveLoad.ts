@@ -328,6 +328,7 @@ export class Server {
   Socket: WebSocket | null = null
   Logs: string[] = []
   Chat: string[] = []
+  LogsFilter: string | null = null
   CommandHistory: string[] = []
   AutoConnect = false
   WideScreen = false
