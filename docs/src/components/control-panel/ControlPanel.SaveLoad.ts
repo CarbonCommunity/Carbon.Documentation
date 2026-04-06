@@ -919,7 +919,7 @@ export class Server {
           return
         }
 
-        this.appendLog(resp.Message, new Date(resp.Time * 1000))
+        this.appendLog(resp.Message, new Date(Date.now()))
         tryFocusLogs()
       }
     }
@@ -1051,7 +1051,7 @@ export class Server {
         break
       case 7: // console.tail
         data.forEach((log: any) => {
-          this.appendLog(log.Message as string, log.Time * 1000)
+          this.appendLog(log.Message as string, log.Time)
         })
         tryFocusLogs(true)
         break
@@ -1073,14 +1073,6 @@ export class Server {
       case 5: // description
         this.Description = data.Message.toString().split(' ').slice(1, 1000).join(' ').replace(/['"]/g, '')
         break
-      case 100: {
-        // c.webpanel.cmd
-        const rpcId = Number(data.rpcId)
-        if (rpcId in this.CommandCallbacks) {
-          this.CommandCallbacks[rpcId](data)
-        }
-        break
-      }
     }
 
     return true
