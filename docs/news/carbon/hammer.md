@@ -92,7 +92,7 @@ To activate the UI, you must hold a <b>Hammer</b> or <b>Garry's Mod Tool</b>. To
 <NewsSectionTitle text="Source" author="raulssorban"/>
 <NewsSection>
 
-Here's the entire source code: [<b>HammerModule</b>](https://github.com/CarbonCommunity/Carbon.Common/blob/develop/src/Carbon/Modules/HammerModule/HammerModule.cs)
+Here's the entire source code: [<b>HammerModule</b>](https://github.com/CarbonCommunity/Carbon/tree/main/src/Carbon.Components/Carbon.Common/src/Carbon/Modules/HammerModule/HammerModule.cs)
 
 </NewsSection>
 </NewsHeroSection>

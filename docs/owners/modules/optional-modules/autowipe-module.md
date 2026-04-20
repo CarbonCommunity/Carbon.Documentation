@@ -13,7 +13,7 @@ using a configurable wipe list and cron expressions. It can trigger commands and
 - **Class Name:** `AutoWipeModule`
 - **Enabled by default:** No
 - **Supports Configuration:** Yes
-- **Source:** [`Carbon.Modules/AutoWipeModule`](https://github.com/CarbonCommunity/Carbon.Modules/tree/develop/src/AutoWipeModule)
+- **Source:** [`Carbon.Modules/AutoWipeModule`](https://github.com/CarbonCommunity/Carbon/tree/main/src/Carbon.Components/Carbon.Modules/src/AutoWipeModule)
 - **Forces Modded Tag:** No
 
 AutoWipe lets you schedule wipes using cron syntax, execute commands or delete files/folders after wiping, and even

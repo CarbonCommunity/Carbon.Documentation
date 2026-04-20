@@ -19,7 +19,7 @@ Carbon.
 - **Purpose:** Spawn, update, and destroy entities per client with custom behavior
 - **Net usage:** Efficient per-client entity transmission using `ProtoBuf`
 - **Source**:
-  [`Carbon.Common/ClientEntity.cs`](https://github.com/CarbonCommunity/Carbon.Common/blob/develop/src/Carbon/Components/ClientEntity.cs)
+  [`Carbon.Common/ClientEntity.cs`](https://github.com/CarbonCommunity/Carbon/tree/main/src/Carbon.Components/Carbon.Common/src/Carbon/Components/ClientEntity.cs)
 
 ## Core API Reference
 

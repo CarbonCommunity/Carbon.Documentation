@@ -15,7 +15,7 @@ offline developer environments.
 - **Class Name:** `SelectiveEACModule`
 - **Enabled by default:** No
 - **Supports Configuration:** Yes
-- **Source:** [`Carbon.Modules/SelectiveEACModule`](https://github.com/CarbonCommunity/Carbon.Modules/tree/develop/src/SelectiveEACModule)
+- **Source:** [`Carbon.Modules/SelectiveEACModule`](https://github.com/CarbonCommunity/Carbon/tree/main/src/Carbon.Components/Carbon.Modules/src/SelectiveEACModule)
 - **Forces Modded Tag:** No
 
 When enabled, this module patches internal Rust server methods to override how encryption and `EAC` validation work on

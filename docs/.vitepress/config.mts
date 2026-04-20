@@ -126,15 +126,7 @@ export default defineConfig({
                   collapsed: true,
                   items: [
                     { text: 'AutoWipe Module', link: '/owners/modules/optional-modules/autowipe-module' },
-                    {
-                      text: 'Circular Networking Module',
-                      link: '/owners/modules/optional-modules/circularnetworking-module',
-                    },
                     { text: 'Gather Manager Module', link: '/owners/modules/optional-modules/gather-manager-module' },
-                    {
-                      text: 'Moderation Tools Module',
-                      link: '/owners/modules/optional-modules/moderation-tools-module',
-                    },
                     { text: 'Selective EAC Module', link: '/owners/modules/optional-modules/selective-eac-module' },
                     { text: 'Stack Manager Module', link: '/owners/modules/optional-modules/stack-manager-module' },
                     { text: 'Vanish Module', link: '/owners/modules/optional-modules/vanish-module' },

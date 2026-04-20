@@ -15,7 +15,7 @@ types.
 - **Enabled by default:** Yes
 - **Force enabled:** Yes (cannot be disabled)
 - **Supports Configuration:** No
-- **Source:** [`Carbon.Common/ModalModule`](https://github.com/CarbonCommunity/Carbon.Common/blob/develop/src/Carbon/Modules/ModalModule/ModalModule.cs)
+- **Source:** [`Carbon.Common/ModalModule`](https://github.com/CarbonCommunity/Carbon/tree/main/src/Carbon.Components/Carbon.Common/src/Carbon/Modules/ModalModule/ModalModule.cs)
 - **Forces Modded Tag:** No
 
 This module allows **plugins to create modals** with input fields such as strings, booleans, numbers, colors, enums, and

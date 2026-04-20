@@ -13,7 +13,7 @@ It supports both global and per-item configuration, and applies changes dynamica
 - **Class Name:** `StackManagerModule`
 - **Enabled by default:** No
 - **Supports Configuration:** Yes
-- **Source:** [`Carbon.Modules/StackManagerModule`](https://github.com/CarbonCommunity/Carbon.Modules/tree/develop/src/StackManagerModule)
+- **Source:** [`Carbon.Modules/StackManagerModule`](https://github.com/CarbonCommunity/Carbon/tree/main/src/Carbon.Components/Carbon.Modules/src/StackManagerModule)
 - **Forces Modded Tag:** Yes
 
 StackManager adjusts `ItemDefinition.stackable` values for all items based on configurable rules.

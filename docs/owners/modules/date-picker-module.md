@@ -15,7 +15,7 @@ directly to allow date-based inputs from players.
 - **Enabled by default:** Yes
 - **Force enabled:** Yes (cannot be disabled)
 - **Supports Configuration:** No
-- **Source:** [`Carbon.Common/DatePickerModule`](https://github.com/CarbonCommunity/Carbon.Common/blob/develop/src/Carbon/Modules/DatePickerModule/DatePickerModule.cs)
+- **Source:** [`Carbon.Common/DatePickerModule`](https://github.com/CarbonCommunity/Carbon/tree/main/src/Carbon.Components/Carbon.Common/src/Carbon/Modules/DatePickerModule/DatePickerModule.cs)
 - **Forces Modded Tag:** No
 
 This module is intended for use by **other plugins** to enable date selection through a UI interface. It includes a

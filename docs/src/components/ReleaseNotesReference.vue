@@ -129,7 +129,7 @@ const getChangeType = (val: number) => {
         <Badge type="info" :text="'Current Version: ' + releaseNotes[0]?.Version" style="text-align: center; width: 100%; user-select: none; margin: 0" />
 
         <CarbonButton
-          href="https://github.com/CarbonCommunity/Carbon.Core/releases/tag/production_build"
+          href="https://github.com/CarbonCommunity/Carbon/releases/tag/production_build"
           text="Download Latest"
           :icon="CloudDownloadIcon"
           external

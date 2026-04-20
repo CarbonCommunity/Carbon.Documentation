@@ -64,7 +64,7 @@ const sections = [
       'This is the most stable Carbon build you could run against the official Rust server public release.'
     ),
     new ReleaseBuild(
-      'develop',
+      'main',
       'edge_build',
       'Edge Build',
       '#6a6a0c',
@@ -74,19 +74,9 @@ const sections = [
       "This build is Carbon's version of a staging build, packed with the most recent changes and features in Carbon that might end up getting added or not in the production build."
     ),
     new ReleaseBuild(
-      'qa',
-      'qa_build',
-      'QA',
-      '#0c676a',
-      ['public', 'release', 'staging'],
-      ['Debug', 'Release', 'Minimal'],
-      false,
-      'Periodically updated when the Carbon team has one or more significant changes that need crowd testing.'
-    ),
-    new ReleaseBuild(
-      'preview',
-      'preview_build',
-      'Preview',
+      'experimental',
+      'experimental_build',
+      'Experimental',
       '#984b2b',
       ['public', 'release'],
       ['Debug', 'Minimal'],

@@ -14,7 +14,7 @@ includes UI feedback, sound effects, and permission-controlled behavior.
 - **Class Name:** `VanishModule`
 - **Enabled by default:** No
 - **Supports Configuration:** Yes
-- **Source:** [`Carbon.Modules/VanishModule`](https://github.com/CarbonCommunity/Carbon.Modules/tree/develop/src/VanishModule)
+- **Source:** [`Carbon.Modules/VanishModule`](https://github.com/CarbonCommunity/Carbon/tree/main/src/Carbon.Components/Carbon.Modules/src/VanishModule)
 - **Forces Modded Tag:** No
 
 When a player is vanished, they become invisible, unattackable, and undetectable by most game systems and AI.

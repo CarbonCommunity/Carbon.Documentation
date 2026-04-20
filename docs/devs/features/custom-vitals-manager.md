@@ -33,7 +33,7 @@ public int timeLeft;
 
 There are two types of custom vitals that the manager... manages. The <b>Shared vitals</b>, and the <b>player</b>-specific <b>vitals</b>. 
 
-Here's the [<b>source</b>](https://github.com/CarbonCommunity/Carbon/blob/develop/src/Carbon.Components/Carbon.Common/src/Carbon/Components/CustomVitalManager.cs) for the implementation.
+Here's the [<b>source</b>](https://github.com/CarbonCommunity/Carbon/tree/main/src/Carbon.Components/Carbon.Common/src/Carbon/Components/CustomVitalManager.cs) for the implementation.
 
 ## Shared Vitals
 

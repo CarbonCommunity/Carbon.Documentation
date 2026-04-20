@@ -20,7 +20,7 @@ To install **Carbon** on your Windows dedicated Rust server, you must follow the
 
 Please verify all server files and keep the server up to date every time it boots up.
 
-1. Go to the GitHub [Releases page](https://github.com/CarbonCommunity/Carbon.Core/releases) and download the latest
+1. Go to the GitHub [Releases page](https://github.com/CarbonCommunity/Carbon/releases) and download the latest
    `Carbon.Windows.TARGET.zip`.
 2. Unpack the archive in the root folder of your server; extract all files the same way they're presented in the
    archive, on top of the folder where `RustDedicated.exe` exists.
@@ -33,7 +33,7 @@ Please verify all server files and keep the server up to date every time it boot
 To install **Carbon** on your Linux dedicated Rust server, you must follow these steps:
 
 1. Download the latest `Carbon.Linux.TARGET.tar.gz` from the
-   [GitHub Releases page](https://github.com/CarbonCommunity/Carbon.Core/releases).
+   [GitHub Releases page](https://github.com/CarbonCommunity/Carbon/releases).
 2. Unpack the archive in the root folder of your server
     1. Extract all files the same way they're presented in the archive, on top of the folder where `RustDedicated`
        exists

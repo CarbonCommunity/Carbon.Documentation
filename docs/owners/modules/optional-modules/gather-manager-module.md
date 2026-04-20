@@ -13,7 +13,7 @@ dynamically based on source type-like pickups, quarries, dispensers, and more.
 - **Class Name:** `GatherManagerModule`
 - **Enabled by default:** No
 - **Supports Configuration:** Yes
-- **Source:** [`Carbon.Modules/GatherManagerModule`](https://github.com/CarbonCommunity/Carbon.Modules/tree/develop/src/GatherManagerModule)
+- **Source:** [`Carbon.Modules/GatherManagerModule`](https://github.com/CarbonCommunity/Carbon/tree/main/src/Carbon.Components/Carbon.Modules/src/GatherManagerModule)
 - **Forces Modded Tag:** Yes
 
 When enabled, this module intercepts item gathering logic and adjusts the resulting amounts using multipliers defined in
