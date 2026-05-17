@@ -41,6 +41,8 @@ debug_suspend=true
 debug_address=127.0.0.1:5337
 ```
 
+You will also need to install the`Game Development with Unity` workload to enable the Mono attach process.
+
 :::warning Configuration Note
 Running any `update_*.bat` will overwrite `doorstop_config.ini` with default values.  
 Backup your changes before updating.
@@ -49,6 +51,11 @@ Backup your changes before updating.
 :::danger Configuration Note #2
 Be aware that `debug_suspend=true` will prevent the server from starting until you attach a debugger.
 :::
+
+:::info Configuration Note #3
+If you are using CSZip, make sure you are copying the files to the correct directory. [ZIP Script Packages](/devs/features/zip-script-packages.md)
+:::
+
 
 ## <PlayIcon class="carbon-icon" /> Run Your Server
 
