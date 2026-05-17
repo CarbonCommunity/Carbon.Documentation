@@ -164,6 +164,7 @@ export default defineConfig({
                 { text: 'Custom Vitals Manager', link: '/devs/features/custom-vitals-manager' },
                 { text: 'Modifiers', link: '/devs/features/modifiers' },
                 { text: 'Permissions', link: '/devs/features/permissions' },
+                { text: 'Persistence', link: '/devs/features/persistence' },
                 { text: 'Profiler (Mono)', link: '/devs/features/mono-profiler' },
                 { text: 'Timers', link: '/devs/features/timers' },
                 { text: 'Vault', link: '/devs/features/vault' },
