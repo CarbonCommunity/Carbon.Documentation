@@ -2,21 +2,21 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/crypto-js": "^4.2.2",
-    "@types/node": "^24.12.2",
+    "@types/node": "^24.12.4",
     "autoprefixer": "^9.8.8",
-    "eslint": "^10.2.0",
-    "eslint-config-prettier": "^10.1.5",
-    "eslint-plugin-vue": "^10.1.0",
-    "globals": "^17.4.0",
+    "eslint": "^10.4.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-vue": "^10.9.1",
+    "globals": "^17.6.0",
     "gray-matter": "^4.0.3",
-    "postcss": "^8.5.3",
-    "prettier": "^3.7.4",
-    "prettier-plugin-tailwindcss": "^0.7.1",
-    "tailwindcss": "^3.4.17",
-    "typescript-eslint": "^8.58.0",
-    "vitepress": "^1.6.3",
+    "postcss": "^8.5.15",
+    "prettier": "^3.8.3",
+    "prettier-plugin-tailwindcss": "^0.7.4",
+    "tailwindcss": "^3.4.19",
+    "typescript-eslint": "^8.59.4",
+    "vitepress": "^1.6.4",
     "vitepress-plugin-tabs": "^0.8.0",
-    "vue": "^3.5.32"
+    "vue": "^3.5.34"
   },
   "scripts": {
     "generate:rss": "node scripts/generate-rss.mjs",
@@ -27,13 +27,13 @@
     "docs:preview": "vitepress preview docs"
   },
   "dependencies": {
-    "@vueuse/core": "^14.0.0",
+    "@vueuse/core": "^14.3.0",
     "crypto-js": "^4.2.0",
     "lucide-vue-next": "^0.577.0",
-    "markdown-it": "^14.1.0",
-    "minisearch": "^7.1.2",
+    "markdown-it": "^14.1.1",
+    "minisearch": "^7.2.0",
     "pako": "^2.1.0",
-    "vue-draggable-plus": "^0.6.0"
+    "vue-draggable-plus": "^0.6.1"
   },
   "type": "module"
 }
