@@ -1112,12 +1112,14 @@ export class Server {
 
   appendChat(message: any) {
     let channel = ""
+    let channelColor = "text-zinc-500 text-xs"
     switch (message.Channel) {
       case 0:
         channel = "Global"
         break
       case 1:
         channel = "Team"
+        channelColor = "text-[#af5] text-xs"
         break
       case 2:
         channel = "Server"
@@ -1137,7 +1139,7 @@ export class Server {
     }
     channel = channel.toUpperCase()
 
-    this.Chat.push( `<span class="text-zinc-500 text-xs">${new Date(message.Time * 1000).toLocaleTimeString()}\t ${channel} \t</span> <a style="color: ${message.Color}" href="http://steamcommunity.com/profiles/${message.UserId}" target="_blank">${message.Username}</a>: ${message.Message}`)
+    this.Chat.push( `<span class="text-zinc-500 text-xs">${new Date(message.Time * 1000).toLocaleTimeString()}\t <span class="${channelColor}">${channel}</span> \t</span> <a style="color: ${message.Color}" href="http://steamcommunity.com/profiles/${message.UserId}" target="_blank">${message.Username}</a>: ${message.Message}`)
   }
 
   selectHistory(up: boolean) {
