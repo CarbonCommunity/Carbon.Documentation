@@ -107,6 +107,7 @@ export default defineConfig({
                 { text: 'Vault', link: '/devs/features/vault' },
                 { text: 'Minimal', link: '/owners/features/minimal' },
                 { text: 'CarbonAuto', link: '/owners/features/carbonauto' },
+                { text: 'WebControlPanel', link: '/owners/features/webcontrolpanel' },
                 { text: 'Profiler (Mono)', link: '/devs/features/mono-profiler' },
               ],
             },
