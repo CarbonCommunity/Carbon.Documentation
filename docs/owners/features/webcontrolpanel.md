@@ -57,11 +57,12 @@ That flips it on, saves the config and starts the server. A few more commands ar
 
 | Command | What it does |
 | --- | --- |
-| `webpanel.setenabled true/false` | Start or stop the panel server. |
-| `webpanel.loadcfg` | Reload the config from disk (re-reads accounts). |
-| `webpanel.savecfg` | Save the current config to disk. |
-| `webpanel.clients` | List everyone currently connected to the panel. |
-| `webpanel.connected` | Whether the panel server is currently running. |
+| `c.webpanel.setenabled true/false` | Start or stop the panel server. |
+| `c.webpanel.setport` | Updates the port of the WebControlPanel Bridge server. |
+| `c.webpanel.loadcfg` | Reload the config from disk (re-reads accounts). |
+| `c.webpanel.savecfg` | Save the current config to disk. |
+| `c.webpanel.clients` | List everyone currently connected to the panel. |
+| `c.webpanel.connected` | Whether the panel server is currently running. |
 
 > All of these require admin (auth level 2).
 
