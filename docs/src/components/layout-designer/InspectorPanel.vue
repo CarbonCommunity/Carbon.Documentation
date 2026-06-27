@@ -3,7 +3,8 @@ import { computed } from 'vue'
 import AnchorWidget from './AnchorWidget.vue'
 import InfoTip from './InfoTip.vue'
 import { round } from './geometry'
-import type { ColorRGBA, DesignerElement } from './types'
+import { TEXT_ALIGNS } from './types'
+import type { ColorRGBA, DesignerElement, TextAlign } from './types'
 import { useDesigner } from './useDesigner'
 
 const { selected, selectedIds, elements, descendantIds, update, reparent, rectOf, fill, removeSelected, duplicateSelected } =
@@ -76,10 +77,15 @@ function setAlpha(el: DesignerElement, raw: string) {
   update(el.id, { props: { color: { ...el.props.color, a } } })
 }
 
-// --- fill (solid color vs URL image) ---
-const fillMode = computed<'color' | 'image'>(() => (selected.value?.props.image ? 'image' : 'color'))
+// Per-type prop views (null unless the selection is that type) — keep template access type-safe.
+const panelProps = computed(() => (selected.value?.type === 'panel' ? selected.value.props : null))
+const textProps = computed(() => (selected.value?.type === 'text' ? selected.value.props : null))
+
+// --- fill (panel only: solid color vs URL image) ---
+const fillMode = computed<'color' | 'image'>(() => (panelProps.value?.image ? 'image' : 'color'))
 
 function setFillMode(el: DesignerElement, mode: 'color' | 'image') {
+  if (el.type !== 'panel') return
   if (mode === 'image') {
     if (el.props.image) return
     // Reset the color to an opaque white tint so the image shows at its true colors.
@@ -92,6 +98,22 @@ function setFillMode(el: DesignerElement, mode: 'color' | 'image') {
 function setImageUrl(el: DesignerElement, raw: string) {
   update(el.id, { props: { image: { kind: 'url', url: raw.trim() } } })
 }
+
+// --- text props ---
+function setText(el: DesignerElement, raw: string) {
+  update(el.id, { props: { text: raw } })
+}
+function setFontSize(el: DesignerElement, raw: string) {
+  const n = Number.parseInt(raw, 10)
+  if (Number.isNaN(n) || n < 1) return
+  update(el.id, { props: { fontSize: n } })
+}
+function setAlign(el: DesignerElement, align: TextAlign) {
+  update(el.id, { props: { align } })
+}
+
+// Heading for the shared color picker: text color, or a panel's fill color / image tint.
+const colorLabel = computed(() => (textProps.value ? 'Text color' : fillMode.value === 'image' ? 'Tint' : 'Color'))
 
 const computedRect = computed(() => (selected.value ? rectOf(selected.value.id) : undefined))
 </script>
@@ -169,25 +191,59 @@ const computedRect = computed(() => (selected.value ? rectOf(selected.value.id) 
         <input type="number" step="1" :value="round(selected.offsetMax.y)" @change="setVec(selected, 'offsetMax', 'y', ($event.target as HTMLInputElement).value)" />
       </div>
 
-      <div class="ld-section-title">
-        <span>Fill</span>
-        <InfoTip text="What this panel renders: a solid color, or a raw image fetched from a URL (CuiRawImageComponent / cui.v2.CreateUrlImage). URL images download at runtime — for production prefer the image database." />
-      </div>
-      <div class="ld-segmented ld-fill-toggle" role="group" aria-label="Fill type">
-        <button :class="{ active: fillMode === 'color' }" @click="setFillMode(selected, 'color')">Color</button>
-        <button :class="{ active: fillMode === 'image' }" @click="setFillMode(selected, 'image')">Image (URL)</button>
-      </div>
-      <label v-if="fillMode === 'image'" class="ld-field">
-        <span class="ld-field-label">Image URL <InfoTip text="The raw image URL. Emitted as CuiRawImageComponent.Url (Oxide) / the url arg of cui.v2.CreateUrlImage (Carbon)." /></span>
-        <input type="text" placeholder="https://example.com/image.png" :value="selected.props.image?.url ?? ''" @change="setImageUrl(selected, ($event.target as HTMLInputElement).value)" />
-      </label>
+      <!-- TEXT props -->
+      <template v-if="textProps">
+        <div class="ld-section-title">
+          <span>Text</span>
+          <InfoTip text="The label's content and how it sits in its box. Emitted as CuiLabel + CuiTextComponent (Oxide) / cui.v2.CreateText (Carbon). The font is RobotoCondensed (Rust's default)." />
+        </div>
+        <label class="ld-field">
+          <span class="ld-field-label">Content</span>
+          <textarea class="ld-textarea" rows="2" :value="textProps.text" @change="setText(selected, ($event.target as HTMLTextAreaElement).value)" />
+        </label>
+        <div class="ld-vec-row">
+          <span class="ld-vec-label">Size</span>
+          <input type="number" min="1" step="1" :value="textProps.fontSize" title="Font size in reference px" @change="setFontSize(selected, ($event.target as HTMLInputElement).value)" />
+        </div>
+        <div class="ld-section-title">
+          <span>Alignment <small>(in box)</small></span>
+          <InfoTip text="Where the text sits within its box (Unity TextAnchor). Maps to CuiTextComponent.Align / the alignment arg of cui.v2.CreateText." />
+        </div>
+        <div class="ld-align-grid" role="group" aria-label="Text alignment">
+          <button
+            v-for="a in TEXT_ALIGNS"
+            :key="a"
+            :class="{ active: textProps.align === a }"
+            :title="a"
+            @click="setAlign(selected, a)"
+          >
+            <span class="ld-align-dot" />
+          </button>
+        </div>
+      </template>
+
+      <!-- PANEL fill (solid color vs URL image) -->
+      <template v-if="panelProps">
+        <div class="ld-section-title">
+          <span>Fill</span>
+          <InfoTip text="What this panel renders: a solid color, or a raw image fetched from a URL (CuiRawImageComponent / cui.v2.CreateUrlImage). URL images download at runtime — for production prefer the image database." />
+        </div>
+        <div class="ld-segmented ld-fill-toggle" role="group" aria-label="Fill type">
+          <button :class="{ active: fillMode === 'color' }" @click="setFillMode(selected, 'color')">Color</button>
+          <button :class="{ active: fillMode === 'image' }" @click="setFillMode(selected, 'image')">Image (URL)</button>
+        </div>
+        <label v-if="fillMode === 'image'" class="ld-field">
+          <span class="ld-field-label">Image URL <InfoTip text="The raw image URL. Emitted as CuiRawImageComponent.Url (Oxide) / the url arg of cui.v2.CreateUrlImage (Carbon)." /></span>
+          <input type="text" placeholder="https://example.com/image.png" :value="panelProps.image?.url ?? ''" @change="setImageUrl(selected, ($event.target as HTMLInputElement).value)" />
+        </label>
+      </template>
 
       <div class="ld-section-title">
-        <span>{{ fillMode === 'image' ? 'Tint' : 'Color' }}</span>
-        <InfoTip :text="fillMode === 'image' ? 'Color multiplied over the image (white = original colors, lower α = more transparent). Maps to the image Color arg / CuiRawImageComponent.Color.' : 'Panel background color and opacity (α). Stored as CUI 0–1 channels — see the \'r g b a\' string in the Captured values panel.'" />
+        <span>{{ colorLabel }}</span>
+        <InfoTip :text="textProps ? 'The text (font) color and opacity (α). Maps to CuiTextComponent.Color / the color arg of cui.v2.CreateText.' : fillMode === 'image' ? 'Color multiplied over the image (white = original colors, lower α = more transparent). Maps to the image Color arg / CuiRawImageComponent.Color.' : 'Panel background color and opacity (α). Stored as CUI 0–1 channels — see the \'r g b a\' string in the Captured values panel.'" />
       </div>
       <div class="ld-vec-row">
-        <input class="ld-color" type="color" :value="toHex(selected.props.color)" title="Panel color" @input="setHex(selected, ($event.target as HTMLInputElement).value)" />
+        <input class="ld-color" type="color" :value="toHex(selected.props.color)" :title="colorLabel" @input="setHex(selected, ($event.target as HTMLInputElement).value)" />
         <label class="ld-alpha">
           <span title="Opacity (alpha), 0–1">α</span>
           <input type="number" min="0" max="1" step="0.05" :value="round(selected.props.color.a)" @change="setAlpha(selected, ($event.target as HTMLInputElement).value)" />
@@ -394,6 +450,55 @@ const computedRect = computed(() => (selected.value ? rectOf(selected.value.id) 
 .ld-fill-toggle button.active {
   background: var(--c-carbon-1);
   color: #fff;
+}
+
+.ld-textarea {
+  background: var(--vp-c-bg);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 3px;
+  padding: 4px 6px;
+  color: var(--vp-c-text-1);
+  font-size: 13px;
+  font-family: inherit;
+  resize: vertical;
+}
+
+/* 3×3 alignment picker — grid position maps to the TextAnchor (top-left = UpperLeft, …) */
+.ld-align-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3px;
+  width: 90px;
+}
+
+.ld-align-grid button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  background: var(--vp-c-bg);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 3px;
+}
+
+.ld-align-grid button:hover {
+  border-color: var(--c-carbon-1);
+}
+
+.ld-align-grid button.active {
+  background: var(--c-carbon-1);
+  border-color: var(--c-carbon-1);
+}
+
+.ld-align-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--vp-c-text-3);
+}
+
+.ld-align-grid button.active .ld-align-dot {
+  background: #fff;
 }
 
 .ld-color {

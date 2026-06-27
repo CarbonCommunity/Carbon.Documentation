@@ -20,7 +20,17 @@ export interface ColorRGBA {
   a: number
 }
 
-export type ElementType = 'panel'
+export type ElementType = 'panel' | 'text'
+
+/** Addable element types, in the order shown by the toolbar's "Add" picker. */
+export interface ElementTypeDef {
+  type: ElementType
+  label: string
+}
+export const ELEMENT_TYPES: ElementTypeDef[] = [
+  { type: 'panel', label: 'Panel' },
+  { type: 'text', label: 'Text' },
+]
 
 /** Target framework for code generation. */
 export type Provider = 'oxide' | 'carbon' | 'both'
@@ -83,9 +93,43 @@ export interface PanelProps {
   image?: ImageFill | null
 }
 
-export interface DesignerElement {
+/** Unity `TextAnchor` members — the alignment of text within its box (vertical × horizontal). */
+export type TextAlign =
+  | 'UpperLeft'
+  | 'UpperCenter'
+  | 'UpperRight'
+  | 'MiddleLeft'
+  | 'MiddleCenter'
+  | 'MiddleRight'
+  | 'LowerLeft'
+  | 'LowerCenter'
+  | 'LowerRight'
+
+/** Row-major (top→bottom, left→right) — drives the inspector's 3×3 alignment grid. */
+export const TEXT_ALIGNS: TextAlign[] = [
+  'UpperLeft',
+  'UpperCenter',
+  'UpperRight',
+  'MiddleLeft',
+  'MiddleCenter',
+  'MiddleRight',
+  'LowerLeft',
+  'LowerCenter',
+  'LowerRight',
+]
+
+export interface TextProps {
+  /** Text (font) color, CUI channels 0..1. */
+  color: ColorRGBA
+  text: string
+  /** Font size in reference px (CuiTextComponent.FontSize / LUI fontSize). */
+  fontSize: number
+  align: TextAlign
+}
+
+/** Fields shared by every element regardless of type. */
+interface BaseElement {
   id: string
-  type: ElementType
   name: string
   /** null => positioned against the root canvas. */
   parentId: string | null
@@ -93,8 +137,20 @@ export interface DesignerElement {
   anchorMax: Vec2
   offsetMin: Vec2
   offsetMax: Vec2
+}
+
+export interface PanelElement extends BaseElement {
+  type: 'panel'
   props: PanelProps
 }
+
+export interface TextElement extends BaseElement {
+  type: 'text'
+  props: TextProps
+}
+
+/** Discriminated on `type` — narrow with `el.type === 'text'` to reach type-specific props. */
+export type DesignerElement = PanelElement | TextElement
 
 /** A resolved rectangle in CUI space (x,y = bottom-left corner, +y up). */
 export interface Rect {

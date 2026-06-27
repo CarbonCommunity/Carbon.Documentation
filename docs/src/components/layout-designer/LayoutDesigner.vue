@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { useEventListener } from '@vueuse/core'
 import { ChevronDown, Clipboard, ClipboardPaste, HelpCircle, Layers, Lock, Pencil, Plus, Redo2, Trash2, Undo2 } from 'lucide-vue-next'
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import ContextMenu from './ContextMenu.vue'
 import DesignerCanvas from './DesignerCanvas.vue'
 import ElementTree from './ElementTree.vue'
 import InfoTip from './InfoTip.vue'
 import InspectorPanel from './InspectorPanel.vue'
-import { ASPECT_PRESETS, CLIENT_PANELS, type ClientPanel } from './types'
+import { ASPECT_PRESETS, CLIENT_PANELS, ELEMENT_TYPES, type ClientPanel, type ElementType } from './types'
 import CodeOutput from './CodeOutput.vue'
 import { useDesigner } from './useDesigner'
 
@@ -16,7 +16,7 @@ const {
   provider,
   gridSize,
   constrain,
-  addPanel,
+  addElement,
   setCanvas,
   init,
   selectedIds,
@@ -60,6 +60,20 @@ onBeforeUnmount(() => {
 // --- layout & help menus ---
 const layoutMenuOpen = ref(false)
 const helpOpen = ref(false)
+
+// --- add-element picker (split button: primary adds `addType`, caret picks the type) ---
+const addType = ref<ElementType>('panel')
+const addMenuOpen = ref(false)
+const currentAddLabel = computed(() => ELEMENT_TYPES.find((t) => t.type === addType.value)?.label ?? 'Panel')
+function addCurrent() {
+  addElement(addType.value, null)
+  addMenuOpen.value = false // keep the primary path consistent with pickAddType
+}
+function pickAddType(type: ElementType) {
+  addType.value = type
+  addElement(type, null)
+  addMenuOpen.value = false
+}
 
 function chooseLayout(id: string) {
   switchLayout(id)
@@ -122,6 +136,7 @@ useEventListener(
     const t = e.target as HTMLElement
     if (!t.closest('.ld-layout-menu')) layoutMenuOpen.value = false
     if (!t.closest('.ld-help')) helpOpen.value = false
+    if (!t.closest('.ld-add-menu')) addMenuOpen.value = false
   },
   true
 )
@@ -186,9 +201,26 @@ useEventListener(window, 'pointerup', () => {
       <button class="ld-icon-btn" :disabled="!canUndo" title="Undo (Ctrl+Z)" @click="undo"><Undo2 :size="15" /></button>
       <button class="ld-icon-btn" :disabled="!canRedo" title="Redo (Ctrl+Shift+Z)" @click="redo"><Redo2 :size="15" /></button>
 
-      <button class="ld-btn primary" title="Add a new panel on the root canvas" @click="addPanel(null)">
-        <Plus :size="15" /> Add panel
-      </button>
+      <!-- add-element split button: primary adds the current type, caret opens the type picker -->
+      <div class="ld-add-menu">
+        <button class="ld-btn primary ld-add-main" :title="`Add a new ${currentAddLabel.toLowerCase()} on the root canvas`" @click="addCurrent">
+          <Plus :size="15" /> Add {{ currentAddLabel }}
+        </button>
+        <button class="ld-btn primary ld-add-caret" title="Choose element type" @click.stop="addMenuOpen = !addMenuOpen">
+          <ChevronDown :size="13" />
+        </button>
+        <div v-if="addMenuOpen" class="ld-menu-pop ld-add-pop" @pointerdown.stop>
+          <button
+            v-for="t in ELEMENT_TYPES"
+            :key="t.type"
+            class="ld-menu-item"
+            :class="{ active: t.type === addType }"
+            @click="pickAddType(t.type)"
+          >
+            <Plus :size="13" /> {{ t.label }}
+          </button>
+        </div>
+      </div>
 
       <div class="ld-spacer" />
 
@@ -532,6 +564,30 @@ useEventListener(window, 'pointerup', () => {
 
 .ld-btn.primary:hover {
   background: var(--c-carbon-3);
+}
+
+/* add-element split button */
+.ld-add-menu {
+  position: relative;
+  display: inline-flex;
+}
+
+.ld-add-main {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-right: none;
+}
+
+.ld-add-caret {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border-left: 1px solid rgba(255, 255, 255, 0.28);
+  padding-left: 7px;
+  padding-right: 7px;
+}
+
+.ld-add-pop {
+  min-width: 140px;
 }
 
 .ld-tool-field {

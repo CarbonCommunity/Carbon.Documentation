@@ -19,10 +19,18 @@ function num(v: number, decimals: number): string {
   return Object.is(r, -0) ? '0' : String(r)
 }
 
-/** Escape a value so it is safe inside a C# double-quoted string literal. */
+/** Escape a value so it is safe inside a C# double-quoted string literal (incl. newlines/tabs). */
 function esc(s: string): string {
-  return s.replace(/\\/g, '\\\\').replace(/"/g, '\\"')
+  return s
+    .replace(/\\/g, '\\\\')
+    .replace(/"/g, '\\"')
+    .replace(/\n/g, '\\n')
+    .replace(/\r/g, '\\r')
+    .replace(/\t/g, '\\t')
 }
+
+/** Integer for emitted C# (font sizes are whole px). */
+const intStr = (v: number) => String(Math.max(1, Math.round(v)))
 
 // Anchors are fractions (need precision); offsets are reference px (usually whole, grid-snapped).
 const anchorPair = (v: Vec2) => `${num(v.x, 4)} ${num(v.y, 4)}`
@@ -65,10 +73,36 @@ function rootContainerName(names: Map<string, string>): string {
 
 // --- Oxide CUI -----------------------------------------------------------------------
 
-/** Emit a single Oxide element. URL fills become a raw-image CuiElement; everything else a CuiPanel. */
+/** Emit a single Oxide element. Text → CuiLabel; URL fills → raw-image CuiElement; else CuiPanel. */
 function oxideElement(el: DesignerElement, names: Map<string, string>, layer: ClientPanelDef): string[] {
   const parent = esc(parentName(el, names, layer.oxide))
   const name = esc(names.get(el.id)!)
+  if (el.type === 'text') {
+    const t = el.props
+    // CuiLabel bundles a CuiTextComponent (Text) + RectTransform. Font is pinned to LUI's default
+    // (robotocondensed-regular) so the Carbon and Oxide outputs render identically.
+    return [
+      'container.Add(new CuiLabel',
+      '{',
+      '    Text =',
+      '    {',
+      `        Text = "${esc(t.text)}",`,
+      `        FontSize = ${intStr(t.fontSize)},`,
+      '        Font = "robotocondensed-regular.ttf",',
+      `        Align = TextAnchor.${t.align},`,
+      `        Color = "${cuiColorString(t.color)}"`,
+      '    },',
+      '    RectTransform =',
+      '    {',
+      `        AnchorMin = "${anchorPair(el.anchorMin)}",`,
+      `        AnchorMax = "${anchorPair(el.anchorMax)}",`,
+      `        OffsetMin = "${offsetPair(el.offsetMin)}",`,
+      `        OffsetMax = "${offsetPair(el.offsetMax)}"`,
+      '    }',
+      `}, "${parent}", "${name}");`,
+      '',
+    ]
+  }
   if (el.props.image?.kind === 'url') {
     // Raw/URL images use CuiRawImageComponent (the panel's Color becomes the image tint).
     return [
@@ -131,12 +165,24 @@ function genCarbon(elements: DesignerElement[], names: Map<string, string>, laye
   return out.join('\n')
 }
 
-/** Emit a single Carbon LUI element. URL fills use CreateUrlImage; everything else CreatePanel. */
+/** Emit a single Carbon LUI element. Text → CreateText; URL fills → CreateUrlImage; else CreatePanel. */
 function carbonElement(el: DesignerElement, names: Map<string, string>, root: string): string[] {
   const parent = esc(parentName(el, names, root))
   const name = esc(names.get(el.id)!)
   const pos = `new LuiPosition(${lf(el.anchorMin.x, 4)}, ${lf(el.anchorMin.y, 4)}, ${lf(el.anchorMax.x, 4)}, ${lf(el.anchorMax.y, 4)})`
   const off = `new LuiOffset(${lf(el.offsetMin.x, 2)}, ${lf(el.offsetMin.y, 2)}, ${lf(el.offsetMax.x, 2)}, ${lf(el.offsetMax.y, 2)})`
+  if (el.type === 'text') {
+    const t = el.props
+    // CreateText(parent, pos, offset, fontSize, color, text, alignment, name). Font isn't a param
+    // here — LUI defaults to robotocondensed-regular, which the Oxide output pins to match.
+    return [
+      `cui.v2.CreateText("${parent}",`,
+      `    ${pos},`,
+      `    ${off},`,
+      `    ${intStr(t.fontSize)}, "${cuiColorString(t.color)}", "${esc(t.text)}", TextAnchor.${t.align}, "${name}");`,
+      '',
+    ]
+  }
   const color = cuiColorString(el.props.color)
   if (el.props.image?.kind === 'url') {
     // CreateUrlImage(parent, pos, offset, url, color/tint, name).
@@ -149,7 +195,7 @@ function carbonElement(el: DesignerElement, names: Map<string, string>, root: st
 
 /** Generate C# source for the given elements, targeting the chosen provider + root layer. */
 export function generateCode(elements: DesignerElement[], provider: Provider, rootLayer: ClientPanel = 'Overlay'): string {
-  if (!elements.length) return '// Add a panel to generate code.'
+  if (!elements.length) return '// Add an element to generate code.'
   const layer = CLIENT_PANELS.find((p) => p.id === rootLayer) ?? CLIENT_PANELS[0]
   const names = buildNames(elements)
   if (provider === 'oxide') return genOxide(elements, names, layer)

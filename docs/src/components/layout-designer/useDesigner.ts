@@ -6,17 +6,28 @@
 
 import { computed, reactive, ref, watch } from 'vue'
 import { resolveRect, rootRect } from './geometry'
-import type { CanvasConfig, ColorRGBA, DesignerElement, Provider, Rect, Vec2 } from './types'
+import type { CanvasConfig, ColorRGBA, DesignerElement, ElementType, PanelElement, PanelProps, Provider, Rect, TextElement, TextProps, Vec2 } from './types'
 
 let idCounter = 0
 function nextId(): { id: string; n: number } {
   const n = ++idCounter
-  return { id: `panel-${n}`, n }
+  return { id: `el-${n}`, n }
 }
 
-function makePanel(parentId: string | null, anchorMin: Vec2, anchorMax: Vec2, offsetMin: Vec2, offsetMax: Vec2, color: ColorRGBA): DesignerElement {
+function makePanel(parentId: string | null, anchorMin: Vec2, anchorMax: Vec2, offsetMin: Vec2, offsetMax: Vec2, color: ColorRGBA): PanelElement {
   const { id, n } = nextId()
   return { id, type: 'panel', name: `Panel.${n}`, parentId, anchorMin, anchorMax, offsetMin, offsetMax, props: { color } }
+}
+
+function makeText(parentId: string | null, anchorMin: Vec2, anchorMax: Vec2, offsetMin: Vec2, offsetMax: Vec2, color: ColorRGBA): TextElement {
+  const { id, n } = nextId()
+  return { id, type: 'text', name: `Text.${n}`, parentId, anchorMin, anchorMax, offsetMin, offsetMax, props: { color, text: 'New Text', fontSize: 14, align: 'MiddleCenter' } }
+}
+
+/** Deep-clone an element's props, preserving its concrete type. */
+function cloneProps(el: DesignerElement): DesignerElement['props'] {
+  if (el.type === 'text') return { ...el.props, color: { ...el.props.color } }
+  return { ...el.props, color: { ...el.props.color }, image: el.props.image ? { ...el.props.image } : el.props.image }
 }
 
 const COLORS: ColorRGBA[] = [
@@ -163,6 +174,29 @@ function addPanel(parentId: string | null = null): DesignerElement {
   return panel
 }
 
+function addText(parentId: string | null = null): DesignerElement {
+  // Text defaults to a centered fixed-size box (a title/label), staggered like child panels so
+  // successive adds don't fully overlap. Color defaults to opaque white (the text color).
+  const c = (elements.value.length % 6) * 24
+  const half = { w: 140, h: 24 }
+  const text = makeText(
+    parentId,
+    { x: 0.5, y: 0.5 },
+    { x: 0.5, y: 0.5 },
+    { x: -half.w + c, y: -half.h + c },
+    { x: half.w + c, y: half.h + c },
+    { r: 1, g: 1, b: 1, a: 1 }
+  )
+  elements.value.push(text)
+  selectedIds.value = [text.id]
+  return text
+}
+
+/** Add an element of the given type on the root canvas (or inside `parentId`). */
+function addElement(type: ElementType, parentId: string | null = null): DesignerElement {
+  return type === 'text' ? addText(parentId) : addPanel(parentId)
+}
+
 function remove(id: string) {
   const toRemove = new Set([id, ...descendantIds(id)])
   elements.value = elements.value.filter((e) => !toRemove.has(e.id))
@@ -204,7 +238,9 @@ function reparent(id: string, newParentId: string | null) {
 }
 
 type ElementPatch = Partial<Pick<DesignerElement, 'name' | 'anchorMin' | 'anchorMax' | 'offsetMin' | 'offsetMax'>> & {
-  props?: Partial<DesignerElement['props']>
+  // Accept any prop from either element type; the inspector only sends fields valid for the
+  // selected element, so a panel never receives text props and vice-versa.
+  props?: Partial<PanelProps & TextProps>
 }
 
 function update(id: string, patch: ElementPatch) {
@@ -215,7 +251,7 @@ function update(id: string, patch: ElementPatch) {
   if (patch.anchorMax) el.anchorMax = patch.anchorMax
   if (patch.offsetMin) el.offsetMin = patch.offsetMin
   if (patch.offsetMax) el.offsetMax = patch.offsetMax
-  if (patch.props) el.props = { ...el.props, ...patch.props }
+  if (patch.props) el.props = { ...(el.props as PanelProps & TextProps), ...patch.props }
 }
 
 function setCanvas(patch: Partial<CanvasConfig>) {
@@ -263,8 +299,8 @@ function cloneSubtree(id: string): string | null {
       anchorMax: { ...el.anchorMax },
       offsetMin: { ...el.offsetMin },
       offsetMax: { ...el.offsetMax },
-      props: { ...el.props, color: { ...el.props.color }, image: el.props.image ? { ...el.props.image } : el.props.image },
-    }
+      props: cloneProps(el),
+    } as DesignerElement
   })
   clones.forEach((c, i) => {
     const origParent = subtree[i].parentId
@@ -325,9 +361,11 @@ function snapshot(): string {
   return JSON.stringify({ elements: elements.value, canvas })
 }
 function reindexIdCounter() {
+  // Ids look like `el-N` (legacy layouts use `panel-N`); seed the counter past the highest
+  // existing suffix so freshly added elements never collide with loaded ones.
   let max = 0
   for (const e of elements.value) {
-    const m = /panel-(\d+)/.exec(e.id)
+    const m = /-(\d+)$/.exec(e.id)
     if (m) max = Math.max(max, Number(m[1]))
   }
   idCounter = max
@@ -647,6 +685,8 @@ export function useDesigner() {
     descendantIds,
     // actions
     addPanel,
+    addText,
+    addElement,
     select,
     remove,
     removeSelected,

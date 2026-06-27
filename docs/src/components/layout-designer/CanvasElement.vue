@@ -11,7 +11,7 @@ import {
   type OffsetPatch,
   type ResizeEdge,
 } from './geometry'
-import type { DesignerElement } from './types'
+import type { DesignerElement, TextAlign } from './types'
 import { useDesigner } from './useDesigner'
 
 defineOptions({ name: 'CanvasElement' })
@@ -57,22 +57,49 @@ const metrics = computed(() => {
 
 const boxStyle = computed(() => {
   const m = metrics.value
-  const fill = props.element.props
+  const el = props.element
   const style: Record<string, string> = {
     left: `${m.left * props.scale}px`,
     top: `${(props.parentH - m.top) * props.scale}px`, // flip y
     width: `${m.cuiW * props.scale}px`,
     height: `${m.cuiH * props.scale}px`,
-    backgroundColor: cssColor(fill.color), // panel color, or the image tint behind it
   }
-  // URL image: preview the actual bitmap stretched to the box (matches Rust's default Image type).
-  if (fill.image?.url) {
-    style.backgroundImage = `url("${fill.image.url.replace(/"/g, '\\"')}")`
-    style.backgroundSize = '100% 100%'
-    style.backgroundRepeat = 'no-repeat'
+  // Panels paint a background (color, or an image tint behind a URL fill). Text boxes stay
+  // transparent — their `color` is the font color, rendered on the inner text node below.
+  if (el.type === 'panel') {
+    style.backgroundColor = cssColor(el.props.color)
+    // URL image: preview the actual bitmap stretched to the box (matches Rust's default Image type).
+    if (el.props.image?.url) {
+      style.backgroundImage = `url("${el.props.image.url.replace(/"/g, '\\"')}")`
+      style.backgroundSize = '100% 100%'
+      style.backgroundRepeat = 'no-repeat'
+    }
   }
   return style
 })
+
+// Map a Unity TextAnchor (Upper/Middle/Lower × Left/Center/Right) to flexbox + text-align.
+function alignParts(a: TextAlign): { vert: string; horiz: string; textAlign: string } {
+  const vert = a.startsWith('Upper') ? 'flex-start' : a.startsWith('Lower') ? 'flex-end' : 'center'
+  const horiz = a.endsWith('Left') ? 'flex-start' : a.endsWith('Right') ? 'flex-end' : 'center'
+  const textAlign = a.endsWith('Left') ? 'left' : a.endsWith('Right') ? 'right' : 'center'
+  return { vert, horiz, textAlign }
+}
+
+// Inner text-node style (text elements only). Font size scales with the canvas like offsets do.
+const textStyle = computed<Record<string, string> | null>(() => {
+  const el = props.element
+  if (el.type !== 'text') return null
+  const a = alignParts(el.props.align)
+  return {
+    alignItems: a.vert,
+    justifyContent: a.horiz,
+    textAlign: a.textAlign,
+    color: cssColor(el.props.color),
+    fontSize: `${el.props.fontSize * props.scale}px`,
+  }
+})
+const textContent = computed(() => (props.element.type === 'text' ? props.element.props.text : ''))
 
 const children = computed(() => childrenOf(props.element.id))
 
@@ -114,8 +141,11 @@ function cloneEl(el: DesignerElement): DesignerElement {
     anchorMax: { ...el.anchorMax },
     offsetMin: { ...el.offsetMin },
     offsetMax: { ...el.offsetMax },
-    props: { ...el.props, color: { ...el.props.color }, image: el.props.image ? { ...el.props.image } : el.props.image },
-  }
+    props:
+      el.type === 'text'
+        ? { ...el.props, color: { ...el.props.color } }
+        : { ...el.props, color: { ...el.props.color }, image: el.props.image ? { ...el.props.image } : el.props.image },
+  } as DesignerElement
 }
 
 type GroupItem = { id: string; snap: DesignerElement }
@@ -231,6 +261,9 @@ const HANDLES: { edge: ResizeEdge; cls: string; cursor: string }[] = [
     @pointerdown="startMove"
     @contextmenu.prevent.stop="onContextMenu"
   >
+    <!-- text content (text elements only); pointer-events off so the box stays draggable -->
+    <div v-if="element.type === 'text'" class="ld-text" :style="textStyle ?? undefined">{{ textContent }}</div>
+
     <!-- selection chrome (full chrome only for a single selection) -->
     <span v-if="single" class="ld-name-tag">{{ element.name }}</span>
     <template v-if="single">
@@ -271,6 +304,20 @@ const HANDLES: { edge: ResizeEdge; cls: string; cursor: string }[] = [
 .ld-element.selected {
   outline: 1.5px solid var(--c-carbon-1);
   z-index: 1;
+}
+
+/* inner text node for text elements — fills the box, alignment/color/size come from :style */
+.ld-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  overflow: hidden;
+  padding: 0;
+  line-height: 1.1;
+  white-space: pre-wrap;
+  word-break: break-word;
+  pointer-events: none;
+  font-family: 'Roboto Condensed', system-ui, sans-serif;
 }
 
 /* anchor markers (cyan) — distinct from the orange selection/handles */
