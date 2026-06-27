@@ -6,7 +6,7 @@
 
 import { computed, reactive, ref, watch } from 'vue'
 import { resolveRect, rootRect } from './geometry'
-import type { CanvasConfig, ColorRGBA, DesignerElement, Rect, Vec2 } from './types'
+import type { CanvasConfig, ColorRGBA, DesignerElement, Provider, Rect, Vec2 } from './types'
 
 let idCounter = 0
 function nextId(): { id: string; n: number } {
@@ -31,8 +31,8 @@ const COLORS: ColorRGBA[] = [
 const elements = ref<DesignerElement[]>([])
 const selectedIds = ref<string[]>([])
 const canvas = reactive<CanvasConfig>({ referenceHeight: 720, aspect: '16:9' })
-/** Provider target for future code generation; not yet wired to a generator. */
-const provider = ref<'oxide' | 'carbon' | 'both'>('both')
+/** Target framework for the generated code (see codegen.ts). */
+const provider = ref<Provider>('both')
 
 /** Snap grid in reference px — drag/resize land on multiples, keeping pixel values clean. */
 const gridSize = ref(8)
@@ -635,6 +635,7 @@ export function useDesigner() {
     deleteLayout,
     exportClipboard,
     importClipboard,
+    copyText,
     init,
     // derived
     byId,

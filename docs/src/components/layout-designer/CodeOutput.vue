@@ -1,13 +1,20 @@
 <script setup lang="ts">
 import { Check, Copy } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
+import { generateCode } from './codegen'
 import { cuiColorString, referenceWidth, round } from './geometry'
 import { useDesigner } from './useDesigner'
 
-const { elements, canvas, provider, resolvedRects } = useDesigner()
+const { elements, canvas, provider, resolvedRects, copyText } = useDesigner()
 
-// The captured intermediate representation. This is the bridge to future code generation:
-// every value the generator will ever need lives here, in CUI-native form.
+type Tab = 'code' | 'debug'
+const tab = ref<Tab>('code')
+
+// Primary output: copy-paste-ready C# for the selected provider.
+const code = computed(() => generateCode(elements.value, provider.value))
+
+// Debug view: the captured intermediate representation every generator reads from — the values
+// in CUI-native form, handy for sanity-checking what the code above was built from.
 const inventory = computed(() => {
   const rects = resolvedRects.value
   return {
@@ -36,51 +43,74 @@ const inventory = computed(() => {
 
 const json = computed(() => JSON.stringify(inventory.value, null, 2))
 
+const active = computed(() => (tab.value === 'code' ? code.value : json.value))
+
 const copied = ref(false)
 async function copy() {
-  try {
-    await navigator.clipboard.writeText(json.value)
+  // copyText falls back to execCommand when navigator.clipboard is unavailable
+  // (insecure context — e.g. http on a LAN IP).
+  if (await copyText(active.value)) {
     copied.value = true
     setTimeout(() => (copied.value = false), 1200)
-  } catch {
-    /* clipboard may be unavailable */
   }
 }
 </script>
 
 <template>
-  <div class="ld-inventory">
-    <div class="ld-inv-head">
-      <span>Captured values</span>
-      <button class="ld-inv-copy" :title="copied ? 'Copied' : 'Copy JSON'" @click="copy">
+  <div class="ld-output">
+    <div class="ld-out-head">
+      <div class="ld-out-tabs" role="tablist">
+        <button :class="{ active: tab === 'code' }" role="tab" @click="tab = 'code'">Code</button>
+        <button :class="{ active: tab === 'debug' }" role="tab" @click="tab = 'debug'">Debug</button>
+      </div>
+      <button class="ld-out-copy" :title="copied ? 'Copied' : 'Copy'" @click="copy">
         <component :is="copied ? Check : Copy" :size="13" />
         {{ copied ? 'Copied' : 'Copy' }}
       </button>
     </div>
-    <pre class="ld-inv-body">{{ json }}</pre>
+    <pre class="ld-out-body">{{ active }}</pre>
   </div>
 </template>
 
 <style scoped>
-.ld-inventory {
+.ld-output {
   display: flex;
   flex-direction: column;
   min-height: 0;
   height: 100%;
 }
 
-.ld-inv-head {
+.ld-out-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6px 10px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--vp-c-text-2);
+  padding: 4px 10px;
   border-bottom: 1px solid var(--vp-c-divider);
 }
 
-.ld-inv-copy {
+.ld-out-tabs {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.ld-out-tabs button {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--vp-c-text-3);
+  padding: 4px 10px;
+  border-radius: 4px;
+}
+
+.ld-out-tabs button:hover {
+  color: var(--vp-c-text-1);
+}
+
+.ld-out-tabs button.active {
+  color: var(--c-carbon-1);
+  background: var(--c-carbon-soft);
+}
+
+.ld-out-copy {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -92,12 +122,12 @@ async function copy() {
   border-radius: 3px;
 }
 
-.ld-inv-copy:hover {
+.ld-out-copy:hover {
   color: var(--vp-c-text-1);
   border-color: var(--c-carbon-1);
 }
 
-.ld-inv-body {
+.ld-out-body {
   margin: 0;
   padding: 10px;
   overflow: auto;

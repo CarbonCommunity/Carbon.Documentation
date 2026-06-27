@@ -22,6 +22,9 @@ export interface ColorRGBA {
 
 export type ElementType = 'panel'
 
+/** Target framework for code generation. */
+export type Provider = 'oxide' | 'carbon' | 'both'
+
 export interface PanelProps {
   color: ColorRGBA
 }

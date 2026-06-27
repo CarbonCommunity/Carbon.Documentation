@@ -8,8 +8,8 @@ import ElementTree from './ElementTree.vue'
 import InfoTip from './InfoTip.vue'
 import InspectorPanel from './InspectorPanel.vue'
 import { ASPECT_PRESETS } from './types'
+import CodeOutput from './CodeOutput.vue'
 import { useDesigner } from './useDesigner'
-import ValueInventory from './ValueInventory.vue'
 
 const {
   canvas,
@@ -255,7 +255,7 @@ useEventListener(window, 'pointerup', () => {
             {{ p.label }}
           </button>
         </div>
-        <InfoTip text="Target framework for the eventual generated code: Oxide, Carbon, or Both (one file with #if CARBON / #else directives). Code generation isn't wired up yet — this just records the choice." />
+        <InfoTip text="Target framework for the generated code: Oxide (CUI), Carbon (LUI), or Both (one file with #if CARBON / #else directives). Shown in the panel below." />
       </div>
 
       <div class="ld-help">
@@ -297,11 +297,11 @@ useEventListener(window, 'pointerup', () => {
       </aside>
     </div>
 
-    <!-- captured-values dock (resizable / collapsible) -->
+    <!-- generated-code dock (resizable / collapsible) -->
     <div class="ld-dock" :class="{ collapsed: bottomCollapsed }">
       <div class="ld-dock-grip" :class="{ resizable: !bottomCollapsed }" @pointerdown="startBottomResize">
         <span class="ld-grip-lines" aria-hidden="true" />
-        <span v-if="bottomCollapsed" class="ld-dock-title">Captured values</span>
+        <span v-if="bottomCollapsed" class="ld-dock-title">Generated code</span>
         <button
           class="ld-dock-toggle"
           :title="bottomCollapsed ? 'Expand' : 'Collapse'"
@@ -312,7 +312,7 @@ useEventListener(window, 'pointerup', () => {
         </button>
       </div>
       <div v-show="!bottomCollapsed" class="ld-dock-body" :style="{ height: `${bottomHeight}px` }">
-        <ValueInventory />
+        <CodeOutput />
       </div>
     </div>
 
