@@ -30,7 +30,7 @@ const COLORS: ColorRGBA[] = [
 
 const elements = ref<DesignerElement[]>([])
 const selectedIds = ref<string[]>([])
-const canvas = reactive<CanvasConfig>({ referenceHeight: 720, aspect: '16:9' })
+const canvas = reactive<CanvasConfig>({ referenceHeight: 720, aspect: '16:9', rootLayer: 'Overlay' })
 /** Target framework for the generated code (see codegen.ts). */
 const provider = ref<Provider>('both')
 
@@ -411,7 +411,7 @@ function nextLayoutName(): string {
   return `Layout ${max + 1}`
 }
 function defaultCanvas(): CanvasConfig {
-  return { referenceHeight: 720, aspect: '16:9' }
+  return { referenceHeight: 720, aspect: '16:9', rootLayer: 'Overlay' }
 }
 function cloneData(): LayoutData {
   return JSON.parse(JSON.stringify({ elements: elements.value, canvas }))

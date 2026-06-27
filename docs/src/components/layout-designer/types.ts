@@ -25,6 +25,48 @@ export type ElementType = 'panel'
 /** Target framework for code generation. */
 export type Provider = 'oxide' | 'carbon' | 'both'
 
+/** Rust client UI layer that the root of the layout attaches to. */
+export type ClientPanel =
+  | 'Overall'
+  | 'Overlay'
+  | 'OverlayNonScaled'
+  | 'HudMenu'
+  | 'Hud'
+  | 'Under'
+  | 'UnderNonScaled'
+  | 'Inventory'
+  | 'Crafting'
+  | 'Contacts'
+  | 'Clans'
+  | 'TechTree'
+  | 'Map'
+
+export interface ClientPanelDef {
+  id: ClientPanel
+  label: string
+  /** Oxide CUI parent string — root elements parent to this directly. */
+  oxide: string
+  /** Carbon `CUI.ClientPanels` enum member — used via `cui.v2.CreateParent(...)`. */
+  carbon: string
+}
+
+/** Selectable root layers. `oxide` is the literal CUI parent string; `carbon` the enum member. */
+export const CLIENT_PANELS: ClientPanelDef[] = [
+  { id: 'Overlay', label: 'Overlay', oxide: 'Overlay', carbon: 'Overlay' },
+  { id: 'OverlayNonScaled', label: 'Overlay (non-scaled)', oxide: 'OverlayNonScaled', carbon: 'OverlayNonScaled' },
+  { id: 'Overall', label: 'Overall', oxide: 'Overall', carbon: 'Overall' },
+  { id: 'HudMenu', label: 'Hud.Menu', oxide: 'Hud.Menu', carbon: 'HudMenu' },
+  { id: 'Hud', label: 'Hud', oxide: 'Hud', carbon: 'Hud' },
+  { id: 'Under', label: 'Under', oxide: 'Under', carbon: 'Under' },
+  { id: 'UnderNonScaled', label: 'Under (non-scaled)', oxide: 'UnderNonScaled', carbon: 'UnderNonScaled' },
+  { id: 'Inventory', label: 'Inventory', oxide: 'Inventory', carbon: 'Inventory' },
+  { id: 'Crafting', label: 'Crafting', oxide: 'Crafting', carbon: 'Crafting' },
+  { id: 'Contacts', label: 'Contacts', oxide: 'Contacts', carbon: 'Contacts' },
+  { id: 'Clans', label: 'Clans', oxide: 'Clans', carbon: 'Clans' },
+  { id: 'TechTree', label: 'TechTree', oxide: 'TechTree', carbon: 'TechTree' },
+  { id: 'Map', label: 'Map', oxide: 'Map', carbon: 'Map' },
+]
+
 export interface PanelProps {
   color: ColorRGBA
 }
@@ -61,6 +103,8 @@ export type AspectPreset = '16:9' | '16:10' | '21:9' | '4:3' | '32:9'
 export interface CanvasConfig {
   referenceHeight: number
   aspect: AspectPreset
+  /** Rust client UI layer the root attaches to (drives the generated parent). */
+  rootLayer: ClientPanel
 }
 
 export const ASPECT_RATIOS: Record<AspectPreset, [number, number]> = {

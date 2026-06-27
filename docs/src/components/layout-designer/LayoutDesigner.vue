@@ -7,7 +7,7 @@ import DesignerCanvas from './DesignerCanvas.vue'
 import ElementTree from './ElementTree.vue'
 import InfoTip from './InfoTip.vue'
 import InspectorPanel from './InspectorPanel.vue'
-import { ASPECT_PRESETS } from './types'
+import { ASPECT_PRESETS, CLIENT_PANELS, type ClientPanel } from './types'
 import CodeOutput from './CodeOutput.vue'
 import { useDesigner } from './useDesigner'
 
@@ -219,6 +219,18 @@ useEventListener(window, 'pointerup', () => {
           @change="setCanvas({ referenceHeight: Math.max(120, Number(($event.target as HTMLInputElement).value) || 720) })"
         />
         <InfoTip text="The reference resolution height (Rust uses 720). All offset pixel values are measured in this space, and the width is derived from the chosen aspect ratio." />
+      </label>
+
+      <label class="ld-tool-field">
+        <span>Layer</span>
+        <select
+          :value="canvas.rootLayer"
+          title="Rust client UI layer the root attaches to"
+          @change="setCanvas({ rootLayer: ($event.target as HTMLSelectElement).value as ClientPanel })"
+        >
+          <option v-for="p in CLIENT_PANELS" :key="p.id" :value="p.id">{{ p.label }}</option>
+        </select>
+        <InfoTip text="The Rust client UI layer the root of your layout attaches to. Oxide parents root elements to this layer string; Carbon emits cui.v2.CreateParent(CUI.ClientPanels.X). Overlay is the standard full-screen menu layer." />
       </label>
 
       <label class="ld-tool-field">

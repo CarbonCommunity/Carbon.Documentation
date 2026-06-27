@@ -11,7 +11,7 @@ type Tab = 'code' | 'debug'
 const tab = ref<Tab>('code')
 
 // Primary output: copy-paste-ready C# for the selected provider.
-const code = computed(() => generateCode(elements.value, provider.value))
+const code = computed(() => generateCode(elements.value, provider.value, canvas.rootLayer))
 
 // Debug view: the captured intermediate representation every generator reads from — the values
 // in CUI-native form, handy for sanity-checking what the code above was built from.
@@ -20,6 +20,7 @@ const inventory = computed(() => {
   return {
     canvas: {
       aspect: canvas.aspect,
+      rootLayer: canvas.rootLayer,
       referenceWidth: round(referenceWidth(canvas), 1),
       referenceHeight: canvas.referenceHeight,
     },
