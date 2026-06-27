@@ -57,13 +57,21 @@ const metrics = computed(() => {
 
 const boxStyle = computed(() => {
   const m = metrics.value
-  return {
+  const fill = props.element.props
+  const style: Record<string, string> = {
     left: `${m.left * props.scale}px`,
     top: `${(props.parentH - m.top) * props.scale}px`, // flip y
     width: `${m.cuiW * props.scale}px`,
     height: `${m.cuiH * props.scale}px`,
-    background: cssColor(props.element.props.color),
+    backgroundColor: cssColor(fill.color), // panel color, or the image tint behind it
   }
+  // URL image: preview the actual bitmap stretched to the box (matches Rust's default Image type).
+  if (fill.image?.url) {
+    style.backgroundImage = `url("${fill.image.url.replace(/"/g, '\\"')}")`
+    style.backgroundSize = '100% 100%'
+    style.backgroundRepeat = 'no-repeat'
+  }
+  return style
 })
 
 const children = computed(() => childrenOf(props.element.id))
@@ -106,7 +114,7 @@ function cloneEl(el: DesignerElement): DesignerElement {
     anchorMax: { ...el.anchorMax },
     offsetMin: { ...el.offsetMin },
     offsetMax: { ...el.offsetMax },
-    props: { ...el.props, color: { ...el.props.color } },
+    props: { ...el.props, color: { ...el.props.color }, image: el.props.image ? { ...el.props.image } : el.props.image },
   }
 }
 

@@ -36,6 +36,7 @@ const inventory = computed(() => {
         offsetMin: [round(el.offsetMin.x), round(el.offsetMin.y)],
         offsetMax: [round(el.offsetMax.x), round(el.offsetMax.y)],
         color: cuiColorString(el.props.color),
+        image: el.props.image ? { ...el.props.image } : null,
         resolvedRect: r ? { x: round(r.x, 1), y: round(r.y, 1), w: round(r.w, 1), h: round(r.h, 1) } : null,
       }
     }),

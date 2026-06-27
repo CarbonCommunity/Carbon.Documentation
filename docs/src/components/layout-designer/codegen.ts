@@ -65,25 +65,52 @@ function rootContainerName(names: Map<string, string>): string {
 
 // --- Oxide CUI -----------------------------------------------------------------------
 
+/** Emit a single Oxide element. URL fills become a raw-image CuiElement; everything else a CuiPanel. */
+function oxideElement(el: DesignerElement, names: Map<string, string>, layer: ClientPanelDef): string[] {
+  const parent = esc(parentName(el, names, layer.oxide))
+  const name = esc(names.get(el.id)!)
+  if (el.props.image?.kind === 'url') {
+    // Raw/URL images use CuiRawImageComponent (the panel's Color becomes the image tint).
+    return [
+      'container.Add(new CuiElement',
+      '{',
+      `    Name = "${name}",`,
+      `    Parent = "${parent}",`,
+      '    Components =',
+      '    {',
+      `        new CuiRawImageComponent { Url = "${esc(el.props.image.url)}", Color = "${cuiColorString(el.props.color)}" },`,
+      '        new CuiRectTransformComponent',
+      '        {',
+      `            AnchorMin = "${anchorPair(el.anchorMin)}",`,
+      `            AnchorMax = "${anchorPair(el.anchorMax)}",`,
+      `            OffsetMin = "${offsetPair(el.offsetMin)}",`,
+      `            OffsetMax = "${offsetPair(el.offsetMax)}"`,
+      '        }',
+      '    }',
+      '});',
+      '',
+    ]
+  }
+  return [
+    'container.Add(new CuiPanel',
+    '{',
+    `    Image = { Color = "${cuiColorString(el.props.color)}" },`,
+    '    RectTransform =',
+    '    {',
+    `        AnchorMin = "${anchorPair(el.anchorMin)}",`,
+    `        AnchorMax = "${anchorPair(el.anchorMax)}",`,
+    `        OffsetMin = "${offsetPair(el.offsetMin)}",`,
+    `        OffsetMax = "${offsetPair(el.offsetMax)}"`,
+    '    }',
+    `}, "${parent}", "${name}");`,
+    '',
+  ]
+}
+
 function genOxide(elements: DesignerElement[], names: Map<string, string>, layer: ClientPanelDef): string {
   // Oxide has no CreateParent equivalent — root elements parent to the layer string directly.
   const out: string[] = ['var container = new CuiElementContainer();', '']
-  for (const el of elements) {
-    out.push(
-      'container.Add(new CuiPanel',
-      '{',
-      `    Image = { Color = "${cuiColorString(el.props.color)}" },`,
-      '    RectTransform =',
-      '    {',
-      `        AnchorMin = "${anchorPair(el.anchorMin)}",`,
-      `        AnchorMax = "${anchorPair(el.anchorMax)}",`,
-      `        OffsetMin = "${offsetPair(el.offsetMin)}",`,
-      `        OffsetMax = "${offsetPair(el.offsetMax)}"`,
-      '    }',
-      `}, "${esc(parentName(el, names, layer.oxide))}", "${esc(names.get(el.id)!)}");`,
-      ''
-    )
-  }
+  for (const el of elements) out.push(...oxideElement(el, names, layer))
   out.push('CuiHelper.AddUi(player, container);')
   return out.join('\n')
 }
@@ -99,17 +126,23 @@ function genCarbon(elements: DesignerElement[], names: Map<string, string>, laye
     `cui.v2.CreateParent(CUI.ClientPanels.${layer.carbon}, LuiPosition.Full, "${esc(root)}");`,
     '',
   ]
-  for (const el of elements) {
-    out.push(
-      `cui.v2.CreatePanel("${esc(parentName(el, names, root))}",`,
-      `    new LuiPosition(${lf(el.anchorMin.x, 4)}, ${lf(el.anchorMin.y, 4)}, ${lf(el.anchorMax.x, 4)}, ${lf(el.anchorMax.y, 4)}),`,
-      `    new LuiOffset(${lf(el.offsetMin.x, 2)}, ${lf(el.offsetMin.y, 2)}, ${lf(el.offsetMax.x, 2)}, ${lf(el.offsetMax.y, 2)}),`,
-      `    "${cuiColorString(el.props.color)}", "${esc(names.get(el.id)!)}");`,
-      ''
-    )
-  }
+  for (const el of elements) out.push(...carbonElement(el, names, root))
   out.push('cui.v2.SendUi(player);')
   return out.join('\n')
+}
+
+/** Emit a single Carbon LUI element. URL fills use CreateUrlImage; everything else CreatePanel. */
+function carbonElement(el: DesignerElement, names: Map<string, string>, root: string): string[] {
+  const parent = esc(parentName(el, names, root))
+  const name = esc(names.get(el.id)!)
+  const pos = `new LuiPosition(${lf(el.anchorMin.x, 4)}, ${lf(el.anchorMin.y, 4)}, ${lf(el.anchorMax.x, 4)}, ${lf(el.anchorMax.y, 4)})`
+  const off = `new LuiOffset(${lf(el.offsetMin.x, 2)}, ${lf(el.offsetMin.y, 2)}, ${lf(el.offsetMax.x, 2)}, ${lf(el.offsetMax.y, 2)})`
+  const color = cuiColorString(el.props.color)
+  if (el.props.image?.kind === 'url') {
+    // CreateUrlImage(parent, pos, offset, url, color/tint, name).
+    return [`cui.v2.CreateUrlImage("${parent}",`, `    ${pos},`, `    ${off},`, `    "${esc(el.props.image.url)}", "${color}", "${name}");`, '']
+  }
+  return [`cui.v2.CreatePanel("${parent}",`, `    ${pos},`, `    ${off},`, `    "${color}", "${name}");`, '']
 }
 
 // --- public --------------------------------------------------------------------------

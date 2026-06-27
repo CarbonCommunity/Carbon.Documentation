@@ -67,8 +67,20 @@ export const CLIENT_PANELS: ClientPanelDef[] = [
   { id: 'Map', label: 'Map', oxide: 'Map', carbon: 'Map' },
 ]
 
+/**
+ * Image fill layered over a panel's background. Only URL/raw images for now
+ * (`CuiRawImageComponent` / `cui.v2.CreateUrlImage`); png/sprite/db/item variants come later.
+ */
+export interface ImageFill {
+  kind: 'url'
+  url: string
+}
+
 export interface PanelProps {
+  /** Panel background color — or, when an image fill is set, the image's tint. */
   color: ColorRGBA
+  /** Optional image fill. Absent/null => plain solid-color panel (unchanged legacy behavior). */
+  image?: ImageFill | null
 }
 
 export interface DesignerElement {

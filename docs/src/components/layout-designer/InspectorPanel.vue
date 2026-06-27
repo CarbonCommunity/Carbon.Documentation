@@ -76,6 +76,23 @@ function setAlpha(el: DesignerElement, raw: string) {
   update(el.id, { props: { color: { ...el.props.color, a } } })
 }
 
+// --- fill (solid color vs URL image) ---
+const fillMode = computed<'color' | 'image'>(() => (selected.value?.props.image ? 'image' : 'color'))
+
+function setFillMode(el: DesignerElement, mode: 'color' | 'image') {
+  if (mode === 'image') {
+    if (el.props.image) return
+    // Reset the color to an opaque white tint so the image shows at its true colors.
+    update(el.id, { props: { image: { kind: 'url', url: '' }, color: { r: 1, g: 1, b: 1, a: 1 } } })
+  } else {
+    update(el.id, { props: { image: null } })
+  }
+}
+
+function setImageUrl(el: DesignerElement, raw: string) {
+  update(el.id, { props: { image: { kind: 'url', url: raw.trim() } } })
+}
+
 const computedRect = computed(() => (selected.value ? rectOf(selected.value.id) : undefined))
 </script>
 
@@ -153,8 +170,21 @@ const computedRect = computed(() => (selected.value ? rectOf(selected.value.id) 
       </div>
 
       <div class="ld-section-title">
-        <span>Color</span>
-        <InfoTip text="Panel background color and opacity (α). Stored as CUI 0–1 channels — see the 'r g b a' string in the Captured values panel." />
+        <span>Fill</span>
+        <InfoTip text="What this panel renders: a solid color, or a raw image fetched from a URL (CuiRawImageComponent / cui.v2.CreateUrlImage). URL images download at runtime — for production prefer the image database." />
+      </div>
+      <div class="ld-segmented ld-fill-toggle" role="group" aria-label="Fill type">
+        <button :class="{ active: fillMode === 'color' }" @click="setFillMode(selected, 'color')">Color</button>
+        <button :class="{ active: fillMode === 'image' }" @click="setFillMode(selected, 'image')">Image (URL)</button>
+      </div>
+      <label v-if="fillMode === 'image'" class="ld-field">
+        <span class="ld-field-label">Image URL <InfoTip text="The raw image URL. Emitted as CuiRawImageComponent.Url (Oxide) / the url arg of cui.v2.CreateUrlImage (Carbon)." /></span>
+        <input type="text" placeholder="https://example.com/image.png" :value="selected.props.image?.url ?? ''" @change="setImageUrl(selected, ($event.target as HTMLInputElement).value)" />
+      </label>
+
+      <div class="ld-section-title">
+        <span>{{ fillMode === 'image' ? 'Tint' : 'Color' }}</span>
+        <InfoTip :text="fillMode === 'image' ? 'Color multiplied over the image (white = original colors, lower α = more transparent). Maps to the image Color arg / CuiRawImageComponent.Color.' : 'Panel background color and opacity (α). Stored as CUI 0–1 channels — see the \'r g b a\' string in the Captured values panel.'" />
       </div>
       <div class="ld-vec-row">
         <input class="ld-color" type="color" :value="toHex(selected.props.color)" title="Panel color" @input="setHex(selected, ($event.target as HTMLInputElement).value)" />
@@ -335,6 +365,35 @@ const computedRect = computed(() => (selected.value ? rectOf(selected.value.id) 
   color: var(--vp-c-text-1);
   font-size: 13px;
   font-variant-numeric: tabular-nums;
+}
+
+.ld-fill-toggle {
+  display: flex;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.ld-fill-toggle button {
+  flex: 1;
+  padding: 5px 4px;
+  font-size: 12px;
+  color: var(--vp-c-text-2);
+  background: var(--vp-c-bg);
+  border-right: 1px solid var(--vp-c-divider);
+}
+
+.ld-fill-toggle button:last-child {
+  border-right: none;
+}
+
+.ld-fill-toggle button:hover {
+  color: var(--vp-c-text-1);
+}
+
+.ld-fill-toggle button.active {
+  background: var(--c-carbon-1);
+  color: #fff;
 }
 
 .ld-color {

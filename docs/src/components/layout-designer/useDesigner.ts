@@ -263,7 +263,7 @@ function cloneSubtree(id: string): string | null {
       anchorMax: { ...el.anchorMax },
       offsetMin: { ...el.offsetMin },
       offsetMax: { ...el.offsetMax },
-      props: { ...el.props, color: { ...el.props.color } },
+      props: { ...el.props, color: { ...el.props.color }, image: el.props.image ? { ...el.props.image } : el.props.image },
     }
   })
   clones.forEach((c, i) => {
