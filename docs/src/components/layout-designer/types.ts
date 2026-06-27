@@ -194,6 +194,60 @@ export interface TextElement extends BaseElement {
 /** Discriminated on `type` — narrow with `el.type === 'text'` to reach type-specific props. */
 export type DesignerElement = PanelElement | TextElement
 
+// --- AddUi wire types ----------------------------------------------------------------
+//
+// The exact JSON shape `CuiHelper.AddUi(player, json)` consumes on the server: a
+// CuiElementContainer is just a `CuiElement[]`. These are the canonical types for the
+// live-preview transport (issue #3) — `generateAddUiJson` emits them, the diff engine
+// consumes them, and the RPC payload ships them verbatim. Field names are the lowercase
+// keys the Rust/Oxide CUI deserializer expects; do not rename them.
+
+/** RectTransform component — anchors as "x y" fractions, offsets as "x y" reference px. */
+export interface CuiRectTransform {
+  type: 'RectTransform'
+  anchormin: string
+  anchormax: string
+  offsetmin: string
+  offsetmax: string
+}
+
+/** Solid-color panel fill. */
+export interface CuiImageComponent {
+  type: 'UnityEngine.UI.Image'
+  color: string
+}
+
+/** URL/raw image fill — `color` is the image tint. */
+export interface CuiRawImageComponent {
+  type: 'UnityEngine.UI.RawImage'
+  url: string
+  color: string
+}
+
+/** Text component (a CuiLabel expands to this + a RectTransform). */
+export interface CuiTextComponent {
+  type: 'UnityEngine.UI.Text'
+  text: string
+  fontSize: number
+  font: string
+  align: TextAlign
+  color: string
+}
+
+export type CuiComponent = CuiImageComponent | CuiRawImageComponent | CuiTextComponent | CuiRectTransform
+
+/**
+ * One CUI element. `update: true` patches the element in place (no destroy/recreate, no flicker) —
+ * the live-preview transport sets it on every steady-state upsert so re-sending the full snapshot
+ * never flashes. Omitted (falsy) on a fresh create.
+ */
+export interface CuiElement {
+  name: string
+  parent: string
+  components: CuiComponent[]
+  update?: boolean
+}
+
 /** A resolved rectangle in CUI space (x,y = bottom-left corner, +y up). */
 export interface Rect {
   x: number

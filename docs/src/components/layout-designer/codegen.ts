@@ -11,7 +11,7 @@
 
 import { cuiColorString, round } from './geometry'
 import { CLIENT_PANELS, DEFAULT_TEXT_FONT, fontDef } from './types'
-import type { ClientPanel, ClientPanelDef, DesignerElement, Provider, Vec2 } from './types'
+import type { ClientPanel, ClientPanelDef, CuiComponent, CuiElement, DesignerElement, Provider, Vec2 } from './types'
 
 /** Format a rounded number without a trailing ".0" or a stray "-0". */
 function num(v: number, decimals: number): string {
@@ -31,6 +31,9 @@ function esc(s: string): string {
 
 /** Integer for emitted C# (font sizes are whole px). */
 const intStr = (v: number) => String(Math.max(1, Math.round(v)))
+
+/** Same clamp as intStr, but as a number (AddUi JSON wants a numeric fontSize, not a string). */
+const intNum = (v: number) => Math.max(1, Math.round(v))
 
 // Anchors are fractions (need precision); offsets are reference px (usually whole, grid-snapped).
 const anchorPair = (v: Vec2) => `${num(v.x, 4)} ${num(v.y, 4)}`
@@ -223,6 +226,61 @@ function carbonElement(el: DesignerElement, names: Map<string, string>, root: st
     return [`cui.v2.CreateUrlImage("${parent}",`, `    ${pos},`, `    ${off},`, `    "${esc(el.props.image.url)}", "${color}", "${name}");`, '']
   }
   return [`cui.v2.CreatePanel("${parent}",`, `    ${pos},`, `    ${off},`, `    "${color}", "${name}");`, '']
+}
+
+// --- AddUi JSON (live preview, issue #3) ---------------------------------------------
+
+/**
+ * Build one CUI element as the wire `CuiElement` that `CuiHelper.AddUi` consumes. Mirrors
+ * `oxideElement` 1:1 (same parent resolution, same anchor/offset/color formatting) but emits the
+ * deserializer's JSON shape instead of C# source: a primary component (Image / RawImage / Text)
+ * plus a RectTransform. No string escaping here — JSON.stringify handles that at send time.
+ */
+function adduiElement(el: DesignerElement, names: Map<string, string>, layer: ClientPanelDef): CuiElement {
+  const rect = {
+    type: 'RectTransform' as const,
+    anchormin: anchorPair(el.anchorMin),
+    anchormax: anchorPair(el.anchorMax),
+    offsetmin: offsetPair(el.offsetMin),
+    offsetmax: offsetPair(el.offsetMax),
+  }
+  let primary: CuiComponent
+  if (el.type === 'text') {
+    const t = el.props
+    primary = {
+      type: 'UnityEngine.UI.Text',
+      text: t.text,
+      fontSize: intNum(t.fontSize),
+      font: fontDef(t.font).oxide,
+      align: t.align,
+      color: cuiColorString(t.color),
+    }
+  } else if (el.props.image?.kind === 'url') {
+    // Raw/URL image — the panel's color becomes the image tint (matches oxideElement).
+    primary = { type: 'UnityEngine.UI.RawImage', url: el.props.image.url, color: cuiColorString(el.props.color) }
+  } else {
+    primary = { type: 'UnityEngine.UI.Image', color: cuiColorString(el.props.color) }
+  }
+  return {
+    name: names.get(el.id)!,
+    parent: parentName(el, names, layer.oxide),
+    components: [primary, rect],
+  }
+}
+
+/**
+ * Generate the live-preview payload: the element tree as a `CuiElement[]` ready for
+ * `CuiHelper.AddUi`. Same naming/ordering guarantees as `generateCode` (stable collision-suffixed
+ * names, parent-before-child emit order). Root elements parent to the layer's Oxide string, exactly
+ * like the Oxide generator; the reserved preview-root wrapping is layered on by the transport, not
+ * here. Returns `[]` for an empty layout (nothing to send).
+ */
+export function generateAddUiJson(elements: DesignerElement[], rootLayer: ClientPanel = 'Overlay'): CuiElement[] {
+  if (!elements.length) return []
+  const layer = CLIENT_PANELS.find((p) => p.id === rootLayer) ?? CLIENT_PANELS[0]
+  const names = buildNames(elements)
+  const ordered = treeOrder(elements)
+  return ordered.map((el) => adduiElement(el, names, layer))
 }
 
 // --- public --------------------------------------------------------------------------
