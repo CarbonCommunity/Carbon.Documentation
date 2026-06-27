@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useEventListener } from '@vueuse/core'
 import { ArrowDownToLine, ArrowUpToLine, ChevronRight, Copy, LogOut, Maximize, Plus, Trash2 } from 'lucide-vue-next'
-import { computed, ref, watch, type Component } from 'vue'
+import { computed, reactive, ref, watch, type Component } from 'vue'
 import ElementTypeMenu from './ElementTypeMenu.vue'
 import type { ElementType } from './types'
 import { useDesigner } from './useDesigner'
@@ -11,14 +11,30 @@ const { contextMenu, byId, closeContextMenu, addElement, duplicate, bringToFront
 
 const target = computed(() => (contextMenu.targetId ? byId.value.get(contextMenu.targetId) ?? null : null))
 
-// flyout state for the "Add child" type submenu
+// "Add child" type flyout. Fixed-positioned (with an edge flip) so it never spills off-screen.
 const addSubOpen = ref(false)
+const subPos = reactive({ x: 0, y: 0 })
+// reset whenever the menu opens/closes OR retargets another element (right-click B while open)
 watch(
-  () => contextMenu.open,
-  (open) => {
-    if (!open) addSubOpen.value = false
+  () => [contextMenu.open, contextMenu.targetId],
+  () => {
+    addSubOpen.value = false
   }
 )
+function toggleSub(ev: MouseEvent) {
+  if (addSubOpen.value) {
+    addSubOpen.value = false
+    return
+  }
+  const r = (ev.currentTarget as HTMLElement).getBoundingClientRect()
+  const pad = 8
+  const W = 150 // approx flyout width; flip to the left when there isn't room on the right
+  let x = r.right + 4
+  if (x + W > window.innerWidth - pad) x = r.left - W - 4
+  subPos.x = Math.max(pad, x)
+  subPos.y = Math.max(pad, Math.min(r.top - 5, window.innerHeight - 130))
+  addSubOpen.value = true
+}
 function onAddChild(type: ElementType) {
   const t = target.value
   if (t) addElement(type, t.id)
@@ -64,10 +80,6 @@ const style = computed(() => {
 })
 
 function run(item: MenuItem) {
-  if (item.submenu) {
-    addSubOpen.value = !addSubOpen.value
-    return
-  }
   item.act?.()
   closeContextMenu()
 }
@@ -96,12 +108,12 @@ useEventListener(window, 'scroll', () => closeContextMenu(), true)
     <template v-for="(it, i) in items" :key="i">
       <div v-if="it.sep" class="ld-ctx-sep" />
       <div v-else-if="it.submenu" class="ld-ctx-sub">
-        <button class="ld-ctx-item" :class="{ active: addSubOpen }" @click="run(it)">
+        <button class="ld-ctx-item" :class="{ active: addSubOpen }" @click="toggleSub($event)">
           <component :is="it.icon" :size="14" />
           <span>{{ it.label }}</span>
           <ChevronRight :size="14" class="ld-ctx-chev" />
         </button>
-        <ElementTypeMenu v-if="addSubOpen" placement="right" @pick="onAddChild" />
+        <ElementTypeMenu v-if="addSubOpen" :x="subPos.x" :y="subPos.y" @pick="onAddChild" />
       </div>
       <button v-else class="ld-ctx-item" :class="{ danger: it.danger }" @click="run(it)">
         <component :is="it.icon" :size="14" />

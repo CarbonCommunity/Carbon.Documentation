@@ -62,6 +62,35 @@ function parentName(el: DesignerElement, names: Map<string, string>, rootParent:
   return el.parentId ? names.get(el.parentId) ?? rootParent : rootParent
 }
 
+/**
+ * Emit order = parent-before-child (pre-order DFS), preserving sibling array order. CUI/LUI require
+ * a parent to exist before a child attaches, but the element array can be non-topological after a
+ * tree drag-reorder / bring-to-front (those move a node without its subtree). Ordering here makes
+ * generation robust regardless of array order; sibling order (z-order) is kept via childrenByParent.
+ */
+function treeOrder(elements: DesignerElement[]): DesignerElement[] {
+  const childrenByParent = new Map<string | null, DesignerElement[]>()
+  for (const el of elements) {
+    const arr = childrenByParent.get(el.parentId)
+    if (arr) arr.push(el)
+    else childrenByParent.set(el.parentId, [el])
+  }
+  const ordered: DesignerElement[] = []
+  const seen = new Set<string>()
+  const visit = (parentId: string | null) => {
+    for (const el of childrenByParent.get(parentId) ?? []) {
+      if (seen.has(el.id)) continue
+      seen.add(el.id)
+      ordered.push(el)
+      visit(el.id)
+    }
+  }
+  visit(null)
+  // orphans (parentId points at a missing element) — keep them rather than silently drop
+  for (const el of elements) if (!seen.has(el.id)) ordered.push(el)
+  return ordered
+}
+
 /** A container name not already taken by an element (for Carbon's CreateParent root). */
 function rootContainerName(names: Map<string, string>): string {
   const taken = new Set(names.values())
@@ -197,9 +226,11 @@ function carbonElement(el: DesignerElement, names: Map<string, string>, root: st
 export function generateCode(elements: DesignerElement[], provider: Provider, rootLayer: ClientPanel = 'Overlay'): string {
   if (!elements.length) return '// Add an element to generate code.'
   const layer = CLIENT_PANELS.find((p) => p.id === rootLayer) ?? CLIENT_PANELS[0]
+  // Names are built from the original order (stable collision suffixes); emission is parent-first.
   const names = buildNames(elements)
-  if (provider === 'oxide') return genOxide(elements, names, layer)
-  if (provider === 'carbon') return genCarbon(elements, names, layer)
+  const ordered = treeOrder(elements)
+  if (provider === 'oxide') return genOxide(ordered, names, layer)
+  if (provider === 'carbon') return genCarbon(ordered, names, layer)
   // both: Carbon compiles with the CARBON symbol defined; Oxide does not.
-  return ['#if CARBON', genCarbon(elements, names, layer), '#else', genOxide(elements, names, layer), '#endif'].join('\n')
+  return ['#if CARBON', genCarbon(ordered, names, layer), '#else', genOxide(ordered, names, layer), '#endif'].join('\n')
 }

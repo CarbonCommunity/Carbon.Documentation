@@ -49,6 +49,10 @@ useEventListener(
   },
   true
 )
+// the menu is fixed-positioned off the "+" button's rect, so close it if the tree scrolls or the
+// window resizes (otherwise it floats at stale coords). Capture phase catches the tree's own scroll.
+useEventListener(window, 'scroll', () => (addMenu.id = null), true)
+useEventListener(window, 'resize', () => (addMenu.id = null))
 
 // --- drag & drop: reorder siblings / reparent inside the tree (never the canvas) ---
 type DropMode = 'before' | 'after' | 'inside'
