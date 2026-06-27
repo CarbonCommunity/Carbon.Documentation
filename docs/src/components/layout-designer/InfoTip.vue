@@ -1,13 +1,35 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { CircleHelp } from 'lucide-vue-next'
 
 defineProps<{ text: string; size?: number }>()
+
+// Position the bubble on hover/focus so it never spills off a viewport edge. These icons sit in
+// toolbars/panels that can be near a screen edge — and the toolbar wraps on narrow screens, which
+// pushes some icons close to the left edge where the default right-anchored bubble would clip.
+const MAX_W = 250
+const bubbleStyle = ref<Record<string, string>>({})
+function place(e: Event) {
+  const r = (e.currentTarget as HTMLElement).getBoundingClientRect()
+  const pad = 8
+  const w = Math.min(MAX_W, window.innerWidth - 2 * pad)
+  // prefer right edge aligned with the icon (bubble grows leftward), then clamp into the viewport
+  const left = Math.max(pad, Math.min(r.right - w, window.innerWidth - w - pad))
+  bubbleStyle.value = {
+    position: 'fixed',
+    top: `${Math.round(r.bottom + 6)}px`,
+    left: `${Math.round(left)}px`,
+    right: 'auto',
+    width: `${Math.round(w)}px`,
+    maxWidth: 'none',
+  }
+}
 </script>
 
 <template>
-  <span class="ld-infotip" tabindex="0">
+  <span class="ld-infotip" tabindex="0" @pointerenter="place" @focus="place">
     <CircleHelp :size="size ?? 13" class="ld-infotip-icon" />
-    <span class="ld-infotip-bubble">{{ text }}</span>
+    <span class="ld-infotip-bubble" :style="bubbleStyle">{{ text }}</span>
   </span>
 </template>
 

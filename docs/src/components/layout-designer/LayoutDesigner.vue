@@ -8,7 +8,7 @@ import ElementTree from './ElementTree.vue'
 import ElementTypeMenu from './ElementTypeMenu.vue'
 import InfoTip from './InfoTip.vue'
 import InspectorPanel from './InspectorPanel.vue'
-import { ASPECT_PRESETS, CLIENT_PANELS, type ClientPanel, type ElementType } from './types'
+import { ASPECT_PRESETS, CLIENT_PANELS, type AspectPreset, type ClientPanel, type ElementType } from './types'
 import CodeOutput from './CodeOutput.vue'
 import { useDesigner } from './useDesigner'
 
@@ -195,19 +195,11 @@ useEventListener(window, 'pointerup', () => {
       <button class="ld-icon-btn" :disabled="!canUndo" title="Undo (Ctrl+Z)" @click="undo"><Undo2 :size="15" /></button>
       <button class="ld-icon-btn" :disabled="!canRedo" title="Redo (Ctrl+Shift+Z)" @click="redo"><Redo2 :size="15" /></button>
 
-      <!-- add-element: one compact button → type menu; choosing a type adds it on the root canvas -->
-      <div class="ld-add-menu">
-        <button class="ld-btn primary" title="Add an element to the root canvas" @click.stop="addMenuOpen = !addMenuOpen">
-          <Plus :size="15" /> Add element <ChevronDown :size="13" />
-        </button>
-        <ElementTypeMenu v-if="addMenuOpen" placement="below" @pick="onAddRoot" />
-      </div>
-
       <div class="ld-spacer" />
 
       <div class="ld-tool-field">
         <span>Aspect</span>
-        <div class="ld-segmented" role="group" aria-label="Aspect ratio">
+        <div class="ld-segmented ld-collapsible" role="group" aria-label="Aspect ratio">
           <button
             v-for="a in ASPECT_PRESETS"
             :key="a"
@@ -218,6 +210,15 @@ useEventListener(window, 'pointerup', () => {
             {{ a }}
           </button>
         </div>
+        <!-- collapsed form when the toolbar is narrow (see media query below) -->
+        <select
+          class="ld-collapsed-select"
+          :value="canvas.aspect"
+          title="Preview aspect ratio"
+          @change="setCanvas({ aspect: ($event.target as HTMLSelectElement).value as AspectPreset })"
+        >
+          <option v-for="a in ASPECT_PRESETS" :key="a" :value="a">{{ a }}</option>
+        </select>
         <InfoTip text="The screen shape to preview. Switching it shows how the layout responds: relative (anchored/stretched) elements reflow, while fixed-px elements keep their reference size." />
       </div>
 
@@ -269,7 +270,8 @@ useEventListener(window, 'pointerup', () => {
       <InfoTip text="When on, elements can't be dragged or resized outside their parent, and root panels stay within the canvas." />
 
       <div class="ld-tool-field">
-        <div class="ld-segmented" role="group" aria-label="Target provider">
+        <span class="ld-collapsed-label">Target</span>
+        <div class="ld-segmented ld-collapsible" role="group" aria-label="Target provider">
           <button
             v-for="p in PROVIDERS"
             :key="p.value"
@@ -280,6 +282,15 @@ useEventListener(window, 'pointerup', () => {
             {{ p.label }}
           </button>
         </div>
+        <!-- collapsed form when the toolbar is narrow (see media query below) -->
+        <select
+          class="ld-collapsed-select"
+          :value="provider"
+          title="Target framework for the generated code"
+          @change="provider = ($event.target as HTMLSelectElement).value as 'oxide' | 'carbon' | 'both'"
+        >
+          <option v-for="p in PROVIDERS" :key="p.value" :value="p.value">{{ p.label }}</option>
+        </select>
         <InfoTip text="Target framework for the generated code: Oxide (CUI), Carbon (LUI), or Both (one file with #if CARBON / #else directives). Shown in the panel below." />
       </div>
 
@@ -304,7 +315,16 @@ useEventListener(window, 'pointerup', () => {
     <!-- body -->
     <div class="ld-body">
       <aside class="ld-left">
-        <div class="ld-panel-head">Elements</div>
+        <div class="ld-panel-head">
+          <span>Elements</span>
+          <!-- add-element lives here (not the toolbar) → one type menu; picking a type adds it -->
+          <div class="ld-add-menu">
+            <button class="ld-add-head-btn" title="Add an element to the root canvas" @click.stop="addMenuOpen = !addMenuOpen">
+              <Plus :size="13" /> Add <ChevronDown :size="11" />
+            </button>
+            <ElementTypeMenu v-if="addMenuOpen" placement="below-right" @pick="onAddRoot" />
+          </div>
+        </div>
         <ElementTree />
       </aside>
 
@@ -359,10 +379,18 @@ useEventListener(window, 'pointerup', () => {
 .ld-toolbar {
   display: flex;
   align-items: center;
-  gap: 12px;
+  flex-wrap: wrap; /* below the collapse breakpoint, controls wrap as whole units to a 2nd row */
+  gap: 8px 12px;
   padding: 8px 14px;
   border-bottom: 1px solid var(--vp-c-divider);
   flex-shrink: 0;
+}
+
+/* keep control labels on one line — let whole controls wrap instead of their text */
+.ld-btn,
+.ld-tool-field,
+.ld-tool-field span {
+  white-space: nowrap;
 }
 
 .ld-title {
@@ -599,6 +627,25 @@ useEventListener(window, 'pointerup', () => {
   color: #fff;
 }
 
+/* Responsive: the Aspect and Target segmented controls need ~1642px of toolbar; below that they
+   collapse into compact <select> dropdowns so the toolbar stays a single row down to ~1349px. */
+.ld-collapsed-select,
+.ld-collapsed-label {
+  display: none;
+}
+
+@media (max-width: 1660px) {
+  .ld-collapsible {
+    display: none;
+  }
+  .ld-collapsed-select {
+    display: inline-block;
+  }
+  .ld-collapsed-label {
+    display: inline;
+  }
+}
+
 /* body */
 .ld-body {
   display: flex;
@@ -641,7 +688,12 @@ useEventListener(window, 'pointerup', () => {
 }
 
 .ld-panel-head {
-  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 8px 5px 12px;
+  min-height: 33px;
   font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
@@ -649,6 +701,25 @@ useEventListener(window, 'pointerup', () => {
   color: var(--vp-c-text-3);
   border-bottom: 1px solid var(--vp-c-divider);
   flex-shrink: 0;
+}
+
+/* "Add element" button that now lives in the Elements panel header */
+.ld-add-head-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  color: #fff;
+  background: var(--c-carbon-1);
+  border-radius: 4px;
+}
+
+.ld-add-head-btn:hover {
+  background: var(--c-carbon-3);
 }
 
 .ld-right-scroll {
