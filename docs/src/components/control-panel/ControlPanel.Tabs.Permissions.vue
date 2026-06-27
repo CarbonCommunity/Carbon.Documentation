@@ -7,12 +7,41 @@ onMounted(() => {
   refreshPermissions()
 })
 
+function searchUser() {
+  selectedServer.value?.sendCall("SearchUsers", userSearch.value)
+}
+function selectUser(value: string | null, forceSelect: boolean = true) {
+  if (!forceSelect && selectedUser.value == value) {
+    selectedUser.value = null
+    selectHookable(null)
+    return
+  }
+  selectedGroup.value = null
+  selectedUser.value = value
+  selectedServer.value.sendCall("GetUserMetadata", value.SteamId)
+  console.log("sent")
+}
+function toggleUserGroup(value: string) {
+  if(selectedServer.value == null || selectedUser.value == null ) {
+    return
+  }
+  selectedServer.value.sendCall("ToggleUserGroup", selectedUser.value.SteamId, value)
+  selectedServer.value.sendCall("GetUserMetadata", selectedUser.value.SteamId)
+}
+function toggleUserPermission(value: string) {
+  if(selectedServer.value == null || selectedUser.value == null ) {
+    return
+  }
+  selectedServer.value.sendCall("ToggleUserPermission", selectedUser.value.SteamId, value)
+  selectedServer.value.sendCall("GetUserMetadata", selectedUser.value.SteamId)
+}
 function selectGroup(value: string | null, forceSelect: boolean = true) {
   if (!forceSelect && selectedGroup.value == value) {
     selectedGroup.value = null
     selectHookable(null)
     return
   }
+  selectedUser.value = null
   selectedGroup.value = value
   selectedServer.value.sendCall("GetGroupPermissions", value)
 }
@@ -41,23 +70,26 @@ function togglePermission(value: string) {
 </script>
 
 <script lang="ts">
+const userInfo = ref()
 const groupInfo = ref()
 const groupPermInfo = ref<string[]>()
+const selectedUser = ref<string | null>('')
 const selectedGroup = ref<string | null>('')
 const selectedHookable = ref()
+const userSearch = ref<string>('')
+const permissionSearch = ref<string>('')
 
 export function refreshPermissions() {
   if (!selectedServer.value) {
     return
   }
 
+  selectedUser.value = null
   selectedGroup.value = null
   selectedHookable.value = null
   groupInfo.value = null
+  userInfo.value = null
 
-  selectedServer.value?.setCommand('GetPermissionsMetadata', (data: any) => {
-    groupInfo.value = data.value
-  })
   selectedServer.value?.setRpc('GetPermissionsMetadata', (read: any) => {
     groupInfo.value = {
       Groups: [],
@@ -106,8 +138,25 @@ export function refreshPermissions() {
       })
     }
   })
-  selectedServer.value?.setCommand('GetGroupPermissions', (data: any) => {
-    groupPermInfo.value = data.value.Permissions
+  selectedServer.value?.setRpc('SearchUsers', (read: any) => {
+    userInfo.value = {
+      Users: []
+    }
+    let containsSelectedUser = false
+    const userCount = read.int32()
+    for (let i = 0; i < userCount; i++) {
+      const user = {
+        DisplayName: read.string(),
+        SteamId: read.string(),
+      }
+      userInfo.value.Users.push(user)
+      if(selectedUser.value?.SteamId == user.SteamId) {
+        containsSelectedUser = true
+      }
+    }
+    if(!containsSelectedUser) {
+      selectedUser.value = null
+    }
   })
   selectedServer.value?.setRpc('GetGroupPermissions', (read: any) => {
     groupPermInfo.value = []
@@ -116,6 +165,23 @@ export function refreshPermissions() {
       groupPermInfo.value.push(read.string())
     }
   })
+  selectedServer.value?.setRpc('GetUserMetadata', (read: any) => {
+    const steamId = read.string()
+    if(selectedUser.value == null || selectedUser.value.SteamId != steamId) {
+      return
+    }
+    selectedUser.value.Permissions = []
+    const permissionCount = read.int32()
+    for (let i = 0; i < permissionCount; i++) {
+      selectedUser.value.Permissions.push(read.string())
+    }
+    const groupCount = read.int32()
+    selectedUser.value.Groups = []
+    for (let i = 0; i < groupCount; i++) {
+      selectedUser.value.Groups.push(read.string())
+    }
+    console.log('User Metadata:', selectedUser.value)
+  })
   selectedServer.value?.sendCall("GetPermissionsMetadata")
 }
 </script>
@@ -123,6 +189,34 @@ export function refreshPermissions() {
 <template>
   <div class="table-stack text-center">
     <table>
+      <thead>
+        <tr>
+          <th class="vp-doc th">Users ({{ userInfo?.Users.length ?? 0 }})</th>
+        </tr>
+      </thead>
+      <tr>
+        <td>
+          <input type="text" v-model="userSearch" @keyup.enter="searchUser()" placeholder="Search user..."
+            class="w-64 px-3 py-1.5 bg-slate-800/40 border border-slate-700/60
+                  text-sm text-slate-200 placeholder:text-slate-500
+                  focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40
+                  transition-all duration-200 hover:bg-slate-700/50 shadow-inner"/>
+        </td>
+      </tr>
+      <tr class="select-none" v-if="userInfo == null || userInfo.Users == null || userInfo.Users.length == 0">
+        <td colspan="1" class="text-sm text-slate-600 pt-2">Start typing to search</td>
+      </tr>
+      <tr>
+        <td v-for="user in userInfo?.Users" :key="user.SteamId" class="vp-doc td">
+          <button class="r-send-button justify-self-center" :class="'r-send-button ' + (user.SteamId == selectedUser?.SteamId ? 'toggled' : null)" @click="selectUser(user, false)">
+            <span class="text-neutral-400">{{ user.DisplayName }}</span>
+          </button>
+        </td>
+      </tr>
+      <Loader2 v-if="userInfo != null && userInfo.Users == null" class="flex animate-spin text-xs text-slate-500" :size="20" />
+    </table>
+
+    <table v-if="selectedUser == null">
       <thead>
         <tr>
           <th class="vp-doc th">Groups</th>
@@ -137,7 +231,51 @@ export function refreshPermissions() {
       </tr>
       <Loader2 v-if="groupInfo == null || groupInfo?.Groups.length == 0" class="flex animate-spin text-xs text-slate-500" :size="20" />
     </table>
-    <table v-if="selectedGroup">
+
+    <table v-if="selectedUser != null">
+      <thead>
+        <tr>
+          <th class="vp-doc th">Groups</th>
+        </tr>
+      </thead>
+      <tr v-for="group in groupInfo?.Groups" :key="group">
+        <td class="vp-doc td">
+          <button class="r-send-button justify-self-center" :class="'r-send-button ' + (selectedUser.Groups.includes(group) ? 'toggled' : null)" @click="toggleUserGroup(group)">
+            <span class="text-neutral-400">{{ group }}</span>
+          </button>
+        </td>
+      </tr>
+      <Loader2 v-if="selectedUser == null || selectedUser?.Groups == null" class="flex animate-spin text-xs text-slate-500" :size="20" />
+    </table>
+
+    <table v-if="selectedUser != null">
+      <thead>
+        <tr>
+          <th class="vp-doc th">Permissions</th>
+        </tr>
+      </thead>
+      <tr>
+        <td>
+          <input type="text" v-model="permissionSearch" placeholder="Search permission..."
+                class="w-64 px-3 py-1.5 bg-slate-800/40 border border-slate-700/60
+                text-sm text-slate-200 placeholder:text-slate-500
+                focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40
+                transition-all duration-200 hover:bg-slate-700/50 shadow-inner"/>
+        </td>
+      </tr>
+      <tr v-for="permission in groupInfo?.Permissions" :key="permission">
+        <td v-if="permissionSearch != '' && permission.includes(permissionSearch)" class="vp-doc td">
+          <button class="r-send-button justify-self-center" :class="'r-send-button ' + (selectedUser.Permissions.includes(permission) ? 'toggled' : null)" @click="toggleUserPermission(permission)">
+            <span class="text-neutral-400">{{ permission }}</span>
+          </button>
+        </td>
+      </tr>
+      <tr class="select-none" v-if="permissionSearch == ''">
+        <td colspan="1" class="text-sm text-slate-600 pt-2">Start typing to search</td>
+      </tr>
+    </table>
+
+    <table v-if="selectedGroup && selectedUser == null">
       <thead>
         <tr>
           <th class="vp-doc th">Plugins</th>
