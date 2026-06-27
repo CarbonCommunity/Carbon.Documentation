@@ -237,6 +237,31 @@ function reparent(id: string, newParentId: string | null) {
   }
 }
 
+/**
+ * Move an element to a new parent and/or sibling position (used by the element-tree drag & drop).
+ * Reparenting preserves the on-screen rect via `reparent`; ordering is the array order among
+ * siblings (also the render/z order). `beforeId` = the sibling to drop in front of (null = last
+ * child). No-ops on cycles (dropping onto self or a descendant).
+ */
+function moveElement(id: string, newParentId: string | null, beforeId: string | null = null) {
+  if (id === beforeId) return
+  const el = byId.value.get(id)
+  if (!el) return
+  if (newParentId === id || (newParentId && isAncestor(id, newParentId))) return // would create a cycle
+  if (el.parentId !== newParentId) reparent(id, newParentId)
+  const arr = elements.value.slice()
+  const from = arr.findIndex((e) => e.id === id)
+  if (from < 0) return
+  const [moved] = arr.splice(from, 1)
+  let to = arr.length
+  if (beforeId) {
+    const idx = arr.findIndex((e) => e.id === beforeId)
+    if (idx >= 0) to = idx
+  }
+  arr.splice(to, 0, moved)
+  elements.value = arr
+}
+
 type ElementPatch = Partial<Pick<DesignerElement, 'name' | 'anchorMin' | 'anchorMax' | 'offsetMin' | 'offsetMax'>> & {
   // Accept any prop from either element type; the inspector only sends fields valid for the
   // selected element, so a panel never receives text props and vice-versa.
@@ -691,6 +716,7 @@ export function useDesigner() {
     remove,
     removeSelected,
     reparent,
+    moveElement,
     update,
     setCanvas,
     nudge,
