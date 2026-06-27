@@ -1,19 +1,37 @@
 <script setup lang="ts">
 import { useEventListener } from '@vueuse/core'
-import { ArrowDownToLine, ArrowUpToLine, Copy, LogOut, Maximize, Plus, Trash2 } from 'lucide-vue-next'
-import { computed, type Component } from 'vue'
+import { ArrowDownToLine, ArrowUpToLine, ChevronRight, Copy, LogOut, Maximize, Plus, Trash2 } from 'lucide-vue-next'
+import { computed, ref, watch, type Component } from 'vue'
+import ElementTypeMenu from './ElementTypeMenu.vue'
+import type { ElementType } from './types'
 import { useDesigner } from './useDesigner'
 
-const { contextMenu, byId, closeContextMenu, addPanel, duplicate, bringToFront, sendToBack, reparent, fill, remove } =
+const { contextMenu, byId, closeContextMenu, addElement, duplicate, bringToFront, sendToBack, reparent, fill, remove } =
   useDesigner()
 
 const target = computed(() => (contextMenu.targetId ? byId.value.get(contextMenu.targetId) ?? null : null))
+
+// flyout state for the "Add child" type submenu
+const addSubOpen = ref(false)
+watch(
+  () => contextMenu.open,
+  (open) => {
+    if (!open) addSubOpen.value = false
+  }
+)
+function onAddChild(type: ElementType) {
+  const t = target.value
+  if (t) addElement(type, t.id)
+  closeContextMenu()
+}
 
 interface MenuItem {
   sep?: boolean
   label?: string
   icon?: Component
   danger?: boolean
+  /** Opens the element-type flyout instead of running an action + closing. */
+  submenu?: boolean
   act?: () => void
 }
 
@@ -22,7 +40,7 @@ const items = computed<MenuItem[]>(() => {
   if (!t) return []
   const grandparent = t.parentId ? byId.value.get(t.parentId)?.parentId ?? null : null
   const list: MenuItem[] = [
-    { label: 'Add child panel', icon: Plus, act: () => addPanel(t.id) },
+    { label: 'Add child', icon: Plus, submenu: true },
     { label: 'Duplicate', icon: Copy, act: () => duplicate(t.id) },
     { sep: true },
     { label: 'Bring to front', icon: ArrowUpToLine, act: () => bringToFront(t.id) },
@@ -46,6 +64,10 @@ const style = computed(() => {
 })
 
 function run(item: MenuItem) {
+  if (item.submenu) {
+    addSubOpen.value = !addSubOpen.value
+    return
+  }
   item.act?.()
   closeContextMenu()
 }
@@ -73,6 +95,14 @@ useEventListener(window, 'scroll', () => closeContextMenu(), true)
   <div v-if="contextMenu.open && target" class="ld-ctx" :style="style" @contextmenu.prevent>
     <template v-for="(it, i) in items" :key="i">
       <div v-if="it.sep" class="ld-ctx-sep" />
+      <div v-else-if="it.submenu" class="ld-ctx-sub">
+        <button class="ld-ctx-item" :class="{ active: addSubOpen }" @click="run(it)">
+          <component :is="it.icon" :size="14" />
+          <span>{{ it.label }}</span>
+          <ChevronRight :size="14" class="ld-ctx-chev" />
+        </button>
+        <ElementTypeMenu v-if="addSubOpen" placement="right" @pick="onAddChild" />
+      </div>
       <button v-else class="ld-ctx-item" :class="{ danger: it.danger }" @click="run(it)">
         <component :is="it.icon" :size="14" />
         <span>{{ it.label }}</span>
@@ -106,9 +136,19 @@ useEventListener(window, 'scroll', () => closeContextMenu(), true)
   text-align: left;
 }
 
-.ld-ctx-item:hover {
+.ld-ctx-item:hover,
+.ld-ctx-item.active {
   background: var(--c-carbon-soft);
   color: var(--c-carbon-1);
+}
+
+/* "Add child" row anchors the type flyout */
+.ld-ctx-sub {
+  position: relative;
+}
+
+.ld-ctx-chev {
+  margin-left: auto;
 }
 
 .ld-ctx-item.danger:hover {
