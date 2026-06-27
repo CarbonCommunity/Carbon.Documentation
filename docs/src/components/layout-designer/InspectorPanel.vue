@@ -3,8 +3,8 @@ import { computed } from 'vue'
 import AnchorWidget from './AnchorWidget.vue'
 import InfoTip from './InfoTip.vue'
 import { round } from './geometry'
-import { TEXT_ALIGNS } from './types'
-import type { ColorRGBA, DesignerElement, TextAlign } from './types'
+import { TEXT_ALIGNS, TEXT_FONTS } from './types'
+import type { ColorRGBA, DesignerElement, TextAlign, TextFont } from './types'
 import { useDesigner } from './useDesigner'
 
 const { selected, selectedIds, elements, descendantIds, update, reparent, rectOf, fill, removeSelected, duplicateSelected } =
@@ -111,6 +111,9 @@ function setFontSize(el: DesignerElement, raw: string) {
 function setAlign(el: DesignerElement, align: TextAlign) {
   update(el.id, { props: { align } })
 }
+function setFont(el: DesignerElement, font: TextFont) {
+  update(el.id, { props: { font } })
+}
 
 // Heading for the shared color picker: text color, or a panel's fill color / image tint.
 const colorLabel = computed(() => (textProps.value ? 'Text color' : fillMode.value === 'image' ? 'Tint' : 'Color'))
@@ -201,9 +204,16 @@ const computedRect = computed(() => (selected.value ? rectOf(selected.value.id) 
           <span class="ld-field-label">Content</span>
           <textarea class="ld-textarea" rows="2" :value="textProps.text" @change="setText(selected, ($event.target as HTMLTextAreaElement).value)" />
         </label>
+        <label class="ld-field">
+          <span class="ld-field-label">Font <InfoTip text="The Rust client font — the same asset for both frameworks. Emitted as CuiTextComponent.Font (Oxide) / .SetTextFont(CUI.Handler.FontTypes.X) (Carbon)." /></span>
+          <select :value="textProps.font ?? 'RobotoCondensedRegular'" @change="setFont(selected, ($event.target as HTMLSelectElement).value as TextFont)">
+            <option v-for="f in TEXT_FONTS" :key="f.id" :value="f.id">{{ f.label }}</option>
+          </select>
+        </label>
         <div class="ld-vec-row">
           <span class="ld-vec-label">Size</span>
-          <input type="number" min="1" step="1" :value="textProps.fontSize" title="Font size in reference px" @change="setFontSize(selected, ($event.target as HTMLInputElement).value)" />
+          <input class="ld-range" type="range" min="4" max="64" step="1" :value="textProps.fontSize" title="Font size" @input="setFontSize(selected, ($event.target as HTMLInputElement).value)" />
+          <input class="ld-num" type="number" min="1" step="1" :value="textProps.fontSize" title="Font size in reference px" @change="setFontSize(selected, ($event.target as HTMLInputElement).value)" />
         </div>
         <div class="ld-section-title">
           <span>Alignment <small>(in box)</small></span>
@@ -244,10 +254,9 @@ const computedRect = computed(() => (selected.value ? rectOf(selected.value.id) 
       </div>
       <div class="ld-vec-row">
         <input class="ld-color" type="color" :value="toHex(selected.props.color)" :title="colorLabel" @input="setHex(selected, ($event.target as HTMLInputElement).value)" />
-        <label class="ld-alpha">
-          <span title="Opacity (alpha), 0–1">α</span>
-          <input type="number" min="0" max="1" step="0.05" :value="round(selected.props.color.a)" @change="setAlpha(selected, ($event.target as HTMLInputElement).value)" />
-        </label>
+        <span class="ld-vec-label ld-alpha-label" title="Opacity (alpha), 0–1">α</span>
+        <input class="ld-range" type="range" min="0" max="1" step="0.01" :value="selected.props.color.a" title="Opacity (alpha)" @input="setAlpha(selected, ($event.target as HTMLInputElement).value)" />
+        <input class="ld-num" type="number" min="0" max="1" step="0.05" :value="round(selected.props.color.a)" @change="setAlpha(selected, ($event.target as HTMLInputElement).value)" />
       </div>
 
       <div v-if="computedRect" class="ld-resolved">
@@ -510,23 +519,24 @@ const computedRect = computed(() => (selected.value ? rectOf(selected.value.id) 
   background: none;
 }
 
-.ld-alpha {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: var(--vp-c-text-3);
-  flex: 1;
+.ld-alpha-label {
+  width: auto;
+  flex-shrink: 0;
 }
 
-.ld-alpha input {
-  width: 100%;
-  background: var(--vp-c-bg);
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 3px;
-  padding: 4px 6px;
-  color: var(--vp-c-text-1);
-  font-size: 13px;
+/* slider + numeric entry pair (font size, alpha) */
+.ld-vec-row input.ld-range {
+  flex: 1;
+  min-width: 36px;
+  width: auto;
+  margin: 0;
+  accent-color: var(--c-carbon-1);
+  cursor: pointer;
+}
+
+.ld-vec-row input.ld-num {
+  flex: 0 0 auto;
+  width: 52px;
 }
 
 .ld-resolved {

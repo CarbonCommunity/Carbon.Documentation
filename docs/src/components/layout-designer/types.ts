@@ -118,6 +118,46 @@ export const TEXT_ALIGNS: TextAlign[] = [
   'LowerRight',
 ]
 
+/**
+ * Font choice. Client-centric: the same Rust font asset is used by BOTH frameworks — Oxide sets
+ * `CuiTextComponent.Font = "<file>"` and Carbon chains `.SetTextFont(CUI.Handler.FontTypes.<id>)`,
+ * which resolve to the identical file. So there is no Oxide-vs-Carbon font split. `id` is the Carbon
+ * `FontTypes` member; `oxide` is the matching filename; `css`/`weight` are a preview-only approximation.
+ */
+export type TextFont =
+  | 'RobotoCondensedRegular'
+  | 'RobotoCondensedBold'
+  | 'PermanentMarker'
+  | 'DroidSansMono'
+  | 'PressStart'
+  | 'LCD'
+  | 'Poxel'
+
+export interface FontDef {
+  id: TextFont
+  label: string
+  oxide: string
+  css: string
+  weight?: number
+}
+
+export const DEFAULT_TEXT_FONT: TextFont = 'RobotoCondensedRegular'
+
+export const TEXT_FONTS: FontDef[] = [
+  { id: 'RobotoCondensedRegular', label: 'Roboto Condensed', oxide: 'robotocondensed-regular.ttf', css: "'Roboto Condensed', system-ui, sans-serif" },
+  { id: 'RobotoCondensedBold', label: 'Roboto Condensed Bold', oxide: 'robotocondensed-bold.ttf', css: "'Roboto Condensed', system-ui, sans-serif", weight: 700 },
+  { id: 'PermanentMarker', label: 'Permanent Marker', oxide: 'permanentmarker.ttf', css: "'Permanent Marker', 'Comic Sans MS', cursive" },
+  { id: 'DroidSansMono', label: 'Droid Sans Mono', oxide: 'droidsansmono.ttf', css: "ui-monospace, 'Droid Sans Mono', monospace" },
+  { id: 'PressStart', label: 'Press Start 2P', oxide: 'pressstart2p-regular.ttf', css: "'Press Start 2P', ui-monospace, monospace" },
+  { id: 'LCD', label: 'LCD', oxide: 'lcd.ttf', css: "'LCD', ui-monospace, monospace" },
+  { id: 'Poxel', label: 'Poxel', oxide: 'poxel.otf', css: "'Poxel', system-ui, sans-serif" },
+]
+
+/** Resolve a (possibly missing, for legacy layouts) font id to its definition; falls back to default. */
+export function fontDef(id: TextFont | undefined | null): FontDef {
+  return TEXT_FONTS.find((f) => f.id === id) ?? TEXT_FONTS[0]
+}
+
 export interface TextProps {
   /** Text (font) color, CUI channels 0..1. */
   color: ColorRGBA
@@ -125,6 +165,8 @@ export interface TextProps {
   /** Font size in reference px (CuiTextComponent.FontSize / LUI fontSize). */
   fontSize: number
   align: TextAlign
+  /** Font asset (shared by both frameworks). Optional for legacy layouts → resolves to the default. */
+  font?: TextFont
 }
 
 /** Fields shared by every element regardless of type. */

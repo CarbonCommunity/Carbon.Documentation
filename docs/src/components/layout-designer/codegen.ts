@@ -10,7 +10,7 @@
 // coordinate math here. Keep it that way: geometry lives in geometry.ts.
 
 import { cuiColorString, round } from './geometry'
-import { CLIENT_PANELS } from './types'
+import { CLIENT_PANELS, DEFAULT_TEXT_FONT, fontDef } from './types'
 import type { ClientPanel, ClientPanelDef, DesignerElement, Provider, Vec2 } from './types'
 
 /** Format a rounded number without a trailing ".0" or a stray "-0". */
@@ -108,8 +108,8 @@ function oxideElement(el: DesignerElement, names: Map<string, string>, layer: Cl
   const name = esc(names.get(el.id)!)
   if (el.type === 'text') {
     const t = el.props
-    // CuiLabel bundles a CuiTextComponent (Text) + RectTransform. Font is pinned to LUI's default
-    // (robotocondensed-regular) so the Carbon and Oxide outputs render identically.
+    // CuiLabel bundles a CuiTextComponent (Text) + RectTransform. Font is the same Rust client asset
+    // Carbon's FontTypes maps to, emitted as the filename here.
     return [
       'container.Add(new CuiLabel',
       '{',
@@ -117,7 +117,7 @@ function oxideElement(el: DesignerElement, names: Map<string, string>, layer: Cl
       '    {',
       `        Text = "${esc(t.text)}",`,
       `        FontSize = ${intStr(t.fontSize)},`,
-      '        Font = "robotocondensed-regular.ttf",',
+      `        Font = "${fontDef(t.font).oxide}",`,
       `        Align = TextAnchor.${t.align},`,
       `        Color = "${cuiColorString(t.color)}"`,
       '    },',
@@ -202,15 +202,20 @@ function carbonElement(el: DesignerElement, names: Map<string, string>, root: st
   const off = `new LuiOffset(${lf(el.offsetMin.x, 2)}, ${lf(el.offsetMin.y, 2)}, ${lf(el.offsetMax.x, 2)}, ${lf(el.offsetMax.y, 2)})`
   if (el.type === 'text') {
     const t = el.props
-    // CreateText(parent, pos, offset, fontSize, color, text, alignment, name). Font isn't a param
-    // here — LUI defaults to robotocondensed-regular, which the Oxide output pins to match.
-    return [
+    // CreateText(parent, pos, offset, fontSize, color, text, alignment, name). Font isn't a param —
+    // LUI defaults to robotocondensed-regular; a non-default font is set by chaining .SetTextFont
+    // (the FontTypes member resolves to the same file Oxide's Font string points at).
+    const head = [
       `cui.v2.CreateText("${parent}",`,
       `    ${pos},`,
       `    ${off},`,
-      `    ${intStr(t.fontSize)}, "${cuiColorString(t.color)}", "${esc(t.text)}", TextAnchor.${t.align}, "${name}");`,
-      '',
+      `    ${intStr(t.fontSize)}, "${cuiColorString(t.color)}", "${esc(t.text)}", TextAnchor.${t.align}, "${name}")`,
     ]
+    if ((t.font ?? DEFAULT_TEXT_FONT) === DEFAULT_TEXT_FONT) {
+      head[head.length - 1] += ';'
+      return [...head, '']
+    }
+    return [...head, `    .SetTextFont(CUI.Handler.FontTypes.${fontDef(t.font).id});`, '']
   }
   const color = cuiColorString(el.props.color)
   if (el.props.image?.kind === 'url') {

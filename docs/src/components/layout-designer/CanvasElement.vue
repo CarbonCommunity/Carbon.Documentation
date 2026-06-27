@@ -11,6 +11,7 @@ import {
   type OffsetPatch,
   type ResizeEdge,
 } from './geometry'
+import { fontDef } from './types'
 import type { DesignerElement, TextAlign } from './types'
 import { useDesigner } from './useDesigner'
 
@@ -91,12 +92,15 @@ const textStyle = computed<Record<string, string> | null>(() => {
   const el = props.element
   if (el.type !== 'text') return null
   const a = alignParts(el.props.align)
+  const f = fontDef(el.props.font)
   return {
     alignItems: a.vert,
     justifyContent: a.horiz,
     textAlign: a.textAlign,
     color: cssColor(el.props.color),
     fontSize: `${el.props.fontSize * props.scale}px`,
+    fontFamily: f.css,
+    fontWeight: String(f.weight ?? 400),
   }
 })
 const textContent = computed(() => (props.element.type === 'text' ? props.element.props.text : ''))

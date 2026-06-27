@@ -21,7 +21,7 @@ function makePanel(parentId: string | null, anchorMin: Vec2, anchorMax: Vec2, of
 
 function makeText(parentId: string | null, anchorMin: Vec2, anchorMax: Vec2, offsetMin: Vec2, offsetMax: Vec2, color: ColorRGBA): TextElement {
   const { id, n } = nextId()
-  return { id, type: 'text', name: `Text.${n}`, parentId, anchorMin, anchorMax, offsetMin, offsetMax, props: { color, text: 'New Text', fontSize: 14, align: 'MiddleCenter' } }
+  return { id, type: 'text', name: `Text.${n}`, parentId, anchorMin, anchorMax, offsetMin, offsetMax, props: { color, text: 'New Text', fontSize: 14, align: 'MiddleCenter', font: 'RobotoCondensedRegular' } }
 }
 
 /** Deep-clone an element's props, preserving its concrete type. */
