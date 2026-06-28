@@ -29,10 +29,13 @@ interface CodeCtx {
   fields: Map<string, string>
 }
 
-/** Sanitise a data-source name into a valid C# identifier; empty/leading-digit gets an `_` prefix. */
+/**
+ * Sanitise a data-source name into a valid C# identifier: each run of invalid chars becomes a single
+ * `_` (so "Data 1" → "Data_1", not "Data1"); empty/leading-digit gets an `_` prefix.
+ */
 function sanitizeIdent(name: string): string {
-  let s = name.replace(/[^A-Za-z0-9_]/g, '')
-  if (!s) return 'Field'
+  let s = name.replace(/[^A-Za-z0-9_]+/g, '_')
+  if (!s || s === '_') return 'Field'
   if (/^[0-9]/.test(s)) s = `_${s}`
   return s
 }

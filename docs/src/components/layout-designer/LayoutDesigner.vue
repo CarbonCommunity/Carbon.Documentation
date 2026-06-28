@@ -998,4 +998,10 @@ function chooseArrangement(id: Arrangement) {
 body.layout-designer-page::after {
   display: none !important;
 }
+
+/* The designer fills the viewport (`.ld-root` = 100vh - nav), so the site footer below it would push
+   a scrollbar. Hide it on this full-bleed tool page; the class is removed on navigate-away. */
+body.layout-designer-page .VPFooter {
+  display: none;
+}
 </style>
