@@ -99,6 +99,36 @@ function setImageUrl(el: DesignerElement, raw: string) {
   update(el.id, { props: { image: { kind: 'url', url: raw.trim() } } })
 }
 
+// --- border (panel only: optional inset frame → four edge subpanels at codegen time) ---
+const DEFAULT_BORDER = { width: 2, color: { r: 0, g: 0, b: 0, a: 1 } }
+const borderProps = computed(() => panelProps.value?.border ?? null)
+
+function setBorderEnabled(el: DesignerElement, on: boolean) {
+  if (el.type !== 'panel') return
+  update(el.id, { props: { border: on ? { width: DEFAULT_BORDER.width, color: { ...DEFAULT_BORDER.color } } : null } })
+}
+function curBorder(el: DesignerElement) {
+  return el.type === 'panel' && el.props.border ? el.props.border : DEFAULT_BORDER
+}
+function setBorderWidth(el: DesignerElement, raw: string) {
+  const n = Number.parseInt(raw, 10)
+  if (Number.isNaN(n) || n < 0) return
+  update(el.id, { props: { border: { width: n, color: { ...curBorder(el).color } } } })
+}
+function setBorderHex(el: DesignerElement, hex: string) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim())
+  if (!m) return
+  const n = Number.parseInt(m[1], 16)
+  const b = curBorder(el)
+  update(el.id, { props: { border: { width: b.width, color: { r: ((n >> 16) & 255) / 255, g: ((n >> 8) & 255) / 255, b: (n & 255) / 255, a: b.color.a } } } })
+}
+function setBorderAlpha(el: DesignerElement, raw: string) {
+  const a = Number.parseFloat(raw)
+  if (Number.isNaN(a)) return
+  const b = curBorder(el)
+  update(el.id, { props: { border: { width: b.width, color: { ...b.color, a } } } })
+}
+
 // --- text props ---
 function setText(el: DesignerElement, raw: string) {
   update(el.id, { props: { text: raw } })
@@ -259,6 +289,24 @@ const computedRect = computed(() => (selected.value ? rectOf(selected.value.id) 
         <input class="ld-num" type="number" min="0" max="1" step="0.05" :value="round(selected.props.color.a)" @change="setAlpha(selected, ($event.target as HTMLInputElement).value)" />
       </div>
 
+      <!-- PANEL border (optional inset frame → four edge subpanels) -->
+      <template v-if="panelProps">
+        <div class="ld-section-title">
+          <label class="ld-border-enable">
+            <input type="checkbox" :checked="!!borderProps" @change="setBorderEnabled(selected, ($event.target as HTMLInputElement).checked)" />
+            <span>Border</span>
+          </label>
+          <InfoTip text="Optional inset border. CUI has no border primitive, so it's emitted as four edge subpanels (top/bottom/left/right) inside the panel — width in reference px. Toggling it sends/removes those panels in the live preview." />
+        </div>
+        <div v-if="borderProps" class="ld-vec-row">
+          <input class="ld-color" type="color" :value="toHex(borderProps.color)" title="Border color" @input="setBorderHex(selected, ($event.target as HTMLInputElement).value)" />
+          <span class="ld-vec-label" title="Border width (reference px)">w</span>
+          <input class="ld-num" type="number" min="0" step="1" :value="borderProps.width" title="Border width (px)" @change="setBorderWidth(selected, ($event.target as HTMLInputElement).value)" />
+          <span class="ld-vec-label ld-alpha-label" title="Opacity (alpha), 0–1">α</span>
+          <input class="ld-num" type="number" min="0" max="1" step="0.05" :value="round(borderProps.color.a)" title="Border opacity" @change="setBorderAlpha(selected, ($event.target as HTMLInputElement).value)" />
+        </div>
+      </template>
+
       <div v-if="computedRect" class="ld-resolved">
         <span>
           Resolved (CUI px): x {{ round(computedRect.x, 1) }}, y {{ round(computedRect.y, 1) }},
@@ -315,6 +363,17 @@ const computedRect = computed(() => (selected.value ? rectOf(selected.value.id) 
 
 .ld-multi-actions button:hover {
   border-color: var(--c-carbon-1);
+}
+
+.ld-border-enable {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.ld-border-enable input {
+  cursor: pointer;
 }
 
 .ld-multi-actions button.danger:hover {

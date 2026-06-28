@@ -75,6 +75,12 @@ const boxStyle = computed(() => {
       style.backgroundSize = '100% 100%'
       style.backgroundRepeat = 'no-repeat'
     }
+    // Border = four inset edge subpanels at codegen time; preview it as an inset box-shadow frame
+    // (drawn over the background, only at the edges — so a translucent panel doesn't mesh). Uses
+    // box-shadow, not `border`, to avoid fighting the selection outline; scales with the canvas.
+    if (el.props.border && el.props.border.width > 0) {
+      style.boxShadow = `inset 0 0 0 ${el.props.border.width * props.scale}px ${cssColor(el.props.border.color)}`
+    }
   }
   return style
 })

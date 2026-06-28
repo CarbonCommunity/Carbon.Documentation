@@ -86,11 +86,24 @@ export interface ImageFill {
   url: string
 }
 
+/**
+ * Optional border. CUI has no border primitive, so codegen renders it as four edge subpanels
+ * (top/bottom/left/right) nested in the panel — NOT a single wrapper behind it, which would bleed
+ * through a translucent panel. Absent/null or width<=0 => no border.
+ */
+export interface PanelBorder {
+  /** Border thickness in reference px. */
+  width: number
+  color: ColorRGBA
+}
+
 export interface PanelProps {
   /** Panel background color — or, when an image fill is set, the image's tint. */
   color: ColorRGBA
   /** Optional image fill. Absent/null => plain solid-color panel (unchanged legacy behavior). */
   image?: ImageFill | null
+  /** Optional inset border, rendered as four edge subpanels at codegen time. */
+  border?: PanelBorder | null
 }
 
 /** Unity `TextAnchor` members — the alignment of text within its box (vertical × horizontal). */

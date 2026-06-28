@@ -11,7 +11,7 @@
 
 import { cuiColorString, round } from './geometry'
 import { CLIENT_PANELS, DEFAULT_TEXT_FONT, fontDef, TEXT_ALIGNS, TEXT_FONTS } from './types'
-import type { ClientPanel, ClientPanelDef, ColorRGBA, CuiComponent, CuiElement, DesignerElement, Provider, TextAlign, TextFont, Vec2 } from './types'
+import type { ClientPanel, ClientPanelDef, ColorRGBA, CuiComponent, CuiElement, DesignerElement, PanelElement, Provider, TextAlign, TextFont, Vec2 } from './types'
 
 /** Format a rounded number without a trailing ".0" or a stray "-0". */
 function num(v: number, decimals: number): string {
@@ -92,6 +92,46 @@ function treeOrder(elements: DesignerElement[]): DesignerElement[] {
   // orphans (parentId points at a missing element) — keep them rather than silently drop
   for (const el of elements) if (!seen.has(el.id)) ordered.push(el)
   return ordered
+}
+
+// --- borders -------------------------------------------------------------------------
+
+/** One edge subpanel of a panel's border (a child of the panel, anchored to the given edge). */
+function borderStrip(el: PanelElement, side: string, color: ColorRGBA, anchorMin: Vec2, anchorMax: Vec2, offsetMin: Vec2, offsetMax: Vec2): PanelElement {
+  return {
+    id: `${el.id}.border-${side}`,
+    name: `${el.name}.border-${side}`,
+    parentId: el.id,
+    anchorMin,
+    anchorMax,
+    offsetMin,
+    offsetMax,
+    type: 'panel',
+    props: { color: { ...color }, image: null },
+  }
+}
+
+/**
+ * Expand each bordered panel into itself + four edge subpanels (top/bottom span the full width;
+ * left/right fill the gap between them, so the corners aren't double-drawn). The strips are CHILDREN
+ * of the panel — they ride along with it and only cover the frame, so a translucent panel doesn't
+ * mesh with a border color behind it. Appended after all originals so they draw on top. No-op when no
+ * panel has a border.
+ */
+function expandBorders(elements: DesignerElement[]): DesignerElement[] {
+  const strips: DesignerElement[] = []
+  for (const el of elements) {
+    if (el.type !== 'panel' || !el.props.border || el.props.border.width <= 0) continue
+    const b = el.props.border.width
+    const c = el.props.border.color
+    strips.push(
+      borderStrip(el, 'top', c, { x: 0, y: 1 }, { x: 1, y: 1 }, { x: 0, y: -b }, { x: 0, y: 0 }),
+      borderStrip(el, 'bottom', c, { x: 0, y: 0 }, { x: 1, y: 0 }, { x: 0, y: 0 }, { x: 0, y: b }),
+      borderStrip(el, 'left', c, { x: 0, y: 0 }, { x: 0, y: 1 }, { x: 0, y: b }, { x: b, y: -b }),
+      borderStrip(el, 'right', c, { x: 1, y: 0 }, { x: 1, y: 1 }, { x: -b, y: b }, { x: 0, y: -b }),
+    )
+  }
+  return strips.length ? [...elements, ...strips] : elements
 }
 
 /** A container name not already taken by an element (for Carbon's CreateParent root). */
@@ -285,8 +325,9 @@ export function generateAddUiJson(
   if (!elements.length) return []
   const layer = CLIENT_PANELS.find((p) => p.id === rootLayer) ?? CLIENT_PANELS[0]
   const rootParent = opts.rootParent ?? layer.oxide
-  const names = buildNames(elements)
-  const ordered = treeOrder(elements)
+  const expanded = expandBorders(elements)
+  const names = buildNames(expanded)
+  const ordered = treeOrder(expanded)
   return ordered.map((el) => adduiElement(el, names, rootParent))
 }
 
@@ -296,9 +337,11 @@ export function generateAddUiJson(
 export function generateCode(elements: DesignerElement[], provider: Provider, rootLayer: ClientPanel = 'Overlay'): string {
   if (!elements.length) return '// Add an element to generate code.'
   const layer = CLIENT_PANELS.find((p) => p.id === rootLayer) ?? CLIENT_PANELS[0]
-  // Names are built from the original order (stable collision suffixes); emission is parent-first.
-  const names = buildNames(elements)
-  const ordered = treeOrder(elements)
+  // Bordered panels expand into edge subpanels; names are built from this order (stable collision
+  // suffixes); emission is parent-first.
+  const expanded = expandBorders(elements)
+  const names = buildNames(expanded)
+  const ordered = treeOrder(expanded)
   if (provider === 'oxide') return genOxide(ordered, names, layer)
   if (provider === 'carbon') return genCarbon(ordered, names, layer)
   // both: Carbon compiles with the CARBON symbol defined; Oxide does not.
@@ -386,10 +429,12 @@ export function generateSelected(elements: DesignerElement[], selectedIds: strin
   const HINT = '// Select an element on the canvas to see its code.'
   if (!selectedIds.length) return HINT
   const layer = CLIENT_PANELS.find((p) => p.id === rootLayer) ?? CLIENT_PANELS[0]
-  const names = buildNames(elements)
+  const expanded = expandBorders(elements)
+  const names = buildNames(expanded)
   const root = rootContainerName(names)
   const sel = new Set(selectedIds)
-  const chosen = treeOrder(elements).filter((el) => sel.has(el.id))
+  // include a selected panel's border subpanels (ids `${selectedId}.border-*`).
+  const chosen = treeOrder(expanded).filter((el) => sel.has(el.id) || [...sel].some((s) => el.id.startsWith(`${s}.border-`)))
   if (!chosen.length) return HINT
   const oxide = () => chosen.flatMap((el) => oxideElement(el, names, layer)).join('\n').trimEnd()
   const carbon = () => chosen.flatMap((el) => carbonElement(el, names, root)).join('\n').trimEnd()
