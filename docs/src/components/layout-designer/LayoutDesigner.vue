@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useEventListener, useStorage } from '@vueuse/core'
-import { ChevronDown, Clipboard, ClipboardPaste, HelpCircle, Layers, Lock, Pencil, PictureInPicture2, Plus, Redo2, Trash2, Undo2, X } from 'lucide-vue-next'
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { ChevronDown, Clipboard, ClipboardPaste, HelpCircle, LayoutDashboard, Layers, Lock, Pencil, PictureInPicture2, Plus, Redo2, Trash2, Undo2, X } from 'lucide-vue-next'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { usePopout } from './usePopout'
 import ContextMenu from './ContextMenu.vue'
 import DesignerCanvas from './DesignerCanvas.vue'
@@ -131,6 +131,7 @@ useEventListener(
   (e: PointerEvent) => {
     const t = e.target as HTMLElement
     if (!t.closest('.ld-layout-menu')) layoutMenuOpen.value = false
+    if (!t.closest('.ld-arrange-menu')) arrangeMenuOpen.value = false
     if (!t.closest('.ld-help')) helpOpen.value = false
     if (!t.closest('.ld-add-menu')) addMenuOpen.value = false
   },
@@ -143,31 +144,39 @@ const rightWidth = useStorage('carbon-layout-designer:workspace:rightWidth', 300
 const bottomHeight = useStorage('carbon-layout-designer:workspace:bottomHeight', 220)
 const bottomCollapsed = useStorage('carbon-layout-designer:workspace:bottomCollapsed', false)
 
-let resize: { type: 'left' | 'right' | 'bottom'; start: number; origin: number } | null = null
+// `sign` flips drag direction when a column is moved to the opposite side (Inspector-left preset),
+// so dragging a divider always grows the pane it borders.
+let resize: { type: 'left' | 'right' | 'code' | 'bottom'; start: number; origin: number; sign: number } | null = null
 
 function startLeftResize(e: PointerEvent) {
-  resize = { type: 'left', start: leftWidth.value, origin: e.clientX }
+  resize = { type: 'left', start: leftWidth.value, origin: e.clientX, sign: isInspectorLeft.value ? -1 : 1 }
   e.preventDefault()
 }
 function startRightResize(e: PointerEvent) {
-  resize = { type: 'right', start: rightWidth.value, origin: e.clientX }
+  resize = { type: 'right', start: rightWidth.value, origin: e.clientX, sign: isInspectorLeft.value ? 1 : -1 }
+  e.preventDefault()
+}
+function startCodeColResize(e: PointerEvent) {
+  resize = { type: 'code', start: codeColWidth.value, origin: e.clientX, sign: -1 }
   e.preventDefault()
 }
 function startBottomResize(e: PointerEvent) {
   if (bottomCollapsed.value) return
-  resize = { type: 'bottom', start: bottomHeight.value, origin: e.clientY }
+  resize = { type: 'bottom', start: bottomHeight.value, origin: e.clientY, sign: -1 }
   e.preventDefault()
 }
 
 useEventListener(window, 'pointermove', (e: PointerEvent) => {
   if (!resize) return
-  if (resize.type === 'left') {
-    leftWidth.value = Math.min(420, Math.max(180, resize.start + (e.clientX - resize.origin)))
-  } else if (resize.type === 'right') {
-    rightWidth.value = Math.min(620, Math.max(240, resize.start - (e.clientX - resize.origin)))
-  } else {
-    bottomHeight.value = Math.min(560, Math.max(120, resize.start - (e.clientY - resize.origin)))
+  const r = resize
+  if (r.type === 'bottom') {
+    bottomHeight.value = Math.min(560, Math.max(120, r.start + r.sign * (e.clientY - r.origin)))
+    return
   }
+  const next = r.start + r.sign * (e.clientX - r.origin)
+  if (r.type === 'left') leftWidth.value = Math.min(420, Math.max(180, next))
+  else if (r.type === 'right') rightWidth.value = Math.min(620, Math.max(240, next))
+  else codeColWidth.value = Math.min(680, Math.max(260, next))
 })
 useEventListener(window, 'pointerup', () => {
   resize = null
@@ -176,6 +185,38 @@ useEventListener(window, 'pointerup', () => {
 // --- pop-out panes (Document Picture-in-Picture; Chromium-only) ---
 const elementsPop = usePopout(() => 'Elements', { width: 320, height: 640 })
 const inspectorPop = usePopout(() => 'Inspector', { width: 360, height: 700 })
+
+// --- workspace arrangement (preset pane layouts, persisted) ---
+type Arrangement = 'default' | 'inspector-left' | 'code-right'
+const ARRANGEMENTS: { id: Arrangement; name: string }[] = [
+  { id: 'default', name: 'Default' },
+  { id: 'inspector-left', name: 'Inspector left' },
+  { id: 'code-right', name: 'Code side-panel' },
+]
+const arrangement = useStorage<Arrangement>('carbon-layout-designer:workspace:arrangement', 'default')
+const arrangeMenuOpen = ref(false)
+const isInspectorLeft = computed(() => arrangement.value === 'inspector-left')
+const codeSide = computed(() => arrangement.value === 'code-right')
+const currentArrangementName = computed(() => ARRANGEMENTS.find((a) => a.id === arrangement.value)?.name ?? 'Default')
+const codeColWidth = useStorage('carbon-layout-designer:workspace:codeColWidth', 380)
+
+// flex `order` for each body child — swaps the Elements/Inspector columns for the "Inspector left"
+// preset while each pane's resize divider stays bound to its own width var.
+const bodyOrder = computed(() => {
+  const swap = isInspectorLeft.value
+  return {
+    elements: swap ? 40 : 0,
+    elementsDiv: swap ? 30 : 10,
+    center: 20,
+    inspectorDiv: swap ? 10 : 30,
+    inspector: swap ? 0 : 40,
+  }
+})
+
+function chooseArrangement(id: Arrangement) {
+  arrangement.value = id
+  arrangeMenuOpen.value = false
+}
 </script>
 
 <template>
@@ -202,6 +243,18 @@ const inspectorPop = usePopout(() => 'Inspector', { width: 360, height: 700 })
           <button class="ld-menu-item" @click="addLayout"><Plus :size="13" /> New layout</button>
           <button class="ld-menu-item" @click="(exportClipboard(), (layoutMenuOpen = false))"><Clipboard :size="13" /> Copy to clipboard</button>
           <button class="ld-menu-item" @click="(importClipboard(), (layoutMenuOpen = false))"><ClipboardPaste :size="13" /> Import from clipboard</button>
+        </div>
+      </div>
+
+      <!-- workspace arrangement (pane layout presets — distinct from the saved CUI "Layouts" above) -->
+      <div class="ld-arrange-menu">
+        <button class="ld-btn" title="Arrange panes" @click.stop="arrangeMenuOpen = !arrangeMenuOpen">
+          <LayoutDashboard :size="14" /> {{ currentArrangementName }} <ChevronDown :size="13" />
+        </button>
+        <div v-if="arrangeMenuOpen" class="ld-menu-pop" @pointerdown.stop>
+          <button v-for="a in ARRANGEMENTS" :key="a.id" class="ld-menu-item" :class="{ active: a.id === arrangement }" @click="chooseArrangement(a.id)">
+            <span class="ld-menu-name">{{ a.name }}</span>
+          </button>
         </div>
       </div>
 
@@ -329,7 +382,7 @@ const inspectorPop = usePopout(() => 'Inspector', { width: 360, height: 700 })
 
     <!-- body -->
     <div class="ld-body">
-      <aside class="ld-left" :class="{ 'ld-pane-popped': elementsPop.pipTarget.value }" :style="{ width: elementsPop.pipTarget.value ? undefined : `${leftWidth}px` }">
+      <aside class="ld-left" :class="{ 'ld-pane-popped': elementsPop.pipTarget.value }" :style="{ width: elementsPop.pipTarget.value ? undefined : `${leftWidth}px`, order: bodyOrder.elements }">
         <Teleport :to="elementsPop.pipTarget.value" :disabled="!elementsPop.pipTarget.value">
           <div class="ld-pane-inner">
             <div class="ld-panel-head">
@@ -361,15 +414,15 @@ const inspectorPop = usePopout(() => 'Inspector', { width: 360, height: 700 })
         </button>
       </aside>
 
-      <div v-if="!elementsPop.pipTarget.value" class="ld-divider-v" title="Drag to resize" @pointerdown="startLeftResize" />
+      <div v-if="!elementsPop.pipTarget.value" class="ld-divider-v" title="Drag to resize" :style="{ order: bodyOrder.elementsDiv }" @pointerdown="startLeftResize" />
 
-      <main class="ld-center">
+      <main class="ld-center" :style="{ order: bodyOrder.center }">
         <DesignerCanvas />
       </main>
 
-      <div v-if="!inspectorPop.pipTarget.value" class="ld-divider-v" title="Drag to resize" @pointerdown="startRightResize" />
+      <div v-if="!inspectorPop.pipTarget.value" class="ld-divider-v" title="Drag to resize" :style="{ order: bodyOrder.inspectorDiv }" @pointerdown="startRightResize" />
 
-      <aside class="ld-right" :class="{ 'ld-pane-popped': inspectorPop.pipTarget.value }" :style="{ width: inspectorPop.pipTarget.value ? undefined : `${rightWidth}px` }">
+      <aside class="ld-right" :class="{ 'ld-pane-popped': inspectorPop.pipTarget.value }" :style="{ width: inspectorPop.pipTarget.value ? undefined : `${rightWidth}px`, order: bodyOrder.inspector }">
         <Teleport :to="inspectorPop.pipTarget.value" :disabled="!inspectorPop.pipTarget.value">
           <div class="ld-pane-inner">
             <div class="ld-panel-head">
@@ -393,10 +446,18 @@ const inspectorPop = usePopout(() => 'Inspector', { width: 360, height: 700 })
           <span class="ld-pane-restore-label">Inspector</span>
         </button>
       </aside>
+
+      <!-- code as a right-hand column (the "Code side-panel" arrangement; bottom dock is hidden then) -->
+      <template v-if="codeSide">
+        <div class="ld-divider-v" title="Drag to resize" :style="{ order: 50 }" @pointerdown="startCodeColResize" />
+        <aside class="ld-code-col" :style="{ width: `${codeColWidth}px`, order: 60 }">
+          <CodeOutput />
+        </aside>
+      </template>
     </div>
 
-    <!-- generated-code dock (resizable / collapsible) -->
-    <div class="ld-dock" :class="{ collapsed: bottomCollapsed }">
+    <!-- generated-code dock (resizable / collapsible) — hidden when code is shown as a side panel -->
+    <div v-if="!codeSide" class="ld-dock" :class="{ collapsed: bottomCollapsed }">
       <div class="ld-dock-grip" :class="{ resizable: !bottomCollapsed }" @pointerdown="startBottomResize">
         <span class="ld-grip-lines" aria-hidden="true" />
         <span v-if="bottomCollapsed" class="ld-dock-title">Generated code</span>
@@ -839,6 +900,16 @@ const inspectorPop = usePopout(() => 'Inspector', { width: 360, height: 700 })
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.06em;
+}
+
+/* code shown as a right-hand column instead of the bottom dock */
+.ld-code-col {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  border-left: 1px solid var(--vp-c-divider);
 }
 
 /* captured-values dock */
