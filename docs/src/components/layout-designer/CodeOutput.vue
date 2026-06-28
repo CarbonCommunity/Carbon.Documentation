@@ -61,10 +61,7 @@ async function copy() {
     <Teleport :to="pipTarget" :disabled="!pipTarget">
       <div class="ld-out-inner">
         <div class="ld-out-head">
-          <div class="ld-out-tabs" role="tablist">
-            <button v-for="t in TABS" :key="t.id" :class="{ active: tab === t.id }" role="tab" @click="tab = t.id">{{ t.label }}</button>
-          </div>
-          <div class="ld-out-actions">
+          <div class="ld-out-head-left">
             <select
               v-model="provider"
               class="ld-out-target"
@@ -73,6 +70,11 @@ async function copy() {
             >
               <option v-for="p in PROVIDERS" :key="p.value" :value="p.value">{{ p.label }}</option>
             </select>
+            <div class="ld-out-tabs" role="tablist">
+              <button v-for="t in TABS" :key="t.id" :class="{ active: tab === t.id }" role="tab" @click="tab = t.id">{{ t.label }}</button>
+            </div>
+          </div>
+          <div class="ld-out-actions">
             <button class="ld-out-copy" :title="copied ? 'Copied' : 'Copy'" @click="copy">
               <component :is="copied ? Check : Copy" :size="13" />
               {{ copied ? 'Copied' : 'Copy' }}
@@ -112,6 +114,12 @@ async function copy() {
   min-height: 0;
   flex: 1;
   height: 100%;
+}
+
+.ld-out-head-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .ld-out-actions {
