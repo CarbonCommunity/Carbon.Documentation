@@ -4,7 +4,7 @@
 // runs client-side only (onMounted), so SSR renders the plain-text fallback.
 import { refDebounced } from '@vueuse/core'
 import { createHighlighterCore, type HighlighterCore } from 'shiki/core'
-import { createJavaScriptRegexEngine } from 'shiki/engine/javascript'
+import { createOnigurumaEngine } from 'shiki/engine/oniguruma'
 import csharp from '@shikijs/langs/csharp'
 import json from '@shikijs/langs/json'
 import githubDark from '@shikijs/themes/github-dark'
@@ -14,13 +14,16 @@ const THEME = 'github-dark'
 export type CodeLang = 'csharp' | 'json'
 
 // One highlighter shared across every pane that highlights (Code + Debug); created on first use.
+// Uses the Oniguruma (inlined WASM) engine — the same one VitePress uses to build docs code blocks,
+// so the generated code is tokenised exactly like a docs C#/JSON block. (The JS regex engine is
+// lighter but mis-tokenises parts of the C# grammar, collapsing argument lists into one plain run.)
 let highlighterPromise: Promise<HighlighterCore> | null = null
 function getHighlighter() {
   if (!highlighterPromise) {
     highlighterPromise = createHighlighterCore({
       themes: [githubDark],
       langs: [csharp, json],
-      engine: createJavaScriptRegexEngine({ forgiving: true }), // never throw on an odd token
+      engine: createOnigurumaEngine(import('shiki/wasm')),
     })
   }
   return highlighterPromise
