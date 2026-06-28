@@ -5,6 +5,7 @@
 // designer is mounted once.
 
 import { computed, reactive, ref, watch } from 'vue'
+import { parseCuiJson } from './codegen'
 import { resolveRect, rootRect } from './geometry'
 import type { CanvasConfig, ColorRGBA, DesignerElement, ElementType, PanelElement, PanelProps, Provider, Rect, TextElement, TextProps, Vec2 } from './types'
 
@@ -603,6 +604,21 @@ function ingestLayoutJson(text: string | null) {
   if (!text) return
   try {
     const o = JSON.parse(text)
+
+    // Raw CUI JSON (a plugin's CuiElementContainer.ToJson()) — accept it alongside our own format so
+    // someone can round-trip an existing UI back into the designer. parseCuiJson returns null for our
+    // export shape, so this never shadows a normal layout import.
+    const cui = parseCuiJson(o)
+    if (cui) {
+      const id = newLayoutId()
+      const data: LayoutData = { elements: cui.elements, canvas: { ...defaultCanvas(), rootLayer: cui.rootLayer } }
+      layouts.value.push({ id, name: 'Imported CUI (imported)', data, updatedAt: Date.now() })
+      persist()
+      switchLayout(id)
+      window.alert(`Imported ${cui.elements.length} element${cui.elements.length > 1 ? 's' : ''} from CUI JSON.`)
+      return
+    }
+
     const incoming: { name?: string; data: LayoutData }[] = Array.isArray(o) ? o : [o]
     let lastId: string | null = null
     let added = 0

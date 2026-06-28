@@ -10,8 +10,8 @@
 // coordinate math here. Keep it that way: geometry lives in geometry.ts.
 
 import { cuiColorString, round } from './geometry'
-import { CLIENT_PANELS, DEFAULT_TEXT_FONT, fontDef } from './types'
-import type { ClientPanel, ClientPanelDef, CuiComponent, CuiElement, DesignerElement, Provider, Vec2 } from './types'
+import { CLIENT_PANELS, DEFAULT_TEXT_FONT, fontDef, TEXT_ALIGNS, TEXT_FONTS } from './types'
+import type { ClientPanel, ClientPanelDef, ColorRGBA, CuiComponent, CuiElement, DesignerElement, Provider, TextAlign, TextFont, Vec2 } from './types'
 
 /** Format a rounded number without a trailing ".0" or a stray "-0". */
 function num(v: number, decimals: number): string {
@@ -396,4 +396,111 @@ export function generateSelected(elements: DesignerElement[], selectedIds: strin
   if (provider === 'oxide') return oxide()
   if (provider === 'carbon') return carbon()
   return ['#if CARBON', carbon(), '#else', oxide(), '#endif'].join('\n')
+}
+
+// --- Import: CUI JSON -> elements (inverse of generateAddUiJson / the Oxide generator) -----------
+
+/** Parse a "x y" pair into a Vec2, falling back per-axis on missing/non-numeric input. */
+function parseVec(s: unknown, fallback: Vec2): Vec2 {
+  if (typeof s !== 'string') return { ...fallback }
+  const [x, y] = s.trim().split(/\s+/).map(Number)
+  return { x: Number.isFinite(x) ? x : fallback.x, y: Number.isFinite(y) ? y : fallback.y }
+}
+
+/** Parse a "r g b a" CUI color (alpha optional → 1) into ColorRGBA. */
+function parseColor(s: unknown, fallback: ColorRGBA): ColorRGBA {
+  if (typeof s !== 'string') return { ...fallback }
+  const p = s.trim().split(/\s+/).map(Number)
+  const f = (v: number | undefined, d: number) => (v !== undefined && Number.isFinite(v) ? v : d)
+  return { r: f(p[0], fallback.r), g: f(p[1], fallback.g), b: f(p[2], fallback.b), a: f(p[3], 1) }
+}
+
+/** Map an Oxide font filename back to a known TextFont id (case-insensitive); undefined → default. */
+function fontFromOxide(file: unknown): TextFont | undefined {
+  if (typeof file !== 'string') return undefined
+  return TEXT_FONTS.find((d) => d.oxide.toLowerCase() === file.toLowerCase())?.id
+}
+
+interface ParsedCui {
+  elements: DesignerElement[]
+  rootLayer: ClientPanel
+}
+
+/**
+ * Parse a CUI `CuiElementContainer.ToJson()` payload — an array of `{ name, parent, components[] }` —
+ * into designer elements. Returns null if the input isn't that shape (so callers can fall back to the
+ * designer's own export format). Recognises Image (panel), RawImage with a url (image panel), and Text
+ * (text element); a RectTransform supplies the geometry. Parents that name another element become
+ * `parentId` links; parents that name a client layer (or anything unknown) become roots, and the most
+ * common such layer is inferred as the canvas `rootLayer`.
+ */
+export function parseCuiJson(data: unknown): ParsedCui | null {
+  if (!Array.isArray(data) || !data.length) return null
+  if (!data.every((e) => e && typeof e === 'object' && Array.isArray((e as { components?: unknown }).components))) return null
+  const arr = data as Array<{ name?: unknown; parent?: unknown; components: Array<Record<string, unknown>> }>
+
+  // Pass 1: assign ids + map names so parent strings can resolve to parentIds.
+  const nameToId = new Map<string, string>()
+  const recs = arr.map((raw, i) => {
+    const id = `el-${i + 1}`
+    const name = typeof raw.name === 'string' && raw.name.trim() ? raw.name : `Element ${i + 1}`
+    if (!nameToId.has(name)) nameToId.set(name, id)
+    return { id, name, raw }
+  })
+
+  const layerVotes = new Map<string, number>()
+  const elements: DesignerElement[] = []
+  for (const { id, name, raw } of recs) {
+    const comps = raw.components
+    const rect = comps.find((c) => c.type === 'RectTransform')
+    const base = {
+      id,
+      name,
+      parentId: null as string | null,
+      anchorMin: parseVec(rect?.anchormin, { x: 0, y: 0 }),
+      anchorMax: parseVec(rect?.anchormax, { x: 1, y: 1 }),
+      offsetMin: parseVec(rect?.offsetmin, { x: 0, y: 0 }),
+      offsetMax: parseVec(rect?.offsetmax, { x: 0, y: 0 }),
+    }
+    const parent = typeof raw.parent === 'string' ? raw.parent : ''
+    if (nameToId.has(parent) && nameToId.get(parent) !== id) {
+      base.parentId = nameToId.get(parent)!
+    } else if (parent) {
+      layerVotes.set(parent, (layerVotes.get(parent) ?? 0) + 1) // root parents to a layer string
+    }
+
+    const text = comps.find((c) => c.type === 'UnityEngine.UI.Text')
+    const rawImg = comps.find((c) => c.type === 'UnityEngine.UI.RawImage')
+    const img = comps.find((c) => c.type === 'UnityEngine.UI.Image')
+    if (text) {
+      const align = text.align as TextAlign
+      elements.push({
+        ...base,
+        type: 'text',
+        props: {
+          text: typeof text.text === 'string' ? text.text : '',
+          fontSize: typeof text.fontSize === 'number' ? text.fontSize : 14,
+          align: TEXT_ALIGNS.includes(align) ? align : 'MiddleCenter',
+          color: parseColor(text.color, { r: 1, g: 1, b: 1, a: 1 }),
+          font: fontFromOxide(text.font),
+        },
+      })
+    } else if (rawImg && typeof rawImg.url === 'string') {
+      elements.push({ ...base, type: 'panel', props: { color: parseColor(rawImg.color, { r: 1, g: 1, b: 1, a: 1 }), image: { kind: 'url', url: rawImg.url } } })
+    } else {
+      elements.push({ ...base, type: 'panel', props: { color: parseColor(img?.color, { r: 1, g: 1, b: 1, a: 1 }), image: null } })
+    }
+  }
+
+  // Infer the root layer from the most-referenced layer string that matches a known client panel.
+  let rootLayer: ClientPanel = 'Overlay'
+  let best = 0
+  for (const [layerStr, votes] of layerVotes) {
+    const match = CLIENT_PANELS.find((p) => p.oxide === layerStr)
+    if (match && votes > best) {
+      best = votes
+      rootLayer = match.id
+    }
+  }
+  return { elements, rootLayer }
 }

@@ -235,7 +235,7 @@ function chooseArrangement(id: Arrangement) {
           <div class="ld-menu-sep" />
           <button class="ld-menu-item" @click="addLayout"><Plus :size="13" /> New layout</button>
           <button class="ld-menu-item" @click="(exportClipboard(), (layoutMenuOpen = false))"><Clipboard :size="13" /> Copy to clipboard</button>
-          <button class="ld-menu-item" @click="(importClipboard(), (layoutMenuOpen = false))"><ClipboardPaste :size="13" /> Import from clipboard</button>
+          <button class="ld-menu-item" title="Accepts a designer export or raw CUI JSON from a plugin's CuiElementContainer.ToJson()" @click="(importClipboard(), (layoutMenuOpen = false))"><ClipboardPaste :size="13" /> Import from clipboard</button>
         </div>
       </div>
 
