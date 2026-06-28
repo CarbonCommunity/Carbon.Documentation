@@ -75,14 +75,18 @@ const boxStyle = computed(() => {
       style.backgroundSize = '100% 100%'
       style.backgroundRepeat = 'no-repeat'
     }
-    // Border = four inset edge subpanels at codegen time; preview it as an inset box-shadow frame
-    // (drawn over the background, only at the edges — so a translucent panel doesn't mesh). Uses
-    // box-shadow, not `border`, to avoid fighting the selection outline; scales with the canvas.
-    if (el.props.border && el.props.border.width > 0) {
-      style.boxShadow = `inset 0 0 0 ${el.props.border.width * props.scale}px ${cssColor(el.props.border.color)}`
-    }
   }
   return style
+})
+
+// Border preview. Rendered as a separate overlay AFTER the children (see template) so it paints on
+// top of them — matching the game, where the border = four edge subpanels appended as the panel's
+// last children. Inset box-shadow draws the frame over the edges only (no mesh on a translucent
+// panel); pointer-events off so it never blocks dragging. Scales with the canvas.
+const borderOverlay = computed(() => {
+  const el = props.element
+  if (el.type !== 'panel' || !el.props.border || el.props.border.width <= 0) return null
+  return { boxShadow: `inset 0 0 0 ${el.props.border.width * props.scale}px ${cssColor(el.props.border.color)}` }
 })
 
 // Map a Unity TextAnchor (Upper/Middle/Lower × Left/Center/Right) to flexbox + text-align.
@@ -299,10 +303,19 @@ const HANDLES: { edge: ResizeEdge; cls: string; cursor: string }[] = [
       :parent-h="metrics.cuiH"
       :scale="scale"
     />
+
+    <!-- border overlay LAST so it paints over the children (matches the in-game edge subpanels) -->
+    <div v-if="borderOverlay" class="ld-border-overlay" :style="borderOverlay" />
   </div>
 </template>
 
 <style scoped>
+.ld-border-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
 .ld-element {
   position: absolute;
   box-sizing: border-box;
