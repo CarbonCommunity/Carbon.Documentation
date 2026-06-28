@@ -691,7 +691,9 @@ function chooseArrangement(id: Arrangement) {
   position: relative;
 }
 
-.ld-menu-flyout {
+/* two classes → outranks the base .ld-menu-pop (top:100%/left:0) regardless of source order,
+   so the flyout sits to the right of its row instead of dropping below it */
+.ld-menu-pop.ld-menu-flyout {
   top: -6px;
   left: calc(100% + 3px);
   min-width: 200px;
