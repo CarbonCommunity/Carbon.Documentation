@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { useEventListener } from '@vueuse/core'
-import { ChevronDown, Clipboard, ClipboardPaste, HelpCircle, Layers, Lock, Pencil, Plus, Redo2, Trash2, Undo2 } from 'lucide-vue-next'
+import { useEventListener, useStorage } from '@vueuse/core'
+import { ChevronDown, Clipboard, ClipboardPaste, HelpCircle, Layers, Lock, Pencil, PictureInPicture2, Plus, Redo2, Trash2, Undo2, X } from 'lucide-vue-next'
 import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { usePopout } from './usePopout'
 import ContextMenu from './ContextMenu.vue'
 import DesignerCanvas from './DesignerCanvas.vue'
 import ElementTree from './ElementTree.vue'
@@ -136,13 +137,18 @@ useEventListener(
   true
 )
 
-// --- resizable panels ---
-const rightWidth = ref(300)
-const bottomHeight = ref(220)
-const bottomCollapsed = ref(false)
+// --- resizable panels (persisted to localStorage so the workspace sticks) ---
+const leftWidth = useStorage('carbon-layout-designer:workspace:leftWidth', 230)
+const rightWidth = useStorage('carbon-layout-designer:workspace:rightWidth', 300)
+const bottomHeight = useStorage('carbon-layout-designer:workspace:bottomHeight', 220)
+const bottomCollapsed = useStorage('carbon-layout-designer:workspace:bottomCollapsed', false)
 
-let resize: { type: 'right' | 'bottom'; start: number; origin: number } | null = null
+let resize: { type: 'left' | 'right' | 'bottom'; start: number; origin: number } | null = null
 
+function startLeftResize(e: PointerEvent) {
+  resize = { type: 'left', start: leftWidth.value, origin: e.clientX }
+  e.preventDefault()
+}
 function startRightResize(e: PointerEvent) {
   resize = { type: 'right', start: rightWidth.value, origin: e.clientX }
   e.preventDefault()
@@ -155,7 +161,9 @@ function startBottomResize(e: PointerEvent) {
 
 useEventListener(window, 'pointermove', (e: PointerEvent) => {
   if (!resize) return
-  if (resize.type === 'right') {
+  if (resize.type === 'left') {
+    leftWidth.value = Math.min(420, Math.max(180, resize.start + (e.clientX - resize.origin)))
+  } else if (resize.type === 'right') {
     rightWidth.value = Math.min(620, Math.max(240, resize.start - (e.clientX - resize.origin)))
   } else {
     bottomHeight.value = Math.min(560, Math.max(120, resize.start - (e.clientY - resize.origin)))
@@ -164,6 +172,10 @@ useEventListener(window, 'pointermove', (e: PointerEvent) => {
 useEventListener(window, 'pointerup', () => {
   resize = null
 })
+
+// --- pop-out panes (Document Picture-in-Picture; Chromium-only) ---
+const elementsPop = usePopout(() => 'Elements', { width: 320, height: 640 })
+const inspectorPop = usePopout(() => 'Inspector', { width: 360, height: 700 })
 </script>
 
 <template>
@@ -317,31 +329,69 @@ useEventListener(window, 'pointerup', () => {
 
     <!-- body -->
     <div class="ld-body">
-      <aside class="ld-left">
-        <div class="ld-panel-head">
-          <span>Elements</span>
-          <!-- add-element lives here (not the toolbar) → one type menu; picking a type adds it -->
-          <div class="ld-add-menu">
-            <button class="ld-add-head-btn" title="Add an element to the root canvas" @click.stop="addMenuOpen = !addMenuOpen">
-              <Plus :size="13" /> Add <ChevronDown :size="11" />
-            </button>
-            <ElementTypeMenu v-if="addMenuOpen" placement="below-right" @pick="onAddRoot" />
+      <aside class="ld-left" :class="{ 'ld-pane-popped': elementsPop.pipTarget.value }" :style="{ width: elementsPop.pipTarget.value ? undefined : `${leftWidth}px` }">
+        <Teleport :to="elementsPop.pipTarget.value" :disabled="!elementsPop.pipTarget.value">
+          <div class="ld-pane-inner">
+            <div class="ld-panel-head">
+              <span>Elements</span>
+              <div class="ld-panel-head-actions">
+                <!-- add-element lives here (not the toolbar) → one type menu; picking a type adds it -->
+                <div class="ld-add-menu">
+                  <button class="ld-add-head-btn" title="Add an element to the root canvas" @click.stop="addMenuOpen = !addMenuOpen">
+                    <Plus :size="13" /> Add <ChevronDown :size="11" />
+                  </button>
+                  <ElementTypeMenu v-if="addMenuOpen" placement="below-right" @pick="onAddRoot" />
+                </div>
+                <button
+                  v-if="elementsPop.supported"
+                  class="ld-pane-pop-btn"
+                  :title="elementsPop.pipTarget.value ? 'Pop back in' : 'Pop out into its own window'"
+                  @click="elementsPop.toggle()"
+                >
+                  <component :is="elementsPop.pipTarget.value ? X : PictureInPicture2" :size="14" />
+                </button>
+              </div>
+            </div>
+            <ElementTree />
           </div>
-        </div>
-        <ElementTree />
+        </Teleport>
+        <button v-if="elementsPop.pipTarget.value" class="ld-pane-restore" title="Bring Elements back" @click="elementsPop.close()">
+          <PictureInPicture2 :size="15" />
+          <span class="ld-pane-restore-label">Elements</span>
+        </button>
       </aside>
+
+      <div v-if="!elementsPop.pipTarget.value" class="ld-divider-v" title="Drag to resize" @pointerdown="startLeftResize" />
 
       <main class="ld-center">
         <DesignerCanvas />
       </main>
 
-      <div class="ld-divider-v" title="Drag to resize" @pointerdown="startRightResize" />
+      <div v-if="!inspectorPop.pipTarget.value" class="ld-divider-v" title="Drag to resize" @pointerdown="startRightResize" />
 
-      <aside class="ld-right" :style="{ width: `${rightWidth}px` }">
-        <div class="ld-panel-head">Inspector</div>
-        <div class="ld-right-scroll">
-          <InspectorPanel />
-        </div>
+      <aside class="ld-right" :class="{ 'ld-pane-popped': inspectorPop.pipTarget.value }" :style="{ width: inspectorPop.pipTarget.value ? undefined : `${rightWidth}px` }">
+        <Teleport :to="inspectorPop.pipTarget.value" :disabled="!inspectorPop.pipTarget.value">
+          <div class="ld-pane-inner">
+            <div class="ld-panel-head">
+              <span>Inspector</span>
+              <button
+                v-if="inspectorPop.supported"
+                class="ld-pane-pop-btn"
+                :title="inspectorPop.pipTarget.value ? 'Pop back in' : 'Pop out into its own window'"
+                @click="inspectorPop.toggle()"
+              >
+                <component :is="inspectorPop.pipTarget.value ? X : PictureInPicture2" :size="14" />
+              </button>
+            </div>
+            <div class="ld-right-scroll">
+              <InspectorPanel />
+            </div>
+          </div>
+        </Teleport>
+        <button v-if="inspectorPop.pipTarget.value" class="ld-pane-restore" title="Bring Inspector back" @click="inspectorPop.close()">
+          <PictureInPicture2 :size="15" />
+          <span class="ld-pane-restore-label">Inspector</span>
+        </button>
       </aside>
     </div>
 
@@ -729,6 +779,66 @@ useEventListener(window, 'pointerup', () => {
   overflow-y: auto;
   flex: 1;
   min-height: 0;
+}
+
+/* --- pop-out panes --- */
+/* the content that gets teleported into a PiP window; fills its container in both places */
+.ld-pane-inner {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+}
+
+.ld-panel-head-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ld-pane-pop-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px;
+  border-radius: 4px;
+  color: var(--vp-c-text-3);
+}
+
+.ld-pane-pop-btn:hover {
+  color: var(--c-carbon-1);
+  background: var(--c-carbon-soft);
+}
+
+/* while a side pane is popped out, its column collapses to a slim "bring it back" strip */
+.ld-left.ld-pane-popped,
+.ld-right.ld-pane-popped {
+  width: 34px;
+  align-items: stretch;
+}
+
+.ld-pane-restore {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  padding: 10px 0;
+  color: var(--vp-c-text-3);
+}
+
+.ld-pane-restore:hover {
+  color: var(--c-carbon-1);
+  background: var(--c-carbon-soft);
+}
+
+.ld-pane-restore-label {
+  writing-mode: vertical-rl;
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
 }
 
 /* captured-values dock */

@@ -1,14 +1,17 @@
 <script setup lang="ts">
-import { Check, Copy } from 'lucide-vue-next'
+import { Check, Copy, PictureInPicture2, X } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 import { generateCode } from './codegen'
 import { cuiColorString, referenceWidth, round } from './geometry'
+import { usePopout } from './usePopout'
 import { useDesigner } from './useDesigner'
 
 const { elements, canvas, provider, resolvedRects, copyText } = useDesigner()
 
 type Tab = 'code' | 'debug'
 const tab = ref<Tab>('code')
+
+const { supported: popoutSupported, pipTarget, toggle: togglePopout, close: closePopout } = usePopout(() => 'Generated code', { width: 520, height: 640 })
 
 // Primary output: copy-paste-ready C# for the selected provider.
 const code = computed(() => generateCode(elements.value, provider.value, canvas.rootLayer))
@@ -61,17 +64,35 @@ async function copy() {
 
 <template>
   <div class="ld-output">
-    <div class="ld-out-head">
-      <div class="ld-out-tabs" role="tablist">
-        <button :class="{ active: tab === 'code' }" role="tab" @click="tab = 'code'">Code</button>
-        <button :class="{ active: tab === 'debug' }" role="tab" @click="tab = 'debug'">Debug</button>
+    <Teleport :to="pipTarget" :disabled="!pipTarget">
+      <div class="ld-out-inner">
+        <div class="ld-out-head">
+          <div class="ld-out-tabs" role="tablist">
+            <button :class="{ active: tab === 'code' }" role="tab" @click="tab = 'code'">Code</button>
+            <button :class="{ active: tab === 'debug' }" role="tab" @click="tab = 'debug'">Debug</button>
+          </div>
+          <div class="ld-out-actions">
+            <button class="ld-out-copy" :title="copied ? 'Copied' : 'Copy'" @click="copy">
+              <component :is="copied ? Check : Copy" :size="13" />
+              {{ copied ? 'Copied' : 'Copy' }}
+            </button>
+            <button
+              v-if="popoutSupported"
+              class="ld-out-copy ld-out-pop"
+              :title="pipTarget ? 'Pop back in' : 'Pop out into its own window'"
+              @click="togglePopout"
+            >
+              <component :is="pipTarget ? X : PictureInPicture2" :size="13" />
+            </button>
+          </div>
+        </div>
+        <pre class="ld-out-body">{{ active }}</pre>
       </div>
-      <button class="ld-out-copy" :title="copied ? 'Copied' : 'Copy'" @click="copy">
-        <component :is="copied ? Check : Copy" :size="13" />
-        {{ copied ? 'Copied' : 'Copy' }}
-      </button>
+    </Teleport>
+    <div v-if="pipTarget" class="ld-out-placeholder">
+      <span>Code panel popped out.</span>
+      <button @click="closePopout"><X :size="12" /> Bring it back</button>
     </div>
-    <pre class="ld-out-body">{{ active }}</pre>
   </div>
 </template>
 
@@ -81,6 +102,53 @@ async function copy() {
   flex-direction: column;
   min-height: 0;
   height: 100%;
+}
+
+/* the part that actually pops out (teleported into the PiP window); fills its host either way */
+.ld-out-inner {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+  height: 100%;
+}
+
+.ld-out-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ld-out-pop {
+  padding: 2px 5px;
+}
+
+.ld-out-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 100%;
+  font-size: 12px;
+  color: var(--vp-c-text-3);
+}
+
+.ld-out-placeholder button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--vp-c-text-2);
+  padding: 3px 8px;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 4px;
+}
+
+.ld-out-placeholder button:hover {
+  color: var(--vp-c-text-1);
+  border-color: var(--c-carbon-1);
 }
 
 .ld-out-head {
