@@ -10,8 +10,31 @@
 // coordinate math here. Keep it that way: geometry lives in geometry.ts.
 
 import { cuiColorString, round } from './geometry'
-import { CLIENT_PANELS, DEFAULT_TEXT_FONT, fontDef, TEXT_ALIGNS, TEXT_FONTS } from './types'
-import type { ClientPanel, ClientPanelDef, ColorRGBA, CuiComponent, CuiElement, DesignerElement, PanelElement, Provider, TextAlign, TextFont, Vec2 } from './types'
+import { CLIENT_PANELS, DEFAULT_TEXT_FONT, fontDef, resolveText, TEXT_ALIGNS, TEXT_FONTS } from './types'
+import type { ClientPanel, ClientPanelDef, ColorRGBA, CuiComponent, CuiElement, DataSource, DesignerElement, PanelElement, Provider, TextAlign, TextFont, Vec2 } from './types'
+
+/**
+ * Inline-resolve every bound prop to its data-source value, returning plain literal elements the rest
+ * of the generators can treat normally. This is the "UX / JSON / Selected / live-preview" strategy —
+ * the value is baked into the element (the Class output, by contrast, references a field). Only bound
+ * elements are rewritten (cloned); an unbound layout passes through unchanged, so output for layouts
+ * with no data sources is byte-identical to before. Reserved for later: expanding `repeat` templates.
+ */
+function resolveBindings(elements: DesignerElement[], dataSources: DataSource[]): DesignerElement[] {
+  if (!dataSources.length) return elements
+  let changed = false
+  const out = elements.map((el) => {
+    if (el.type === 'text' && el.bindings?.text) {
+      const value = resolveText(el, dataSources)
+      if (value !== el.props.text) {
+        changed = true
+        return { ...el, props: { ...el.props, text: value } }
+      }
+    }
+    return el
+  })
+  return changed ? out : elements
+}
 
 /** Format a rounded number without a trailing ".0" or a stray "-0". */
 function num(v: number, decimals: number): string {
@@ -320,12 +343,12 @@ function adduiElement(el: DesignerElement, names: Map<string, string>, rootParen
 export function generateAddUiJson(
   elements: DesignerElement[],
   rootLayer: ClientPanel = 'Overlay',
-  opts: { rootParent?: string } = {},
+  opts: { rootParent?: string; dataSources?: DataSource[] } = {},
 ): CuiElement[] {
   if (!elements.length) return []
   const layer = CLIENT_PANELS.find((p) => p.id === rootLayer) ?? CLIENT_PANELS[0]
   const rootParent = opts.rootParent ?? layer.oxide
-  const expanded = expandBorders(elements)
+  const expanded = expandBorders(resolveBindings(elements, opts.dataSources ?? []))
   const names = buildNames(expanded)
   const ordered = treeOrder(expanded)
   return ordered.map((el) => adduiElement(el, names, rootParent))
@@ -334,12 +357,12 @@ export function generateAddUiJson(
 // --- public --------------------------------------------------------------------------
 
 /** Generate C# source for the given elements, targeting the chosen provider + root layer. */
-export function generateCode(elements: DesignerElement[], provider: Provider, rootLayer: ClientPanel = 'Overlay'): string {
+export function generateCode(elements: DesignerElement[], provider: Provider, rootLayer: ClientPanel = 'Overlay', dataSources: DataSource[] = []): string {
   if (!elements.length) return '// Add an element to generate code.'
   const layer = CLIENT_PANELS.find((p) => p.id === rootLayer) ?? CLIENT_PANELS[0]
-  // Bordered panels expand into edge subpanels; names are built from this order (stable collision
-  // suffixes); emission is parent-first.
-  const expanded = expandBorders(elements)
+  // Bound props resolve to their data-source value (inline); bordered panels expand into edge
+  // subpanels; names are built from this order (stable collision suffixes); emission is parent-first.
+  const expanded = expandBorders(resolveBindings(elements, dataSources))
   const names = buildNames(expanded)
   const ordered = treeOrder(expanded)
   if (provider === 'oxide') return genOxide(ordered, names, layer)
@@ -362,9 +385,11 @@ function indent(code: string, spaces: number): string {
  * a `TestPlugin`. Oxide/Carbon get their own usings/namespace/base class; `both` keeps the whole shell
  * `#if CARBON`-guarded (the UX body is already #if-split). Mirrors the confirmed skeleton.
  */
-export function generateFullClass(elements: DesignerElement[], provider: Provider, rootLayer: ClientPanel = 'Overlay'): string {
+export function generateFullClass(elements: DesignerElement[], provider: Provider, rootLayer: ClientPanel = 'Overlay', dataSources: DataSource[] = []): string {
   if (!elements.length) return '// Add an element to generate code.'
-  const body = indent(generateCode(elements, provider, rootLayer), 8)
+  // First checkpoint: bound values are inlined here too (no class fields yet). The next checkpoint
+  // promotes data sources to real fields the body references — this is where they'll be emitted.
+  const body = indent(generateCode(elements, provider, rootLayer, dataSources), 8)
   const info = '[Info("Test Plugin", "hizen", "0.0.1")]'
   const desc = '[Description("Generated by the Carbon Layout Designer")]'
   const method = ['    [ChatCommand("test")]', '    private void TestCommand(BasePlayer player, string command, string[] args)', '    {', body, '    }']
@@ -414,8 +439,8 @@ export function generateFullClass(elements: DesignerElement[], provider: Provide
 }
 
 /** The CUI `CuiElement[]` (the `CuiHelper.ToJson()` / AddUi wire format) as pretty JSON. */
-export function generateJson(elements: DesignerElement[], rootLayer: ClientPanel = 'Overlay'): string {
-  const arr = generateAddUiJson(elements, rootLayer)
+export function generateJson(elements: DesignerElement[], rootLayer: ClientPanel = 'Overlay', dataSources: DataSource[] = []): string {
+  const arr = generateAddUiJson(elements, rootLayer, { dataSources })
   if (!arr.length) return '// Add an element to generate JSON.'
   return JSON.stringify(arr, null, 2)
 }
@@ -425,11 +450,11 @@ export function generateJson(elements: DesignerElement[], rootLayer: ClientPanel
  * the whole tree so parent references stay correct. Handy "what builds this box" view for the
  * selected element. `both` #if-splits like the full snippet.
  */
-export function generateSelected(elements: DesignerElement[], selectedIds: string[], provider: Provider, rootLayer: ClientPanel = 'Overlay'): string {
+export function generateSelected(elements: DesignerElement[], selectedIds: string[], provider: Provider, rootLayer: ClientPanel = 'Overlay', dataSources: DataSource[] = []): string {
   const HINT = '// Select an element on the canvas to see its code.'
   if (!selectedIds.length) return HINT
   const layer = CLIENT_PANELS.find((p) => p.id === rootLayer) ?? CLIENT_PANELS[0]
-  const expanded = expandBorders(elements)
+  const expanded = expandBorders(resolveBindings(elements, dataSources))
   const names = buildNames(expanded)
   const root = rootContainerName(names)
   const sel = new Set(selectedIds)

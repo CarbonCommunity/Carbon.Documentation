@@ -192,6 +192,20 @@ interface BaseElement {
   anchorMax: Vec2
   offsetMin: Vec2
   offsetMax: Vec2
+  /**
+   * Optional prop bindings: maps an element prop path (e.g. `"text"`) to a {@link DataSource} id. A
+   * bound prop draws its value from that data source instead of its literal. In the *Class* output
+   * the source becomes a field the element references; every other path (UX / JSON / Selected / live
+   * preview) inlines the resolved value. Absent => every prop is a literal (legacy behaviour).
+   */
+  bindings?: Record<string, string>
+  /**
+   * Reserved — not yet expanded. Marks this element as a template repeated once per item of a list
+   * data source: the Class output will emit a `foreach`, while UX/preview will expand to one concrete
+   * element per item (the item value inlined). Modelled now so the list → template → scrollable work
+   * needs no model change later. Absent/null => a normal, single element.
+   */
+  repeat?: { source: string } | null
 }
 
 export interface PanelElement extends BaseElement {
@@ -206,6 +220,54 @@ export interface TextElement extends BaseElement {
 
 /** Discriminated on `type` — narrow with `el.type === 'text'` to reach type-specific props. */
 export type DesignerElement = PanelElement | TextElement
+
+// --- Data sources --------------------------------------------------------------------
+//
+// A data source is a named, typed static value that lives ALONGSIDE the element tree. In the
+// generated *Class* output it becomes a field on the plugin — a shared string, or a collection a
+// "template" element repeats over — and bound elements reference it. On every other path (the UX
+// snippet, the AddUi JSON, the Selected view, and the live preview) the value is INLINED per element
+// (and, for lists, per item), so the preview always ships plain static CUI. Deliberately small for
+// now: `text` is wired end-to-end; `list` is modelled for the forthcoming repeat/template work.
+
+export type DataSourceKind = 'text' | 'list'
+
+interface BaseDataSource {
+  id: string
+  /** Display name; doubles as the generated C# field identifier (sanitised at codegen time). */
+  name: string
+  kind: DataSourceKind
+}
+
+/** A shared string — e.g. a title or label reused by several text elements. */
+export interface TextDataSource extends BaseDataSource {
+  kind: 'text'
+  value: string
+}
+
+/** A static collection — the sample items a template element repeats over (see `BaseElement.repeat`). */
+export interface ListDataSource extends BaseDataSource {
+  kind: 'list'
+  items: string[]
+}
+
+/** Discriminated on `kind`. Narrow with `ds.kind === 'text'` to reach kind-specific fields. */
+export type DataSource = TextDataSource | ListDataSource
+
+/**
+ * Resolve a text element's effective text: the value of its bound text data source if it has one and
+ * the source exists, otherwise the element's own literal `text` prop. Pure — shared by the canvas
+ * render and the inline codegen paths so they always agree on what the element displays.
+ */
+export function resolveText(el: DesignerElement, sources: DataSource[]): string {
+  if (el.type !== 'text') return ''
+  const dsId = el.bindings?.text
+  if (dsId) {
+    const ds = sources.find((s) => s.id === dsId)
+    if (ds?.kind === 'text') return ds.value
+  }
+  return el.props.text
+}
 
 // --- AddUi wire types ----------------------------------------------------------------
 //

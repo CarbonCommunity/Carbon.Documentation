@@ -28,7 +28,7 @@ const PERM = 'draw_ui' // PermissionTypes.DrawUi — frontend gate only; the ser
 const PREVIEW_ROOT = 'layoutdesigner.preview'
 const DEBOUNCE_MS = 200
 
-const { elements, canvas } = useDesigner()
+const { elements, dataSources, canvas } = useDesigner()
 
 const previewing = ref(false)
 const previewServer = ref<Server | null>(null)
@@ -64,7 +64,7 @@ function rootElement(): CuiElement {
 
 /** Root + layout body (the full tree). Create/update flags are decided by the diff at push time. */
 function buildPayload(): CuiElement[] {
-  const body = generateAddUiJson(elements.value, canvas.rootLayer, { rootParent: PREVIEW_ROOT })
+  const body = generateAddUiJson(elements.value, canvas.rootLayer, { rootParent: PREVIEW_ROOT, dataSources: dataSources.value })
   return [rootElement(), ...body]
 }
 
@@ -112,7 +112,7 @@ function startPreview() {
   pushSnapshot()
   // Re-push on any edit to elements or canvas (rootLayer/aspect). The name diff handles add/move/remove
   // and even a full layout switch, so no special-casing here.
-  stopWatch = watch([elements, () => ({ ...canvas })], schedulePush, { deep: true })
+  stopWatch = watch([elements, dataSources, () => ({ ...canvas })], schedulePush, { deep: true })
 }
 
 function stopPreview() {

@@ -6,7 +6,7 @@ import { cuiColorString, referenceWidth, round } from './geometry'
 import { usePopout } from './usePopout'
 import { useDesigner } from './useDesigner'
 
-const { elements, canvas, provider, selectedIds, resolvedRects, copyText } = useDesigner()
+const { elements, dataSources, canvas, provider, selectedIds, resolvedRects, copyText } = useDesigner()
 
 // Emission level. Target (Oxide/Carbon/Both) applies to class/ux/selected; json + debug are
 // provider-independent (json = the CUI wire format, debug = the captured IR).
@@ -29,10 +29,10 @@ const targetApplies = computed(() => tab.value === 'class' || tab.value === 'ux'
 const { supported: popoutSupported, pipTarget, toggle: togglePopout, close: closePopout } = usePopout(() => 'Generated code', { width: 520, height: 640 })
 
 // One computed per emission level (each only recomputes when its inputs change).
-const uxCode = computed(() => generateCode(elements.value, provider.value, canvas.rootLayer))
-const classCode = computed(() => generateFullClass(elements.value, provider.value, canvas.rootLayer))
-const jsonCode = computed(() => generateJson(elements.value, canvas.rootLayer))
-const selectedCode = computed(() => generateSelected(elements.value, selectedIds.value, provider.value, canvas.rootLayer))
+const uxCode = computed(() => generateCode(elements.value, provider.value, canvas.rootLayer, dataSources.value))
+const classCode = computed(() => generateFullClass(elements.value, provider.value, canvas.rootLayer, dataSources.value))
+const jsonCode = computed(() => generateJson(elements.value, canvas.rootLayer, dataSources.value))
+const selectedCode = computed(() => generateSelected(elements.value, selectedIds.value, provider.value, canvas.rootLayer, dataSources.value))
 
 // Debug view: the captured intermediate representation every generator reads from — the values
 // in CUI-native form, handy for sanity-checking what the code above was built from.

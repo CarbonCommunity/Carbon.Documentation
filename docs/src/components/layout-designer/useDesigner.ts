@@ -7,12 +7,18 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { parseCuiJson } from './codegen'
 import { resolveRect, rootRect } from './geometry'
-import type { CanvasConfig, ColorRGBA, DesignerElement, ElementType, PanelElement, PanelProps, Provider, Rect, TextElement, TextProps, Vec2 } from './types'
+import type { CanvasConfig, ColorRGBA, DataSource, DataSourceKind, DesignerElement, ElementType, ListDataSource, PanelElement, PanelProps, Provider, Rect, TextDataSource, TextElement, TextProps, Vec2 } from './types'
 
 let idCounter = 0
 function nextId(): { id: string; n: number } {
   const n = ++idCounter
   return { id: `el-${n}`, n }
+}
+
+let dsCounter = 0
+function nextDataSourceId(): { id: string; n: number } {
+  const n = ++dsCounter
+  return { id: `ds-${n}`, n }
 }
 
 function makePanel(parentId: string | null, anchorMin: Vec2, anchorMax: Vec2, offsetMin: Vec2, offsetMax: Vec2, color: ColorRGBA): PanelElement {
@@ -41,6 +47,8 @@ const COLORS: ColorRGBA[] = [
 // --- state ---------------------------------------------------------------------------
 
 const elements = ref<DesignerElement[]>([])
+/** Static data sources (shared strings / template lists) — see types.ts. Bound elements resolve through these. */
+const dataSources = ref<DataSource[]>([])
 const selectedIds = ref<string[]>([])
 const canvas = reactive<CanvasConfig>({ referenceHeight: 720, aspect: '16:9', rootLayer: 'Overlay' })
 /** Target framework for the generated code (see codegen.ts). */
@@ -375,6 +383,65 @@ function seedSample() {
   selectedIds.value = [title.id]
 }
 
+// --- data sources --------------------------------------------------------------------
+
+/** Next generic data-source name: "Data N" past the highest existing one. */
+function nextDataSourceName(): string {
+  let max = 0
+  for (const ds of dataSources.value) {
+    const m = /^Data (\d+)$/.exec(ds.name)
+    if (m) max = Math.max(max, Number(m[1]))
+  }
+  return `Data ${max + 1}`
+}
+
+/** Create a data source of the given kind (text default) and return it. */
+function addDataSource(kind: DataSourceKind = 'text', name?: string): DataSource {
+  const { id } = nextDataSourceId()
+  const finalName = name ?? nextDataSourceName()
+  const ds: DataSource =
+    kind === 'list'
+      ? ({ id, name: finalName, kind: 'list', items: ['Item 1', 'Item 2', 'Item 3'] } satisfies ListDataSource)
+      : ({ id, name: finalName, kind: 'text', value: 'Text' } satisfies TextDataSource)
+  dataSources.value.push(ds)
+  return ds
+}
+
+type DataSourcePatch = Partial<Pick<TextDataSource, 'name' | 'value'>> & Partial<Pick<ListDataSource, 'items'>>
+
+/** Patch a data source's fields. The inspector only sends keys valid for the source's kind. */
+function updateDataSource(id: string, patch: DataSourcePatch) {
+  const ds = dataSources.value.find((d) => d.id === id)
+  if (!ds) return
+  if (patch.name !== undefined) ds.name = patch.name
+  if (ds.kind === 'text' && patch.value !== undefined) ds.value = patch.value
+  if (ds.kind === 'list' && patch.items !== undefined) ds.items = patch.items
+}
+
+/** Delete a data source and clear any element bindings that referenced it (no dangling ids). */
+function removeDataSource(id: string) {
+  dataSources.value = dataSources.value.filter((d) => d.id !== id)
+  for (const el of elements.value) {
+    if (!el.bindings) continue
+    for (const key of Object.keys(el.bindings)) if (el.bindings[key] === id) delete el.bindings[key]
+    if (el.repeat?.source === id) el.repeat = null
+    if (Object.keys(el.bindings).length === 0) delete el.bindings
+  }
+}
+
+/** Bind (dsId) or unbind (null) an element prop to a data source. */
+function setBinding(elId: string, propPath: string, dsId: string | null) {
+  const el = byId.value.get(elId)
+  if (!el) return
+  if (dsId) {
+    if (!el.bindings) el.bindings = {}
+    el.bindings[propPath] = dsId
+  } else if (el.bindings) {
+    delete el.bindings[propPath]
+    if (Object.keys(el.bindings).length === 0) delete el.bindings
+  }
+}
+
 // --- history (undo / redo) -----------------------------------------------------------
 
 let past: string[] = []
@@ -384,21 +451,28 @@ const canUndo = ref(false)
 const canRedo = ref(false)
 
 function snapshot(): string {
-  return JSON.stringify({ elements: elements.value, canvas })
+  return JSON.stringify({ elements: elements.value, dataSources: dataSources.value, canvas })
 }
 function reindexIdCounter() {
-  // Ids look like `el-N` (legacy layouts use `panel-N`); seed the counter past the highest
-  // existing suffix so freshly added elements never collide with loaded ones.
+  // Element ids look like `el-N` (legacy layouts use `panel-N`); data-source ids `ds-N`. Seed each
+  // counter past the highest existing suffix so freshly added items never collide with loaded ones.
   let max = 0
   for (const e of elements.value) {
     const m = /-(\d+)$/.exec(e.id)
     if (m) max = Math.max(max, Number(m[1]))
   }
   idCounter = max
+  let dsMax = 0
+  for (const ds of dataSources.value) {
+    const m = /-(\d+)$/.exec(ds.id)
+    if (m) dsMax = Math.max(dsMax, Number(m[1]))
+  }
+  dsCounter = dsMax
 }
 function applySnapshot(s: string) {
   const o = JSON.parse(s)
   elements.value = o.elements
+  dataSources.value = o.dataSources ?? []
   Object.assign(canvas, o.canvas)
   reindexIdCounter()
   selectedIds.value = selectedIds.value.filter((id) => elements.value.some((e) => e.id === id))
@@ -446,6 +520,8 @@ function redo() {
 
 interface LayoutData {
   elements: DesignerElement[]
+  /** Optional for legacy layouts saved before data sources existed → treated as []. */
+  dataSources?: DataSource[]
   canvas: CanvasConfig
 }
 interface Layout {
@@ -478,10 +554,11 @@ function defaultCanvas(): CanvasConfig {
   return { referenceHeight: 720, aspect: '16:9', rootLayer: 'Overlay' }
 }
 function cloneData(): LayoutData {
-  return JSON.parse(JSON.stringify({ elements: elements.value, canvas }))
+  return JSON.parse(JSON.stringify({ elements: elements.value, dataSources: dataSources.value, canvas }))
 }
 function applyData(data: LayoutData) {
   elements.value = JSON.parse(JSON.stringify(data.elements ?? []))
+  dataSources.value = JSON.parse(JSON.stringify(data.dataSources ?? []))
   Object.assign(canvas, defaultCanvas(), data.canvas ?? {})
   reindexIdCounter()
   selectedIds.value = []
@@ -672,7 +749,7 @@ function init() {
 // into a single entry. Post-undo/redo states are skipped by the snapshot-equality check.
 let saveTimer: ReturnType<typeof setTimeout> | undefined
 watch(
-  [elements, canvas],
+  [elements, dataSources, canvas],
   () => {
     clearTimeout(saveTimer)
     saveTimer = setTimeout(() => {
@@ -687,6 +764,7 @@ export function useDesigner() {
   return {
     // state
     elements,
+    dataSources,
     selectedIds,
     selectedId,
     selected,
@@ -743,5 +821,10 @@ export function useDesigner() {
     fill,
     openContextMenu,
     closeContextMenu,
+    // data sources
+    addDataSource,
+    updateDataSource,
+    removeDataSource,
+    setBinding,
   }
 }

@@ -11,7 +11,7 @@ import {
   type OffsetPatch,
   type ResizeEdge,
 } from './geometry'
-import { fontDef } from './types'
+import { fontDef, resolveText } from './types'
 import type { DesignerElement, TextAlign } from './types'
 import { useDesigner } from './useDesigner'
 
@@ -41,6 +41,7 @@ const {
   rectOf,
   setGuides,
   clearGuides,
+  dataSources,
 } = useDesigner()
 
 const isSelected = computed(() => isSelectedFn(props.element.id)) // any selection (outline)
@@ -113,7 +114,8 @@ const textStyle = computed<Record<string, string> | null>(() => {
     fontWeight: String(f.weight ?? 400),
   }
 })
-const textContent = computed(() => (props.element.type === 'text' ? props.element.props.text : ''))
+// Resolve through any data-source binding so the canvas shows the same text the generated code emits.
+const textContent = computed(() => resolveText(props.element, dataSources.value))
 
 const children = computed(() => childrenOf(props.element.id))
 
