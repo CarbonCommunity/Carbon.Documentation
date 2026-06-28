@@ -2,21 +2,19 @@
 import { Check, Copy, PictureInPicture2, X } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 import { generateCode, generateFullClass, generateJson, generateSelected } from './codegen'
-import { cuiColorString, referenceWidth, round } from './geometry'
 import { usePopout } from './usePopout'
 import { useDesigner } from './useDesigner'
 
-const { elements, dataSources, canvas, provider, selectedIds, resolvedRects, copyText } = useDesigner()
+const { elements, dataSources, canvas, provider, selectedIds, copyText } = useDesigner()
 
-// Emission level. Target (Oxide/Carbon/Both) applies to class/ux/selected; json + debug are
-// provider-independent (json = the CUI wire format, debug = the captured IR).
-type Tab = 'class' | 'ux' | 'json' | 'selected' | 'debug'
+// Emission level. Target (Oxide/Carbon/Both) applies to class/ux/selected; json is
+// provider-independent (the CUI wire format). The captured IR lives in its own Debug pane.
+type Tab = 'class' | 'ux' | 'json' | 'selected'
 const TABS: { id: Tab; label: string }[] = [
   { id: 'class', label: 'Class' },
   { id: 'ux', label: 'UX' },
   { id: 'selected', label: 'Selected' },
   { id: 'json', label: 'JSON' },
-  { id: 'debug', label: 'Debug' },
 ]
 const PROVIDERS = [
   { value: 'oxide', label: 'Oxide' },
@@ -26,46 +24,13 @@ const PROVIDERS = [
 const tab = ref<Tab>('ux')
 const targetApplies = computed(() => tab.value === 'class' || tab.value === 'ux' || tab.value === 'selected')
 
-const { supported: popoutSupported, pipTarget, toggle: togglePopout, close: closePopout } = usePopout(() => 'Generated code', { width: 520, height: 640 })
+const { supported: popoutSupported, pipTarget, toggle: togglePopout, close: closePopout } = usePopout(() => 'Code', { width: 520, height: 640 })
 
 // One computed per emission level (each only recomputes when its inputs change).
 const uxCode = computed(() => generateCode(elements.value, provider.value, canvas.rootLayer, dataSources.value))
 const classCode = computed(() => generateFullClass(elements.value, provider.value, canvas.rootLayer, dataSources.value))
 const jsonCode = computed(() => generateJson(elements.value, canvas.rootLayer, dataSources.value))
 const selectedCode = computed(() => generateSelected(elements.value, selectedIds.value, provider.value, canvas.rootLayer, dataSources.value))
-
-// Debug view: the captured intermediate representation every generator reads from — the values
-// in CUI-native form, handy for sanity-checking what the code above was built from.
-const inventory = computed(() => {
-  const rects = resolvedRects.value
-  return {
-    canvas: {
-      aspect: canvas.aspect,
-      rootLayer: canvas.rootLayer,
-      referenceWidth: round(referenceWidth(canvas), 1),
-      referenceHeight: canvas.referenceHeight,
-    },
-    provider: provider.value,
-    elements: elements.value.map((el) => {
-      const r = rects.get(el.id)
-      return {
-        name: el.name,
-        type: el.type,
-        parent: el.parentId ? elements.value.find((e) => e.id === el.parentId)?.name ?? null : null,
-        anchorMin: [round(el.anchorMin.x), round(el.anchorMin.y)],
-        anchorMax: [round(el.anchorMax.x), round(el.anchorMax.y)],
-        offsetMin: [round(el.offsetMin.x), round(el.offsetMin.y)],
-        offsetMax: [round(el.offsetMax.x), round(el.offsetMax.y)],
-        color: cuiColorString(el.props.color),
-        image: el.type === 'panel' && el.props.image ? { ...el.props.image } : null,
-        text: el.type === 'text' ? { text: el.props.text, fontSize: el.props.fontSize, align: el.props.align } : null,
-        resolvedRect: r ? { x: round(r.x, 1), y: round(r.y, 1), w: round(r.w, 1), h: round(r.h, 1) } : null,
-      }
-    }),
-  }
-})
-
-const debugCode = computed(() => JSON.stringify(inventory.value, null, 2))
 
 const active = computed(() => {
   switch (tab.value) {
@@ -75,8 +40,6 @@ const active = computed(() => {
       return jsonCode.value
     case 'selected':
       return selectedCode.value
-    case 'debug':
-      return debugCode.value
     default:
       return uxCode.value
   }

@@ -11,7 +11,7 @@ import ElementTypeMenu from './ElementTypeMenu.vue'
 import InfoTip from './InfoTip.vue'
 import InspectorPanel from './InspectorPanel.vue'
 import { ASPECT_PRESETS, CLIENT_PANELS, type AspectPreset, type ClientPanel, type ElementType } from './types'
-import CodeOutput from './CodeOutput.vue'
+import CodeDock from './CodeDock.vue'
 import LivePreviewControls from './LivePreviewControls.vue'
 import { useDesigner } from './useDesigner'
 
@@ -265,21 +265,24 @@ const dataSourcesPop = usePopout(() => 'Data Sources', { width: 320, height: 420
 const inspectorPop = usePopout(() => 'Inspector', { width: 360, height: 700 })
 
 // --- pane visibility (the View menu; show/hide each aux pane, persisted) ---
-type PaneKey = 'elements' | 'dataSources' | 'inspector' | 'code'
+type PaneKey = 'elements' | 'dataSources' | 'inspector' | 'code' | 'debug'
 const VIEW_PANES: { key: PaneKey; label: string }[] = [
   { key: 'elements', label: 'Elements' },
   { key: 'dataSources', label: 'Data Sources' },
   { key: 'inspector', label: 'Inspector' },
   { key: 'code', label: 'Code' },
+  { key: 'debug', label: 'Debug' },
 ]
 const paneVisible = useStorage<Record<PaneKey, boolean>>(
   'carbon-layout-designer:workspace:paneVisible',
-  { elements: true, dataSources: true, inspector: true, code: true },
+  { elements: true, dataSources: true, inspector: true, code: true, debug: true },
   undefined, // let vueuse pick its SSR-safe default storage (this page is server-rendered at build time)
-  { mergeDefaults: true } // a future pane (e.g. Debug) added to the defaults shows up for existing users
+  { mergeDefaults: true } // a newly-added pane (e.g. Debug) picks up its default for existing users
 )
 // the left column only exists while at least one of its stacked panes is shown
 const leftColVisible = computed(() => paneVisible.value.elements || paneVisible.value.dataSources)
+// the Code/Debug dock exists while either of its panes is shown
+const codeDockVisible = computed(() => paneVisible.value.code || paneVisible.value.debug)
 function togglePane(key: PaneKey) {
   const next = !paneVisible.value[key]
   paneVisible.value[key] = next
@@ -613,19 +616,19 @@ function chooseArrangement(id: Arrangement) {
       </aside>
 
       <!-- code as a right-hand column (the "Code side-panel" arrangement; bottom dock is hidden then) -->
-      <template v-if="codeSide && paneVisible.code">
+      <template v-if="codeSide && codeDockVisible">
         <div class="ld-divider-v" title="Drag to resize" :style="{ order: 50 }" @pointerdown="startCodeColResize" />
         <aside class="ld-code-col" :style="{ width: `${codeColWidth}px`, order: 60 }">
-          <CodeOutput />
+          <CodeDock :show-code="paneVisible.code" :show-debug="paneVisible.debug" />
         </aside>
       </template>
     </div>
 
-    <!-- generated-code dock (resizable / collapsible) — hidden when code is shown as a side panel -->
-    <div v-if="!codeSide && paneVisible.code" class="ld-dock" :class="{ collapsed: bottomCollapsed }">
+    <!-- Code/Debug dock (resizable / collapsible) — hidden when code is shown as a side panel -->
+    <div v-if="!codeSide && codeDockVisible" class="ld-dock" :class="{ collapsed: bottomCollapsed }">
       <div class="ld-dock-grip" :class="{ resizable: !bottomCollapsed }" @pointerdown="startBottomResize">
         <span class="ld-grip-lines" aria-hidden="true" />
-        <span v-if="bottomCollapsed" class="ld-dock-title">Generated code</span>
+        <span v-if="bottomCollapsed" class="ld-dock-title">Code</span>
         <button
           class="ld-dock-toggle"
           :title="bottomCollapsed ? 'Expand' : 'Collapse'"
@@ -636,7 +639,7 @@ function chooseArrangement(id: Arrangement) {
         </button>
       </div>
       <div v-show="!bottomCollapsed" class="ld-dock-body" :style="{ height: `${bottomHeight}px` }">
-        <CodeOutput />
+        <CodeDock :show-code="paneVisible.code" :show-debug="paneVisible.debug" />
       </div>
     </div>
 
