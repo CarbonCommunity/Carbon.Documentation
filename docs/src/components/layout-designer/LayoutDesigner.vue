@@ -578,6 +578,7 @@ function chooseArrangement(id: Arrangement) {
 
 /* dropdown menus (layouts) */
 .ld-layout-menu,
+.ld-arrange-menu,
 .ld-help {
   position: relative;
   display: inline-flex;
