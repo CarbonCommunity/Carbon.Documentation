@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useEventListener, useStorage } from '@vueuse/core'
-import { ChevronDown, Clipboard, ClipboardPaste, HelpCircle, LayoutDashboard, Layers, Lock, Pencil, PictureInPicture2, Plus, Redo2, Trash2, Undo2, X } from 'lucide-vue-next'
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { ChevronDown, ChevronRight, Clipboard, ClipboardPaste, FolderOpen, HelpCircle, LayoutDashboard, Lock, Pencil, PictureInPicture2, Plus, Redo2, Trash2, Undo2, X } from 'lucide-vue-next'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { usePopout } from './usePopout'
 import ContextMenu from './ContextMenu.vue'
 import DataSourcePanel from './DataSourcePanel.vue'
@@ -33,7 +33,6 @@ const {
   canRedo,
   layouts,
   currentLayoutId,
-  currentLayoutName,
   newLayout,
   switchLayout,
   renameLayout,
@@ -55,9 +54,17 @@ onBeforeUnmount(() => {
   document.body.classList.remove('layout-designer-page')
 })
 
-// --- layout & help menus ---
-const layoutMenuOpen = ref(false)
+// --- menus (File menu + Help) ---
+const fileMenuOpen = ref(false)
+const newFlyoutOpen = ref(false)
+const loadFlyoutOpen = ref(false)
 const helpOpen = ref(false)
+
+function closeFileMenu() {
+  fileMenuOpen.value = false
+  newFlyoutOpen.value = false
+  loadFlyoutOpen.value = false
+}
 
 // --- add-element picker (single button → type menu; picking a type IS the add) ---
 const addMenuOpen = ref(false)
@@ -66,13 +73,27 @@ function onAddRoot(type: ElementType) {
   addMenuOpen.value = false
 }
 
+// File ▸ New presets. Today there's just Empty + Default (the seeded sample); more starters can be
+// added here once the tool supports richer UX.
+const NEW_PRESETS: { id: 'empty' | 'default'; name: string; hint: string }[] = [
+  { id: 'empty', name: 'Empty', hint: 'A blank layout' },
+  { id: 'default', name: 'Default', hint: 'The starter sample (panel + title + corner)' },
+]
+function fileNew(preset: 'empty' | 'default') {
+  newLayout(undefined, preset) // auto-named "Layout N"; rename via the pencil
+  closeFileMenu()
+}
 function chooseLayout(id: string) {
   switchLayout(id)
-  layoutMenuOpen.value = false
+  closeFileMenu()
 }
-function addLayout() {
-  newLayout() // auto-named "Layout N"; rename via the pencil
-  layoutMenuOpen.value = false
+function fileImport() {
+  importClipboard()
+  closeFileMenu()
+}
+function fileExport() {
+  exportClipboard()
+  closeFileMenu()
 }
 function doRename(id: string, current: string) {
   const name = window.prompt('Rename layout', current)
@@ -81,6 +102,29 @@ function doRename(id: string, current: string) {
 function doDelete(id: string, name: string) {
   if (window.confirm(`Delete layout "${name}"?`)) deleteLayout(id)
 }
+
+// --- recent layouts (most-recently-opened quick-load list at the bottom of File) ---
+const RECENT_MAX = 6
+const recentIds = useStorage<string[]>('carbon-layout-designer:workspace:recent', [])
+watch(
+  currentLayoutId,
+  (id) => {
+    if (!id) return
+    recentIds.value = [id, ...recentIds.value.filter((x) => x !== id)].slice(0, 20)
+  },
+  { immediate: true }
+)
+// most-recent-first, excluding the layout already open and any that were since deleted
+const recentLayouts = computed(() => {
+  const out: { id: string; name: string }[] = []
+  for (const id of recentIds.value) {
+    if (id === currentLayoutId.value) continue
+    const l = layouts.value.find((x) => x.id === id)
+    if (l) out.push({ id: l.id, name: l.name })
+    if (out.length >= RECENT_MAX) break
+  }
+  return out
+})
 
 // --- keyboard shortcuts ---
 function isTyping(e: KeyboardEvent) {
@@ -125,7 +169,7 @@ useEventListener(
   'pointerdown',
   (e: PointerEvent) => {
     const t = e.target as HTMLElement
-    if (!t.closest('.ld-layout-menu')) layoutMenuOpen.value = false
+    if (!t.closest('.ld-file-menu')) closeFileMenu()
     if (!t.closest('.ld-arrange-menu')) arrangeMenuOpen.value = false
     if (!t.closest('.ld-help')) helpOpen.value = false
     if (!t.closest('.ld-add-menu')) addMenuOpen.value = false
@@ -232,23 +276,59 @@ function chooseArrangement(id: Arrangement) {
     <div class="ld-toolbar">
       <span class="ld-title">Layout Designer</span>
 
-      <!-- layout switcher -->
-      <div class="ld-layout-menu">
-        <button class="ld-btn" title="Layouts" @click.stop="layoutMenuOpen = !layoutMenuOpen">
-          <Layers :size="14" /> {{ currentLayoutName }} <ChevronDown :size="13" />
-        </button>
-        <div v-if="layoutMenuOpen" class="ld-menu-pop" @pointerdown.stop>
-          <button v-for="l in layouts" :key="l.id" class="ld-menu-item" :class="{ active: l.id === currentLayoutId }" @click="chooseLayout(l.id)">
-            <span class="ld-menu-name">{{ l.name }}</span>
-            <span class="ld-menu-row-actions">
-              <Pencil :size="12" title="Rename" @click.stop="doRename(l.id, l.name)" />
-              <Trash2 :size="12" title="Delete" @click.stop="doDelete(l.id, l.name)" />
-            </span>
-          </button>
+      <!-- File menu (new / load / import / export / recent) -->
+      <div class="ld-file-menu">
+        <button class="ld-menubar-btn" :class="{ open: fileMenuOpen }" title="File" @click.stop="fileMenuOpen = !fileMenuOpen">File</button>
+        <div v-if="fileMenuOpen" class="ld-menu-pop" @pointerdown.stop>
+          <!-- New: flyout of starter presets (Empty / Default / …) -->
+          <div class="ld-menu-flyout-anchor" @pointerenter="((newFlyoutOpen = true), (loadFlyoutOpen = false))" @pointerleave="newFlyoutOpen = false">
+            <button class="ld-menu-item" :class="{ active: newFlyoutOpen }">
+              <Plus :size="13" /> <span class="ld-menu-name">New</span> <ChevronRight :size="13" />
+            </button>
+            <div v-if="newFlyoutOpen" class="ld-menu-pop ld-menu-flyout" @pointerdown.stop>
+              <button v-for="p in NEW_PRESETS" :key="p.id" class="ld-menu-item" :title="p.hint" @click="fileNew(p.id)">
+                <span class="ld-menu-name">{{ p.name }}</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Load: flyout of every saved layout (rename / delete inline) -->
+          <div class="ld-menu-flyout-anchor" @pointerenter="((loadFlyoutOpen = true), (newFlyoutOpen = false))" @pointerleave="loadFlyoutOpen = false">
+            <button class="ld-menu-item" :class="{ active: loadFlyoutOpen }">
+              <FolderOpen :size="13" /> <span class="ld-menu-name">Load</span> <ChevronRight :size="13" />
+            </button>
+            <div v-if="loadFlyoutOpen" class="ld-menu-pop ld-menu-flyout" @pointerdown.stop>
+              <button
+                v-for="l in layouts"
+                :key="l.id"
+                class="ld-menu-item"
+                :class="{ active: l.id === currentLayoutId }"
+                @click="chooseLayout(l.id)"
+              >
+                <span class="ld-menu-name">{{ l.name }}</span>
+                <span class="ld-menu-row-actions">
+                  <Pencil :size="12" title="Rename" @click.stop="doRename(l.id, l.name)" />
+                  <Trash2 :size="12" title="Delete" @click.stop="doDelete(l.id, l.name)" />
+                </span>
+              </button>
+            </div>
+          </div>
+
           <div class="ld-menu-sep" />
-          <button class="ld-menu-item" @click="addLayout"><Plus :size="13" /> New layout</button>
-          <button class="ld-menu-item" @click="(exportClipboard(), (layoutMenuOpen = false))"><Clipboard :size="13" /> Copy to clipboard</button>
-          <button class="ld-menu-item" title="Accepts a designer export or raw CUI JSON from a plugin's CuiElementContainer.ToJson()" @click="(importClipboard(), (layoutMenuOpen = false))"><ClipboardPaste :size="13" /> Import from clipboard</button>
+          <button class="ld-menu-item" title="Accepts a designer export or raw CUI JSON from a plugin's CuiElementContainer.ToJson()" @click="fileImport"><ClipboardPaste :size="13" /> Import from clipboard</button>
+          <button class="ld-menu-item" @click="fileExport"><Clipboard :size="13" /> Export to clipboard</button>
+
+          <div class="ld-menu-sep" />
+          <button class="ld-menu-item" disabled title="Close all open layout tabs (arrives with the tabbed canvas)"><X :size="13" /> Close All</button>
+
+          <template v-if="recentLayouts.length">
+            <div class="ld-menu-sep" />
+            <div class="ld-menu-section">Recent</div>
+            <button v-for="(l, i) in recentLayouts" :key="l.id" class="ld-menu-item" @click="chooseLayout(l.id)">
+              <span class="ld-menu-recent-idx">{{ i + 1 }}</span>
+              <span class="ld-menu-name">{{ l.name }}</span>
+            </button>
+          </template>
         </div>
       </div>
 
@@ -585,11 +665,61 @@ function chooseArrangement(id: Arrangement) {
 }
 
 /* dropdown menus (layouts) */
-.ld-layout-menu,
+.ld-file-menu,
 .ld-arrange-menu,
 .ld-help {
   position: relative;
   display: inline-flex;
+}
+
+/* menu-bar style trigger (File / View) — borderless text, distinct from the bordered .ld-btn */
+.ld-menubar-btn {
+  padding: 5px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 4px;
+  color: var(--vp-c-text-1);
+}
+
+.ld-menubar-btn:hover,
+.ld-menubar-btn.open {
+  background: var(--c-carbon-soft);
+}
+
+/* a File-menu row that opens a side flyout (New / Load) */
+.ld-menu-flyout-anchor {
+  position: relative;
+}
+
+.ld-menu-flyout {
+  top: -6px;
+  left: calc(100% + 3px);
+  min-width: 200px;
+}
+
+.ld-menu-section {
+  padding: 5px 9px 3px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--vp-c-text-3);
+}
+
+.ld-menu-recent-idx {
+  width: 13px;
+  text-align: right;
+  color: var(--vp-c-text-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.ld-menu-item:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.ld-menu-item:disabled:hover {
+  background: none;
 }
 
 .ld-menu-pop {

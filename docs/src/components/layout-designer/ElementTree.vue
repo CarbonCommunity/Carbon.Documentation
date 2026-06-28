@@ -64,7 +64,7 @@ function onDragStart(rowId: string, e: DragEvent) {
   addMenu.id = null
   if (e.dataTransfer) {
     e.dataTransfer.effectAllowed = 'move'
-    e.dataTransfer.setData('text/plain', rowId) // Firefox won't start a drag without data
+    e.dataTransfer.setData('text/plain', rowId) // some browsers won't start a drag without data
   }
 }
 

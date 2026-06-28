@@ -592,14 +592,14 @@ function loadFromStorage(): boolean {
     return false
   }
 }
-function newLayout(name?: string) {
+function newLayout(name?: string, preset: 'empty' | 'default' = 'default') {
   persist()
   const finalName = name ?? nextLayoutName()
   const id = newLayoutId()
   layouts.value.push({ id, name: finalName, data: { elements: [], canvas: defaultCanvas() }, updatedAt: Date.now() })
   currentLayoutId.value = id
   applyData({ elements: [], canvas: defaultCanvas() })
-  seedSample() // every new layout starts from the default content
+  if (preset === 'default') seedSample() // 'default' seeds the sample content; 'empty' starts blank
   persist()
   resetHistory()
 }

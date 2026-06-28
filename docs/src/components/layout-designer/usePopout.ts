@@ -7,7 +7,7 @@ import { onBeforeUnmount, shallowRef } from 'vue'
 // lifecycle (open / close / cleanup) and the one-time stylesheet copy; the caller wires `pipTarget`
 // into a <Teleport :to="pipTarget" :disabled="!pipTarget"> and shows a placeholder while popped.
 //
-// Chromium-only (Chrome/Edge). `supported` is false elsewhere — callers hide the control then.
+// Chromium-based browsers only. `supported` is false elsewhere — callers hide the control then.
 
 export interface PopoutOptions {
   width?: number
