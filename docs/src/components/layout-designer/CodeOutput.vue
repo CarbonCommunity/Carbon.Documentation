@@ -3,6 +3,7 @@ import { Check, Copy, PictureInPicture2, X } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 import { generateCode, generateFullClass, generateJson, generateSelected } from './codegen'
 import { usePopout } from './usePopout'
+import { useShiki } from './useShiki'
 import { useDesigner } from './useDesigner'
 
 const { elements, dataSources, canvas, provider, selectedIds, copyText } = useDesigner()
@@ -45,6 +46,10 @@ const active = computed(() => {
       return uxCode.value
   }
 })
+
+// JSON tab is JSON; the rest are C#. Highlighted via the same engine VitePress uses for docs blocks.
+const lang = computed(() => (tab.value === 'json' ? 'json' : 'csharp'))
+const { html } = useShiki(() => active.value, lang)
 
 const copied = ref(false)
 async function copy() {
@@ -101,7 +106,9 @@ async function copy() {
             </button>
           </div>
         </div>
-        <pre class="ld-out-body">{{ active }}</pre>
+        <!-- eslint-disable-next-line vue/no-v-html — Shiki output is generated from our own code strings -->
+        <div v-if="html" class="ld-shiki" v-html="html" />
+        <pre v-else class="ld-out-body">{{ active }}</pre>
       </div>
     </Teleport>
     <div v-if="pipTarget" class="ld-out-placeholder">
@@ -276,6 +283,24 @@ async function copy() {
   line-height: 1.5;
   color: var(--vp-c-text-2);
   font-variant-numeric: tabular-nums;
+  white-space: pre;
+}
+
+/* Shiki-highlighted output (v-html). The container scrolls; the injected <pre> carries the padding
+   and matches the docs code-block background, with token colors from the theme. */
+.ld-shiki {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.ld-shiki :deep(pre.shiki) {
+  margin: 0;
+  padding: 10px;
+  background: var(--vp-code-block-bg, #161618) !important;
+  font-family: var(--vp-font-family-mono);
+  font-size: 11.5px;
+  line-height: 1.5;
   white-space: pre;
 }
 </style>

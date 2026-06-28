@@ -3,6 +3,7 @@ import { Check, Copy, PictureInPicture2, X } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 import { cuiColorString, referenceWidth, round } from './geometry'
 import { usePopout } from './usePopout'
+import { useShiki } from './useShiki'
 import { useDesigner } from './useDesigner'
 
 const { elements, canvas, provider, resolvedRects, copyText } = useDesigner()
@@ -41,6 +42,7 @@ const inventory = computed(() => {
 })
 
 const debugCode = computed(() => JSON.stringify(inventory.value, null, 2))
+const { html } = useShiki(() => debugCode.value, () => 'json')
 
 const copied = ref(false)
 async function copy() {
@@ -73,7 +75,9 @@ async function copy() {
             </button>
           </div>
         </div>
-        <pre class="ld-out-body">{{ debugCode }}</pre>
+        <!-- eslint-disable-next-line vue/no-v-html — Shiki output is generated from our own IR -->
+        <div v-if="html" class="ld-shiki" v-html="html" />
+        <pre v-else class="ld-out-body">{{ debugCode }}</pre>
       </div>
     </Teleport>
     <div v-if="pipTarget" class="ld-out-placeholder">
@@ -152,6 +156,23 @@ async function copy() {
   line-height: 1.5;
   color: var(--vp-c-text-2);
   font-variant-numeric: tabular-nums;
+  white-space: pre;
+}
+
+/* Shiki-highlighted output (v-html); container scrolls, injected <pre> carries padding + theme bg */
+.ld-shiki {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.ld-shiki :deep(pre.shiki) {
+  margin: 0;
+  padding: 10px;
+  background: var(--vp-code-block-bg, #161618) !important;
+  font-family: var(--vp-font-family-mono);
+  font-size: 11.5px;
+  line-height: 1.5;
   white-space: pre;
 }
 
