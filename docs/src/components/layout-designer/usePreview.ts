@@ -129,7 +129,9 @@ function selectServer(sv: Server | null) {
   if (previewing.value) stopPreview()
   previewServer.value = sv
   previewPlayerId.value = null
-  sv?.sendCall('Players') // refresh PlayerInfo/SleeperInfo
+  // Refresh players only if the socket is already open. A freshly-added server is still CONNECTING
+  // (send() would throw); its connect() onopen handler fetches Players itself.
+  if (sv?.IsConnected) sv.sendCall('Players')
 }
 
 function selectPlayer(pid: bigint | null) {

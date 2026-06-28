@@ -85,7 +85,7 @@ const serverLabel = (s: Server) => s.CachedHostname || s.Address
             <option value="" disabled>{{ players.length ? 'Select a player…' : 'No players online' }}</option>
             <option v-for="p in players" :key="String(p.SteamID)" :value="String(p.SteamID)">{{ p.DisplayName }}</option>
           </select>
-          <button class="ld-icon-btn" title="Refresh players" :disabled="!previewServer" @click="previewServer?.sendCall('Players')"><RefreshCw :size="13" /></button>
+          <button class="ld-icon-btn" title="Refresh players" :disabled="!previewServer?.IsConnected" @click="previewServer?.sendCall('Players')"><RefreshCw :size="13" /></button>
         </div>
       </label>
 
