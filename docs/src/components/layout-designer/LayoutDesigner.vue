@@ -196,6 +196,8 @@ useEventListener(window, 'pointerup', () => {
       <button class="ld-icon-btn" :disabled="!canUndo" title="Undo (Ctrl+Z)" @click="undo"><Undo2 :size="15" /></button>
       <button class="ld-icon-btn" :disabled="!canRedo" title="Redo (Ctrl+Shift+Z)" @click="redo"><Redo2 :size="15" /></button>
 
+      <LivePreviewControls />
+
       <div class="ld-spacer" />
 
       <div class="ld-tool-field">
@@ -294,8 +296,6 @@ useEventListener(window, 'pointerup', () => {
         </select>
         <InfoTip text="Target framework for the generated code: Oxide (CUI), Carbon (LUI), or Both (one file with #if CARBON / #else directives). Shown in the panel below." />
       </div>
-
-      <LivePreviewControls />
 
       <div class="ld-help">
         <button class="ld-icon-btn" title="Shortcuts & help" @click.stop="helpOpen = !helpOpen"><HelpCircle :size="16" /></button>
