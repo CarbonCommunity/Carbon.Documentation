@@ -63,14 +63,25 @@ async function copy() {
       <div class="ld-out-inner">
         <div class="ld-out-head">
           <div class="ld-out-head-left">
-            <select
-              v-model="provider"
+            <div
               class="ld-out-target"
-              :disabled="!targetApplies"
+              role="group"
+              aria-label="Target framework"
+              :class="{ disabled: !targetApplies }"
               :title="targetApplies ? 'Target framework for the generated code' : 'Target applies to Class / UX / Selected'"
             >
-              <option v-for="p in PROVIDERS" :key="p.value" :value="p.value">{{ p.label }}</option>
-            </select>
+              <button
+                v-for="p in PROVIDERS"
+                :key="p.value"
+                type="button"
+                :class="{ active: provider === p.value }"
+                :disabled="!targetApplies"
+                @click="provider = p.value"
+              >
+                {{ p.label }}
+              </button>
+            </div>
+            <span class="ld-out-sep" aria-hidden="true" />
             <div class="ld-out-tabs" role="tablist">
               <button v-for="t in TABS" :key="t.id" :class="{ active: tab === t.id }" role="tab" @click="tab = t.id">{{ t.label }}</button>
             </div>
@@ -129,23 +140,49 @@ async function copy() {
   gap: 6px;
 }
 
+/* target framework as a segmented control (mirrors the toolbar's Aspect control) */
 .ld-out-target {
+  display: inline-flex;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.ld-out-target button {
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--vp-c-text-2);
   background: var(--vp-c-bg);
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 3px;
-  padding: 2px 4px;
+  padding: 3px 10px;
+  border-right: 1px solid var(--vp-c-divider);
 }
 
-.ld-out-target:hover:not(:disabled) {
-  border-color: var(--c-carbon-1);
+.ld-out-target button:last-child {
+  border-right: none;
 }
 
-.ld-out-target:disabled {
+.ld-out-target button:hover:not(.active):not(:disabled) {
+  color: var(--vp-c-text-1);
+}
+
+.ld-out-target button.active {
+  background: var(--c-carbon-1);
+  color: #fff;
+}
+
+.ld-out-target.disabled {
   opacity: 0.4;
+}
+
+.ld-out-target.disabled button {
   cursor: not-allowed;
+}
+
+/* thin divider grouping the target apart from the view tabs */
+.ld-out-sep {
+  width: 1px;
+  height: 18px;
+  background: var(--vp-c-divider);
 }
 
 .ld-out-pop {
