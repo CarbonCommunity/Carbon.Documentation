@@ -103,10 +103,10 @@ const serverLabel = (s: Server) => s.CachedHostname || s.Address
           <button class="lp-icon" title="Refresh players" :disabled="!previewServer?.IsConnected" @click="doRefresh"><RefreshCw :size="13" /></button>
         </div>
         <p v-if="previewServer?.IsConnected && !mayViewPlayers" class="lp-warn">
-          This account lacks the <code>players_view</code> permission, so the server won't return the player list. Enable it in <code>config.webpanel.json</code> + <code>webpanel.loadcfg</code>.
+          This account lacks the <code>players_view</code> permission, so the server won't return the player list. Enable it in <code>config.webpanel.json</code> + <code>c.webpanel.loadcfg</code>.
         </p>
         <p v-else-if="noPlayersNotice" class="lp-warn">
-          No players loaded. Confirm the server is connected over <strong>Bridge</strong> (the Antenna toggle) and the webpanel is actually running on this port (<code>webpanel.connected</code>) — a plain RCON connection won't return the player list.
+          No players loaded. Confirm the server is connected over <strong>Bridge</strong> (the Antenna toggle) and the webpanel is actually running on this port (<code>c.webpanel.connected</code>) — a plain RCON connection won't return the player list.
         </p>
       </label>
 
