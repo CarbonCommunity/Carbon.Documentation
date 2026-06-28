@@ -60,7 +60,32 @@ const newFlyoutOpen = ref(false)
 const loadFlyoutOpen = ref(false)
 const helpOpen = ref(false)
 
+// Flyouts (New / Load) open on hover. A short close-delay bridges the gap between a row and its
+// flyout so moving the mouse diagonally onto the submenu doesn't dismiss it (the timer is cancelled
+// the moment the pointer re-enters either the row or the flyout, which is a descendant of the row).
+let flyoutTimer: ReturnType<typeof setTimeout> | null = null
+function clearFlyoutTimer() {
+  if (flyoutTimer) {
+    clearTimeout(flyoutTimer)
+    flyoutTimer = null
+  }
+}
+function openFlyout(which: 'new' | 'load') {
+  clearFlyoutTimer()
+  newFlyoutOpen.value = which === 'new'
+  loadFlyoutOpen.value = which === 'load'
+}
+function scheduleFlyoutClose() {
+  clearFlyoutTimer()
+  flyoutTimer = setTimeout(() => {
+    newFlyoutOpen.value = false
+    loadFlyoutOpen.value = false
+    flyoutTimer = null
+  }, 180)
+}
+
 function closeFileMenu() {
+  clearFlyoutTimer()
   fileMenuOpen.value = false
   newFlyoutOpen.value = false
   loadFlyoutOpen.value = false
@@ -281,7 +306,7 @@ function chooseArrangement(id: Arrangement) {
         <button class="ld-menubar-btn" :class="{ open: fileMenuOpen }" title="File" @click.stop="fileMenuOpen = !fileMenuOpen">File</button>
         <div v-if="fileMenuOpen" class="ld-menu-pop" @pointerdown.stop>
           <!-- New: flyout of starter presets (Empty / Default / …) -->
-          <div class="ld-menu-flyout-anchor" @pointerenter="((newFlyoutOpen = true), (loadFlyoutOpen = false))" @pointerleave="newFlyoutOpen = false">
+          <div class="ld-menu-flyout-anchor" @pointerenter="openFlyout('new')" @pointerleave="scheduleFlyoutClose">
             <button class="ld-menu-item" :class="{ active: newFlyoutOpen }">
               <Plus :size="13" /> <span class="ld-menu-name">New</span> <ChevronRight :size="13" />
             </button>
@@ -293,7 +318,7 @@ function chooseArrangement(id: Arrangement) {
           </div>
 
           <!-- Load: flyout of every saved layout (rename / delete inline) -->
-          <div class="ld-menu-flyout-anchor" @pointerenter="((loadFlyoutOpen = true), (newFlyoutOpen = false))" @pointerleave="loadFlyoutOpen = false">
+          <div class="ld-menu-flyout-anchor" @pointerenter="openFlyout('load')" @pointerleave="scheduleFlyoutClose">
             <button class="ld-menu-item" :class="{ active: loadFlyoutOpen }">
               <FolderOpen :size="13" /> <span class="ld-menu-name">Load</span> <ChevronRight :size="13" />
             </button>
