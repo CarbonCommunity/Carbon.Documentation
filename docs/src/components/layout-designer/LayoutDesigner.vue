@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useEventListener, useStorage } from '@vueuse/core'
-import { ChevronDown, ChevronRight, Clipboard, ClipboardPaste, FolderOpen, HelpCircle, LayoutDashboard, Lock, Pencil, PictureInPicture2, Plus, Redo2, Trash2, Undo2, X } from 'lucide-vue-next'
+import { Check, ChevronDown, ChevronRight, Clipboard, ClipboardPaste, FolderOpen, HelpCircle, LayoutDashboard, Lock, Pencil, PictureInPicture2, Plus, Redo2, Trash2, Undo2, X } from 'lucide-vue-next'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { usePopout } from './usePopout'
 import ContextMenu from './ContextMenu.vue'
@@ -54,10 +54,11 @@ onBeforeUnmount(() => {
   document.body.classList.remove('layout-designer-page')
 })
 
-// --- menus (File menu + Help) ---
+// --- menus (File menu + View menu + Help) ---
 const fileMenuOpen = ref(false)
 const newFlyoutOpen = ref(false)
 const loadFlyoutOpen = ref(false)
+const viewMenuOpen = ref(false)
 const helpOpen = ref(false)
 
 // Flyouts (New / Load) open on hover. A short close-delay bridges the gap between a row and its
@@ -195,6 +196,7 @@ useEventListener(
   (e: PointerEvent) => {
     const t = e.target as HTMLElement
     if (!t.closest('.ld-file-menu')) closeFileMenu()
+    if (!t.closest('.ld-view-menu')) viewMenuOpen.value = false
     if (!t.closest('.ld-arrange-menu')) arrangeMenuOpen.value = false
     if (!t.closest('.ld-help')) helpOpen.value = false
     if (!t.closest('.ld-add-menu')) addMenuOpen.value = false
@@ -261,6 +263,33 @@ useEventListener(window, 'pointerup', () => {
 const elementsPop = usePopout(() => 'Elements', { width: 320, height: 640 })
 const dataSourcesPop = usePopout(() => 'Data Sources', { width: 320, height: 420 })
 const inspectorPop = usePopout(() => 'Inspector', { width: 360, height: 700 })
+
+// --- pane visibility (the View menu; show/hide each aux pane, persisted) ---
+type PaneKey = 'elements' | 'dataSources' | 'inspector' | 'code'
+const VIEW_PANES: { key: PaneKey; label: string }[] = [
+  { key: 'elements', label: 'Elements' },
+  { key: 'dataSources', label: 'Data Sources' },
+  { key: 'inspector', label: 'Inspector' },
+  { key: 'code', label: 'Code' },
+]
+const paneVisible = useStorage<Record<PaneKey, boolean>>(
+  'carbon-layout-designer:workspace:paneVisible',
+  { elements: true, dataSources: true, inspector: true, code: true },
+  undefined, // let vueuse pick its SSR-safe default storage (this page is server-rendered at build time)
+  { mergeDefaults: true } // a future pane (e.g. Debug) added to the defaults shows up for existing users
+)
+// the left column only exists while at least one of its stacked panes is shown
+const leftColVisible = computed(() => paneVisible.value.elements || paneVisible.value.dataSources)
+function togglePane(key: PaneKey) {
+  const next = !paneVisible.value[key]
+  paneVisible.value[key] = next
+  if (!next) {
+    // hiding a popped-out pane would otherwise leave an orphaned PiP window — bring it back first
+    if (key === 'elements') elementsPop.close()
+    else if (key === 'dataSources') dataSourcesPop.close()
+    else if (key === 'inspector') inspectorPop.close()
+  }
+}
 
 // --- workspace arrangement (preset pane layouts, persisted) ---
 type Arrangement = 'default' | 'inspector-left' | 'code-right'
@@ -354,6 +383,18 @@ function chooseArrangement(id: Arrangement) {
               <span class="ld-menu-name">{{ l.name }}</span>
             </button>
           </template>
+        </div>
+      </div>
+
+      <!-- View menu (show / hide each aux pane) -->
+      <div class="ld-view-menu">
+        <button class="ld-menubar-btn" :class="{ open: viewMenuOpen }" title="View" @click.stop="viewMenuOpen = !viewMenuOpen">View</button>
+        <div v-if="viewMenuOpen" class="ld-menu-pop" @pointerdown.stop>
+          <button v-for="p in VIEW_PANES" :key="p.key" class="ld-menu-item ld-menu-check" @click="togglePane(p.key)">
+            <Check v-if="paneVisible[p.key]" :size="13" class="ld-check-on" />
+            <span v-else class="ld-check-spacer" />
+            <span class="ld-menu-name">{{ p.label }}</span>
+          </button>
         </div>
       </div>
 
@@ -470,9 +511,9 @@ function chooseArrangement(id: Arrangement) {
     <!-- body -->
     <div class="ld-body">
       <!-- left column: two independent panes (Elements, Data Sources), each pop-out-able -->
-      <div class="ld-left-col" :style="{ width: `${leftWidth}px`, order: bodyOrder.elements }">
+      <div v-if="leftColVisible" class="ld-left-col" :style="{ width: `${leftWidth}px`, order: bodyOrder.elements }">
         <!-- Elements -->
-        <aside class="ld-pane ld-pane-grow" :class="{ 'ld-pane-popped-v': elementsPop.pipTarget.value }">
+        <aside v-if="paneVisible.elements" class="ld-pane ld-pane-grow" :class="{ 'ld-pane-popped-v': elementsPop.pipTarget.value }">
           <Teleport :to="elementsPop.pipTarget.value" :disabled="!elementsPop.pipTarget.value">
             <div class="ld-pane-inner">
               <div class="ld-panel-head">
@@ -506,10 +547,10 @@ function chooseArrangement(id: Arrangement) {
           </button>
         </aside>
 
-        <div v-if="!elementsPop.pipTarget.value && !dataSourcesPop.pipTarget.value" class="ld-divider-h" title="Drag to resize Data Sources" @pointerdown="startDsResize" />
+        <div v-if="paneVisible.elements && paneVisible.dataSources && !elementsPop.pipTarget.value && !dataSourcesPop.pipTarget.value" class="ld-divider-h" title="Drag to resize Data Sources" @pointerdown="startDsResize" />
 
         <!-- Data Sources (its own pane, not part of Elements) -->
-        <aside class="ld-pane ld-ds-pane" :class="{ 'ld-pane-popped-v': dataSourcesPop.pipTarget.value }" :style="dataSourcesPop.pipTarget.value ? undefined : { height: `${dsHeight}px` }">
+        <aside v-if="paneVisible.dataSources" class="ld-pane ld-ds-pane" :class="{ 'ld-pane-popped-v': dataSourcesPop.pipTarget.value }" :style="dataSourcesPop.pipTarget.value ? undefined : { height: `${dsHeight}px` }">
           <Teleport :to="dataSourcesPop.pipTarget.value" :disabled="!dataSourcesPop.pipTarget.value">
             <div class="ld-pane-inner">
               <div class="ld-panel-head">
@@ -538,15 +579,15 @@ function chooseArrangement(id: Arrangement) {
         </aside>
       </div>
 
-      <div v-if="!(elementsPop.pipTarget.value && dataSourcesPop.pipTarget.value)" class="ld-divider-v" title="Drag to resize" :style="{ order: bodyOrder.elementsDiv }" @pointerdown="startLeftResize" />
+      <div v-if="leftColVisible && !(elementsPop.pipTarget.value && dataSourcesPop.pipTarget.value)" class="ld-divider-v" title="Drag to resize" :style="{ order: bodyOrder.elementsDiv }" @pointerdown="startLeftResize" />
 
       <main class="ld-center" :style="{ order: bodyOrder.center }">
         <DesignerCanvas />
       </main>
 
-      <div v-if="!inspectorPop.pipTarget.value" class="ld-divider-v" title="Drag to resize" :style="{ order: bodyOrder.inspectorDiv }" @pointerdown="startRightResize" />
+      <div v-if="paneVisible.inspector && !inspectorPop.pipTarget.value" class="ld-divider-v" title="Drag to resize" :style="{ order: bodyOrder.inspectorDiv }" @pointerdown="startRightResize" />
 
-      <aside class="ld-right" :class="{ 'ld-pane-popped': inspectorPop.pipTarget.value }" :style="{ width: inspectorPop.pipTarget.value ? undefined : `${rightWidth}px`, order: bodyOrder.inspector }">
+      <aside v-if="paneVisible.inspector" class="ld-right" :class="{ 'ld-pane-popped': inspectorPop.pipTarget.value }" :style="{ width: inspectorPop.pipTarget.value ? undefined : `${rightWidth}px`, order: bodyOrder.inspector }">
         <Teleport :to="inspectorPop.pipTarget.value" :disabled="!inspectorPop.pipTarget.value">
           <div class="ld-pane-inner">
             <div class="ld-panel-head">
@@ -572,7 +613,7 @@ function chooseArrangement(id: Arrangement) {
       </aside>
 
       <!-- code as a right-hand column (the "Code side-panel" arrangement; bottom dock is hidden then) -->
-      <template v-if="codeSide">
+      <template v-if="codeSide && paneVisible.code">
         <div class="ld-divider-v" title="Drag to resize" :style="{ order: 50 }" @pointerdown="startCodeColResize" />
         <aside class="ld-code-col" :style="{ width: `${codeColWidth}px`, order: 60 }">
           <CodeOutput />
@@ -581,7 +622,7 @@ function chooseArrangement(id: Arrangement) {
     </div>
 
     <!-- generated-code dock (resizable / collapsible) — hidden when code is shown as a side panel -->
-    <div v-if="!codeSide" class="ld-dock" :class="{ collapsed: bottomCollapsed }">
+    <div v-if="!codeSide && paneVisible.code" class="ld-dock" :class="{ collapsed: bottomCollapsed }">
       <div class="ld-dock-grip" :class="{ resizable: !bottomCollapsed }" @pointerdown="startBottomResize">
         <span class="ld-grip-lines" aria-hidden="true" />
         <span v-if="bottomCollapsed" class="ld-dock-title">Generated code</span>
@@ -691,10 +732,25 @@ function chooseArrangement(id: Arrangement) {
 
 /* dropdown menus (layouts) */
 .ld-file-menu,
+.ld-view-menu,
 .ld-arrange-menu,
 .ld-help {
   position: relative;
   display: inline-flex;
+}
+
+/* View menu: checkable pane toggles (Check icon when shown, spacer keeps labels aligned) */
+.ld-menu-check {
+  gap: 7px;
+}
+
+.ld-check-spacer {
+  display: inline-block;
+  width: 13px;
+}
+
+.ld-check-on {
+  color: var(--c-carbon-1);
 }
 
 /* menu-bar style trigger (File / View) — borderless text, distinct from the bordered .ld-btn */
