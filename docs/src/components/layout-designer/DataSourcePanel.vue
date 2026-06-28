@@ -3,13 +3,14 @@
 // sources (shared strings); the `list` kind exists in the model/store and lands here alongside the
 // repeat/template work. Editing a source's value live-updates every element bound to it (canvas +
 // generated code), since both resolve through resolveText().
-import { Plus, Trash2 } from 'lucide-vue-next'
+// Body of the Data Sources pane (the pane chrome — header, Add, pop-out — lives in LayoutDesigner,
+// mirroring how ElementTree is the body of the Elements pane).
+import { Trash2 } from 'lucide-vue-next'
 import { computed } from 'vue'
-import InfoTip from './InfoTip.vue'
 import type { TextDataSource } from './types'
 import { useDesigner } from './useDesigner'
 
-const { dataSources, elements, addDataSource, updateDataSource, removeDataSource } = useDesigner()
+const { dataSources, elements, updateDataSource, removeDataSource } = useDesigner()
 
 // Only text sources are editable here for now (list editing ships with repeat/template).
 const textSources = computed(() => dataSources.value.filter((d): d is TextDataSource => d.kind === 'text'))
@@ -24,9 +25,6 @@ const usage = computed(() => {
   return counts
 })
 
-function add() {
-  addDataSource('text')
-}
 function setName(id: string, raw: string) {
   const name = raw.trim()
   if (name) updateDataSource(id, { name })
@@ -43,13 +41,6 @@ function remove(id: string) {
 
 <template>
   <div class="ld-ds">
-    <div class="ld-panel-head ld-ds-head">
-      <span>Data Sources <InfoTip text="Named static values your elements can bind to. In the generated Class they become fields; everywhere else (UX/JSON/preview) the value is inlined. Edit one and every bound element updates." /></span>
-      <button class="ld-add-head-btn" title="Add a text data source" @click="add">
-        <Plus :size="13" /> Add
-      </button>
-    </div>
-
     <div class="ld-ds-body">
       <p v-if="!textSources.length" class="ld-ds-empty">
         No data sources yet.<br />Add one, then bind a Text element to it in the Inspector.
@@ -87,25 +78,6 @@ function remove(id: string) {
   flex-direction: column;
   min-height: 0;
   height: 100%;
-}
-.ld-ds-head {
-  flex: 0 0 auto;
-}
-.ld-add-head-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  padding: 3px 8px;
-  border-radius: 5px;
-  border: 1px solid var(--vp-c-divider);
-  background: var(--vp-c-bg-soft);
-  color: var(--vp-c-text-1);
-  cursor: pointer;
-}
-.ld-add-head-btn:hover {
-  border-color: var(--vp-c-brand-1);
-  color: var(--vp-c-brand-1);
 }
 .ld-ds-body {
   flex: 1 1 auto;

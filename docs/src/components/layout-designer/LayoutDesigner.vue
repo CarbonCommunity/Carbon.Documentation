@@ -25,6 +25,7 @@ const {
   selectedIds,
   removeSelected,
   duplicateSelected,
+  addDataSource,
   nudge,
   undo,
   redo,
@@ -189,6 +190,7 @@ useEventListener(window, 'pointerup', () => {
 
 // --- pop-out panes (Document Picture-in-Picture; Chromium-only) ---
 const elementsPop = usePopout(() => 'Elements', { width: 320, height: 640 })
+const dataSourcesPop = usePopout(() => 'Data Sources', { width: 320, height: 420 })
 const inspectorPop = usePopout(() => 'Inspector', { width: 360, height: 700 })
 
 // --- workspace arrangement (preset pane layouts, persisted) ---
@@ -363,45 +365,76 @@ function chooseArrangement(id: Arrangement) {
 
     <!-- body -->
     <div class="ld-body">
-      <aside class="ld-left" :class="{ 'ld-pane-popped': elementsPop.pipTarget.value }" :style="{ width: elementsPop.pipTarget.value ? undefined : `${leftWidth}px`, order: bodyOrder.elements }">
-        <Teleport :to="elementsPop.pipTarget.value" :disabled="!elementsPop.pipTarget.value">
-          <div class="ld-pane-inner">
-            <div class="ld-panel-head">
-              <span>Elements</span>
-              <div class="ld-panel-head-actions">
-                <!-- add-element lives here (not the toolbar) → one type menu; picking a type adds it -->
-                <div class="ld-add-menu">
-                  <button class="ld-add-head-btn" title="Add an element to the root canvas" @click.stop="addMenuOpen = !addMenuOpen">
-                    <Plus :size="13" /> Add <ChevronDown :size="11" />
+      <!-- left column: two independent panes (Elements, Data Sources), each pop-out-able -->
+      <div class="ld-left-col" :style="{ width: `${leftWidth}px`, order: bodyOrder.elements }">
+        <!-- Elements -->
+        <aside class="ld-pane ld-pane-grow" :class="{ 'ld-pane-popped-v': elementsPop.pipTarget.value }">
+          <Teleport :to="elementsPop.pipTarget.value" :disabled="!elementsPop.pipTarget.value">
+            <div class="ld-pane-inner">
+              <div class="ld-panel-head">
+                <span>Elements</span>
+                <div class="ld-panel-head-actions">
+                  <!-- add-element lives here (not the toolbar) → one type menu; picking a type adds it -->
+                  <div class="ld-add-menu">
+                    <button class="ld-add-head-btn" title="Add an element to the root canvas" @click.stop="addMenuOpen = !addMenuOpen">
+                      <Plus :size="13" /> Add <ChevronDown :size="11" />
+                    </button>
+                    <ElementTypeMenu v-if="addMenuOpen" placement="below-right" @pick="onAddRoot" />
+                  </div>
+                  <button
+                    v-if="elementsPop.supported"
+                    class="ld-pane-pop-btn"
+                    :title="elementsPop.pipTarget.value ? 'Pop back in' : 'Pop out into its own window'"
+                    @click="elementsPop.toggle()"
+                  >
+                    <component :is="elementsPop.pipTarget.value ? X : PictureInPicture2" :size="14" />
                   </button>
-                  <ElementTypeMenu v-if="addMenuOpen" placement="below-right" @pick="onAddRoot" />
                 </div>
-                <button
-                  v-if="elementsPop.supported"
-                  class="ld-pane-pop-btn"
-                  :title="elementsPop.pipTarget.value ? 'Pop back in' : 'Pop out into its own window'"
-                  @click="elementsPop.toggle()"
-                >
-                  <component :is="elementsPop.pipTarget.value ? X : PictureInPicture2" :size="14" />
-                </button>
+              </div>
+              <div class="ld-tree-wrap">
+                <ElementTree />
               </div>
             </div>
-            <div class="ld-tree-wrap">
-              <ElementTree />
-            </div>
-            <div class="ld-divider-h" title="Drag to resize Data Sources" @pointerdown="startDsResize" />
-            <div class="ld-ds-section" :style="{ height: `${dsHeight}px` }">
+          </Teleport>
+          <button v-if="elementsPop.pipTarget.value" class="ld-pane-restore-h" title="Bring Elements back" @click="elementsPop.close()">
+            <PictureInPicture2 :size="14" />
+            <span>Elements</span>
+          </button>
+        </aside>
+
+        <div v-if="!elementsPop.pipTarget.value && !dataSourcesPop.pipTarget.value" class="ld-divider-h" title="Drag to resize Data Sources" @pointerdown="startDsResize" />
+
+        <!-- Data Sources (its own pane, not part of Elements) -->
+        <aside class="ld-pane ld-ds-pane" :class="{ 'ld-pane-popped-v': dataSourcesPop.pipTarget.value }" :style="dataSourcesPop.pipTarget.value ? undefined : { height: `${dsHeight}px` }">
+          <Teleport :to="dataSourcesPop.pipTarget.value" :disabled="!dataSourcesPop.pipTarget.value">
+            <div class="ld-pane-inner">
+              <div class="ld-panel-head">
+                <span>Data Sources <InfoTip text="Named static values your elements can bind to. In the generated Class they become fields; everywhere else (UX/JSON/preview) the value is inlined. Edit one and every bound element updates." /></span>
+                <div class="ld-panel-head-actions">
+                  <button class="ld-add-head-btn" title="Add a text data source" @click="addDataSource('text')">
+                    <Plus :size="13" /> Add
+                  </button>
+                  <button
+                    v-if="dataSourcesPop.supported"
+                    class="ld-pane-pop-btn"
+                    :title="dataSourcesPop.pipTarget.value ? 'Pop back in' : 'Pop out into its own window'"
+                    @click="dataSourcesPop.toggle()"
+                  >
+                    <component :is="dataSourcesPop.pipTarget.value ? X : PictureInPicture2" :size="14" />
+                  </button>
+                </div>
+              </div>
               <DataSourcePanel />
             </div>
-          </div>
-        </Teleport>
-        <button v-if="elementsPop.pipTarget.value" class="ld-pane-restore" title="Bring Elements back" @click="elementsPop.close()">
-          <PictureInPicture2 :size="15" />
-          <span class="ld-pane-restore-label">Elements</span>
-        </button>
-      </aside>
+          </Teleport>
+          <button v-if="dataSourcesPop.pipTarget.value" class="ld-pane-restore-h" title="Bring Data Sources back" @click="dataSourcesPop.close()">
+            <PictureInPicture2 :size="14" />
+            <span>Data Sources</span>
+          </button>
+        </aside>
+      </div>
 
-      <div v-if="!elementsPop.pipTarget.value" class="ld-divider-v" title="Drag to resize" :style="{ order: bodyOrder.elementsDiv }" @pointerdown="startLeftResize" />
+      <div v-if="!(elementsPop.pipTarget.value && dataSourcesPop.pipTarget.value)" class="ld-divider-v" title="Drag to resize" :style="{ order: bodyOrder.elementsDiv }" @pointerdown="startLeftResize" />
 
       <main class="ld-center" :style="{ order: bodyOrder.center }">
         <DesignerCanvas />
@@ -757,13 +790,28 @@ function chooseArrangement(id: Arrangement) {
   overflow-x: auto;
 }
 
-.ld-left {
+/* left column holds the Elements and Data Sources panes stacked vertically */
+.ld-left-col {
   width: 230px;
   flex-shrink: 0;
   border-right: 1px solid var(--vp-c-divider);
   display: flex;
   flex-direction: column;
   min-height: 0;
+}
+
+/* a stacked pane in the left column */
+.ld-pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* the pane that absorbs the column's free space (Elements); keeps a floor so a tall Data Sources
+   pane on a short viewport can't crush it away entirely */
+.ld-pane-grow {
+  flex: 1 1 auto;
+  min-height: 64px;
 }
 
 .ld-center {
@@ -793,12 +841,11 @@ function chooseArrangement(id: Arrangement) {
   overflow-y: auto;
 }
 
-.ld-ds-section {
-  flex: 0 0 auto;
+/* Data Sources pane: its inline height is the preferred size, but it may shrink (its list scrolls)
+   when the column is short so the Elements pane keeps its floor. */
+.ld-ds-pane {
+  flex: 0 1 auto;
   min-height: 0;
-  display: flex;
-  flex-direction: column;
-  border-top: 1px solid var(--vp-c-divider);
 }
 
 .ld-divider-h {
@@ -909,6 +956,33 @@ function chooseArrangement(id: Arrangement) {
 }
 
 .ld-pane-restore:hover {
+  color: var(--c-carbon-1);
+  background: var(--c-carbon-soft);
+}
+
+/* a stacked (vertical) pane that's popped out collapses to a short full-width "bring it back" bar */
+.ld-pane.ld-pane-popped-v {
+  flex: 0 0 auto;
+  height: auto;
+}
+
+.ld-pane-restore-h {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 33px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--vp-c-divider);
+  color: var(--vp-c-text-3);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.ld-pane-restore-h:hover {
   color: var(--c-carbon-1);
   background: var(--c-carbon-soft);
 }
