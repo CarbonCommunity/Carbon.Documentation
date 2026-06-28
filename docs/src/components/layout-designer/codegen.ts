@@ -236,7 +236,7 @@ function carbonElement(el: DesignerElement, names: Map<string, string>, root: st
  * deserializer's JSON shape instead of C# source: a primary component (Image / RawImage / Text)
  * plus a RectTransform. No string escaping here — JSON.stringify handles that at send time.
  */
-function adduiElement(el: DesignerElement, names: Map<string, string>, layer: ClientPanelDef): CuiElement {
+function adduiElement(el: DesignerElement, names: Map<string, string>, rootParent: string): CuiElement {
   const rect = {
     type: 'RectTransform' as const,
     anchormin: anchorPair(el.anchorMin),
@@ -263,7 +263,7 @@ function adduiElement(el: DesignerElement, names: Map<string, string>, layer: Cl
   }
   return {
     name: names.get(el.id)!,
-    parent: parentName(el, names, layer.oxide),
+    parent: parentName(el, names, rootParent),
     components: [primary, rect],
   }
 }
@@ -272,15 +272,22 @@ function adduiElement(el: DesignerElement, names: Map<string, string>, layer: Cl
  * Generate the live-preview payload: the element tree as a `CuiElement[]` ready for
  * `CuiHelper.AddUi`. Same naming/ordering guarantees as `generateCode` (stable collision-suffixed
  * names, parent-before-child emit order). Root elements parent to the layer's Oxide string, exactly
- * like the Oxide generator; the reserved preview-root wrapping is layered on by the transport, not
- * here. Returns `[]` for an empty layout (nothing to send).
+ * like the Oxide generator. Pass `opts.rootParent` to re-parent the layout's roots somewhere else —
+ * the live preview points them at the reserved root `layoutdesigner.preview` so the whole tree can be
+ * torn down with one `DestroyUi`. The per-element `update` flag is applied by the caller (the preview
+ * transport, which owns the name diff). Returns `[]` for an empty layout (nothing to send).
  */
-export function generateAddUiJson(elements: DesignerElement[], rootLayer: ClientPanel = 'Overlay'): CuiElement[] {
+export function generateAddUiJson(
+  elements: DesignerElement[],
+  rootLayer: ClientPanel = 'Overlay',
+  opts: { rootParent?: string } = {},
+): CuiElement[] {
   if (!elements.length) return []
   const layer = CLIENT_PANELS.find((p) => p.id === rootLayer) ?? CLIENT_PANELS[0]
+  const rootParent = opts.rootParent ?? layer.oxide
   const names = buildNames(elements)
   const ordered = treeOrder(elements)
-  return ordered.map((el) => adduiElement(el, names, layer))
+  return ordered.map((el) => adduiElement(el, names, rootParent))
 }
 
 // --- public --------------------------------------------------------------------------

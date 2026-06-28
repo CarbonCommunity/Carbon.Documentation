@@ -10,6 +10,7 @@ import InfoTip from './InfoTip.vue'
 import InspectorPanel from './InspectorPanel.vue'
 import { ASPECT_PRESETS, CLIENT_PANELS, type AspectPreset, type ClientPanel, type ElementType } from './types'
 import CodeOutput from './CodeOutput.vue'
+import LivePreviewControls from './LivePreviewControls.vue'
 import { useDesigner } from './useDesigner'
 
 const {
@@ -293,6 +294,8 @@ useEventListener(window, 'pointerup', () => {
         </select>
         <InfoTip text="Target framework for the generated code: Oxide (CUI), Carbon (LUI), or Both (one file with #if CARBON / #else directives). Shown in the panel below." />
       </div>
+
+      <LivePreviewControls />
 
       <div class="ld-help">
         <button class="ld-icon-btn" title="Shortcuts & help" @click.stop="helpOpen = !helpOpen"><HelpCircle :size="16" /></button>
