@@ -1,8 +1,12 @@
 <script setup lang="ts">
-import { Cast, Plus, RefreshCw } from 'lucide-vue-next'
-import { onMounted, ref } from 'vue'
+import { Cast, ExternalLink, RefreshCw, X } from 'lucide-vue-next'
+import { defineAsyncComponent, onMounted, ref } from 'vue'
 import type { Server } from '@/components/control-panel/ControlPanel.SaveLoad'
 import { usePreview } from './usePreview'
+
+// The real Carbon Control Panel — add/connect servers through its proven, proxy-backed UI (which
+// gives reactive connection status + error handling). Lazy so it isn't bundled until opened.
+const ControlPanel = defineAsyncComponent(() => import('@/components/control-panel/ControlPanel.vue'))
 
 const {
   previewing,
@@ -15,14 +19,12 @@ const {
   togglePreview,
   selectServer,
   selectPlayer,
-  addAndConnect,
+  refreshPlayers,
   initPreview,
 } = usePreview()
 
 const open = ref(false)
-const adding = ref(false)
-const addr = ref('')
-const pass = ref('')
+const showPanel = ref(false)
 
 onMounted(() => initPreview())
 
@@ -36,12 +38,9 @@ function onPlayerChange(e: Event) {
   selectPlayer(v ? BigInt(v) : null)
 }
 
-function submitAdd() {
-  if (!addr.value.trim()) return
-  addAndConnect(addr.value.trim(), pass.value)
-  addr.value = ''
-  pass.value = ''
-  adding.value = false
+function closePanel() {
+  showPanel.value = false
+  refreshPlayers() // pick up any player/connection changes made in the panel
 }
 
 const serverLabel = (s: Server) => s.CachedHostname || s.Address
@@ -69,16 +68,10 @@ const serverLabel = (s: Server) => s.CachedHostname || s.Address
             <option value="" disabled>{{ connectedServers.length ? 'Select a server…' : 'No connected Bridge servers' }}</option>
             <option v-for="s in connectedServers" :key="s.Address" :value="s.Address">{{ serverLabel(s) }}</option>
           </select>
-          <button class="lp-icon" title="Add a server" @click="adding = !adding"><Plus :size="14" /></button>
+          <button class="lp-icon" title="Add / connect servers in the Control Panel" @click="showPanel = true"><ExternalLink :size="14" /></button>
         </div>
+        <button v-if="!connectedServers.length" class="lp-link" @click="showPanel = true">Open the Control Panel to add &amp; connect a server →</button>
       </label>
-
-      <!-- add-server mini-form (reuses the Control Panel data layer) -->
-      <div v-if="adding" class="lp-add">
-        <input v-model="addr" class="lp-select" type="text" placeholder="localhost:28507" @keyup.enter="submitAdd" />
-        <input v-model="pass" class="lp-select" type="password" placeholder="password" @keyup.enter="submitAdd" />
-        <button class="lp-action lp-add-btn" @click="submitAdd">Add &amp; connect (Bridge)</button>
-      </div>
 
       <!-- player -->
       <label class="lp-field">
@@ -100,6 +93,22 @@ const serverLabel = (s: Server) => s.CachedHostname || s.Address
       </button>
       <p class="lp-hint">Pushes the layout live to the player and streams edits. Toggling off clears it.</p>
     </div>
+
+    <!-- Carbon Control Panel modal — add/connect servers here, then close to pick one above. -->
+    <Teleport to="body">
+      <div v-if="showPanel" class="lp-modal-backdrop" @click.self="closePanel">
+        <div class="lp-modal">
+          <div class="lp-modal-bar">
+            <span class="lp-modal-title">Carbon Control Panel</span>
+            <span class="lp-modal-note">Add &amp; connect a Bridge server, then close and pick it above.</span>
+            <button class="lp-icon" title="Close" @click="closePanel"><X :size="16" /></button>
+          </div>
+          <div class="lp-modal-body">
+            <ControlPanel />
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -241,16 +250,18 @@ const serverLabel = (s: Server) => s.CachedHostname || s.Address
   background: var(--vp-c-bg);
   color: var(--vp-c-text-1);
 }
-.lp-add {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 8px;
-  border: 1px dashed var(--vp-c-divider);
-  border-radius: 6px;
+.lp-link {
+  margin-top: 2px;
+  padding: 0;
+  font-size: 11px;
+  text-align: left;
+  color: var(--c-carbon-1, #d6453a);
+  background: none;
+  border: none;
+  cursor: pointer;
 }
-.lp-add-btn {
-  justify-content: center;
+.lp-link:hover {
+  text-decoration: underline;
 }
 .lp-toggle {
   justify-content: center;
@@ -265,5 +276,50 @@ const serverLabel = (s: Server) => s.CachedHostname || s.Address
   font-size: 11px;
   opacity: 0.5;
   margin: 0;
+}
+
+/* Control Panel modal */
+.lp-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.55);
+}
+.lp-modal {
+  display: flex;
+  flex-direction: column;
+  width: min(1200px, 96vw);
+  height: min(860px, 92vh);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 10px;
+  background: var(--vp-c-bg);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+.lp-modal-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--vp-c-divider);
+  flex-shrink: 0;
+}
+.lp-modal-title {
+  font-weight: 700;
+  font-size: 13px;
+}
+.lp-modal-note {
+  font-size: 11px;
+  opacity: 0.55;
+  flex: 1;
+}
+.lp-modal-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
 }
 </style>

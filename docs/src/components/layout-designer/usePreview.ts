@@ -10,7 +10,7 @@
 //   RPC_DestroyUi(playerId, name) → CuiHelper.DestroyUi(player, name)  — tear down by name (cascades)
 
 import { computed, ref, watch } from 'vue'
-import { Server, addServer, createServer, load, servers } from '@/components/control-panel/ControlPanel.SaveLoad'
+import { Server, load, servers } from '@/components/control-panel/ControlPanel.SaveLoad'
 import { generateAddUiJson } from './codegen'
 import { CLIENT_PANELS } from './types'
 import type { CuiElement } from './types'
@@ -140,16 +140,9 @@ function selectPlayer(pid: bigint | null) {
   if (previewing.value) pushSnapshot()
 }
 
-/** Add + connect a Bridge server from the designer's mini-form (reuses the Control Panel data layer). */
-function addAndConnect(address: string, password: string): Server | null {
-  if (!address) return null
-  const sv = createServer(address, password)
-  sv.Bridge = true // preview only works over the binary Bridge protocol
-  sv.AutoConnect = true
-  addServer(sv)
-  sv.connect()
-  selectServer(sv)
-  return sv
+/** Re-request the player list for the current server (e.g. after the Control Panel modal closes). */
+function refreshPlayers() {
+  if (previewServer.value?.IsConnected) previewServer.value.sendCall('Players')
 }
 
 /** Ensure the persisted server list is loaded (idempotent) — call from the UI's onMounted. */
@@ -171,7 +164,7 @@ export function usePreview() {
     stopPreview,
     selectServer,
     selectPlayer,
-    addAndConnect,
+    refreshPlayers,
     initPreview,
   }
 }
