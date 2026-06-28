@@ -16,10 +16,11 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'selected', label: 'Selected' },
   { id: 'json', label: 'JSON' },
 ]
+// Display order/labels only; the stored provider value 'both' is unchanged (codegen reads the value).
 const PROVIDERS = [
-  { value: 'oxide', label: 'Oxide' },
   { value: 'carbon', label: 'Carbon' },
-  { value: 'both', label: 'Both' },
+  { value: 'oxide', label: 'Oxide' },
+  { value: 'both', label: 'Hybrid' },
 ] as const
 const tab = ref<Tab>('ux')
 const targetApplies = computed(() => tab.value === 'class' || tab.value === 'ux' || tab.value === 'selected')
