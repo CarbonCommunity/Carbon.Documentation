@@ -12,6 +12,7 @@
 import { computed, ref, watch } from 'vue'
 import { Server, load, servers } from '@/components/control-panel/ControlPanel.SaveLoad'
 import { generateAddUiJson } from './codegen'
+import { diffPreview } from './previewDiff'
 import { CLIENT_PANELS } from './types'
 import type { CuiElement } from './types'
 import { useDesigner } from './useDesigner'
@@ -35,6 +36,8 @@ const previewPlayerId = ref<bigint | null>(null)
 
 // Names sent on the previous push — drives the diff: seen → update-in-place, gone → DestroyUi.
 let lastNames = new Set<string>()
+// name → parent on the previous push — a changed parent is a reparent (destroy + recreate, not update).
+let lastParents = new Map<string, string>()
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
 let stopWatch: (() => void) | null = null
 
@@ -59,28 +62,31 @@ function rootElement(): CuiElement {
   }
 }
 
-/** Root + layout body, with `update:true` on any element whose name we already sent (in-place patch). */
+/** Root + layout body (the full tree). Create/update flags are decided by the diff at push time. */
 function buildPayload(): CuiElement[] {
   const body = generateAddUiJson(elements.value, canvas.rootLayer, { rootParent: PREVIEW_ROOT })
-  const payload = [rootElement(), ...body]
-  for (const el of payload) {
-    if (lastNames.has(el.name)) el.update = true
-  }
-  return payload
+  return [rootElement(), ...body]
 }
 
-/** Send one full snapshot: AddUi the whole tree, then DestroyUi anything that vanished since last send. */
+/**
+ * Send one full snapshot. Reparented elements (and their cascade-destroyed subtrees) are torn down
+ * first then recreated — Rust CUI won't reparent on `update:true`. Everything else patches in place;
+ * finally DestroyUi anything that vanished since the last send.
+ */
 function pushSnapshot() {
   const sv = previewServer.value
   const pid = previewPlayerId.value
   if (!sv || pid == null) return
-  const payload = buildPayload()
+  const { payload, reparentDestroys } = diffPreview(buildPayload(), lastNames, lastParents)
+  // Tear down moved subtrees BEFORE re-adding, so they recreate cleanly under their new parent.
+  for (const name of reparentDestroys) sv.sendCall(RPC_DESTROY, pid, name)
   sv.sendCall(RPC_ADD, pid, JSON.stringify(payload))
   const names = new Set(payload.map((e) => e.name))
   for (const old of lastNames) {
     if (!names.has(old)) sv.sendCall(RPC_DESTROY, pid, old)
   }
   lastNames = names
+  lastParents = new Map(payload.map((e) => [e.name, e.parent]))
 }
 
 function destroyPreview() {
@@ -88,6 +94,7 @@ function destroyPreview() {
   const pid = previewPlayerId.value
   if (sv && pid != null) sv.sendCall(RPC_DESTROY, pid, PREVIEW_ROOT)
   lastNames = new Set()
+  lastParents = new Map()
 }
 
 function schedulePush() {
