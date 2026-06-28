@@ -26,17 +26,30 @@ const {
 
 const open = ref(false)
 const showPanel = ref(false)
+// Set after a Players request comes back empty, so we only nudge once we've actually looked.
+const noPlayersNotice = ref(false)
 
 onMounted(() => initPreview())
 
+/** Request players, then ~900ms later (after the WS round-trip) flag if the list is still empty. */
+function doRefresh() {
+  noPlayersNotice.value = false
+  refreshPlayers()
+  setTimeout(() => {
+    noPlayersNotice.value = !!previewServer.value?.IsConnected && players.value.length === 0
+  }, 900)
+}
+
 // Re-request players whenever the popover opens, so the list is fresh when you look at it.
 watch(open, (isOpen) => {
-  if (isOpen) refreshPlayers()
+  if (isOpen) doRefresh()
 })
 
 function onServerChange(e: Event) {
   const address = (e.target as HTMLSelectElement).value
+  noPlayersNotice.value = false
   selectServer(connectedServers.value.find((s: Server) => s.Address === address) ?? null)
+  doRefresh()
 }
 
 function onPlayerChange(e: Event) {
@@ -87,10 +100,13 @@ const serverLabel = (s: Server) => s.CachedHostname || s.Address
             <option value="" disabled>{{ players.length ? 'Select a player…' : 'No players online' }}</option>
             <option v-for="p in players" :key="String(p.SteamID)" :value="String(p.SteamID)">{{ p.DisplayName }}</option>
           </select>
-          <button class="lp-icon" title="Refresh players" :disabled="!previewServer?.IsConnected" @click="previewServer?.sendCall('Players')"><RefreshCw :size="13" /></button>
+          <button class="lp-icon" title="Refresh players" :disabled="!previewServer?.IsConnected" @click="doRefresh"><RefreshCw :size="13" /></button>
         </div>
         <p v-if="previewServer?.IsConnected && !mayViewPlayers" class="lp-warn">
           This account lacks the <code>players_view</code> permission, so the server won't return the player list. Enable it in <code>config.webpanel.json</code> + <code>webpanel.loadcfg</code>.
+        </p>
+        <p v-else-if="noPlayersNotice" class="lp-warn">
+          No players found. If players are online, your webaccount likely needs the <code>players_view</code> permission — check <code>config.webpanel.json</code> + run <code>webpanel.loadcfg</code>.
         </p>
       </label>
 
