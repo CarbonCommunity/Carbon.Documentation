@@ -334,6 +334,9 @@ function cloneSubtree(id: string): string | null {
       offsetMin: { ...el.offsetMin },
       offsetMax: { ...el.offsetMax },
       props: cloneProps(el),
+      // bindings/repeat are objects — copy them so the clone doesn't share (and mutate) the original's.
+      bindings: el.bindings ? { ...el.bindings } : el.bindings,
+      repeat: el.repeat ? { ...el.repeat } : el.repeat,
     } as DesignerElement
   })
   clones.forEach((c, i) => {
