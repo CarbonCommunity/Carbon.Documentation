@@ -16,7 +16,6 @@ import { useDesigner } from './useDesigner'
 
 const {
   canvas,
-  provider,
   gridSize,
   constrain,
   addElement,
@@ -42,12 +41,6 @@ const {
 } = useDesigner()
 
 const GRID_SIZES = [1, 2, 4, 8, 16, 32]
-
-const PROVIDERS: { value: 'oxide' | 'carbon' | 'both'; label: string }[] = [
-  { value: 'oxide', label: 'Oxide' },
-  { value: 'carbon', label: 'Carbon' },
-  { value: 'both', label: 'Both' },
-]
 
 onMounted(() => {
   // The docs apply a global noise/speckle overlay (body::after, color-dodge) over the page;
@@ -337,30 +330,6 @@ function chooseArrangement(id: Arrangement) {
       </button>
       <InfoTip text="When on, elements can't be dragged or resized outside their parent, and root panels stay within the canvas." />
 
-      <div class="ld-tool-field">
-        <span class="ld-collapsed-label">Target</span>
-        <div class="ld-segmented ld-collapsible" role="group" aria-label="Target provider">
-          <button
-            v-for="p in PROVIDERS"
-            :key="p.value"
-            :title="p.value === 'both' ? 'Carbon + Oxide via #if CARBON / #else directives' : `Generate ${p.label}-style code`"
-            :class="{ active: provider === p.value }"
-            @click="provider = p.value"
-          >
-            {{ p.label }}
-          </button>
-        </div>
-        <!-- collapsed form when the toolbar is narrow (see media query below) -->
-        <select
-          class="ld-collapsed-select"
-          :value="provider"
-          title="Target framework for the generated code"
-          @change="provider = ($event.target as HTMLSelectElement).value as 'oxide' | 'carbon' | 'both'"
-        >
-          <option v-for="p in PROVIDERS" :key="p.value" :value="p.value">{{ p.label }}</option>
-        </select>
-        <InfoTip text="Target framework for the generated code: Oxide (CUI), Carbon (LUI), or Both (one file with #if CARBON / #else directives). Shown in the panel below." />
-      </div>
 
       <div class="ld-help">
         <button class="ld-icon-btn" title="Shortcuts & help" @click.stop="helpOpen = !helpOpen"><HelpCircle :size="16" /></button>

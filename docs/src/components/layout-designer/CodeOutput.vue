@@ -1,20 +1,38 @@
 <script setup lang="ts">
 import { Check, Copy, PictureInPicture2, X } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
-import { generateCode } from './codegen'
+import { generateCode, generateFullClass, generateJson, generateSelected } from './codegen'
 import { cuiColorString, referenceWidth, round } from './geometry'
 import { usePopout } from './usePopout'
 import { useDesigner } from './useDesigner'
 
-const { elements, canvas, provider, resolvedRects, copyText } = useDesigner()
+const { elements, canvas, provider, selectedIds, resolvedRects, copyText } = useDesigner()
 
-type Tab = 'code' | 'debug'
-const tab = ref<Tab>('code')
+// Emission level. Target (Oxide/Carbon/Both) applies to class/ux/selected; json + debug are
+// provider-independent (json = the CUI wire format, debug = the captured IR).
+type Tab = 'class' | 'ux' | 'json' | 'selected' | 'debug'
+const TABS: { id: Tab; label: string }[] = [
+  { id: 'class', label: 'Class' },
+  { id: 'ux', label: 'UX' },
+  { id: 'json', label: 'JSON' },
+  { id: 'selected', label: 'Selected' },
+  { id: 'debug', label: 'Debug' },
+]
+const PROVIDERS = [
+  { value: 'oxide', label: 'Oxide' },
+  { value: 'carbon', label: 'Carbon' },
+  { value: 'both', label: 'Both' },
+] as const
+const tab = ref<Tab>('ux')
+const targetApplies = computed(() => tab.value === 'class' || tab.value === 'ux' || tab.value === 'selected')
 
 const { supported: popoutSupported, pipTarget, toggle: togglePopout, close: closePopout } = usePopout(() => 'Generated code', { width: 520, height: 640 })
 
-// Primary output: copy-paste-ready C# for the selected provider.
-const code = computed(() => generateCode(elements.value, provider.value, canvas.rootLayer))
+// One computed per emission level (each only recomputes when its inputs change).
+const uxCode = computed(() => generateCode(elements.value, provider.value, canvas.rootLayer))
+const classCode = computed(() => generateFullClass(elements.value, provider.value, canvas.rootLayer))
+const jsonCode = computed(() => generateJson(elements.value, canvas.rootLayer))
+const selectedCode = computed(() => generateSelected(elements.value, selectedIds.value, provider.value, canvas.rootLayer))
 
 // Debug view: the captured intermediate representation every generator reads from — the values
 // in CUI-native form, handy for sanity-checking what the code above was built from.
@@ -47,9 +65,22 @@ const inventory = computed(() => {
   }
 })
 
-const json = computed(() => JSON.stringify(inventory.value, null, 2))
+const debugCode = computed(() => JSON.stringify(inventory.value, null, 2))
 
-const active = computed(() => (tab.value === 'code' ? code.value : json.value))
+const active = computed(() => {
+  switch (tab.value) {
+    case 'class':
+      return classCode.value
+    case 'json':
+      return jsonCode.value
+    case 'selected':
+      return selectedCode.value
+    case 'debug':
+      return debugCode.value
+    default:
+      return uxCode.value
+  }
+})
 
 const copied = ref(false)
 async function copy() {
@@ -68,10 +99,17 @@ async function copy() {
       <div class="ld-out-inner">
         <div class="ld-out-head">
           <div class="ld-out-tabs" role="tablist">
-            <button :class="{ active: tab === 'code' }" role="tab" @click="tab = 'code'">Code</button>
-            <button :class="{ active: tab === 'debug' }" role="tab" @click="tab = 'debug'">Debug</button>
+            <button v-for="t in TABS" :key="t.id" :class="{ active: tab === t.id }" role="tab" @click="tab = t.id">{{ t.label }}</button>
           </div>
           <div class="ld-out-actions">
+            <select
+              v-model="provider"
+              class="ld-out-target"
+              :disabled="!targetApplies"
+              :title="targetApplies ? 'Target framework for the generated code' : 'Target applies to Class / UX / Selected'"
+            >
+              <option v-for="p in PROVIDERS" :key="p.value" :value="p.value">{{ p.label }}</option>
+            </select>
             <button class="ld-out-copy" :title="copied ? 'Copied' : 'Copy'" @click="copy">
               <component :is="copied ? Check : Copy" :size="13" />
               {{ copied ? 'Copied' : 'Copy' }}
@@ -117,6 +155,25 @@ async function copy() {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+}
+
+.ld-out-target {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--vp-c-text-2);
+  background: var(--vp-c-bg);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 3px;
+  padding: 2px 4px;
+}
+
+.ld-out-target:hover:not(:disabled) {
+  border-color: var(--c-carbon-1);
+}
+
+.ld-out-target:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .ld-out-pop {
