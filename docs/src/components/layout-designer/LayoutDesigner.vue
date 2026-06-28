@@ -765,6 +765,8 @@ function chooseArrangement(id: Arrangement) {
   display: flex;
   flex: 1;
   min-height: 0;
+  /* escape valve when fixed columns + min-width canvas exceed the viewport (narrow screens) */
+  overflow-x: auto;
 }
 
 .ld-left {
@@ -778,7 +780,9 @@ function chooseArrangement(id: Arrangement) {
 
 .ld-center {
   flex: 1;
-  min-width: 0;
+  /* keep the canvas usable; if the fixed-width side columns can't all fit, the body scrolls
+     horizontally rather than crushing the canvas to nothing (e.g. Code-side-panel on a narrow window) */
+  min-width: 240px;
   min-height: 0;
 }
 

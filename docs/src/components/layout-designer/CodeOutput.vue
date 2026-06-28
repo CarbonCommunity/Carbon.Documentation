@@ -201,6 +201,10 @@ async function copy() {
 .ld-out-body {
   margin: 0;
   padding: 10px;
+  /* flex:1 + min-height:0 so the <pre> scrolls internally instead of stretching its column
+     (matters when the panel is a flex-sized side column, not the fixed-height bottom dock) */
+  flex: 1;
+  min-height: 0;
   overflow: auto;
   font-size: 11.5px;
   line-height: 1.5;
