@@ -14,8 +14,8 @@ type Tab = 'class' | 'ux' | 'json' | 'selected' | 'debug'
 const TABS: { id: Tab; label: string }[] = [
   { id: 'class', label: 'Class' },
   { id: 'ux', label: 'UX' },
-  { id: 'json', label: 'JSON' },
   { id: 'selected', label: 'Selected' },
+  { id: 'json', label: 'JSON' },
   { id: 'debug', label: 'Debug' },
 ]
 const PROVIDERS = [

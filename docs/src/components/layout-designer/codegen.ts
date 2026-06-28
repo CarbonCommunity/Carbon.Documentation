@@ -11,14 +11,82 @@
 
 import { cuiColorString, round } from './geometry'
 import { CLIENT_PANELS, DEFAULT_TEXT_FONT, fontDef, resolveText, TEXT_ALIGNS, TEXT_FONTS } from './types'
-import type { ClientPanel, ClientPanelDef, ColorRGBA, CuiComponent, CuiElement, DataSource, DesignerElement, PanelElement, Provider, TextAlign, TextFont, Vec2 } from './types'
+import type { ClientPanel, ClientPanelDef, ColorRGBA, CuiComponent, CuiElement, DataSource, DesignerElement, PanelElement, Provider, TextAlign, TextElement, TextFont, Vec2 } from './types'
+
+// --- data-source fields --------------------------------------------------------------
+//
+// In the CODE outputs (Class / UX / Selected) a bound prop becomes a *reference* to a field holding
+// the data-source value, with the field declared up top: a class member in the Class output
+// (`private string Title = "...";`), or a local at the head of the snippet in UX / Selected
+// (`string Title = "...";`). The JSON / live-preview path instead inlines the literal value
+// (`resolveBindings` below), since the AddUi wire format has no place for a C# field. Only text
+// sources are emitted today; `list` is reserved for the repeat/template work.
+
+interface CodeCtx {
+  /** All data sources in scope (for resolving a binding's value / fallback literal). */
+  sources: DataSource[]
+  /** dsId -> C# field identifier (sanitised, de-duped). Empty when there are no sources. */
+  fields: Map<string, string>
+}
+
+/** Sanitise a data-source name into a valid C# identifier; empty/leading-digit gets an `_` prefix. */
+function sanitizeIdent(name: string): string {
+  let s = name.replace(/[^A-Za-z0-9_]/g, '')
+  if (!s) return 'Field'
+  if (/^[0-9]/.test(s)) s = `_${s}`
+  return s
+}
+
+/** Map each TEXT data source to a unique C# field identifier (collision-suffixed). */
+function fieldNames(sources: DataSource[]): Map<string, string> {
+  const used = new Set<string>()
+  const map = new Map<string, string>()
+  for (const ds of sources) {
+    if (ds.kind !== 'text') continue
+    const base = sanitizeIdent(ds.name)
+    let name = base
+    let i = 2
+    while (used.has(name)) name = `${base}${i++}`
+    used.add(name)
+    map.set(ds.id, name)
+  }
+  return map
+}
+
+/** Ids of data sources actually referenced by the given elements' bindings. */
+function usedSourceIds(elements: DesignerElement[]): Set<string> {
+  const s = new Set<string>()
+  for (const el of elements) if (el.bindings) for (const id of Object.values(el.bindings)) s.add(id)
+  return s
+}
+
+/** C# expression for a text element's text: a bound field reference, else a quoted literal. */
+function textCode(el: TextElement, ctx: CodeCtx): string {
+  const dsId = el.bindings?.text
+  if (dsId && ctx.fields.has(dsId)) return ctx.fields.get(dsId)!
+  return `"${esc(resolveText(el, ctx.sources))}"`
+}
 
 /**
- * Inline-resolve every bound prop to its data-source value, returning plain literal elements the rest
- * of the generators can treat normally. This is the "UX / JSON / Selected / live-preview" strategy —
- * the value is baked into the element (the Class output, by contrast, references a field). Only bound
- * elements are rewritten (cloned); an unbound layout passes through unchanged, so output for layouts
- * with no data sources is byte-identical to before. Reserved for later: expanding `repeat` templates.
+ * Declaration lines for every text source in `usedIds`. `style:'field'` => class members
+ * (`private string X = "v";`); `style:'local'` => snippet-local vars (`string X = "v";`).
+ */
+function genFieldDecls(ctx: CodeCtx, usedIds: Set<string>, style: 'field' | 'local'): string[] {
+  const lines: string[] = []
+  for (const ds of ctx.sources) {
+    if (ds.kind !== 'text' || !usedIds.has(ds.id)) continue
+    const ident = ctx.fields.get(ds.id)
+    if (!ident) continue
+    lines.push(`${style === 'field' ? 'private string ' : 'string '}${ident} = "${esc(ds.value)}";`)
+  }
+  return lines
+}
+
+/**
+ * Inline-resolve every bound prop to its data-source value — the JSON / live-preview strategy (the
+ * AddUi wire format has no field concept). Only bound elements are cloned; an unbound layout passes
+ * through unchanged, so JSON for layouts with no data sources is byte-identical. (The code outputs use
+ * `textCode` instead, which emits a field reference.) Reserved for later: expanding `repeat` templates.
  */
 function resolveBindings(elements: DesignerElement[], dataSources: DataSource[]): DesignerElement[] {
   if (!dataSources.length) return elements
@@ -169,19 +237,19 @@ function rootContainerName(names: Map<string, string>): string {
 // --- Oxide CUI -----------------------------------------------------------------------
 
 /** Emit a single Oxide element. Text → CuiLabel; URL fills → raw-image CuiElement; else CuiPanel. */
-function oxideElement(el: DesignerElement, names: Map<string, string>, layer: ClientPanelDef): string[] {
+function oxideElement(el: DesignerElement, names: Map<string, string>, layer: ClientPanelDef, ctx: CodeCtx): string[] {
   const parent = esc(parentName(el, names, layer.oxide))
   const name = esc(names.get(el.id)!)
   if (el.type === 'text') {
     const t = el.props
     // CuiLabel bundles a CuiTextComponent (Text) + RectTransform. Font is the same Rust client asset
-    // Carbon's FontTypes maps to, emitted as the filename here.
+    // Carbon's FontTypes maps to, emitted as the filename here. A bound Text references its field.
     return [
       'container.Add(new CuiLabel',
       '{',
       '    Text =',
       '    {',
-      `        Text = "${esc(t.text)}",`,
+      `        Text = ${textCode(el, ctx)},`,
       `        FontSize = ${intStr(t.fontSize)},`,
       `        Font = "${fontDef(t.font).oxide}",`,
       `        Align = TextAnchor.${t.align},`,
@@ -236,17 +304,17 @@ function oxideElement(el: DesignerElement, names: Map<string, string>, layer: Cl
   ]
 }
 
-function genOxide(elements: DesignerElement[], names: Map<string, string>, layer: ClientPanelDef): string {
+function genOxide(elements: DesignerElement[], names: Map<string, string>, layer: ClientPanelDef, ctx: CodeCtx): string {
   // Oxide has no CreateParent equivalent — root elements parent to the layer string directly.
   const out: string[] = ['var container = new CuiElementContainer();', '']
-  for (const el of elements) out.push(...oxideElement(el, names, layer))
+  for (const el of elements) out.push(...oxideElement(el, names, layer, ctx))
   out.push('CuiHelper.AddUi(player, container);')
   return out.join('\n')
 }
 
 // --- Carbon LUI ----------------------------------------------------------------------
 
-function genCarbon(elements: DesignerElement[], names: Map<string, string>, layer: ClientPanelDef): string {
+function genCarbon(elements: DesignerElement[], names: Map<string, string>, layer: ClientPanelDef, ctx: CodeCtx): string {
   // Carbon attaches to a client panel via CreateParent; root elements then nest under it.
   const root = rootContainerName(names)
   const out: string[] = [
@@ -255,13 +323,13 @@ function genCarbon(elements: DesignerElement[], names: Map<string, string>, laye
     `cui.v2.CreateParent(CUI.ClientPanels.${layer.carbon}, LuiPosition.Full, "${esc(root)}");`,
     '',
   ]
-  for (const el of elements) out.push(...carbonElement(el, names, root))
+  for (const el of elements) out.push(...carbonElement(el, names, root, ctx))
   out.push('cui.v2.SendUi(player);')
   return out.join('\n')
 }
 
 /** Emit a single Carbon LUI element. Text → CreateText; URL fills → CreateUrlImage; else CreatePanel. */
-function carbonElement(el: DesignerElement, names: Map<string, string>, root: string): string[] {
+function carbonElement(el: DesignerElement, names: Map<string, string>, root: string, ctx: CodeCtx): string[] {
   const parent = esc(parentName(el, names, root))
   const name = esc(names.get(el.id)!)
   const pos = `new LuiPosition(${lf(el.anchorMin.x, 4)}, ${lf(el.anchorMin.y, 4)}, ${lf(el.anchorMax.x, 4)}, ${lf(el.anchorMax.y, 4)})`
@@ -275,7 +343,7 @@ function carbonElement(el: DesignerElement, names: Map<string, string>, root: st
       `cui.v2.CreateText("${parent}",`,
       `    ${pos},`,
       `    ${off},`,
-      `    ${intStr(t.fontSize)}, "${cuiColorString(t.color)}", "${esc(t.text)}", TextAnchor.${t.align}, "${name}")`,
+      `    ${intStr(t.fontSize)}, "${cuiColorString(t.color)}", ${textCode(el, ctx)}, TextAnchor.${t.align}, "${name}")`,
     ]
     if ((t.font ?? DEFAULT_TEXT_FONT) === DEFAULT_TEXT_FONT) {
       head[head.length - 1] += ';'
@@ -356,19 +424,35 @@ export function generateAddUiJson(
 
 // --- public --------------------------------------------------------------------------
 
-/** Generate C# source for the given elements, targeting the chosen provider + root layer. */
-export function generateCode(elements: DesignerElement[], provider: Provider, rootLayer: ClientPanel = 'Overlay', dataSources: DataSource[] = []): string {
+/**
+ * Generate C# source for the given elements, targeting the chosen provider + root layer. A bound prop
+ * emits a field reference; the field declarations are prepended as snippet-local vars
+ * (`declStyle:'local'`, the default for a standalone UX snippet) or omitted (`declStyle:'none'`, used
+ * when this is the body of a full class — there the class declares them as members instead).
+ */
+export function generateCode(
+  elements: DesignerElement[],
+  provider: Provider,
+  rootLayer: ClientPanel = 'Overlay',
+  dataSources: DataSource[] = [],
+  opts: { declStyle?: 'local' | 'none' } = {},
+): string {
   if (!elements.length) return '// Add an element to generate code.'
   const layer = CLIENT_PANELS.find((p) => p.id === rootLayer) ?? CLIENT_PANELS[0]
-  // Bound props resolve to their data-source value (inline); bordered panels expand into edge
-  // subpanels; names are built from this order (stable collision suffixes); emission is parent-first.
-  const expanded = expandBorders(resolveBindings(elements, dataSources))
+  // Bordered panels expand into edge subpanels; names are built from this order (stable collision
+  // suffixes); emission is parent-first. Bound props reference fields via `ctx`.
+  const expanded = expandBorders(elements)
   const names = buildNames(expanded)
   const ordered = treeOrder(expanded)
-  if (provider === 'oxide') return genOxide(ordered, names, layer)
-  if (provider === 'carbon') return genCarbon(ordered, names, layer)
+  const ctx: CodeCtx = { sources: dataSources, fields: fieldNames(dataSources) }
+  // Declarations for the sources this snippet actually uses, emitted once at the very top (for `both`,
+  // before the #if — they are plain C# valid under either framework).
+  const decls = (opts.declStyle ?? 'local') === 'local' ? genFieldDecls(ctx, usedSourceIds(ordered), 'local') : []
+  const head = decls.length ? [...decls, ''] : []
+  if (provider === 'oxide') return [...head, genOxide(ordered, names, layer, ctx)].join('\n')
+  if (provider === 'carbon') return [...head, genCarbon(ordered, names, layer, ctx)].join('\n')
   // both: Carbon compiles with the CARBON symbol defined; Oxide does not.
-  return ['#if CARBON', genCarbon(ordered, names, layer), '#else', genOxide(ordered, names, layer), '#endif'].join('\n')
+  return [...head, '#if CARBON', genCarbon(ordered, names, layer, ctx), '#else', genOxide(ordered, names, layer, ctx), '#endif'].join('\n')
 }
 
 /** Indent every non-empty line by `spaces` (used to nest the UX snippet inside a method body). */
@@ -387,9 +471,13 @@ function indent(code: string, spaces: number): string {
  */
 export function generateFullClass(elements: DesignerElement[], provider: Provider, rootLayer: ClientPanel = 'Overlay', dataSources: DataSource[] = []): string {
   if (!elements.length) return '// Add an element to generate code.'
-  // First checkpoint: bound values are inlined here too (no class fields yet). The next checkpoint
-  // promotes data sources to real fields the body references — this is where they'll be emitted.
-  const body = indent(generateCode(elements, provider, rootLayer, dataSources), 8)
+  // Data sources become `private` class fields (outside the method); the body references them, so the
+  // snippet is generated with declStyle:'none' (no in-method locals). Plain C#, valid under either
+  // framework, so the field block is emitted once even for `both`.
+  const ctx: CodeCtx = { sources: dataSources, fields: fieldNames(dataSources) }
+  const fieldLines = genFieldDecls(ctx, usedSourceIds(expandBorders(elements)), 'field')
+  const members = fieldLines.length ? [...fieldLines.map((l) => `    ${l}`), ''] : []
+  const body = indent(generateCode(elements, provider, rootLayer, dataSources, { declStyle: 'none' }), 8)
   const info = '[Info("Test Plugin", "hizen", "0.0.1")]'
   const desc = '[Description("Generated by the Carbon Layout Designer")]'
   const method = ['    [ChatCommand("test")]', '    private void TestCommand(BasePlayer player, string command, string[] args)', '    {', body, '    }']
@@ -418,6 +506,7 @@ export function generateFullClass(elements: DesignerElement[], provider: Provide
       '    RustPlugin',
       '#endif',
       '{',
+      ...members,
       ...method,
       '}',
     ].join('\n')
@@ -433,6 +522,7 @@ export function generateFullClass(elements: DesignerElement[], provider: Provide
     desc,
     `public class TestPlugin : ${carbon ? 'CarbonPlugin' : 'RustPlugin'}`,
     '{',
+    ...members,
     ...method,
     '}',
   ].join('\n')
@@ -454,18 +544,22 @@ export function generateSelected(elements: DesignerElement[], selectedIds: strin
   const HINT = '// Select an element on the canvas to see its code.'
   if (!selectedIds.length) return HINT
   const layer = CLIENT_PANELS.find((p) => p.id === rootLayer) ?? CLIENT_PANELS[0]
-  const expanded = expandBorders(resolveBindings(elements, dataSources))
+  const expanded = expandBorders(elements)
   const names = buildNames(expanded)
   const root = rootContainerName(names)
   const sel = new Set(selectedIds)
   // include a selected panel's border subpanels (ids `${selectedId}.border-*`).
   const chosen = treeOrder(expanded).filter((el) => sel.has(el.id) || [...sel].some((s) => el.id.startsWith(`${s}.border-`)))
   if (!chosen.length) return HINT
-  const oxide = () => chosen.flatMap((el) => oxideElement(el, names, layer)).join('\n').trimEnd()
-  const carbon = () => chosen.flatMap((el) => carbonElement(el, names, root)).join('\n').trimEnd()
-  if (provider === 'oxide') return oxide()
-  if (provider === 'carbon') return carbon()
-  return ['#if CARBON', carbon(), '#else', oxide(), '#endif'].join('\n')
+  // Bound props reference fields; declare the locals the chosen elements use, once at the top.
+  const ctx: CodeCtx = { sources: dataSources, fields: fieldNames(dataSources) }
+  const decls = genFieldDecls(ctx, usedSourceIds(chosen), 'local')
+  const head = decls.length ? [...decls, ''] : []
+  const oxide = () => chosen.flatMap((el) => oxideElement(el, names, layer, ctx)).join('\n').trimEnd()
+  const carbon = () => chosen.flatMap((el) => carbonElement(el, names, root, ctx)).join('\n').trimEnd()
+  if (provider === 'oxide') return [...head, oxide()].join('\n')
+  if (provider === 'carbon') return [...head, carbon()].join('\n')
+  return [...head, '#if CARBON', carbon(), '#else', oxide(), '#endif'].join('\n')
 }
 
 // --- Import: CUI JSON -> elements (inverse of generateAddUiJson / the Oxide generator) -----------
