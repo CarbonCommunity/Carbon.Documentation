@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Cast, ExternalLink, RefreshCw, X } from 'lucide-vue-next'
-import { defineAsyncComponent, onMounted, ref } from 'vue'
+import { defineAsyncComponent, onMounted, ref, watch } from 'vue'
 import type { Server } from '@/components/control-panel/ControlPanel.SaveLoad'
 import { usePreview } from './usePreview'
 
@@ -16,6 +16,7 @@ const {
   players,
   canPreview,
   mayDraw,
+  mayViewPlayers,
   togglePreview,
   selectServer,
   selectPlayer,
@@ -27,6 +28,11 @@ const open = ref(false)
 const showPanel = ref(false)
 
 onMounted(() => initPreview())
+
+// Re-request players whenever the popover opens, so the list is fresh when you look at it.
+watch(open, (isOpen) => {
+  if (isOpen) refreshPlayers()
+})
 
 function onServerChange(e: Event) {
   const address = (e.target as HTMLSelectElement).value
@@ -83,6 +89,9 @@ const serverLabel = (s: Server) => s.CachedHostname || s.Address
           </select>
           <button class="lp-icon" title="Refresh players" :disabled="!previewServer?.IsConnected" @click="previewServer?.sendCall('Players')"><RefreshCw :size="13" /></button>
         </div>
+        <p v-if="previewServer?.IsConnected && !mayViewPlayers" class="lp-warn">
+          This account lacks the <code>players_view</code> permission, so the server won't return the player list. Enable it in <code>config.webpanel.json</code> + <code>webpanel.loadcfg</code>.
+        </p>
       </label>
 
       <p v-if="previewServer && !mayDraw" class="lp-warn">This account lacks the <code>draw_ui</code> permission — the server may reject preview calls.</p>

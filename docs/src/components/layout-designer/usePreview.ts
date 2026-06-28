@@ -43,6 +43,8 @@ const players = computed<any[]>(() => [...(previewServer.value?.PlayerInfo ?? []
 const canPreview = computed(() => !!previewServer.value?.IsConnected && previewPlayerId.value != null)
 /** The selected server permits CUI draw (defaults true if the panel never reported the flag). */
 const mayDraw = computed(() => previewServer.value?.hasPermission(PERM) ?? true)
+/** The account can list players — without `players_view` the server ignores the Players request. */
+const mayViewPlayers = computed(() => previewServer.value?.hasPermission('players_view') ?? true)
 
 /** Transparent full-screen panel every layout root re-parents under. */
 function rootElement(): CuiElement {
@@ -159,6 +161,7 @@ export function usePreview() {
     players,
     canPreview,
     mayDraw,
+    mayViewPlayers,
     togglePreview,
     startPreview,
     stopPreview,
