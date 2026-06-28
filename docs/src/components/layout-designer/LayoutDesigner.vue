@@ -231,7 +231,6 @@ function chooseArrangement(id: Arrangement) {
     <!-- toolbar -->
     <div class="ld-toolbar">
       <span class="ld-title">Layout Designer</span>
-      <span class="ld-badge">Preview</span>
 
       <!-- layout switcher -->
       <div class="ld-layout-menu">
@@ -530,17 +529,6 @@ function chooseArrangement(id: Arrangement) {
 .ld-title {
   font-weight: 700;
   font-size: 15px;
-}
-
-.ld-badge {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: #fff;
-  background: var(--c-carbon-1);
-  padding: 1px 6px;
-  border-radius: 3px;
 }
 
 .ld-spacer {
