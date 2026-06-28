@@ -4,10 +4,10 @@ import AnchorWidget from './AnchorWidget.vue'
 import InfoTip from './InfoTip.vue'
 import { round } from './geometry'
 import { TEXT_ALIGNS, TEXT_FONTS } from './types'
-import type { ColorRGBA, DesignerElement, TextAlign, TextFont } from './types'
+import type { ColorRGBA, DesignerElement, TextAlign, TextDataSource, TextFont } from './types'
 import { useDesigner } from './useDesigner'
 
-const { selected, selectedIds, elements, descendantIds, update, reparent, rectOf, fill, removeSelected, duplicateSelected } =
+const { selected, selectedIds, elements, dataSources, descendantIds, update, reparent, rectOf, fill, removeSelected, duplicateSelected, setBinding } =
   useDesigner()
 
 // Plain-English summary of how the selected element responds to resizing.
@@ -145,6 +145,14 @@ function setFont(el: DesignerElement, font: TextFont) {
   update(el.id, { props: { font } })
 }
 
+// --- text binding (data sources) ---
+const textSources = computed(() => dataSources.value.filter((d): d is TextDataSource => d.kind === 'text'))
+/** Currently-bound text data-source id for the selected element ('' = literal/unbound). */
+const textBinding = computed(() => (selected.value?.type === 'text' ? selected.value.bindings?.text ?? '' : ''))
+function setTextBinding(el: DesignerElement, dsId: string) {
+  setBinding(el.id, 'text', dsId || null)
+}
+
 // Heading for the shared color picker: text color, or a panel's fill color / image tint.
 const colorLabel = computed(() => (textProps.value ? 'Text color' : fillMode.value === 'image' ? 'Tint' : 'Color'))
 
@@ -230,9 +238,23 @@ const computedRect = computed(() => (selected.value ? rectOf(selected.value.id) 
           <span>Text</span>
           <InfoTip text="The label's content and how it sits in its box. Emitted as CuiLabel + CuiTextComponent (Oxide) / cui.v2.CreateText (Carbon). The font is RobotoCondensed (Rust's default)." />
         </div>
+        <label v-if="textSources.length" class="ld-field">
+          <span class="ld-field-label">Source <InfoTip text="Bind this label's text to a Data Source (a shared string). Bound text is driven by the source — edit it once in the Data Sources pane and every bound element updates. Pick (literal) to type text directly." /></span>
+          <select :value="textBinding" @change="setTextBinding(selected, ($event.target as HTMLSelectElement).value)">
+            <option value="">(literal text)</option>
+            <option v-for="ds in textSources" :key="ds.id" :value="ds.id">{{ ds.name }}</option>
+          </select>
+        </label>
         <label class="ld-field">
-          <span class="ld-field-label">Content</span>
-          <textarea class="ld-textarea" rows="2" :value="textProps.text" @change="setText(selected, ($event.target as HTMLTextAreaElement).value)" />
+          <span class="ld-field-label">Content<span v-if="textBinding" class="ld-bound-tag">bound</span></span>
+          <textarea
+            class="ld-textarea"
+            rows="2"
+            :value="textProps.text"
+            :disabled="!!textBinding"
+            :placeholder="textBinding ? 'Driven by the bound data source' : ''"
+            @change="setText(selected, ($event.target as HTMLTextAreaElement).value)"
+          />
         </label>
         <label class="ld-field">
           <span class="ld-field-label">Font <InfoTip text="The Rust client font — the same asset for both frameworks. Emitted as CuiTextComponent.Font (Oxide) / .SetTextFont(CUI.Handler.FontTypes.X) (Carbon)." /></span>
@@ -397,6 +419,24 @@ const computedRect = computed(() => (selected.value ? rectOf(selected.value.id) 
   padding: 4px 6px;
   color: var(--vp-c-text-1);
   font-size: 13px;
+}
+
+/* A bound text prop is read-only — its value comes from the data source. */
+.ld-field textarea:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.ld-bound-tag {
+  margin-left: 6px;
+  padding: 0 5px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--vp-c-brand-1);
+  background: var(--vp-c-brand-soft);
 }
 
 .ld-section-title {

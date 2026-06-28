@@ -4,6 +4,7 @@ import { ChevronDown, Clipboard, ClipboardPaste, HelpCircle, LayoutDashboard, La
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { usePopout } from './usePopout'
 import ContextMenu from './ContextMenu.vue'
+import DataSourcePanel from './DataSourcePanel.vue'
 import DesignerCanvas from './DesignerCanvas.vue'
 import ElementTree from './ElementTree.vue'
 import ElementTypeMenu from './ElementTypeMenu.vue'
@@ -136,10 +137,12 @@ const leftWidth = useStorage('carbon-layout-designer:workspace:leftWidth', 230)
 const rightWidth = useStorage('carbon-layout-designer:workspace:rightWidth', 300)
 const bottomHeight = useStorage('carbon-layout-designer:workspace:bottomHeight', 220)
 const bottomCollapsed = useStorage('carbon-layout-designer:workspace:bottomCollapsed', false)
+// Height of the Data Sources section split off the bottom of the Elements pane (the tree takes the rest).
+const dsHeight = useStorage('carbon-layout-designer:workspace:dsHeight', 170)
 
 // `sign` flips drag direction when a column is moved to the opposite side (Inspector-left preset),
 // so dragging a divider always grows the pane it borders.
-let resize: { type: 'left' | 'right' | 'code' | 'bottom'; start: number; origin: number; sign: number } | null = null
+let resize: { type: 'left' | 'right' | 'code' | 'bottom' | 'ds'; start: number; origin: number; sign: number } | null = null
 
 function startLeftResize(e: PointerEvent) {
   resize = { type: 'left', start: leftWidth.value, origin: e.clientX, sign: isInspectorLeft.value ? -1 : 1 }
@@ -158,12 +161,21 @@ function startBottomResize(e: PointerEvent) {
   resize = { type: 'bottom', start: bottomHeight.value, origin: e.clientY, sign: -1 }
   e.preventDefault()
 }
+function startDsResize(e: PointerEvent) {
+  // Data Sources sits below the element tree; dragging the divider up grows it (sign -1).
+  resize = { type: 'ds', start: dsHeight.value, origin: e.clientY, sign: -1 }
+  e.preventDefault()
+}
 
 useEventListener(window, 'pointermove', (e: PointerEvent) => {
   if (!resize) return
   const r = resize
   if (r.type === 'bottom') {
     bottomHeight.value = Math.min(560, Math.max(120, r.start + r.sign * (e.clientY - r.origin)))
+    return
+  }
+  if (r.type === 'ds') {
+    dsHeight.value = Math.min(420, Math.max(90, r.start + r.sign * (e.clientY - r.origin)))
     return
   }
   const next = r.start + r.sign * (e.clientX - r.origin)
@@ -374,7 +386,13 @@ function chooseArrangement(id: Arrangement) {
                 </button>
               </div>
             </div>
-            <ElementTree />
+            <div class="ld-tree-wrap">
+              <ElementTree />
+            </div>
+            <div class="ld-divider-h" title="Drag to resize Data Sources" @pointerdown="startDsResize" />
+            <div class="ld-ds-section" :style="{ height: `${dsHeight}px` }">
+              <DataSourcePanel />
+            </div>
           </div>
         </Teleport>
         <button v-if="elementsPop.pipTarget.value" class="ld-pane-restore" title="Bring Elements back" @click="elementsPop.close()">
@@ -765,6 +783,33 @@ function chooseArrangement(id: Arrangement) {
 }
 
 .ld-divider-v:hover {
+  background: var(--c-carbon-1);
+}
+
+/* Elements pane is split: the tree takes the free space, Data Sources a resizable strip below it. */
+.ld-tree-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.ld-ds-section {
+  flex: 0 0 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--vp-c-divider);
+}
+
+.ld-divider-h {
+  height: 5px;
+  flex-shrink: 0;
+  cursor: row-resize;
+  background: var(--vp-c-divider);
+  transition: background 0.12s;
+}
+
+.ld-divider-h:hover {
   background: var(--c-carbon-1);
 }
 
