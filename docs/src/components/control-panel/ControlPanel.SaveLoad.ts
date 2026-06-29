@@ -1132,6 +1132,7 @@ export class Server {
         break
       case 5:
         channel = "Clan"
+        channelColor = "text-[#cf3dff] text-xs"
         break
       case 6:
         channel = "ExternalDM"
