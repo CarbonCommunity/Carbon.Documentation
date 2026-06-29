@@ -45,7 +45,7 @@ export function defaultDockTree(): SplitNode {
       split(
         'row',
         [split('col', [leaf('elements'), leaf('dataSources')], [1.6, 1]), leaf('canvas'), leaf('inspector')],
-        [0.95, 3.4, 1.25],
+        [1.25, 3.2, 1.4],
       ),
       tabs([leaf('code'), leaf('debug')], 0),
     ],

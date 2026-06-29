@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { useEventListener, useStorage } from '@vueuse/core'
 import { Check, ChevronDown, ChevronRight, Clipboard, ClipboardPaste, FolderOpen, HelpCircle, LayoutDashboard, Lock, Pencil, PictureInPicture2, Plus, Redo2, Trash2, Undo2, X } from 'lucide-vue-next'
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, provide, ref } from 'vue'
 import { usePopout } from './usePopout'
 import ContextMenu from './ContextMenu.vue'
+import DockNode from './DockNode.vue'
+import { useDock } from './useDock'
 import DataSourcePanel from './DataSourcePanel.vue'
 import DesignerCanvas from './DesignerCanvas.vue'
 import ElementTree from './ElementTree.vue'
@@ -265,6 +267,11 @@ const paneVisible = useStorage<Record<PaneKey, boolean>>(
   undefined, // let vueuse pick its SSR-safe default storage (this page is server-rendered at build time)
   { mergeDefaults: true } // a newly-added pane (e.g. Debug) picks up its default for existing users
 )
+
+// --- dock workspace (recursive tree of tool panes around the pinned centre canvas) ---
+const { tree } = useDock()
+provide('ld-pane-visible', paneVisible) // DockNode reads this to drop hidden subtrees
+
 // the left column only exists while at least one of its stacked panes is shown
 const leftColVisible = computed(() => paneVisible.value.elements || paneVisible.value.dataSources)
 // the Code/Debug dock exists while either of its panes is shown
@@ -387,18 +394,6 @@ function chooseArrangement(id: Arrangement) {
         </div>
       </div>
 
-      <!-- workspace arrangement (pane layout presets — distinct from the saved CUI "Layouts" above) -->
-      <div class="ld-arrange-menu">
-        <button class="ld-btn" title="Arrange panes" @click.stop="arrangeMenuOpen = !arrangeMenuOpen">
-          <LayoutDashboard :size="14" /> {{ currentArrangementName }} <ChevronDown :size="13" />
-        </button>
-        <div v-if="arrangeMenuOpen" class="ld-menu-pop" @pointerdown.stop>
-          <button v-for="a in ARRANGEMENTS" :key="a.id" class="ld-menu-item" :class="{ active: a.id === arrangement }" @click="chooseArrangement(a.id)">
-            <span class="ld-menu-name">{{ a.name }}</span>
-          </button>
-        </div>
-      </div>
-
       <button class="ld-icon-btn" :disabled="!canUndo" title="Undo (Ctrl+Z)" @click="undo"><Undo2 :size="15" /></button>
       <button class="ld-icon-btn" :disabled="!canRedo" title="Redo (Ctrl+Shift+Z)" @click="redo"><Redo2 :size="15" /></button>
 
@@ -497,173 +492,9 @@ function chooseArrangement(id: Arrangement) {
       </div>
     </div>
 
-    <!-- body -->
+    <!-- body: recursive dock tree (tool panes around the pinned centre canvas) -->
     <div class="ld-body">
-      <!-- left column: two independent panes (Elements, Data Sources), each pop-out-able -->
-      <div v-if="leftColVisible" class="ld-left-col" :style="{ width: `${leftWidth}px`, order: bodyOrder.elements }">
-        <!-- Elements -->
-        <aside v-if="paneVisible.elements" class="ld-pane ld-pane-grow" :class="{ 'ld-pane-popped-v': elementsPop.pipTarget.value }">
-          <Teleport :to="elementsPop.pipTarget.value" :disabled="!elementsPop.pipTarget.value">
-            <div class="ld-pane-inner">
-              <div class="ld-panel-head">
-                <span>Elements</span>
-                <div class="ld-panel-head-actions">
-                  <!-- add-element lives here (not the toolbar) → one type menu; picking a type adds it -->
-                  <div class="ld-add-menu">
-                    <button class="ld-add-head-btn" title="Add an element to the root canvas" @click.stop="addMenuOpen = !addMenuOpen">
-                      <Plus :size="13" /> Add <ChevronDown :size="11" />
-                    </button>
-                    <ElementTypeMenu v-if="addMenuOpen" placement="below-right" @pick="onAddRoot" />
-                  </div>
-                  <button
-                    v-if="elementsPop.supported"
-                    class="ld-pane-pop-btn"
-                    :title="elementsPop.pipTarget.value ? 'Pop back in' : 'Pop out into its own window'"
-                    @click="elementsPop.toggle()"
-                  >
-                    <component :is="elementsPop.pipTarget.value ? X : PictureInPicture2" :size="14" />
-                  </button>
-                </div>
-              </div>
-              <div class="ld-tree-wrap">
-                <ElementTree />
-              </div>
-            </div>
-          </Teleport>
-          <button v-if="elementsPop.pipTarget.value" class="ld-pane-restore-h" title="Bring Elements back" @click="elementsPop.close()">
-            <PictureInPicture2 :size="14" />
-            <span>Elements</span>
-          </button>
-        </aside>
-
-        <div v-if="paneVisible.elements && paneVisible.dataSources && !elementsPop.pipTarget.value && !dataSourcesPop.pipTarget.value" class="ld-divider-h" title="Drag to resize Data Sources" @pointerdown="startDsResize" />
-
-        <!-- Data Sources (its own pane, not part of Elements) -->
-        <aside v-if="paneVisible.dataSources" class="ld-pane ld-ds-pane" :class="{ 'ld-pane-popped-v': dataSourcesPop.pipTarget.value }" :style="dataSourcesPop.pipTarget.value ? undefined : { height: `${dsHeight}px` }">
-          <Teleport :to="dataSourcesPop.pipTarget.value" :disabled="!dataSourcesPop.pipTarget.value">
-            <div class="ld-pane-inner">
-              <div class="ld-panel-head">
-                <span>Data Sources <InfoTip text="Named static values your elements can bind to. In the generated Class they become fields; everywhere else (UX/JSON/preview) the value is inlined. Edit one and every bound element updates." /></span>
-                <div class="ld-panel-head-actions">
-                  <button class="ld-add-head-btn" title="Add a text data source" @click="addDataSource('text')">
-                    <Plus :size="13" /> Add
-                  </button>
-                  <button
-                    v-if="dataSourcesPop.supported"
-                    class="ld-pane-pop-btn"
-                    :title="dataSourcesPop.pipTarget.value ? 'Pop back in' : 'Pop out into its own window'"
-                    @click="dataSourcesPop.toggle()"
-                  >
-                    <component :is="dataSourcesPop.pipTarget.value ? X : PictureInPicture2" :size="14" />
-                  </button>
-                </div>
-              </div>
-              <DataSourcePanel />
-            </div>
-          </Teleport>
-          <button v-if="dataSourcesPop.pipTarget.value" class="ld-pane-restore-h" title="Bring Data Sources back" @click="dataSourcesPop.close()">
-            <PictureInPicture2 :size="14" />
-            <span>Data Sources</span>
-          </button>
-        </aside>
-      </div>
-
-      <div v-if="leftColVisible && !(elementsPop.pipTarget.value && dataSourcesPop.pipTarget.value)" class="ld-divider-v" title="Drag to resize" :style="{ order: bodyOrder.elementsDiv }" @pointerdown="startLeftResize" />
-
-      <main class="ld-center" :style="{ order: bodyOrder.center }">
-        <!-- canvas pane title bar = document tabs (each open layout); closing a tab keeps the layout -->
-        <div v-if="currentLayoutId" class="ld-canvas-tabs" role="tablist">
-          <div
-            v-for="t in openTabLayouts"
-            :key="t.id"
-            class="ld-canvas-tab"
-            :class="{ active: t.id === currentLayoutId }"
-            role="tab"
-            :title="t.name"
-            @click="switchLayout(t.id)"
-            @mousedown.middle.prevent
-            @mouseup.middle="closeTab(t.id)"
-          >
-            <span class="ld-canvas-tab-name">{{ t.name }}</span>
-            <button class="ld-canvas-tab-close" title="Close tab (keeps the layout)" @click.stop="closeTab(t.id)"><X :size="12" /></button>
-          </div>
-        </div>
-
-        <div class="ld-canvas-stage">
-          <DesignerCanvas v-if="currentLayoutId" />
-          <!-- empty state: nothing open (all tabs closed) -->
-          <div v-else class="ld-canvas-empty">
-            <div class="ld-canvas-empty-card">
-              <LayoutDashboard :size="34" class="ld-canvas-empty-icon" />
-              <div class="ld-canvas-empty-title">No layout open</div>
-              <div class="ld-canvas-empty-sub">Create a new layout or open a saved one.</div>
-              <button class="ld-btn primary ld-canvas-empty-new" @click="newLayout()"><Plus :size="14" /> New layout</button>
-              <div v-if="layouts.length" class="ld-canvas-empty-saved">
-                <div class="ld-canvas-empty-saved-label">Open a saved layout</div>
-                <div class="ld-canvas-empty-saved-list">
-                  <button v-for="l in layouts" :key="l.id" class="ld-canvas-empty-saved-item" @click="switchLayout(l.id)">
-                    <FolderOpen :size="13" /> <span>{{ l.name }}</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </main>
-
-      <div v-if="paneVisible.inspector && !inspectorPop.pipTarget.value" class="ld-divider-v" title="Drag to resize" :style="{ order: bodyOrder.inspectorDiv }" @pointerdown="startRightResize" />
-
-      <aside v-if="paneVisible.inspector" class="ld-right" :class="{ 'ld-pane-popped': inspectorPop.pipTarget.value }" :style="{ width: inspectorPop.pipTarget.value ? undefined : `${rightWidth}px`, order: bodyOrder.inspector }">
-        <Teleport :to="inspectorPop.pipTarget.value" :disabled="!inspectorPop.pipTarget.value">
-          <div class="ld-pane-inner">
-            <div class="ld-panel-head">
-              <span>Inspector</span>
-              <button
-                v-if="inspectorPop.supported"
-                class="ld-pane-pop-btn"
-                :title="inspectorPop.pipTarget.value ? 'Pop back in' : 'Pop out into its own window'"
-                @click="inspectorPop.toggle()"
-              >
-                <component :is="inspectorPop.pipTarget.value ? X : PictureInPicture2" :size="14" />
-              </button>
-            </div>
-            <div class="ld-right-scroll">
-              <InspectorPanel />
-            </div>
-          </div>
-        </Teleport>
-        <button v-if="inspectorPop.pipTarget.value" class="ld-pane-restore" title="Bring Inspector back" @click="inspectorPop.close()">
-          <PictureInPicture2 :size="15" />
-          <span class="ld-pane-restore-label">Inspector</span>
-        </button>
-      </aside>
-
-      <!-- code as a right-hand column (the "Code side-panel" arrangement; bottom dock is hidden then) -->
-      <template v-if="codeSide && codeDockVisible">
-        <div class="ld-divider-v" title="Drag to resize" :style="{ order: 50 }" @pointerdown="startCodeColResize" />
-        <aside class="ld-code-col" :style="{ width: `${codeColWidth}px`, order: 60 }">
-          <CodeDock :show-code="paneVisible.code" :show-debug="paneVisible.debug" />
-        </aside>
-      </template>
-    </div>
-
-    <!-- Code/Debug dock (resizable / collapsible) — hidden when code is shown as a side panel -->
-    <div v-if="!codeSide && codeDockVisible" class="ld-dock" :class="{ collapsed: bottomCollapsed }">
-      <div class="ld-dock-grip" :class="{ resizable: !bottomCollapsed }" @pointerdown="startBottomResize">
-        <span class="ld-grip-lines" aria-hidden="true" />
-        <span v-if="bottomCollapsed" class="ld-dock-title">Code</span>
-        <button
-          class="ld-dock-toggle"
-          :title="bottomCollapsed ? 'Expand' : 'Collapse'"
-          @pointerdown.stop
-          @click="bottomCollapsed = !bottomCollapsed"
-        >
-          <ChevronDown :size="15" :style="{ transform: bottomCollapsed ? 'rotate(180deg)' : 'none' }" />
-        </button>
-      </div>
-      <div v-show="!bottomCollapsed" class="ld-dock-body" :style="{ height: `${bottomHeight}px` }">
-        <CodeDock :show-code="paneVisible.code" :show-debug="paneVisible.debug" />
-      </div>
+      <DockNode :node="tree" />
     </div>
 
     <ContextMenu />

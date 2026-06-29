@@ -1,0 +1,206 @@
+<script setup lang="ts">
+import { useEventListener } from '@vueuse/core'
+import { ChevronDown, PictureInPicture2, Plus, X } from 'lucide-vue-next'
+import { computed, ref, type Component } from 'vue'
+import CanvasPane from './CanvasPane.vue'
+import CodeOutput from './CodeOutput.vue'
+import DataSourcePanel from './DataSourcePanel.vue'
+import DebugPanel from './DebugPanel.vue'
+import ElementTree from './ElementTree.vue'
+import ElementTypeMenu from './ElementTypeMenu.vue'
+import InfoTip from './InfoTip.vue'
+import InspectorPanel from './InspectorPanel.vue'
+import type { ElementType } from './types'
+import { usePopout } from './usePopout'
+import { useDesigner } from './useDesigner'
+import type { PaneId } from './dockTree'
+
+const props = defineProps<{ pane: PaneId }>()
+const { addElement, addDataSource } = useDesigner()
+
+// Framed tool panes: a header (title + actions + pop-out) wraps the body. canvas/code/debug are
+// "self-framed" (render their own component with its own header) and skip this.
+const FRAMED: Partial<Record<PaneId, { title: string; body: Component; scroll: boolean }>> = {
+  elements: { title: 'Elements', body: ElementTree, scroll: true },
+  dataSources: { title: 'Data Sources', body: DataSourcePanel, scroll: false },
+  inspector: { title: 'Inspector', body: InspectorPanel, scroll: true },
+}
+const meta = computed(() => FRAMED[props.pane])
+
+const pip = usePopout(() => meta.value?.title ?? props.pane, { width: 340, height: 660 })
+
+const addMenuOpen = ref(false)
+function onAddRoot(type: ElementType) {
+  addElement(type, null)
+  addMenuOpen.value = false
+}
+useEventListener(
+  window,
+  'pointerdown',
+  (e: PointerEvent) => {
+    const t = e.target as HTMLElement | null
+    if (!t?.closest?.('.ld-add-menu')) addMenuOpen.value = false
+  },
+  true,
+)
+</script>
+
+<template>
+  <CanvasPane v-if="pane === 'canvas'" />
+  <CodeOutput v-else-if="pane === 'code'" />
+  <DebugPanel v-else-if="pane === 'debug'" />
+
+  <div v-else-if="meta" class="ld-dock-pane">
+    <Teleport :to="pip.pipTarget.value" :disabled="!pip.pipTarget.value">
+      <div class="ld-dock-pane-inner">
+        <div class="ld-dock-pane-head">
+          <span class="ld-dock-pane-title">
+            {{ meta.title }}
+            <InfoTip
+              v-if="pane === 'dataSources'"
+              text="Named static values your elements can bind to. In the generated Class they become fields; everywhere else (UX/JSON/preview) the value is inlined. Edit one and every bound element updates."
+            />
+          </span>
+          <div class="ld-dock-pane-actions">
+            <div v-if="pane === 'elements'" class="ld-add-menu">
+              <button class="ld-add-head-btn" title="Add an element to the root canvas" @click.stop="addMenuOpen = !addMenuOpen">
+                <Plus :size="13" /> Add <ChevronDown :size="11" />
+              </button>
+              <ElementTypeMenu v-if="addMenuOpen" placement="below-right" @pick="onAddRoot" />
+            </div>
+            <button v-else-if="pane === 'dataSources'" class="ld-add-head-btn" title="Add a text data source" @click="addDataSource('text')">
+              <Plus :size="13" /> Add
+            </button>
+            <button
+              v-if="pip.supported"
+              class="ld-pane-pop-btn"
+              :title="pip.pipTarget.value ? 'Pop back in' : 'Pop out into its own window'"
+              @click="pip.toggle()"
+            >
+              <component :is="pip.pipTarget.value ? X : PictureInPicture2" :size="14" />
+            </button>
+          </div>
+        </div>
+        <div class="ld-dock-pane-body" :class="{ scroll: meta.scroll }">
+          <component :is="meta.body" />
+        </div>
+      </div>
+    </Teleport>
+    <div v-if="pip.pipTarget.value" class="ld-dock-pane-popped">
+      <span>{{ meta.title }} popped out.</span>
+      <button @click="pip.close()"><X :size="12" /> Bring it back</button>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.ld-dock-pane,
+.ld-dock-pane-inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.ld-dock-pane-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 8px 5px 12px;
+  min-height: 33px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--vp-c-text-3);
+  border-bottom: 1px solid var(--vp-c-divider);
+  flex-shrink: 0;
+}
+
+.ld-dock-pane-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.ld-dock-pane-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ld-add-menu {
+  position: relative;
+  display: inline-flex;
+}
+
+.ld-add-head-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  color: #fff;
+  background: var(--c-carbon-1);
+  border-radius: 4px;
+}
+
+.ld-add-head-btn:hover {
+  background: var(--c-carbon-3);
+}
+
+.ld-pane-pop-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px;
+  border-radius: 4px;
+  color: var(--vp-c-text-3);
+}
+
+.ld-pane-pop-btn:hover {
+  color: var(--c-carbon-1);
+  background: var(--c-carbon-soft);
+}
+
+.ld-dock-pane-body {
+  flex: 1;
+  min-height: 0;
+}
+
+.ld-dock-pane-body.scroll {
+  overflow-y: auto;
+}
+
+.ld-dock-pane-popped {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 100%;
+  font-size: 12px;
+  color: var(--vp-c-text-3);
+}
+
+.ld-dock-pane-popped button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--vp-c-text-2);
+  padding: 3px 8px;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 4px;
+}
+
+.ld-dock-pane-popped button:hover {
+  color: var(--vp-c-text-1);
+  border-color: var(--c-carbon-1);
+}
+</style>
