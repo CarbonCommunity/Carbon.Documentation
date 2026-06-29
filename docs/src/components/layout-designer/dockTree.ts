@@ -103,14 +103,25 @@ export function removeLeaf(node: DockNode, pane: PaneId): DockNode | null {
   if (node.type === 'leaf') return node.pane === pane ? null : node
   const children: DockNode[] = []
   const sizes: number[] = []
+  let freed = 0 // weight of a removed split child, handed to a neighbour below
+  let gapAt = -1 // index in `children` the removed child sat in front of
   node.children.forEach((c, i) => {
     const r = removeLeaf(c, pane)
     if (r) {
       children.push(r)
       if (node.type === 'split') sizes.push(node.sizes[i])
+    } else if (node.type === 'split') {
+      freed += node.sizes[i]
+      gapAt = children.length
     }
   })
   if (children.length === 0) return null
+  // Hand a removed pane's space to the sibling it sat next to (the one before it, else the one
+  // after) so that neighbour reclaims it — instead of letting the freed weight vanish and the
+  // split's ratios skew. Without this, repeatedly docking a pane into a region and pulling it back
+  // out starves that region geometrically until it collapses (issue #6). No-op when the node
+  // collapses to a single child (its weight is inherited via the parent slot) or for tabs.
+  if (freed > 0 && children.length > 1) sizes[gapAt > 0 ? gapAt - 1 : 0] += freed
   if (children.length === 1) return children[0] // collapse single-child node
   if (node.type === 'split') return { ...node, children, sizes }
   return { ...node, children: children as LeafNode[], active: Math.min(node.active, children.length - 1) }
