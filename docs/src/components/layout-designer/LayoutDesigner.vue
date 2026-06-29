@@ -329,16 +329,16 @@ function togglePane(key: PaneKey) {
       </div>
 
       <label class="ld-tool-field">
-        <span>Ref. height</span>
+        <span>Ref. width</span>
         <input
           type="number"
-          min="120"
+          min="160"
           step="10"
-          :value="canvas.referenceHeight"
-          title="Reference resolution height in pixels — the space offsets are measured in. Width is derived from the aspect ratio."
-          @change="setCanvas({ referenceHeight: Math.max(120, Number(($event.target as HTMLInputElement).value) || 720) })"
+          :value="canvas.referenceWidth"
+          title="Reference resolution width in pixels — the space offsets are measured in. Height is derived from the aspect ratio (Rust's CUI scales to match width)."
+          @change="setCanvas({ referenceWidth: Math.max(160, Number(($event.target as HTMLInputElement).value) || 1280) })"
         />
-        <InfoTip text="The reference resolution height (Rust uses 720). All offset pixel values are measured in this space, and the width is derived from the chosen aspect ratio." />
+        <InfoTip text="The reference resolution width (Rust uses 1280). Rust's CUI canvas scales to match width, so this stays constant across aspect ratios; the height is derived from the chosen aspect. All offset pixels are measured in this space." />
       </label>
 
       <label class="ld-tool-field">

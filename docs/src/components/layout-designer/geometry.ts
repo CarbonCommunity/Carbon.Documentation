@@ -11,15 +11,20 @@ const MIN_SIZE = 1 // CUI px — keeps an element from inverting while dragging
 
 // --- canvas dimensions ---------------------------------------------------------------
 
-/** Reference width derived from the constant reference height and the chosen aspect ratio. */
+/** Reference width — the constant base (Rust's CUI canvas scales to MATCH WIDTH, so width is fixed). */
 export function referenceWidth(cfg: CanvasConfig): number {
+  return cfg.referenceWidth
+}
+
+/** Reference height derived from the constant width and the chosen aspect ratio (match-width scaler). */
+export function referenceHeight(cfg: CanvasConfig): number {
   const [aw, ah] = ASPECT_RATIOS[cfg.aspect]
-  return (cfg.referenceHeight * aw) / ah
+  return (cfg.referenceWidth * ah) / aw
 }
 
 /** Root canvas rect in CUI space. */
 export function rootRect(cfg: CanvasConfig): Rect {
-  return { x: 0, y: 0, w: referenceWidth(cfg), h: cfg.referenceHeight }
+  return { x: 0, y: 0, w: referenceWidth(cfg), h: referenceHeight(cfg) }
 }
 
 export interface Display {
@@ -32,7 +37,7 @@ export interface Display {
 /** Fit the reference canvas into the available container, preserving aspect ratio. */
 export function canvasDisplay(containerW: number, containerH: number, cfg: CanvasConfig): Display {
   const refW = referenceWidth(cfg)
-  const refH = cfg.referenceHeight
+  const refH = referenceHeight(cfg)
   const scale = Math.max(0, Math.min(containerW / refW, containerH / refH))
   return { displayW: refW * scale, displayH: refH * scale, scale }
 }

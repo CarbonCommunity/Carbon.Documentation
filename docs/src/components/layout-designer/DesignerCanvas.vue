@@ -2,7 +2,7 @@
 import { useElementSize } from '@vueuse/core'
 import { computed, ref } from 'vue'
 import CanvasElement from './CanvasElement.vue'
-import { canvasDisplay, referenceWidth } from './geometry'
+import { canvasDisplay, referenceHeight, referenceWidth } from './geometry'
 import { useDesigner } from './useDesigner'
 
 const { canvas, rootElements, select, gridSize, guides } = useDesigner()
@@ -14,6 +14,7 @@ const { width: vw, height: vh } = useElementSize(viewport)
 const PAD = 32
 
 const refW = computed(() => referenceWidth(canvas))
+const refH = computed(() => referenceHeight(canvas))
 const display = computed(() => canvasDisplay(Math.max(0, vw.value - PAD * 2), Math.max(0, vh.value - PAD * 2), canvas))
 
 const frameStyle = computed(() => ({
@@ -33,13 +34,13 @@ const vGuideStyle = computed(() => {
   const g = guides.v
   if (!g) return null
   const s = display.value.scale
-  return { left: `${g.x * s}px`, top: `${(canvas.referenceHeight - g.y1) * s}px`, height: `${(g.y1 - g.y0) * s}px` }
+  return { left: `${g.x * s}px`, top: `${(refH.value - g.y1) * s}px`, height: `${(g.y1 - g.y0) * s}px` }
 })
 const hGuideStyle = computed(() => {
   const g = guides.h
   if (!g) return null
   const s = display.value.scale
-  return { top: `${(canvas.referenceHeight - g.y) * s}px`, left: `${g.x0 * s}px`, width: `${(g.x1 - g.x0) * s}px` }
+  return { top: `${(refH.value - g.y) * s}px`, left: `${g.x0 * s}px`, width: `${(g.x1 - g.x0) * s}px` }
 })
 </script>
 
@@ -52,12 +53,12 @@ const hGuideStyle = computed(() => {
         :key="el.id"
         :element="el"
         :parent-w="refW"
-        :parent-h="canvas.referenceHeight"
+        :parent-h="refH"
         :scale="display.scale"
       />
       <div v-if="vGuideStyle" class="ld-guide ld-guide-v" :style="vGuideStyle" />
       <div v-if="hGuideStyle" class="ld-guide ld-guide-h" :style="hGuideStyle" />
-      <span class="ld-frame-label">{{ canvas.aspect }} · {{ Math.round(refW) }}×{{ canvas.referenceHeight }}</span>
+      <span class="ld-frame-label">{{ canvas.aspect }} · {{ Math.round(refW) }}×{{ Math.round(refH) }}</span>
     </div>
   </div>
 </template>

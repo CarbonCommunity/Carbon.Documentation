@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Check, Copy, PictureInPicture2, X } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
-import { cuiColorString, referenceWidth, round } from './geometry'
+import { cuiColorString, referenceHeight, referenceWidth, round } from './geometry'
 import type { ColorRGBA } from './types'
 import { usePopout } from './usePopout'
 import { useShiki } from './useShiki'
@@ -20,7 +20,7 @@ const inventory = computed(() => {
       aspect: canvas.aspect,
       rootLayer: canvas.rootLayer,
       referenceWidth: round(referenceWidth(canvas), 1),
-      referenceHeight: canvas.referenceHeight,
+      referenceHeight: round(referenceHeight(canvas), 1),
     },
     provider: provider.value,
     elements: elements.value.map((el) => {

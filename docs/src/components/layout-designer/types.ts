@@ -386,13 +386,18 @@ export interface Rect {
 export type AspectPreset = '16:9' | '16:10' | '21:9' | '4:3' | '32:9'
 
 /**
- * The canvas models Rust's "match height" canvas scaler: the reference height is
- * constant (720) and the reference width grows with the aspect ratio. This makes the
- * relative-vs-fixed behaviour faithful — fixed-px offsets keep their size across
- * aspect ratios while relative anchors reflow as the width changes.
+ * The canvas models Rust's CUI canvas scaler, which scales to **match width**: the reference WIDTH is
+ * constant (1280 — Rust's CUI reference width) and the reference HEIGHT grows as the screen gets taller
+ * (lower aspect ratio), i.e. `height = width × ah/aw`. Fixed-px offsets keep their size across aspect
+ * ratios while relative anchors reflow as the height changes — matching what Rust actually renders.
+ *
+ * NOTE: this was previously modelled the other way (constant height 720, width = height × aw/ah). That
+ * only matched in-game at 16:9; every other aspect diverged. Verified against an in-game 4:3 capture.
+ * See `geometry.referenceWidth` / `geometry.referenceHeight`.
  */
 export interface CanvasConfig {
-  referenceHeight: number
+  /** Constant reference width in CUI px. Rust's CUI reference width is 1280. */
+  referenceWidth: number
   aspect: AspectPreset
   /** Rust client UI layer the root attaches to (drives the generated parent). */
   rootLayer: ClientPanel
