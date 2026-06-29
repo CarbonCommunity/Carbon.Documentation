@@ -18,7 +18,7 @@ import { anchorPair, esc, nameRef, offsetPair, parentRef } from './elements/emit
 import type { EmitContext } from './elements/emit'
 import { definitionOf } from './elements/registry'
 import { CLIENT_PANELS, resolveText, TEXT_ALIGNS, TEXT_FONTS } from './types'
-import type { ClientPanel, ClientPanelDef, ColorRGBA, CuiElement, DataSource, DesignerElement, PanelElement, Provider, TextAlign, TextFont, Vec2 } from './types'
+import type { ClientPanel, ClientPanelDef, ColorRGBA, CuiElement, DataSource, DesignerElement, ImageFill, PanelElement, Provider, TextAlign, TextFont, Vec2 } from './types'
 
 // --- data-source fields --------------------------------------------------------------
 //
@@ -519,7 +519,12 @@ export function parseCuiJson(data: unknown): ParsedCui | null {
     } else if (rawImg && typeof rawImg.url === 'string') {
       elements.push({ ...base, type: 'panel', props: { color: parseColor(rawImg.color, { r: 1, g: 1, b: 1, a: 1 }), image: { kind: 'url', url: rawImg.url } } })
     } else if (img) {
-      elements.push({ ...base, type: 'panel', props: { color: parseColor(img.color, { r: 1, g: 1, b: 1, a: 1 }), image: null } })
+      // A plain Image may carry a non-color source (sprite / stored png / item icon); else color-only.
+      let image: ImageFill | null = null
+      if (typeof img.sprite === 'string' && img.sprite) image = { kind: 'sprite', sprite: img.sprite }
+      else if (typeof img.png === 'string' && img.png) image = { kind: 'png', png: img.png }
+      else if (img.itemId !== undefined) image = { kind: 'itemicon', itemId: Number(img.itemId) || 0, skinId: Number(img.skinId) || 0 }
+      elements.push({ ...base, type: 'panel', props: { color: parseColor(img.color, { r: 1, g: 1, b: 1, a: 1 }), image } })
     } else {
       // No graphic component — a RectTransform-only node is an empty container / section.
       elements.push({ ...base, type: 'container', props: {} })

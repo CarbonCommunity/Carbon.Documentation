@@ -3,68 +3,27 @@
 // subpanels are plain color panels, so they emit through this same definition. Image-fill *variants*
 // (sprite / png / item icon / …) extend `ImageFill.kind` and slot into the switches below.
 
-import { anchorPair, color, esc, fullStretch, nameRef, offExpr, offsetPair, parentRef, posExpr, staggeredBox } from './emit'
+import { color, cuiPanelLines, esc, fullStretch, nameRef, offExpr, parentRef, posExpr, staggeredBox } from './emit'
 import type { CreateArgs, ElementDefinition, EmitContext } from './emit'
 import type { CuiComponent, PanelElement } from '../types'
+import { adduiImageFill, carbonImageFill, oxideImageFill } from './fills'
 
-/** Oxide: a URL fill is a CuiElement + CuiRawImageComponent; otherwise a CuiPanel (Image.Color). */
+/** Oxide: an image fill emits via its kind (see fills.ts); a plain panel is a CuiPanel (Image.Color). */
 function oxide(el: PanelElement, ctx: EmitContext): string[] {
-  const parent = esc(parentRef(el, ctx))
-  const name = esc(nameRef(el, ctx))
-  if (el.props.image?.kind === 'url') {
-    return [
-      'container.Add(new CuiElement',
-      '{',
-      `    Name = "${name}",`,
-      `    Parent = "${parent}",`,
-      '    Components =',
-      '    {',
-      `        new CuiRawImageComponent { Url = "${esc(el.props.image.url)}", Color = "${color(el.props.color)}" },`,
-      '        new CuiRectTransformComponent',
-      '        {',
-      `            AnchorMin = "${anchorPair(el.anchorMin)}",`,
-      `            AnchorMax = "${anchorPair(el.anchorMax)}",`,
-      `            OffsetMin = "${offsetPair(el.offsetMin)}",`,
-      `            OffsetMax = "${offsetPair(el.offsetMax)}"`,
-      '        }',
-      '    }',
-      '});',
-      '',
-    ]
-  }
-  return [
-    'container.Add(new CuiPanel',
-    '{',
-    `    Image = { Color = "${color(el.props.color)}" },`,
-    '    RectTransform =',
-    '    {',
-    `        AnchorMin = "${anchorPair(el.anchorMin)}",`,
-    `        AnchorMax = "${anchorPair(el.anchorMax)}",`,
-    `        OffsetMin = "${offsetPair(el.offsetMin)}",`,
-    `        OffsetMax = "${offsetPair(el.offsetMax)}"`,
-    '    }',
-    `}, "${parent}", "${name}");`,
-    '',
-  ]
+  if (el.props.image) return oxideImageFill(el, ctx, el.props.image)
+  return cuiPanelLines(el, ctx, `Color = "${color(el.props.color)}"`)
 }
 
-/** Carbon: a URL fill is CreateUrlImage; otherwise CreatePanel. */
+/** Carbon: an image fill emits via its kind (see fills.ts); a plain panel is CreatePanel. */
 function carbon(el: PanelElement, ctx: EmitContext): string[] {
+  if (el.props.image) return carbonImageFill(el, ctx, el.props.image)
   const parent = esc(parentRef(el, ctx))
   const name = esc(nameRef(el, ctx))
-  const pos = posExpr(el)
-  const off = offExpr(el)
-  const c = color(el.props.color)
-  if (el.props.image?.kind === 'url') {
-    return [`cui.v2.CreateUrlImage("${parent}",`, `    ${pos},`, `    ${off},`, `    "${esc(el.props.image.url)}", "${c}", "${name}");`, '']
-  }
-  return [`cui.v2.CreatePanel("${parent}",`, `    ${pos},`, `    ${off},`, `    "${c}", "${name}");`, '']
+  return [`cui.v2.CreatePanel("${parent}",`, `    ${posExpr(el)},`, `    ${offExpr(el)},`, `    "${color(el.props.color)}", "${name}");`, '']
 }
 
 function adduiComponents(el: PanelElement): CuiComponent[] {
-  if (el.props.image?.kind === 'url') {
-    return [{ type: 'UnityEngine.UI.RawImage', url: el.props.image.url, color: color(el.props.color) }]
-  }
+  if (el.props.image) return [adduiImageFill(el.props.image, color(el.props.color))]
   return [{ type: 'UnityEngine.UI.Image', color: color(el.props.color) }]
 }
 

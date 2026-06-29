@@ -1,0 +1,57 @@
+// Panel image fills — the per-kind emit for an ImageFill (url / sprite / png / item icon). Kept apart
+// from panel.ts so the panel definition stays small and new fill kinds slot in here. The panel's
+// `color` is the image tint for every kind. URL fills use the raw-image element form; sprite/png/item
+// icon use the CuiPanel `Image` form (a sprite/png/item is just an Image with a different source).
+
+import { color, cuiPanelLines, cuiRawImageLines, esc, nameRef, offExpr, parentRef, posExpr } from './emit'
+import type { EmitContext } from './emit'
+import type { CuiComponent, ImageFill, PanelElement } from '../types'
+
+/** Oxide CUI lines for a panel whose fill is `fill` (the panel color is the tint). */
+export function oxideImageFill(el: PanelElement, ctx: EmitContext, fill: ImageFill): string[] {
+  const c = color(el.props.color)
+  switch (fill.kind) {
+    case 'url':
+      return cuiRawImageLines(el, ctx, `Url = "${esc(fill.url)}", Color = "${c}"`)
+    case 'sprite':
+      return cuiPanelLines(el, ctx, `Sprite = "${esc(fill.sprite)}", Color = "${c}"`)
+    case 'png':
+      return cuiPanelLines(el, ctx, `Png = "${esc(fill.png)}", Color = "${c}"`)
+    case 'itemicon':
+      return cuiPanelLines(el, ctx, `ItemId = ${fill.itemId}, SkinId = ${fill.skinId}, Color = "${c}"`)
+  }
+}
+
+/** Carbon LUI lines for a panel whose fill is `fill`. */
+export function carbonImageFill(el: PanelElement, ctx: EmitContext, fill: ImageFill): string[] {
+  const parent = esc(parentRef(el, ctx))
+  const name = esc(nameRef(el, ctx))
+  const c = color(el.props.color)
+  const pos = posExpr(el)
+  const off = offExpr(el)
+  switch (fill.kind) {
+    case 'url':
+      return [`cui.v2.CreateUrlImage("${parent}",`, `    ${pos},`, `    ${off},`, `    "${esc(fill.url)}", "${c}", "${name}");`, '']
+    case 'sprite':
+      return [`cui.v2.CreateSprite("${parent}",`, `    ${pos},`, `    ${off},`, `    "${esc(fill.sprite)}", "${c}", "${name}");`, '']
+    case 'png':
+      return [`cui.v2.CreateImage("${parent}",`, `    ${pos},`, `    ${off},`, `    "${esc(fill.png)}", "${c}", "${name}");`, '']
+    case 'itemicon':
+      // CreateItemIcon has no color/tint parameter — the icon renders at its natural colors.
+      return [`cui.v2.CreateItemIcon("${parent}",`, `    ${pos},`, `    ${off},`, `    ${fill.itemId}, ${fill.skinId}, "${name}");`, '']
+  }
+}
+
+/** AddUi wire component for a panel whose fill is `fill` (with the tint `colorStr`). */
+export function adduiImageFill(fill: ImageFill, colorStr: string): CuiComponent {
+  switch (fill.kind) {
+    case 'url':
+      return { type: 'UnityEngine.UI.RawImage', url: fill.url, color: colorStr }
+    case 'sprite':
+      return { type: 'UnityEngine.UI.Image', color: colorStr, sprite: fill.sprite }
+    case 'png':
+      return { type: 'UnityEngine.UI.Image', color: colorStr, png: fill.png }
+    case 'itemicon':
+      return { type: 'UnityEngine.UI.Image', color: colorStr, itemId: fill.itemId, skinId: fill.skinId }
+  }
+}

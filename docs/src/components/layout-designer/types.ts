@@ -79,13 +79,19 @@ export const CLIENT_PANELS: ClientPanelDef[] = [
 ]
 
 /**
- * Image fill layered over a panel's background. Only URL/raw images for now
- * (`CuiRawImageComponent` / `cui.v2.CreateUrlImage`); png/sprite/db/item variants come later.
+ * Image fill layered over a panel's background (the panel's `color` doubles as the image tint).
+ * Discriminated on `kind`, mirroring the framework's image creators:
+ *  - `url`      raw/remote image — `CuiRawImageComponent` / `cui.v2.CreateUrlImage`
+ *  - `sprite`   a Rust client sprite asset — `CuiImageComponent.Sprite` / `cui.v2.CreateSprite`
+ *  - `png`      a stored file by SQL data id — `CuiImageComponent.Png` / `cui.v2.CreateImage`
+ *  - `itemicon` an item's inventory icon — `CuiImageComponent.ItemId/SkinId` / `cui.v2.CreateItemIcon`
+ * (steam-avatar and image-DB fills are deferred — they need a ulong id / asset-preload step.)
  */
-export interface ImageFill {
-  kind: 'url'
-  url: string
-}
+export type ImageFill =
+  | { kind: 'url'; url: string }
+  | { kind: 'sprite'; sprite: string }
+  | { kind: 'png'; png: string }
+  | { kind: 'itemicon'; itemId: number; skinId: number }
 
 /**
  * Optional border. CUI has no border primitive, so codegen renders it as four edge subpanels
@@ -287,10 +293,18 @@ export interface CuiRectTransform {
   offsetmax: string
 }
 
-/** Solid-color panel fill. */
+/**
+ * Image fill (the AddUi `UnityEngine.UI.Image` component). `color` is always present (solid fill or
+ * image tint); the optional fields select a non-color source (sprite / stored png / item icon). Absent
+ * fields are omitted by JSON.stringify, so a plain color panel still serialises as `{ type, color }`.
+ */
 export interface CuiImageComponent {
   type: 'UnityEngine.UI.Image'
   color: string
+  sprite?: string
+  png?: string
+  itemId?: number
+  skinId?: number
 }
 
 /** URL/raw image fill — `color` is the image tint. */

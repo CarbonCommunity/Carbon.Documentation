@@ -74,6 +74,57 @@ export function nameRef(el: DesignerElement, ctx: EmitContext): string {
   return ctx.names.get(el.id) ?? el.name
 }
 
+/**
+ * Oxide CuiPanel lines whose `Image = { … }` body is `imageInner` (e.g. `Color = "1 1 1 1"` or
+ * `Sprite = "…", Color = "…"`). Shared by the plain color panel and the sprite/png/item-icon fills.
+ */
+export function cuiPanelLines(el: DesignerElement, ctx: EmitContext, imageInner: string): string[] {
+  const parent = esc(parentRef(el, ctx))
+  const name = esc(nameRef(el, ctx))
+  return [
+    'container.Add(new CuiPanel',
+    '{',
+    `    Image = { ${imageInner} },`,
+    '    RectTransform =',
+    '    {',
+    `        AnchorMin = "${anchorPair(el.anchorMin)}",`,
+    `        AnchorMax = "${anchorPair(el.anchorMax)}",`,
+    `        OffsetMin = "${offsetPair(el.offsetMin)}",`,
+    `        OffsetMax = "${offsetPair(el.offsetMax)}"`,
+    '    }',
+    `}, "${parent}", "${name}");`,
+    '',
+  ]
+}
+
+/**
+ * Oxide CuiElement + CuiRawImageComponent lines whose component body is `rawInner` (e.g.
+ * `Url = "…", Color = "…"`). Shared by the URL fill (and future SteamId raw images).
+ */
+export function cuiRawImageLines(el: DesignerElement, ctx: EmitContext, rawInner: string): string[] {
+  const parent = esc(parentRef(el, ctx))
+  const name = esc(nameRef(el, ctx))
+  return [
+    'container.Add(new CuiElement',
+    '{',
+    `    Name = "${name}",`,
+    `    Parent = "${parent}",`,
+    '    Components =',
+    '    {',
+    `        new CuiRawImageComponent { ${rawInner} },`,
+    '        new CuiRectTransformComponent',
+    '        {',
+    `            AnchorMin = "${anchorPair(el.anchorMin)}",`,
+    `            AnchorMax = "${anchorPair(el.anchorMax)}",`,
+    `            OffsetMin = "${offsetPair(el.offsetMin)}",`,
+    `            OffsetMax = "${offsetPair(el.offsetMax)}"`,
+    '        }',
+    '    }',
+    '});',
+    '',
+  ]
+}
+
 /** This element's parent reference: a named sibling, else the supplied root parent (raw). */
 export function parentRef(el: DesignerElement, ctx: EmitContext): string {
   return el.parentId ? ctx.names.get(el.parentId) ?? ctx.rootParent : ctx.rootParent

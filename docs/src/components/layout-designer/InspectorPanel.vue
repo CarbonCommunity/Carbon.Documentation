@@ -108,6 +108,51 @@ function setImageUrl(el: DesignerElement, raw: string) {
   update(el.id, { props: { image: { kind: 'url', url: raw.trim() } } })
 }
 
+// Image-fill kind (url / sprite / png / item icon) + per-kind field setters. The panel color is the
+// image tint for every kind. Switching kind resets to that kind's default fields.
+type ImageKind = 'url' | 'sprite' | 'png' | 'itemicon'
+const IMAGE_KINDS: { id: ImageKind; label: string }[] = [
+  { id: 'url', label: 'URL' },
+  { id: 'sprite', label: 'Sprite' },
+  { id: 'png', label: 'File (id)' },
+  { id: 'itemicon', label: 'Item icon' },
+]
+const imageKind = computed<ImageKind>(() => panelProps.value?.image?.kind ?? 'url')
+
+function setImageKind(el: DesignerElement, kind: ImageKind) {
+  if (el.type !== 'panel') return
+  if (el.props.image?.kind === kind) return
+  const image =
+    kind === 'url'
+      ? { kind: 'url' as const, url: '' }
+      : kind === 'sprite'
+        ? { kind: 'sprite' as const, sprite: '' }
+        : kind === 'png'
+          ? { kind: 'png' as const, png: '' }
+          : { kind: 'itemicon' as const, itemId: 0, skinId: 0 }
+  update(el.id, { props: { image } })
+}
+function setSprite(el: DesignerElement, raw: string) {
+  update(el.id, { props: { image: { kind: 'sprite', sprite: raw.trim() } } })
+}
+function setPng(el: DesignerElement, raw: string) {
+  update(el.id, { props: { image: { kind: 'png', png: raw.trim() } } })
+}
+/** Item-icon fields keep the other field intact (read the current image for the sibling value). */
+function curItemIcon(el: DesignerElement): { itemId: number; skinId: number } {
+  return el.type === 'panel' && el.props.image?.kind === 'itemicon' ? el.props.image : { itemId: 0, skinId: 0 }
+}
+function setItemId(el: DesignerElement, raw: string) {
+  const n = Number.parseInt(raw, 10)
+  if (Number.isNaN(n)) return
+  update(el.id, { props: { image: { kind: 'itemicon', itemId: n, skinId: curItemIcon(el).skinId } } })
+}
+function setSkinId(el: DesignerElement, raw: string) {
+  const n = Number.parseInt(raw, 10)
+  if (Number.isNaN(n)) return
+  update(el.id, { props: { image: { kind: 'itemicon', itemId: curItemIcon(el).itemId, skinId: n } } })
+}
+
 // --- border (panel only: optional inset frame → four edge subpanels at codegen time) ---
 const DEFAULT_BORDER = { width: 2, color: { r: 0, g: 0, b: 0, a: 1 } }
 const borderProps = computed(() => panelProps.value?.border ?? null)
@@ -313,20 +358,45 @@ const computedRect = computed(() => (selected.value ? rectOf(selected.value.id) 
         </label>
       </template>
 
-      <!-- PANEL fill (solid color vs URL image) -->
+      <!-- PANEL fill (solid color vs image — url / sprite / file / item icon) -->
       <template v-if="panelProps">
         <div class="ld-section-title">
           <span>Fill</span>
-          <InfoTip text="What this panel renders: a solid color, or a raw image fetched from a URL (CuiRawImageComponent / cui.v2.CreateUrlImage). URL images download at runtime — for production prefer the image database." />
+          <InfoTip text="What this panel renders: a solid color, or an image. Image kinds map to the framework's creators — URL (CuiRawImageComponent / CreateUrlImage), Sprite (Image.Sprite / CreateSprite), File by data id (Image.Png / CreateImage), Item icon (Image.ItemId / CreateItemIcon). The panel color is the image tint." />
         </div>
         <div class="ld-segmented ld-fill-toggle" role="group" aria-label="Fill type">
           <button :class="{ active: fillMode === 'color' }" @click="setFillMode(selected, 'color')">Color</button>
-          <button :class="{ active: fillMode === 'image' }" @click="setFillMode(selected, 'image')">Image (URL)</button>
+          <button :class="{ active: fillMode === 'image' }" @click="setFillMode(selected, 'image')">Image</button>
         </div>
-        <label v-if="fillMode === 'image'" class="ld-field">
-          <span class="ld-field-label">Image URL <InfoTip text="The raw image URL. Emitted as CuiRawImageComponent.Url (Oxide) / the url arg of cui.v2.CreateUrlImage (Carbon)." /></span>
-          <input type="text" placeholder="https://example.com/image.png" :value="panelProps.image?.url ?? ''" @change="setImageUrl(selected, ($event.target as HTMLInputElement).value)" />
-        </label>
+        <template v-if="fillMode === 'image'">
+          <label class="ld-field">
+            <span class="ld-field-label">Image source <InfoTip text="Where the image comes from. URL downloads at runtime; Sprite is a Rust client asset path; File is a stored image's SQL data id; Item icon renders an item's inventory icon by item id (+ optional skin id)." /></span>
+            <select :value="imageKind" @change="setImageKind(selected, ($event.target as HTMLSelectElement).value as 'url')">
+              <option v-for="k in IMAGE_KINDS" :key="k.id" :value="k.id">{{ k.label }}</option>
+            </select>
+          </label>
+          <label v-if="imageKind === 'url'" class="ld-field">
+            <span class="ld-field-label">Image URL <InfoTip text="The raw image URL. Emitted as CuiRawImageComponent.Url (Oxide) / the url arg of cui.v2.CreateUrlImage (Carbon)." /></span>
+            <input type="text" placeholder="https://example.com/image.png" :value="panelProps.image?.kind === 'url' ? panelProps.image.url : ''" @change="setImageUrl(selected, ($event.target as HTMLInputElement).value)" />
+          </label>
+          <label v-else-if="imageKind === 'sprite'" class="ld-field">
+            <span class="ld-field-label">Sprite path <InfoTip text="A Rust client sprite asset path (e.g. assets/icons/examplemap.png). Emitted as CuiImageComponent.Sprite (Oxide) / cui.v2.CreateSprite (Carbon)." /></span>
+            <input type="text" placeholder="assets/icons/example.png" :value="panelProps.image?.kind === 'sprite' ? panelProps.image.sprite : ''" @change="setSprite(selected, ($event.target as HTMLInputElement).value)" />
+          </label>
+          <label v-else-if="imageKind === 'png'" class="ld-field">
+            <span class="ld-field-label">File data id <InfoTip text="The SQL data id of a stored image (e.g. from ImageLibrary / FileStorage). Emitted as CuiImageComponent.Png (Oxide) / cui.v2.CreateImage (Carbon). The image must be loaded server-side first." /></span>
+            <input type="text" placeholder="e.g. 123456789" :value="panelProps.image?.kind === 'png' ? panelProps.image.png : ''" @change="setPng(selected, ($event.target as HTMLInputElement).value)" />
+          </label>
+          <template v-else-if="imageKind === 'itemicon'">
+            <div class="ld-vec-row">
+              <span class="ld-vec-label" title="Item id">Item</span>
+              <input class="ld-num" type="number" step="1" :value="panelProps.image?.kind === 'itemicon' ? panelProps.image.itemId : 0" title="Item id (the item's numeric id)" @change="setItemId(selected, ($event.target as HTMLInputElement).value)" />
+              <span class="ld-vec-label" title="Skin id">Skin</span>
+              <input class="ld-num" type="number" step="1" :value="panelProps.image?.kind === 'itemicon' ? panelProps.image.skinId : 0" title="Skin id (0 = default skin)" @change="setSkinId(selected, ($event.target as HTMLInputElement).value)" />
+            </div>
+            <p class="ld-help-intro">Item icon by id. Emitted as CuiImageComponent.ItemId/SkinId (Oxide) / cui.v2.CreateItemIcon (Carbon, no tint).</p>
+          </template>
+        </template>
       </template>
 
       <template v-if="hasColor">
