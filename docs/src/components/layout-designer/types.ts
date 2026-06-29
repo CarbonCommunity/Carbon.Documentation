@@ -11,6 +11,8 @@
 // imported here purely to assemble the DesignerElement union below. Type-only — no runtime coupling.
 import type { ButtonElement } from './elements/button'
 import type { ContainerElement } from './elements/container'
+import type { CountdownElement } from './elements/countdown'
+import type { InputElement } from './elements/input'
 
 export interface Vec2 {
   x: number
@@ -25,7 +27,7 @@ export interface ColorRGBA {
   a: number
 }
 
-export type ElementType = 'panel' | 'text' | 'container' | 'button'
+export type ElementType = 'panel' | 'text' | 'container' | 'button' | 'input' | 'countdown'
 // The addable-type list (label + order) is derived from the element registry — see
 // elements/registry.ts (`ELEMENT_TYPES`). This file owns only the discriminated-union data model.
 //
@@ -226,7 +228,7 @@ export interface TextElement extends BaseElement {
 }
 
 /** Discriminated on `type` — narrow with `el.type === 'text'` to reach type-specific props. */
-export type DesignerElement = PanelElement | TextElement | ContainerElement | ButtonElement
+export type DesignerElement = PanelElement | TextElement | ContainerElement | ButtonElement | InputElement | CountdownElement
 
 // --- Data sources --------------------------------------------------------------------
 //
@@ -331,7 +333,35 @@ export interface CuiButtonComponent {
   color: string
 }
 
-export type CuiComponent = CuiImageComponent | CuiRawImageComponent | CuiTextComponent | CuiButtonComponent | CuiRectTransform
+/** Editable input field. `command` runs on submit with the typed value appended. */
+export interface CuiInputFieldComponent {
+  type: 'UnityEngine.UI.InputField'
+  text: string
+  fontSize: number
+  font: string
+  align: TextAlign
+  color: string
+  characterLimit: number
+  command: string
+}
+
+/** Client-side countdown timer (pairs with a Text component whose `%TIME_LEFT%` it replaces). */
+export interface CuiCountdownComponent {
+  type: 'Countdown'
+  startTime: number
+  endTime: number
+  step: number
+  command: string
+}
+
+export type CuiComponent =
+  | CuiImageComponent
+  | CuiRawImageComponent
+  | CuiTextComponent
+  | CuiButtonComponent
+  | CuiInputFieldComponent
+  | CuiCountdownComponent
+  | CuiRectTransform
 
 /**
  * One CUI element. `update: true` patches the element in place (no destroy/recreate, no flicker) —

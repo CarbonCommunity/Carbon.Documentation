@@ -13,7 +13,7 @@ import {
 } from './geometry'
 import { definitionOf } from './elements/registry'
 import { fontDef, resolveText } from './types'
-import type { DesignerElement, TextAlign } from './types'
+import type { ColorRGBA, DesignerElement, TextAlign, TextFont } from './types'
 import { useDesigner } from './useDesigner'
 
 defineOptions({ name: 'CanvasElement' })
@@ -102,24 +102,35 @@ function alignParts(a: TextAlign): { vert: string; horiz: string; textAlign: str
   return { vert, horiz, textAlign }
 }
 
-// Inner text-node style (text elements only). Font size scales with the canvas like offsets do.
+// Elements that render text in their box (share content + fontSize + font + align props).
+const TEXTY = new Set(['text', 'input', 'countdown'])
+const isTexty = computed(() => TEXTY.has(props.element.type))
+
+// Inner text-node style (text/input/countdown). Font size scales with the canvas like offsets do.
 const textStyle = computed<Record<string, string> | null>(() => {
   const el = props.element
-  if (el.type !== 'text') return null
-  const a = alignParts(el.props.align)
-  const f = fontDef(el.props.font)
+  if (!TEXTY.has(el.type)) return null
+  const p = el.props as { align: TextAlign; font?: TextFont; color: ColorRGBA; fontSize: number }
+  const a = alignParts(p.align)
+  const f = fontDef(p.font)
   return {
     alignItems: a.vert,
     justifyContent: a.horiz,
     textAlign: a.textAlign,
-    color: cssColor(el.props.color),
-    fontSize: `${el.props.fontSize * props.scale}px`,
+    color: cssColor(p.color),
+    fontSize: `${p.fontSize * props.scale}px`,
     fontFamily: f.css,
     fontWeight: String(f.weight ?? 400),
   }
 })
-// Resolve through any data-source binding so the canvas shows the same text the generated code emits.
-const textContent = computed(() => resolveText(props.element, dataSources.value))
+// What to show in the box: a bound text resolves through its data source; input/countdown show their
+// own literal text (input's initial value, countdown's %TIME_LEFT% template).
+const textContent = computed(() => {
+  const el = props.element
+  if (el.type === 'text') return resolveText(el, dataSources.value)
+  if (el.type === 'input' || el.type === 'countdown') return el.props.text
+  return ''
+})
 
 const children = computed(() => childrenOf(props.element.id))
 
@@ -278,8 +289,8 @@ const HANDLES: { edge: ResizeEdge; cls: string; cursor: string }[] = [
     @pointerdown="startMove"
     @contextmenu.prevent.stop="onContextMenu"
   >
-    <!-- text content (text elements only); pointer-events off so the box stays draggable -->
-    <div v-if="element.type === 'text'" class="ld-text" :style="textStyle ?? undefined">{{ textContent }}</div>
+    <!-- text content (text / input / countdown); pointer-events off so the box stays draggable -->
+    <div v-if="isTexty" class="ld-text" :style="textStyle ?? undefined">{{ textContent }}</div>
 
     <!-- selection chrome (full chrome only for a single selection) -->
     <span v-if="single" class="ld-name-tag">{{ element.name }}</span>

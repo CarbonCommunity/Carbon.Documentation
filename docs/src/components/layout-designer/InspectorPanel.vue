@@ -82,12 +82,37 @@ const panelProps = computed(() => (selected.value?.type === 'panel' ? selected.v
 const textProps = computed(() => (selected.value?.type === 'text' ? selected.value.props : null))
 const buttonProps = computed(() => (selected.value?.type === 'button' ? selected.value.props : null))
 
-// --- button props ---
+const inputProps = computed(() => (selected.value?.type === 'input' ? selected.value.props : null))
+const countdownProps = computed(() => (selected.value?.type === 'countdown' ? selected.value.props : null))
+// Text-bearing props shared by text / input / countdown (all have text + fontSize + font + align), so
+// the content/font/size/align controls render once for any of them.
+const textLikeProps = computed(() => {
+  const el = selected.value
+  if (el && (el.type === 'text' || el.type === 'input' || el.type === 'countdown')) return el.props
+  return null
+})
+/** Heading for the shared content section, per type. */
+const textSectionLabel = computed(() => (selected.value?.type === 'input' ? 'Input' : selected.value?.type === 'countdown' ? 'Countdown text' : 'Text'))
+
+// --- button / input / countdown props (generic merge setters) ---
 function setCommand(el: DesignerElement, raw: string) {
   update(el.id, { props: { command: raw } })
 }
 function setProtected(el: DesignerElement, on: boolean) {
   update(el.id, { props: { isProtected: on } })
+}
+function setIntProp(el: DesignerElement, key: string, raw: string, min = 0) {
+  const n = Number.parseInt(raw, 10)
+  if (Number.isNaN(n) || n < min) return
+  update(el.id, { props: { [key]: n } })
+}
+function setFloatProp(el: DesignerElement, key: string, raw: string, min?: number) {
+  const n = Number.parseFloat(raw)
+  if (Number.isNaN(n) || (min !== undefined && n < min)) return
+  update(el.id, { props: { [key]: n } })
+}
+function setBoolProp(el: DesignerElement, key: string, on: boolean) {
+  update(el.id, { props: { [key]: on } })
 }
 
 // --- fill (panel only: solid color vs URL image) ---
@@ -289,13 +314,13 @@ const computedRect = computed(() => (selected.value ? rectOf(selected.value.id) 
         <input type="number" step="1" :value="round(selected.offsetMax.y)" @change="setVec(selected, 'offsetMax', 'y', ($event.target as HTMLInputElement).value)" />
       </div>
 
-      <!-- TEXT props -->
-      <template v-if="textProps">
+      <!-- TEXT-bearing props: text, input, and countdown all share content / font / size / align -->
+      <template v-if="textLikeProps">
         <div class="ld-section-title">
-          <span>Text</span>
-          <InfoTip text="The label's content and how it sits in its box. Emitted as CuiLabel + CuiTextComponent (Oxide) / cui.v2.CreateText (Carbon). The font is RobotoCondensed (Rust's default)." />
+          <span>{{ textSectionLabel }}</span>
+          <InfoTip text="The content and how it sits in its box. Text → CuiLabel / cui.v2.CreateText; Input → CuiInputFieldComponent / cui.v2.CreateInput; Countdown → CuiTextComponent + CuiCountdownComponent / cui.v2.CreateCountdown. The font asset is shared by both frameworks." />
         </div>
-        <label v-if="textSources.length" class="ld-field">
+        <label v-if="textSources.length && textProps" class="ld-field">
           <span class="ld-field-label">Source <InfoTip text="Bind this label's text to a Data Source (a shared string). Bound text is driven by the source — edit it once in the Data Sources pane and every bound element updates. Pick (literal) to type text directly." /></span>
           <select :value="textBinding" @change="setTextBinding(selected, ($event.target as HTMLSelectElement).value)">
             <option value="">(literal text)</option>
@@ -303,42 +328,100 @@ const computedRect = computed(() => (selected.value ? rectOf(selected.value.id) 
           </select>
         </label>
         <label class="ld-field">
-          <span class="ld-field-label">Content<span v-if="textBinding" class="ld-bound-tag">bound</span></span>
+          <span class="ld-field-label">
+            <template v-if="countdownProps">Format text<InfoTip text="Shown as the countdown text; the substring %TIME_LEFT% is replaced with the formatted remaining time." /></template>
+            <template v-else>Content</template>
+            <span v-if="textBinding" class="ld-bound-tag">bound</span>
+          </span>
           <textarea
             class="ld-textarea"
             rows="2"
-            :value="textProps.text"
+            :value="textLikeProps.text"
             :disabled="!!textBinding"
-            :placeholder="textBinding ? 'Driven by the bound data source' : ''"
+            :placeholder="countdownProps ? 'e.g. %TIME_LEFT%' : textBinding ? 'Driven by the bound data source' : ''"
             @change="setText(selected, ($event.target as HTMLTextAreaElement).value)"
           />
         </label>
         <label class="ld-field">
-          <span class="ld-field-label">Font <InfoTip text="The Rust client font — the same asset for both frameworks. Emitted as CuiTextComponent.Font (Oxide) / .SetTextFont(CUI.Handler.FontTypes.X) (Carbon)." /></span>
-          <select :value="textProps.font ?? 'RobotoCondensedRegular'" @change="setFont(selected, ($event.target as HTMLSelectElement).value as TextFont)">
+          <span class="ld-field-label">Font <InfoTip text="The Rust client font — the same asset for both frameworks. Emitted as the Font/.SetTextFont arg." /></span>
+          <select :value="textLikeProps.font ?? 'RobotoCondensedRegular'" @change="setFont(selected, ($event.target as HTMLSelectElement).value as TextFont)">
             <option v-for="f in TEXT_FONTS" :key="f.id" :value="f.id">{{ f.label }}</option>
           </select>
         </label>
         <div class="ld-vec-row">
           <span class="ld-vec-label">Size</span>
-          <input class="ld-range" type="range" min="4" max="64" step="1" :value="textProps.fontSize" title="Font size" @input="setFontSize(selected, ($event.target as HTMLInputElement).value)" />
-          <input class="ld-num" type="number" min="1" step="1" :value="textProps.fontSize" title="Font size in reference px" @change="setFontSize(selected, ($event.target as HTMLInputElement).value)" />
+          <input class="ld-range" type="range" min="4" max="64" step="1" :value="textLikeProps.fontSize" title="Font size" @input="setFontSize(selected, ($event.target as HTMLInputElement).value)" />
+          <input class="ld-num" type="number" min="1" step="1" :value="textLikeProps.fontSize" title="Font size in reference px" @change="setFontSize(selected, ($event.target as HTMLInputElement).value)" />
         </div>
         <div class="ld-section-title">
           <span>Alignment <small>(in box)</small></span>
-          <InfoTip text="Where the text sits within its box (Unity TextAnchor). Maps to CuiTextComponent.Align / the alignment arg of cui.v2.CreateText." />
+          <InfoTip text="Where the text sits within its box (Unity TextAnchor)." />
         </div>
         <div class="ld-align-grid" role="group" aria-label="Text alignment">
           <button
             v-for="a in TEXT_ALIGNS"
             :key="a"
-            :class="{ active: textProps.align === a }"
+            :class="{ active: textLikeProps.align === a }"
             :title="a"
             @click="setAlign(selected, a)"
           >
             <span class="ld-align-dot" />
           </button>
         </div>
+      </template>
+
+      <!-- INPUT extras (command + char limit + password); text/font/size/align are shared above -->
+      <template v-if="inputProps">
+        <div class="ld-section-title">
+          <span>Input field</span>
+          <InfoTip text="An editable field. On submit it runs the command with the typed value appended. Emitted as CuiInputFieldComponent (Oxide) / cui.v2.CreateInput (Carbon). The Content above is the initial text; the color above is the text color." />
+        </div>
+        <label class="ld-field">
+          <span class="ld-field-label">Command <InfoTip text="Command run when the player submits the field; the input value is appended as an argument." /></span>
+          <input type="text" placeholder="e.g. myplugin.setname" :value="inputProps.command" @change="setCommand(selected, ($event.target as HTMLInputElement).value)" />
+        </label>
+        <div class="ld-vec-row">
+          <span class="ld-vec-label" title="Character limit (0 = unlimited)">Limit</span>
+          <input class="ld-num" type="number" min="0" step="1" :value="inputProps.charLimit" title="Character limit (0 = unlimited)" @change="setIntProp(selected, 'charLimit', ($event.target as HTMLInputElement).value)" />
+          <label class="ld-border-enable">
+            <input type="checkbox" :checked="inputProps.password" @change="setBoolProp(selected, 'password', ($event.target as HTMLInputElement).checked)" />
+            <span>Password</span>
+          </label>
+        </div>
+        <label class="ld-border-enable">
+          <input type="checkbox" :checked="inputProps.isProtected" @change="setProtected(selected, ($event.target as HTMLInputElement).checked)" />
+          <span>Protected</span>
+          <InfoTip text="Carbon command protection (Carbon-only; Oxide ignores it)." />
+        </label>
+      </template>
+
+      <!-- COUNTDOWN extras (timer + command); text/font/size/align are shared above -->
+      <template v-if="countdownProps">
+        <div class="ld-section-title">
+          <span>Countdown timer</span>
+          <InfoTip text="Counts from Start to End seconds, client-side, substituting %TIME_LEFT% in the text. Runs the command when it reaches the end. Emitted as CuiCountdownComponent (Oxide) / cui.v2.CreateCountdown (Carbon)." />
+        </div>
+        <div class="ld-vec-row">
+          <span class="ld-vec-label" title="Start time (seconds)">Start</span>
+          <input class="ld-num" type="number" step="1" :value="countdownProps.startTime" title="Start time (seconds)" @change="setFloatProp(selected, 'startTime', ($event.target as HTMLInputElement).value)" />
+          <span class="ld-vec-label" title="End time (seconds)">End</span>
+          <input class="ld-num" type="number" step="1" :value="countdownProps.endTime" title="End time (seconds)" @change="setFloatProp(selected, 'endTime', ($event.target as HTMLInputElement).value)" />
+        </div>
+        <div class="ld-vec-row">
+          <span class="ld-vec-label" title="Step (seconds per tick)">Step</span>
+          <input class="ld-num" type="number" min="0" step="0.1" :value="countdownProps.step" title="Step — seconds decremented per tick" @change="setFloatProp(selected, 'step', ($event.target as HTMLInputElement).value, 0)" />
+          <span class="ld-vec-label" title="Client refresh interval (Carbon)">Int.</span>
+          <input class="ld-num" type="number" min="0" step="0.1" :value="countdownProps.interval" title="Client refresh interval in seconds (Carbon only)" @change="setFloatProp(selected, 'interval', ($event.target as HTMLInputElement).value, 0)" />
+        </div>
+        <label class="ld-field">
+          <span class="ld-field-label">Command <InfoTip text="Optional command run when the countdown reaches the end. Leave empty for none." /></span>
+          <input type="text" placeholder="(none)" :value="countdownProps.command" @change="setCommand(selected, ($event.target as HTMLInputElement).value)" />
+        </label>
+        <label class="ld-border-enable">
+          <input type="checkbox" :checked="countdownProps.isProtected" @change="setProtected(selected, ($event.target as HTMLInputElement).checked)" />
+          <span>Protected</span>
+          <InfoTip text="Carbon command protection (Carbon-only; Oxide ignores it)." />
+        </label>
       </template>
 
       <!-- BUTTON props (command + Carbon command protection); the label is a child Text element -->
