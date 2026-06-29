@@ -1,33 +1,24 @@
 <script setup lang="ts">
 import { useEventListener, useStorage } from '@vueuse/core'
-import { Check, ChevronDown, ChevronRight, Clipboard, ClipboardPaste, FolderOpen, HelpCircle, LayoutDashboard, Lock, Pencil, PictureInPicture2, Plus, Redo2, Trash2, Undo2, X } from 'lucide-vue-next'
-import { computed, onBeforeUnmount, onMounted, provide, ref } from 'vue'
-import { usePopout } from './usePopout'
+import { Check, ChevronRight, Clipboard, ClipboardPaste, FolderOpen, HelpCircle, Lock, Pencil, Plus, Redo2, Trash2, Undo2, X } from 'lucide-vue-next'
+import { onBeforeUnmount, onMounted, provide, ref } from 'vue'
 import ContextMenu from './ContextMenu.vue'
 import DockNode from './DockNode.vue'
-import { useDock } from './useDock'
-import DataSourcePanel from './DataSourcePanel.vue'
-import DesignerCanvas from './DesignerCanvas.vue'
-import ElementTree from './ElementTree.vue'
-import ElementTypeMenu from './ElementTypeMenu.vue'
 import InfoTip from './InfoTip.vue'
-import InspectorPanel from './InspectorPanel.vue'
-import { ASPECT_PRESETS, CLIENT_PANELS, type AspectPreset, type ClientPanel, type ElementType } from './types'
-import CodeDock from './CodeDock.vue'
 import LivePreviewControls from './LivePreviewControls.vue'
+import { ASPECT_PRESETS, CLIENT_PANELS, type AspectPreset, type ClientPanel } from './types'
 import { useDesigner } from './useDesigner'
+import { useDock } from './useDock'
 
 const {
   canvas,
   gridSize,
   constrain,
-  addElement,
   setCanvas,
   init,
   selectedIds,
   removeSelected,
   duplicateSelected,
-  addDataSource,
   nudge,
   undo,
   redo,
@@ -37,7 +28,6 @@ const {
   currentLayoutId,
   openTabLayouts,
   recentLayouts,
-  closeTab,
   closeAllTabs,
   newLayout,
   switchLayout,
@@ -101,13 +91,6 @@ function closeFileMenu() {
   fileMenuOpen.value = false
   newFlyoutOpen.value = false
   loadFlyoutOpen.value = false
-}
-
-// --- add-element picker (single button → type menu; picking a type IS the add) ---
-const addMenuOpen = ref(false)
-function onAddRoot(type: ElementType) {
-  addElement(type, null)
-  addMenuOpen.value = false
 }
 
 // File ▸ New presets. Today there's just Empty + Default (the seeded sample); more starters can be
@@ -185,72 +168,10 @@ useEventListener(
     const t = e.target as HTMLElement
     if (!t.closest('.ld-file-menu')) closeFileMenu()
     if (!t.closest('.ld-view-menu')) viewMenuOpen.value = false
-    if (!t.closest('.ld-arrange-menu')) arrangeMenuOpen.value = false
     if (!t.closest('.ld-help')) helpOpen.value = false
-    if (!t.closest('.ld-add-menu')) addMenuOpen.value = false
   },
   true
 )
-
-// --- resizable panels (persisted to localStorage so the workspace sticks) ---
-const leftWidth = useStorage('carbon-layout-designer:workspace:leftWidth', 230)
-const rightWidth = useStorage('carbon-layout-designer:workspace:rightWidth', 300)
-const bottomHeight = useStorage('carbon-layout-designer:workspace:bottomHeight', 220)
-const bottomCollapsed = useStorage('carbon-layout-designer:workspace:bottomCollapsed', false)
-// Height of the Data Sources section split off the bottom of the Elements pane (the tree takes the rest).
-const dsHeight = useStorage('carbon-layout-designer:workspace:dsHeight', 170)
-
-// `sign` flips drag direction when a column is moved to the opposite side (Inspector-left preset),
-// so dragging a divider always grows the pane it borders.
-let resize: { type: 'left' | 'right' | 'code' | 'bottom' | 'ds'; start: number; origin: number; sign: number } | null = null
-
-function startLeftResize(e: PointerEvent) {
-  resize = { type: 'left', start: leftWidth.value, origin: e.clientX, sign: isInspectorLeft.value ? -1 : 1 }
-  e.preventDefault()
-}
-function startRightResize(e: PointerEvent) {
-  resize = { type: 'right', start: rightWidth.value, origin: e.clientX, sign: isInspectorLeft.value ? 1 : -1 }
-  e.preventDefault()
-}
-function startCodeColResize(e: PointerEvent) {
-  resize = { type: 'code', start: codeColWidth.value, origin: e.clientX, sign: -1 }
-  e.preventDefault()
-}
-function startBottomResize(e: PointerEvent) {
-  if (bottomCollapsed.value) return
-  resize = { type: 'bottom', start: bottomHeight.value, origin: e.clientY, sign: -1 }
-  e.preventDefault()
-}
-function startDsResize(e: PointerEvent) {
-  // Data Sources sits below the element tree; dragging the divider up grows it (sign -1).
-  resize = { type: 'ds', start: dsHeight.value, origin: e.clientY, sign: -1 }
-  e.preventDefault()
-}
-
-useEventListener(window, 'pointermove', (e: PointerEvent) => {
-  if (!resize) return
-  const r = resize
-  if (r.type === 'bottom') {
-    bottomHeight.value = Math.min(560, Math.max(120, r.start + r.sign * (e.clientY - r.origin)))
-    return
-  }
-  if (r.type === 'ds') {
-    dsHeight.value = Math.min(420, Math.max(90, r.start + r.sign * (e.clientY - r.origin)))
-    return
-  }
-  const next = r.start + r.sign * (e.clientX - r.origin)
-  if (r.type === 'left') leftWidth.value = Math.min(420, Math.max(180, next))
-  else if (r.type === 'right') rightWidth.value = Math.min(620, Math.max(240, next))
-  else codeColWidth.value = Math.min(680, Math.max(260, next))
-})
-useEventListener(window, 'pointerup', () => {
-  resize = null
-})
-
-// --- pop-out panes (Document Picture-in-Picture; Chromium-only) ---
-const elementsPop = usePopout(() => 'Elements', { width: 320, height: 640 })
-const dataSourcesPop = usePopout(() => 'Data Sources', { width: 320, height: 420 })
-const inspectorPop = usePopout(() => 'Inspector', { width: 360, height: 700 })
 
 // --- pane visibility (the View menu; show/hide each aux pane, persisted) ---
 type PaneKey = 'elements' | 'dataSources' | 'inspector' | 'code' | 'debug'
@@ -272,51 +193,10 @@ const paneVisible = useStorage<Record<PaneKey, boolean>>(
 const { tree } = useDock()
 provide('ld-pane-visible', paneVisible) // DockNode reads this to drop hidden subtrees
 
-// the left column only exists while at least one of its stacked panes is shown
-const leftColVisible = computed(() => paneVisible.value.elements || paneVisible.value.dataSources)
-// the Code/Debug dock exists while either of its panes is shown
-const codeDockVisible = computed(() => paneVisible.value.code || paneVisible.value.debug)
+// Hiding a popped-out pane unmounts its DockLeaf, which closes the PiP window via usePopout cleanup,
+// so nothing extra is needed here.
 function togglePane(key: PaneKey) {
-  const next = !paneVisible.value[key]
-  paneVisible.value[key] = next
-  if (!next) {
-    // hiding a popped-out pane would otherwise leave an orphaned PiP window — bring it back first
-    if (key === 'elements') elementsPop.close()
-    else if (key === 'dataSources') dataSourcesPop.close()
-    else if (key === 'inspector') inspectorPop.close()
-  }
-}
-
-// --- workspace arrangement (preset pane layouts, persisted) ---
-type Arrangement = 'default' | 'inspector-left' | 'code-right'
-const ARRANGEMENTS: { id: Arrangement; name: string }[] = [
-  { id: 'default', name: 'Default' },
-  { id: 'inspector-left', name: 'Inspector left' },
-  { id: 'code-right', name: 'Code side-panel' },
-]
-const arrangement = useStorage<Arrangement>('carbon-layout-designer:workspace:arrangement', 'default')
-const arrangeMenuOpen = ref(false)
-const isInspectorLeft = computed(() => arrangement.value === 'inspector-left')
-const codeSide = computed(() => arrangement.value === 'code-right')
-const currentArrangementName = computed(() => ARRANGEMENTS.find((a) => a.id === arrangement.value)?.name ?? 'Default')
-const codeColWidth = useStorage('carbon-layout-designer:workspace:codeColWidth', 380)
-
-// flex `order` for each body child — swaps the Elements/Inspector columns for the "Inspector left"
-// preset while each pane's resize divider stays bound to its own width var.
-const bodyOrder = computed(() => {
-  const swap = isInspectorLeft.value
-  return {
-    elements: swap ? 40 : 0,
-    elementsDiv: swap ? 30 : 10,
-    center: 20,
-    inspectorDiv: swap ? 10 : 30,
-    inspector: swap ? 0 : 40,
-  }
-})
-
-function chooseArrangement(id: Arrangement) {
-  arrangement.value = id
-  arrangeMenuOpen.value = false
+  paneVisible.value[key] = !paneVisible.value[key]
 }
 </script>
 
@@ -590,7 +470,6 @@ function chooseArrangement(id: Arrangement) {
 /* dropdown menus (layouts) */
 .ld-file-menu,
 .ld-view-menu,
-.ld-arrange-menu,
 .ld-help {
   position: relative;
   display: inline-flex;
@@ -848,427 +727,6 @@ function chooseArrangement(id: Arrangement) {
   overflow-x: auto;
 }
 
-/* left column holds the Elements and Data Sources panes stacked vertically */
-.ld-left-col {
-  width: 230px;
-  flex-shrink: 0;
-  border-right: 1px solid var(--vp-c-divider);
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-
-/* a stacked pane in the left column */
-.ld-pane {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-
-/* the pane that absorbs the column's free space (Elements); keeps a floor so a tall Data Sources
-   pane on a short viewport can't crush it away entirely */
-.ld-pane-grow {
-  flex: 1 1 auto;
-  min-height: 64px;
-}
-
-.ld-center {
-  flex: 1;
-  /* keep the canvas usable; if the fixed-width side columns can't all fit, the body scrolls
-     horizontally rather than crushing the canvas to nothing (e.g. Code-side-panel on a narrow window) */
-  min-width: 240px;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-/* canvas document tabs (one per open layout) — the canvas pane's title bar */
-.ld-canvas-tabs {
-  display: flex;
-  align-items: stretch;
-  gap: 2px;
-  min-height: 33px;
-  padding: 3px 6px 0;
-  border-bottom: 1px solid var(--vp-c-divider);
-  background: var(--vp-c-bg-soft);
-  overflow-x: auto;
-  flex-shrink: 0;
-}
-
-.ld-canvas-tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  max-width: 200px;
-  padding: 4px 6px 4px 11px;
-  font-size: 12.5px;
-  color: var(--vp-c-text-2);
-  background: transparent;
-  border: 1px solid transparent;
-  border-bottom: none;
-  border-radius: 5px 5px 0 0;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.ld-canvas-tab:hover {
-  color: var(--vp-c-text-1);
-  background: var(--vp-c-bg);
-}
-
-.ld-canvas-tab.active {
-  color: var(--vp-c-text-1);
-  background: var(--c-carbon-bg-dark);
-  border-color: var(--vp-c-divider);
-}
-
-.ld-canvas-tab-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.ld-canvas-tab-close {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1px;
-  border-radius: 3px;
-  color: var(--vp-c-text-3);
-  opacity: 0.65;
-}
-
-.ld-canvas-tab-close:hover {
-  opacity: 1;
-  color: var(--c-carbon-1);
-  background: var(--c-carbon-soft);
-}
-
-.ld-canvas-stage {
-  position: relative;
-  flex: 1;
-  min-height: 0;
-}
-
-/* empty state when no tab is open */
-.ld-canvas-empty {
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  overflow: auto; /* scroll rather than clip the card top on a short stage */
-}
-
-.ld-canvas-empty-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  max-width: 360px;
-  text-align: center;
-}
-
-.ld-canvas-empty-icon {
-  color: var(--vp-c-text-3);
-  opacity: 0.7;
-}
-
-.ld-canvas-empty-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--vp-c-text-1);
-}
-
-.ld-canvas-empty-sub {
-  font-size: 13px;
-  color: var(--vp-c-text-3);
-}
-
-.ld-canvas-empty-new {
-  margin-top: 6px;
-}
-
-.ld-canvas-empty-saved {
-  margin-top: 14px;
-  width: 100%;
-}
-
-.ld-canvas-empty-saved-label {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--vp-c-text-3);
-  margin-bottom: 6px;
-}
-
-.ld-canvas-empty-saved-list {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  max-height: 180px;
-  overflow-y: auto;
-}
-
-.ld-canvas-empty-saved-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 5px 10px;
-  font-size: 13px;
-  color: var(--vp-c-text-2);
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 5px;
-}
-
-.ld-canvas-empty-saved-item:hover {
-  color: var(--vp-c-text-1);
-  border-color: var(--c-carbon-1);
-}
-
-.ld-divider-v {
-  width: 5px;
-  flex-shrink: 0;
-  cursor: col-resize;
-  background: var(--vp-c-divider);
-  transition: background 0.12s;
-}
-
-.ld-divider-v:hover {
-  background: var(--c-carbon-1);
-}
-
-/* Elements pane is split: the tree takes the free space, Data Sources a resizable strip below it. */
-.ld-tree-wrap {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-}
-
-/* Data Sources pane: its inline height is the preferred size, but it may shrink (its list scrolls)
-   when the column is short so the Elements pane keeps its floor. */
-.ld-ds-pane {
-  flex: 0 1 auto;
-  min-height: 0;
-}
-
-.ld-divider-h {
-  height: 5px;
-  flex-shrink: 0;
-  cursor: row-resize;
-  background: var(--vp-c-divider);
-  transition: background 0.12s;
-}
-
-.ld-divider-h:hover {
-  background: var(--c-carbon-1);
-}
-
-.ld-right {
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-
-.ld-panel-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 5px 8px 5px 12px;
-  min-height: 33px;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  color: var(--vp-c-text-3);
-  border-bottom: 1px solid var(--vp-c-divider);
-  flex-shrink: 0;
-}
-
-/* "Add element" button that now lives in the Elements panel header */
-.ld-add-head-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 3px 8px;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: none;
-  letter-spacing: 0;
-  color: #fff;
-  background: var(--c-carbon-1);
-  border-radius: 4px;
-}
-
-.ld-add-head-btn:hover {
-  background: var(--c-carbon-3);
-}
-
-.ld-right-scroll {
-  overflow-y: auto;
-  flex: 1;
-  min-height: 0;
-}
-
-/* --- pop-out panes --- */
-/* the content that gets teleported into a PiP window; fills its container in both places */
-.ld-pane-inner {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-  height: 100%;
-}
-
-.ld-panel-head-actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.ld-pane-pop-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 3px;
-  border-radius: 4px;
-  color: var(--vp-c-text-3);
-}
-
-.ld-pane-pop-btn:hover {
-  color: var(--c-carbon-1);
-  background: var(--c-carbon-soft);
-}
-
-/* while a side pane is popped out, its column collapses to a slim "bring it back" strip */
-.ld-left.ld-pane-popped,
-.ld-right.ld-pane-popped {
-  width: 34px;
-  align-items: stretch;
-}
-
-.ld-pane-restore {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
-  padding: 10px 0;
-  color: var(--vp-c-text-3);
-}
-
-.ld-pane-restore:hover {
-  color: var(--c-carbon-1);
-  background: var(--c-carbon-soft);
-}
-
-/* a stacked (vertical) pane that's popped out collapses to a short full-width "bring it back" bar */
-.ld-pane.ld-pane-popped-v {
-  flex: 0 0 auto;
-  height: auto;
-}
-
-.ld-pane-restore-h {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  min-height: 33px;
-  padding: 0 12px;
-  border-bottom: 1px solid var(--vp-c-divider);
-  color: var(--vp-c-text-3);
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-.ld-pane-restore-h:hover {
-  color: var(--c-carbon-1);
-  background: var(--c-carbon-soft);
-}
-
-.ld-pane-restore-label {
-  writing-mode: vertical-rl;
-  text-transform: uppercase;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-}
-
-/* code shown as a right-hand column instead of the bottom dock */
-.ld-code-col {
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  overflow: hidden;
-  border-left: 1px solid var(--vp-c-divider);
-}
-
-/* captured-values dock */
-.ld-dock {
-  flex-shrink: 0;
-  border-top: 1px solid var(--vp-c-divider);
-  display: flex;
-  flex-direction: column;
-}
-
-.ld-dock-grip {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  height: 22px;
-  padding: 0 10px;
-  background: var(--vp-c-bg-soft);
-  user-select: none;
-}
-
-.ld-dock-grip.resizable {
-  cursor: row-resize;
-}
-
-.ld-grip-lines {
-  flex: 1;
-  height: 100%;
-  background-image: linear-gradient(var(--vp-c-divider) 1px, transparent 1px);
-  background-size: 100% 4px;
-  background-position: center;
-  background-repeat: no-repeat;
-  opacity: 0.5;
-}
-
-.ld-dock-grip:hover .ld-grip-lines {
-  opacity: 1;
-}
-
-.ld-dock-title {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--vp-c-text-3);
-  white-space: nowrap;
-}
-
-.ld-dock-toggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--vp-c-text-3);
-  padding: 2px;
-}
-
-.ld-dock-toggle:hover {
-  color: var(--vp-c-text-1);
-}
-
-.ld-dock-body {
-  min-height: 0;
-  border-top: 1px solid var(--vp-c-divider);
-}
 </style>
 
 <!-- Unscoped: suppress the docs' global noise/speckle overlay while the designer is open so
