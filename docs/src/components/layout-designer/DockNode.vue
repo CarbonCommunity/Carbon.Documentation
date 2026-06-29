@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { useEventListener } from '@vueuse/core'
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
-import { computed, inject, ref, type Ref } from 'vue'
+import { computed, ref } from 'vue'
 import DockLeaf from './DockLeaf.vue'
-import { leavesOf, PANE_TITLES, titlesOf, type DockNode, type PaneId, type SplitNode } from './dockTree'
+import { leavesOf, PANE_TITLES, titlesOf, type DockNode, type SplitNode } from './dockTree'
 import { useDock } from './useDock'
 import { useDockDrag } from './useDockDrag'
 
@@ -14,17 +14,13 @@ const props = defineProps<{ node: DockNode; collapsible?: boolean }>()
 const { setSizes, setActiveTab, toggleCollapse, persist } = useDock()
 const { startPaneDrag } = useDockDrag()
 
-// Pane visibility (View menu), provided by LayoutDesigner as a reactive ref. A subtree with no
-// visible pane is dropped from its parent split so the layout reflows (the canvas is always visible).
-const paneVisRef = inject<Ref<Record<PaneId, boolean>>>('ld-pane-visible', ref({} as Record<PaneId, boolean>))
-const visible = (p: PaneId) => paneVisRef.value[p] ?? true
-const isVisible = (n: DockNode) => leavesOf(n).some(visible)
 const titleOf = PANE_TITLES
 
 // --- split ---
 const splitEl = ref<HTMLElement>()
-// original-index list of the children that are currently visible (others are unmounted)
-const visIdx = computed(() => (props.node.type === 'split' ? props.node.children.map((c, i) => ({ c, i })).filter(({ c }) => isVisible(c)) : []))
+// Children paired with their original index. Since #9 a hidden pane is removed from the tree outright
+// (View is folded into the tree), so there's nothing to filter — every child renders.
+const visIdx = computed(() => (props.node.type === 'split' ? props.node.children.map((c, i) => ({ c, i })) : []))
 
 // --- edge-collapse (#8) ---
 const isRow = computed(() => props.node.type === 'split' && props.node.dir === 'row')
@@ -75,11 +71,10 @@ useEventListener(window, 'pointerup', () => {
 })
 
 // --- tabs ---
-const visibleTabs = computed(() => (props.node.type === 'tabs' ? props.node.children.map((c, i) => ({ c, i })).filter(({ c }) => visible(c.pane)) : []))
+const tabItems = computed(() => (props.node.type === 'tabs' ? props.node.children.map((c, i) => ({ c, i })) : []))
 const activeTab = computed(() => {
   if (props.node.type !== 'tabs') return 0
-  const cur = props.node.children[props.node.active]
-  return cur && visible(cur.pane) ? props.node.active : (visibleTabs.value[0]?.i ?? props.node.active)
+  return props.node.active < props.node.children.length ? props.node.active : 0
 })
 </script>
 
@@ -110,14 +105,14 @@ const activeTab = computed(() => {
   <div v-else-if="node.type === 'tabs'" class="ld-dock-tabgroup">
     <div class="ld-dock-tabgroup-body">
       <template v-for="(child, i) in node.children" :key="i">
-        <div v-if="visible(child.pane)" v-show="i === activeTab" class="ld-dock-tabgroup-pane">
+        <div v-show="i === activeTab" class="ld-dock-tabgroup-pane">
           <DockLeaf :pane="child.pane" />
         </div>
       </template>
     </div>
-    <div v-if="visibleTabs.length > 1 || collapsible" class="ld-dock-tabstrip" role="tablist">
+    <div v-if="node.children.length > 1 || collapsible" class="ld-dock-tabstrip" role="tablist">
       <button
-        v-for="{ c, i } in visibleTabs"
+        v-for="{ c, i } in tabItems"
         :key="i"
         :class="{ active: i === activeTab }"
         role="tab"

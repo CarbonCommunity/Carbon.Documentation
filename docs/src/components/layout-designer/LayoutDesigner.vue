@@ -6,7 +6,7 @@ import ContextMenu from './ContextMenu.vue'
 import DockNode from './DockNode.vue'
 import InfoTip from './InfoTip.vue'
 import LivePreviewControls from './LivePreviewControls.vue'
-import { PANE_TITLES, leavesOf } from './dockTree'
+import { PANE_TITLES, leavesOf, locate, type DockSide, type PaneId } from './dockTree'
 import { ASPECT_PRESETS, CLIENT_PANELS, type AspectPreset, type ClientPanel } from './types'
 import { useDesigner } from './useDesigner'
 import { useDock } from './useDock'
@@ -191,43 +191,68 @@ const VIEW_PANES = computed<{ key: PaneKey; label: string }[]>(() => {
   if (leavesOf(tree.value).includes('screenShare')) list.push({ key: 'screenShare', label: 'Screen Share' })
   return list
 })
-const paneVisible = useStorage<Record<PaneKey, boolean>>(
-  'carbon-layout-designer:workspace:paneVisible',
-  { elements: true, dataSources: true, inspector: true, code: true, debug: true, screenShare: false },
-  undefined, // let vueuse pick its SSR-safe default storage (this page is server-rendered at build time)
-  { mergeDefaults: true } // a newly-added pane (e.g. Debug / Screen Share) picks up its default for existing users
-)
-
 // --- dock workspace (recursive tree of tool panes around the pinned centre canvas) ---
-const { tree, addPane, resetTree } = useDock()
-provide('ld-pane-visible', paneVisible) // DockNode reads this to drop hidden subtrees
+// Since #9 the tree is the single source of truth for what's docked: a pane is "shown" iff it's a
+// leaf in the tree. View hides a pane by *removing* it (remembering where it sat) and shows it by
+// re-docking there — no parallel visibility flag, so the layout can never reserve empty space for a
+// pane that isn't really there (the old "blank hole" when panes were hidden).
+const { tree, addPane, closePane, resetTree } = useDock()
+
+const isShown = (key: PaneKey) => leavesOf(tree.value).includes(key)
+
+// Last spot each hidden pane occupied, so re-showing lands it back where it was. Persisted so it
+// survives reloads; falls back to a sensible default home when the remembered neighbour is gone.
+const hiddenSpots = useStorage<Partial<Record<PaneKey, { target: PaneId; side: DockSide }>>>('carbon-layout-designer:workspace:hiddenSpots', {}, undefined)
+const DEFAULT_HOME: Record<PaneKey, { target: PaneId; side: DockSide }> = {
+  elements: { target: 'canvas', side: 'left' },
+  dataSources: { target: 'canvas', side: 'left' },
+  inspector: { target: 'canvas', side: 'right' },
+  code: { target: 'canvas', side: 'bottom' },
+  debug: { target: 'canvas', side: 'bottom' },
+  screenShare: { target: 'canvas', side: 'bottom' },
+}
+
+function hidePane(key: PaneKey) {
+  const spot = locate(tree.value, key)
+  if (spot) hiddenSpots.value[key] = spot
+  closePane(key)
+}
+function showPane(key: PaneKey) {
+  const spot = hiddenSpots.value[key]
+  if (spot && isShown(spot.target)) addPane(key, spot.target, spot.side)
+  if (!isShown(key)) {
+    const home = DEFAULT_HOME[key] // canvas is always present, so this always lands
+    addPane(key, home.target, home.side)
+  }
+  delete hiddenSpots.value[key]
+}
+// Hiding a popped-out pane removes its DockLeaf, which closes the PiP window via usePopout cleanup.
+function togglePane(key: PaneKey) {
+  if (isShown(key)) hidePane(key)
+  else showPane(key)
+}
 
 // Reset the whole workspace arrangement: dock tree back to the default layout AND every pane shown
-// again (so a stranded/hidden pane or an odd post-docking tree is recoverable in one click).
+// again (so a stranded pane or an odd post-docking tree is recoverable in one click).
 function resetWorkspaceLayout() {
   resetTree()
-  paneVisible.value = { elements: true, dataSources: true, inspector: true, code: true, debug: true, screenShare: leavesOf(tree.value).includes('screenShare') }
+  hiddenSpots.value = {}
   viewMenuOpen.value = false
 }
 
 // --- screen share (issue #7): an opt-in local screen-capture pane, added on demand ---
 const { supported: screenShareSupported } = useScreenShare()
-/** Add the Screen Share pane to the dock (docked as a bottom tab by default) and show it. */
+/** Add the Screen Share pane to the dock (a bottom tab with Code by default; canvas-bottom if Code is
+ *  hidden). No-op if it's already docked. */
 function addScreenShare() {
-  addPane('screenShare', 'code', 'center')
-  paneVisible.value.screenShare = true
+  if (isShown('code')) addPane('screenShare', 'code', 'center')
+  else addPane('screenShare', 'canvas', 'bottom')
 }
 // Let LivePreviewControls (and anyone else) offer the action without reaching into the dock/visibility.
 provide('ld-screen-share', { supported: screenShareSupported, add: addScreenShare })
 
 // drag-docking (2b): a floating ghost that follows the cursor while a pane is being dragged
 const { dragging: dockDragging, pointer: dockPointer } = useDockDrag()
-
-// Hiding a popped-out pane unmounts its DockLeaf, which closes the PiP window via usePopout cleanup,
-// so nothing extra is needed here.
-function togglePane(key: PaneKey) {
-  paneVisible.value[key] = !paneVisible.value[key]
-}
 </script>
 
 <template>
@@ -297,7 +322,7 @@ function togglePane(key: PaneKey) {
         <button class="ld-menubar-btn" :class="{ open: viewMenuOpen }" title="View" @click.stop="viewMenuOpen = !viewMenuOpen">View</button>
         <div v-if="viewMenuOpen" class="ld-menu-pop" @pointerdown.stop>
           <button v-for="p in VIEW_PANES" :key="p.key" class="ld-menu-item ld-menu-check" @click="togglePane(p.key)">
-            <Check v-if="paneVisible[p.key]" :size="13" class="ld-check-on" />
+            <Check v-if="isShown(p.key)" :size="13" class="ld-check-on" />
             <span v-else class="ld-check-spacer" />
             <span class="ld-menu-name">{{ p.label }}</span>
           </button>

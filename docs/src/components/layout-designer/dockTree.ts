@@ -87,15 +87,41 @@ export function titlesOf(node: DockNode): string[] {
   return leavesOf(node).map((p) => PANE_TITLES[p])
 }
 
-/** A tree is usable if it contains every REQUIRED pane exactly once, no duplicates, and only known
- *  panes (optional panes like screen share may be present 0 or 1×). Returns false → caller falls back
- *  to the default tree. Tolerating optional panes means adding one doesn't reset existing layouts. */
+/** A tree is usable if it only contains known panes, with no duplicates, and the pinned canvas is
+ *  present. Other panes may be absent — since #9, hiding a pane *removes* it from the tree (View is
+ *  folded into the tree, not a parallel visibility flag), so a saved tree legitimately omits the
+ *  panes the user has hidden. Returns false → caller falls back to the default tree. */
 export function isCompleteTree(node: DockNode): boolean {
   const found = leavesOf(node)
   const set = new Set(found)
   if (set.size !== found.length) return false // no duplicates
   if (!found.every((p) => PANE_IDS.includes(p))) return false // only known panes
-  return REQUIRED_PANES.every((p) => set.has(p)) // all required present
+  return set.has('canvas') // the pinned canvas must be there
+}
+
+/** Where `pane` sits relative to a surviving neighbour, so a hidden/closed pane can later be re-docked
+ *  next to where it was. Returns null if the pane isn't in the tree or has no neighbour to anchor to. */
+export function locate(node: DockNode, pane: PaneId): { target: PaneId; side: DockSide } | null {
+  if (node.type === 'leaf') return null
+  if (node.type === 'tabs') {
+    if (!node.children.some((c) => c.pane === pane)) return null
+    const other = node.children.find((c) => c.pane !== pane)
+    return other ? { target: other.pane, side: 'center' } : null // rejoin the tab group
+  }
+  const idx = node.children.findIndex((c) => c.type === 'leaf' && c.pane === pane)
+  if (idx !== -1) {
+    const ni = idx > 0 ? idx - 1 : idx + 1
+    const neighbour = node.children[ni]
+    if (!neighbour) return null
+    const target = leavesOf(neighbour)[0]
+    const side: DockSide = node.dir === 'row' ? (idx < ni ? 'left' : 'right') : idx < ni ? 'top' : 'bottom'
+    return { target, side }
+  }
+  for (const c of node.children) {
+    const r = locate(c, pane)
+    if (r) return r
+  }
+  return null
 }
 
 /** Deep clone (trees are small, plain JSON). */
