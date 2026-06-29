@@ -2,6 +2,7 @@
 import { Check, Copy, PictureInPicture2, X } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 import { cuiColorString, referenceWidth, round } from './geometry'
+import type { ColorRGBA } from './types'
 import { usePopout } from './usePopout'
 import { useShiki } from './useShiki'
 import { useDesigner } from './useDesigner'
@@ -24,6 +25,8 @@ const inventory = computed(() => {
     provider: provider.value,
     elements: elements.value.map((el) => {
       const r = rects.get(el.id)
+      // Not every element type has a color (an empty container is colorless), so read it defensively.
+      const color = (el.props as { color?: ColorRGBA }).color
       return {
         name: el.name,
         type: el.type,
@@ -32,9 +35,9 @@ const inventory = computed(() => {
         anchorMax: [round(el.anchorMax.x), round(el.anchorMax.y)],
         offsetMin: [round(el.offsetMin.x), round(el.offsetMin.y)],
         offsetMax: [round(el.offsetMax.x), round(el.offsetMax.y)],
-        color: cuiColorString(el.props.color),
+        color: color ? cuiColorString(color) : null,
         image: el.type === 'panel' && el.props.image ? { ...el.props.image } : null,
-        text: el.type === 'text' ? { text: el.props.text, fontSize: el.props.fontSize, align: el.props.align } : null,
+        text: el.type === 'text' || el.type === 'input' || el.type === 'countdown' ? { text: el.props.text, fontSize: el.props.fontSize, align: el.props.align } : null,
         resolvedRect: r ? { x: round(r.x, 1), y: round(r.y, 1), w: round(r.w, 1), h: round(r.h, 1) } : null,
       }
     }),

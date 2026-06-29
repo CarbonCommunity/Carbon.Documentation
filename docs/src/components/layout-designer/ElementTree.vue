@@ -4,10 +4,16 @@ import { Plus, Trash2 } from 'lucide-vue-next'
 import { computed, reactive, ref } from 'vue'
 import ElementTypeMenu from './ElementTypeMenu.vue'
 import { cssColor } from './geometry'
-import type { DesignerElement, ElementType } from './types'
+import type { ColorRGBA, DesignerElement, ElementType } from './types'
 import { useDesigner } from './useDesigner'
 
 const { byId, childrenOf, isSelected, isAncestor, select, addElement, moveElement, remove, openContextMenu } = useDesigner()
+
+/** Tree-row swatch background: the element's color, or transparent for colorless types (container). */
+function swatchColor(el: DesignerElement): string {
+  const c = (el.props as { color?: ColorRGBA }).color
+  return c ? cssColor(c) : 'transparent'
+}
 
 // flatten the tree depth-first so we can render an indented list without a 2nd recursive SFC
 const flat = computed(() => {
@@ -145,7 +151,7 @@ function endDrag() {
       @drop.prevent="onDrop(row.el.id)"
       @dragend="endDrag"
     >
-      <span class="ld-swatch" :style="{ background: cssColor(row.el.props.color) }" />
+      <span class="ld-swatch" :style="{ background: swatchColor(row.el) }" />
       <span class="ld-tree-name">{{ row.el.name }}</span>
       <button class="ld-tree-btn ld-tree-add" draggable="false" :class="{ open: addMenu.id === row.el.id }" title="Add child element" @click.stop="toggleAddMenu(row.el.id, $event)"><Plus :size="13" /></button>
       <button class="ld-tree-btn danger" draggable="false" title="Delete (and children)" @click.stop="remove(row.el.id)"><Trash2 :size="13" /></button>
