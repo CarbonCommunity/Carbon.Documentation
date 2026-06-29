@@ -5,10 +5,13 @@
 //   - leaf:  a single pane
 // The canvas is a leaf too, but pinned (never dragged/closed) so the fragile canvas math is untouched.
 
-export type PaneId = 'elements' | 'dataSources' | 'inspector' | 'canvas' | 'code' | 'debug'
-export const PANE_IDS: PaneId[] = ['elements', 'dataSources', 'inspector', 'canvas', 'code', 'debug']
+export type PaneId = 'elements' | 'dataSources' | 'inspector' | 'canvas' | 'code' | 'debug' | 'screenShare'
+/** Every known pane. `screenShare` is OPTIONAL (added on demand) — see REQUIRED_PANES. */
+export const PANE_IDS: PaneId[] = ['elements', 'dataSources', 'inspector', 'canvas', 'code', 'debug', 'screenShare']
+/** Panes that must be present in a valid tree. The optional ones (screen share) may be present 0/1×. */
+export const REQUIRED_PANES: PaneId[] = ['elements', 'dataSources', 'inspector', 'canvas', 'code', 'debug']
 /** Panes that can be hidden via View / dragged / closed. The canvas is pinned. */
-export const DOCKABLE_PANES: PaneId[] = ['elements', 'dataSources', 'inspector', 'code', 'debug']
+export const DOCKABLE_PANES: PaneId[] = ['elements', 'dataSources', 'inspector', 'code', 'debug', 'screenShare']
 /** Display titles, shared by the dock renderer, the drop overlay and the drag ghost. */
 export const PANE_TITLES: Record<PaneId, string> = {
   elements: 'Elements',
@@ -17,6 +20,7 @@ export const PANE_TITLES: Record<PaneId, string> = {
   canvas: 'Canvas',
   code: 'Code',
   debug: 'Debug',
+  screenShare: 'Screen Share',
 }
 
 export interface LeafNode {
@@ -71,13 +75,15 @@ export function leavesOf(node: DockNode, out: PaneId[] = []): PaneId[] {
   return out
 }
 
-/** A tree is usable only if every pane appears exactly once (catches stale/old persisted trees and
- *  any pane added to the model later). Returns false → caller falls back to the default tree. */
+/** A tree is usable if it contains every REQUIRED pane exactly once, no duplicates, and only known
+ *  panes (optional panes like screen share may be present 0 or 1×). Returns false → caller falls back
+ *  to the default tree. Tolerating optional panes means adding one doesn't reset existing layouts. */
 export function isCompleteTree(node: DockNode): boolean {
   const found = leavesOf(node)
-  if (found.length !== PANE_IDS.length) return false
   const set = new Set(found)
-  return set.size === found.length && PANE_IDS.every((p) => set.has(p))
+  if (set.size !== found.length) return false // no duplicates
+  if (!found.every((p) => PANE_IDS.includes(p))) return false // only known panes
+  return REQUIRED_PANES.every((p) => set.has(p)) // all required present
 }
 
 /** Deep clone (trees are small, plain JSON). */
@@ -172,4 +178,17 @@ export function dockMove(tree: DockNode, moving: PaneId, targetPane: PaneId, sid
   const removed = removeLeaf(cloneTree(tree), moving)
   if (!removed) return tree
   return normalize(insertRelative(removed, targetPane, moving, side))
+}
+
+/** Insert an optional pane not yet in the tree, docked relative to `target`. No-op if already present. */
+export function addPane(tree: DockNode, pane: PaneId, target: PaneId, side: DockSide = 'center'): DockNode {
+  if (leavesOf(tree).includes(pane)) return tree
+  return normalize(insertRelative(cloneTree(tree), target, pane, side))
+}
+
+/** Remove a pane from the tree (collapsing emptied splits/tabs). No-op if absent. */
+export function closePane(tree: DockNode, pane: PaneId): DockNode {
+  if (!leavesOf(tree).includes(pane)) return tree
+  const next = removeLeaf(cloneTree(tree), pane)
+  return next ? normalize(next) : tree
 }

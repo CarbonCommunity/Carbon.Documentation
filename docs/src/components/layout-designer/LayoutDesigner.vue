@@ -1,15 +1,16 @@
 <script setup lang="ts">
 import { useEventListener, useStorage } from '@vueuse/core'
 import { Check, ChevronRight, Clipboard, ClipboardPaste, FolderOpen, HelpCircle, Lock, Pencil, Plus, Redo2, Trash2, Undo2, X } from 'lucide-vue-next'
-import { onBeforeUnmount, onMounted, provide, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, provide, ref } from 'vue'
 import ContextMenu from './ContextMenu.vue'
 import DockNode from './DockNode.vue'
 import InfoTip from './InfoTip.vue'
 import LivePreviewControls from './LivePreviewControls.vue'
-import { PANE_TITLES } from './dockTree'
+import { PANE_TITLES, leavesOf } from './dockTree'
 import { ASPECT_PRESETS, CLIENT_PANELS, type AspectPreset, type ClientPanel } from './types'
 import { useDesigner } from './useDesigner'
 import { useDock } from './useDock'
+import { useScreenShare } from './useScreenShare'
 import { useDockDrag } from './useDockDrag'
 
 const {
@@ -176,24 +177,40 @@ useEventListener(
 )
 
 // --- pane visibility (the View menu; show/hide each aux pane, persisted) ---
-type PaneKey = 'elements' | 'dataSources' | 'inspector' | 'code' | 'debug'
-const VIEW_PANES: { key: PaneKey; label: string }[] = [
-  { key: 'elements', label: 'Elements' },
-  { key: 'dataSources', label: 'Data Sources' },
-  { key: 'inspector', label: 'Inspector' },
-  { key: 'code', label: 'Code' },
-  { key: 'debug', label: 'Debug' },
-]
+type PaneKey = 'elements' | 'dataSources' | 'inspector' | 'code' | 'debug' | 'screenShare'
+// Screen Share is an OPTIONAL pane (added on demand, see addScreenShare) — it only appears in View
+// once it's in the dock tree, so the View menu is computed from the current tree.
+const VIEW_PANES = computed<{ key: PaneKey; label: string }[]>(() => {
+  const list: { key: PaneKey; label: string }[] = [
+    { key: 'elements', label: 'Elements' },
+    { key: 'dataSources', label: 'Data Sources' },
+    { key: 'inspector', label: 'Inspector' },
+    { key: 'code', label: 'Code' },
+    { key: 'debug', label: 'Debug' },
+  ]
+  if (leavesOf(tree.value).includes('screenShare')) list.push({ key: 'screenShare', label: 'Screen Share' })
+  return list
+})
 const paneVisible = useStorage<Record<PaneKey, boolean>>(
   'carbon-layout-designer:workspace:paneVisible',
-  { elements: true, dataSources: true, inspector: true, code: true, debug: true },
+  { elements: true, dataSources: true, inspector: true, code: true, debug: true, screenShare: false },
   undefined, // let vueuse pick its SSR-safe default storage (this page is server-rendered at build time)
-  { mergeDefaults: true } // a newly-added pane (e.g. Debug) picks up its default for existing users
+  { mergeDefaults: true } // a newly-added pane (e.g. Debug / Screen Share) picks up its default for existing users
 )
 
 // --- dock workspace (recursive tree of tool panes around the pinned centre canvas) ---
-const { tree } = useDock()
+const { tree, addPane } = useDock()
 provide('ld-pane-visible', paneVisible) // DockNode reads this to drop hidden subtrees
+
+// --- screen share (issue #7): an opt-in local screen-capture pane, added on demand ---
+const { supported: screenShareSupported } = useScreenShare()
+/** Add the Screen Share pane to the dock (docked as a bottom tab by default) and show it. */
+function addScreenShare() {
+  addPane('screenShare', 'code', 'center')
+  paneVisible.value.screenShare = true
+}
+// Let LivePreviewControls (and anyone else) offer the action without reaching into the dock/visibility.
+provide('ld-screen-share', { supported: screenShareSupported, add: addScreenShare })
 
 // drag-docking (2b): a floating ghost that follows the cursor while a pane is being dragged
 const { dragging: dockDragging, pointer: dockPointer } = useDockDrag()

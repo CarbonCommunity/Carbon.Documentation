@@ -1,7 +1,7 @@
 // Dock-tree store: the persisted workspace tree + the operations the renderer needs — load/persist,
 // split resize, tab activation, and (2b) drag-docking moves via dockMove.
 import { ref } from 'vue'
-import { dockMove, defaultDockTree, isCompleteTree, type DockNode, type DockSide, type PaneId, type SplitNode, type TabsNode } from './dockTree'
+import { addPane as treeAddPane, closePane as treeClosePane, dockMove, defaultDockTree, isCompleteTree, leavesOf, type DockNode, type DockSide, type PaneId, type SplitNode, type TabsNode } from './dockTree'
 
 const STORAGE = 'carbon-layout-designer:workspace:dockTree'
 
@@ -54,6 +54,27 @@ function movePane(moving: PaneId, target: PaneId, side: DockSide) {
   persist()
 }
 
+/** Add an optional pane (e.g. screen share) to the tree, docked relative to `target`. */
+function addPane(pane: PaneId, target: PaneId, side: DockSide = 'center') {
+  const next = treeAddPane(tree.value, pane, target, side)
+  if (next === tree.value) return
+  tree.value = next
+  persist()
+}
+
+/** Remove a pane from the tree entirely. */
+function closePane(pane: PaneId) {
+  const next = treeClosePane(tree.value, pane)
+  if (next === tree.value) return
+  tree.value = next
+  persist()
+}
+
+/** Whether a pane currently exists in the tree. */
+function hasPane(pane: PaneId): boolean {
+  return leavesOf(tree.value).includes(pane)
+}
+
 export function useDock() {
-  return { tree, persist, resetTree, setSizes, setActiveTab, movePane }
+  return { tree, persist, resetTree, setSizes, setActiveTab, movePane, addPane, closePane, hasPane }
 }

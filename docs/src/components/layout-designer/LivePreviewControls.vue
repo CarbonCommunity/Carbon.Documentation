@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Cast, ExternalLink, RefreshCw, X } from 'lucide-vue-next'
-import { defineAsyncComponent, onMounted, ref, watch } from 'vue'
+import { Cast, ExternalLink, MonitorPlay, RefreshCw, X } from 'lucide-vue-next'
+import { defineAsyncComponent, inject, onMounted, ref, watch } from 'vue'
 import type { Server } from '@/components/control-panel/ControlPanel.SaveLoad'
 import { usePreview } from './usePreview'
 
@@ -23,6 +23,13 @@ const {
   refreshPlayers,
   initPreview,
 } = usePreview()
+
+// Optional local screen-share action, provided by LayoutDesigner (issue #7). Null if not available.
+const screenShare = inject<{ supported: boolean; add: () => void } | null>('ld-screen-share', null)
+function addScreenShare() {
+  screenShare?.add()
+  open.value = false
+}
 
 const open = ref(false)
 const showPanel = ref(false)
@@ -117,6 +124,13 @@ const serverLabel = (s: Server) => s.CachedHostname || s.Address
         {{ previewing ? 'Stop previewing' : 'Start previewing' }}
       </button>
       <p class="lp-hint">Pushes the layout live to the player and streams edits. Toggling off clears it.</p>
+
+      <!-- Local screen share (issue #7) — independent of the in-game preview; the user shares their
+           OWN screen, locally only. Shown only on browsers that support the Screen Capture API. -->
+      <div v-if="screenShare?.supported" class="lp-share">
+        <button class="lp-action lp-share-btn" @click="addScreenShare"><MonitorPlay :size="14" /> Add screen-share view</button>
+        <p class="lp-hint">Opens a pane to share your <strong>Rust window</strong> — local only, never uploaded — so you can design over the real scene.</p>
+      </div>
     </div>
 
     <!-- Carbon Control Panel modal — add/connect servers here, then close to pick one above. -->
@@ -250,6 +264,23 @@ const serverLabel = (s: Server) => s.CachedHostname || s.Address
 .lp-toggle.live {
   background: #2ea36b;
   border-color: #2ea36b;
+}
+/* local screen-share block — separated from the in-game preview controls above it */
+.lp-share {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--vp-c-divider);
+}
+.lp-share-btn {
+  width: 100%;
+  color: var(--vp-c-text-1);
+  background: var(--vp-c-bg);
+  border-color: var(--vp-c-divider);
+}
+.lp-share-btn:hover {
+  border-color: var(--c-carbon-1, #d6453a);
+  color: var(--c-carbon-1, #d6453a);
+  filter: none;
 }
 .lp-field {
   display: flex;

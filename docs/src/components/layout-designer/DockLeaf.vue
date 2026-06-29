@@ -10,6 +10,7 @@ import ElementTree from './ElementTree.vue'
 import ElementTypeMenu from './ElementTypeMenu.vue'
 import InfoTip from './InfoTip.vue'
 import InspectorPanel from './InspectorPanel.vue'
+import ScreenSharePane from './ScreenSharePane.vue'
 import type { ElementType } from './types'
 import { usePopout } from './usePopout'
 import { useDesigner } from './useDesigner'
@@ -37,6 +38,7 @@ const FRAMED: Partial<Record<PaneId, { title: string; body: Component; scroll: b
   elements: { title: 'Elements', body: ElementTree, scroll: true },
   dataSources: { title: 'Data Sources', body: DataSourcePanel, scroll: false },
   inspector: { title: 'Inspector', body: InspectorPanel, scroll: true },
+  screenShare: { title: 'Screen Share', body: ScreenSharePane, scroll: false },
 }
 const meta = computed(() => FRAMED[props.pane])
 
