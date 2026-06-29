@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useEventListener, useStorage } from '@vueuse/core'
-import { Check, ChevronRight, Clipboard, ClipboardPaste, FolderOpen, HelpCircle, Lock, Pencil, Plus, Redo2, Trash2, Undo2, X } from 'lucide-vue-next'
+import { Check, ChevronRight, Clipboard, ClipboardPaste, FolderOpen, HelpCircle, Lock, Pencil, Plus, Redo2, RotateCcw, Trash2, Undo2, X } from 'lucide-vue-next'
 import { computed, onBeforeUnmount, onMounted, provide, ref } from 'vue'
 import ContextMenu from './ContextMenu.vue'
 import DockNode from './DockNode.vue'
@@ -199,8 +199,16 @@ const paneVisible = useStorage<Record<PaneKey, boolean>>(
 )
 
 // --- dock workspace (recursive tree of tool panes around the pinned centre canvas) ---
-const { tree, addPane } = useDock()
+const { tree, addPane, resetTree } = useDock()
 provide('ld-pane-visible', paneVisible) // DockNode reads this to drop hidden subtrees
+
+// Reset the whole workspace arrangement: dock tree back to the default layout AND every pane shown
+// again (so a stranded/hidden pane or an odd post-docking tree is recoverable in one click).
+function resetWorkspaceLayout() {
+  resetTree()
+  paneVisible.value = { elements: true, dataSources: true, inspector: true, code: true, debug: true, screenShare: leavesOf(tree.value).includes('screenShare') }
+  viewMenuOpen.value = false
+}
 
 // --- screen share (issue #7): an opt-in local screen-capture pane, added on demand ---
 const { supported: screenShareSupported } = useScreenShare()
@@ -292,6 +300,10 @@ function togglePane(key: PaneKey) {
             <Check v-if="paneVisible[p.key]" :size="13" class="ld-check-on" />
             <span v-else class="ld-check-spacer" />
             <span class="ld-menu-name">{{ p.label }}</span>
+          </button>
+          <div class="ld-menu-sep" />
+          <button class="ld-menu-item" title="Restore the default pane arrangement and show every pane" @click="resetWorkspaceLayout">
+            <RotateCcw :size="13" /> <span class="ld-menu-name">Reset Layout</span>
           </button>
         </div>
       </div>
