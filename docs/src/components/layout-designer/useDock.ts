@@ -1,7 +1,7 @@
-// Dock-tree store: the persisted workspace tree + the operations the renderer needs. Drag/dock
-// mutations land here in sub-slice 2b; for now it's load/persist + split resize + tab activation.
+// Dock-tree store: the persisted workspace tree + the operations the renderer needs — load/persist,
+// split resize, tab activation, and (2b) drag-docking moves via dockMove.
 import { ref } from 'vue'
-import { defaultDockTree, isCompleteTree, type DockNode, type SplitNode, type TabsNode } from './dockTree'
+import { dockMove, defaultDockTree, isCompleteTree, type DockNode, type DockSide, type PaneId, type SplitNode, type TabsNode } from './dockTree'
 
 const STORAGE = 'carbon-layout-designer:workspace:dockTree'
 
@@ -45,6 +45,15 @@ function setActiveTab(node: TabsNode, index: number) {
   persist()
 }
 
+/** Drag-dock `moving` onto `target` at `side`. Replaces the whole tree (dockMove returns a fresh,
+ *  normalized tree); a degenerate move (e.g. drop onto self) returns the same tree → no-op + no save. */
+function movePane(moving: PaneId, target: PaneId, side: DockSide) {
+  const next = dockMove(tree.value, moving, target, side)
+  if (next === tree.value || !next) return
+  tree.value = next
+  persist()
+}
+
 export function useDock() {
-  return { tree, persist, resetTree, setSizes, setActiveTab }
+  return { tree, persist, resetTree, setSizes, setActiveTab, movePane }
 }

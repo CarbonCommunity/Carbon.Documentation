@@ -2,25 +2,20 @@
 import { useEventListener } from '@vueuse/core'
 import { computed, inject, ref, type Ref } from 'vue'
 import DockLeaf from './DockLeaf.vue'
-import { leavesOf, type DockNode, type PaneId, type SplitNode } from './dockTree'
+import { leavesOf, PANE_TITLES, type DockNode, type PaneId, type SplitNode } from './dockTree'
 import { useDock } from './useDock'
+import { useDockDrag } from './useDockDrag'
 
 const props = defineProps<{ node: DockNode }>()
 const { setSizes, setActiveTab, persist } = useDock()
+const { startPaneDrag } = useDockDrag()
 
 // Pane visibility (View menu), provided by LayoutDesigner as a reactive ref. A subtree with no
 // visible pane is dropped from its parent split so the layout reflows (the canvas is always visible).
 const paneVisRef = inject<Ref<Record<PaneId, boolean>>>('ld-pane-visible', ref({} as Record<PaneId, boolean>))
 const visible = (p: PaneId) => paneVisRef.value[p] ?? true
 const isVisible = (n: DockNode) => leavesOf(n).some(visible)
-const titleOf: Record<PaneId, string> = {
-  elements: 'Elements',
-  dataSources: 'Data Sources',
-  inspector: 'Inspector',
-  canvas: 'Canvas',
-  code: 'Code',
-  debug: 'Debug',
-}
+const titleOf = PANE_TITLES
 
 // --- split ---
 const splitEl = ref<HTMLElement>()
@@ -99,7 +94,9 @@ const activeTab = computed(() => {
         :key="i"
         :class="{ active: i === activeTab }"
         role="tab"
+        title="Drag to dock elsewhere"
         @click="setActiveTab(node, i)"
+        @pointerdown="startPaneDrag(c.pane, $event)"
       >
         {{ titleOf[c.pane] }}
       </button>

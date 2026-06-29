@@ -13,10 +13,23 @@ import InspectorPanel from './InspectorPanel.vue'
 import type { ElementType } from './types'
 import { usePopout } from './usePopout'
 import { useDesigner } from './useDesigner'
+import DockDropOverlay from './DockDropOverlay.vue'
 import type { PaneId } from './dockTree'
+import { useDockDrag } from './useDockDrag'
 
 const props = defineProps<{ pane: PaneId }>()
 const { addElement, addDataSource } = useDesigner()
+const { startPaneDrag } = useDockDrag()
+
+// Start a drag from the pane header (framed panes) or the self-framed code/debug header — but never
+// from an interactive control inside it, and never from the pinned canvas.
+function onHeaderPointerDown(e: PointerEvent) {
+  if (props.pane === 'canvas') return
+  const t = e.target as HTMLElement | null
+  if (!t?.closest('.ld-dock-pane-head, .ld-out-head')) return
+  if (t.closest('button, select, input, textarea, a, [role="tab"], .ld-add-menu')) return
+  startPaneDrag(props.pane, e)
+}
 
 // Framed tool panes: a header (title + actions + pop-out) wraps the body. canvas/code/debug are
 // "self-framed" (render their own component with its own header) and skip this.
@@ -46,11 +59,12 @@ useEventListener(
 </script>
 
 <template>
-  <CanvasPane v-if="pane === 'canvas'" />
-  <CodeOutput v-else-if="pane === 'code'" />
-  <DebugPanel v-else-if="pane === 'debug'" />
+  <div class="ld-dock-leaf-root" @pointerdown="onHeaderPointerDown">
+    <CanvasPane v-if="pane === 'canvas'" />
+    <CodeOutput v-else-if="pane === 'code'" />
+    <DebugPanel v-else-if="pane === 'debug'" />
 
-  <div v-else-if="meta" class="ld-dock-pane">
+    <div v-else-if="meta" class="ld-dock-pane">
     <Teleport :to="pip.pipTarget.value" :disabled="!pip.pipTarget.value">
       <div class="ld-dock-pane-inner">
         <div class="ld-dock-pane-head">
@@ -86,14 +100,34 @@ useEventListener(
         </div>
       </div>
     </Teleport>
-    <div v-if="pip.pipTarget.value" class="ld-dock-pane-popped">
-      <span>{{ meta.title }} popped out.</span>
-      <button @click="pip.close()"><X :size="12" /> Bring it back</button>
+      <div v-if="pip.pipTarget.value" class="ld-dock-pane-popped">
+        <span>{{ meta.title }} popped out.</span>
+        <button @click="pip.close()"><X :size="12" /> Bring it back</button>
+      </div>
     </div>
+
+    <DockDropOverlay :pane="pane" />
   </div>
 </template>
 
 <style scoped>
+/* positioned frame so the drag drop-overlay can sit over the pane content */
+.ld-dock-leaf-root {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
+
+.ld-dock-leaf-root > :not(.ld-drop-overlay) {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
 .ld-dock-pane,
 .ld-dock-pane-inner {
   display: flex;

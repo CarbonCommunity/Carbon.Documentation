@@ -6,9 +6,11 @@ import ContextMenu from './ContextMenu.vue'
 import DockNode from './DockNode.vue'
 import InfoTip from './InfoTip.vue'
 import LivePreviewControls from './LivePreviewControls.vue'
+import { PANE_TITLES } from './dockTree'
 import { ASPECT_PRESETS, CLIENT_PANELS, type AspectPreset, type ClientPanel } from './types'
 import { useDesigner } from './useDesigner'
 import { useDock } from './useDock'
+import { useDockDrag } from './useDockDrag'
 
 const {
   canvas,
@@ -193,6 +195,9 @@ const paneVisible = useStorage<Record<PaneKey, boolean>>(
 const { tree } = useDock()
 provide('ld-pane-visible', paneVisible) // DockNode reads this to drop hidden subtrees
 
+// drag-docking (2b): a floating ghost that follows the cursor while a pane is being dragged
+const { dragging: dockDragging, pointer: dockPointer } = useDockDrag()
+
 // Hiding a popped-out pane unmounts its DockLeaf, which closes the PiP window via usePopout cleanup,
 // so nothing extra is needed here.
 function togglePane(key: PaneKey) {
@@ -376,6 +381,13 @@ function togglePane(key: PaneKey) {
     <div class="ld-body">
       <DockNode :node="tree" />
     </div>
+
+    <!-- drag-docking ghost: a label that tracks the cursor while a pane is dragged -->
+    <Teleport to="body">
+      <div v-if="dockDragging" class="ld-dock-ghost" :style="{ left: dockPointer.x + 14 + 'px', top: dockPointer.y + 14 + 'px' }">
+        {{ PANE_TITLES[dockDragging] }}
+      </div>
+    </Teleport>
 
     <ContextMenu />
   </div>
@@ -725,6 +737,20 @@ function togglePane(key: PaneKey) {
   min-height: 0;
   /* escape valve when fixed columns + min-width canvas exceed the viewport (narrow screens) */
   overflow-x: auto;
+}
+
+/* floating drag-docking ghost (teleported to body, so it rides above everything) */
+.ld-dock-ghost {
+  position: fixed;
+  z-index: 3000;
+  pointer-events: none;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--c-carbon-1);
+  border-radius: 4px;
+  box-shadow: 0 4px 14px rgb(0 0 0 / 35%);
 }
 
 </style>

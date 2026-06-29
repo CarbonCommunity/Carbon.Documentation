@@ -9,6 +9,15 @@ export type PaneId = 'elements' | 'dataSources' | 'inspector' | 'canvas' | 'code
 export const PANE_IDS: PaneId[] = ['elements', 'dataSources', 'inspector', 'canvas', 'code', 'debug']
 /** Panes that can be hidden via View / dragged / closed. The canvas is pinned. */
 export const DOCKABLE_PANES: PaneId[] = ['elements', 'dataSources', 'inspector', 'code', 'debug']
+/** Display titles, shared by the dock renderer, the drop overlay and the drag ghost. */
+export const PANE_TITLES: Record<PaneId, string> = {
+  elements: 'Elements',
+  dataSources: 'Data Sources',
+  inspector: 'Inspector',
+  canvas: 'Canvas',
+  code: 'Code',
+  debug: 'Debug',
+}
 
 export interface LeafNode {
   type: 'leaf'
@@ -101,19 +110,36 @@ export function removeLeaf(node: DockNode, pane: PaneId): DockNode | null {
   return { ...node, children: children as LeafNode[], active: Math.min(node.active, children.length - 1) }
 }
 
+/** Wrap a node in a 2-child split, the moved pane on `side`. */
+function wrapNode(node: DockNode, moving: PaneId, side: DockSide): SplitNode {
+  const dir = side === 'left' || side === 'right' ? 'row' : 'col'
+  const children = side === 'left' || side === 'top' ? [leaf(moving), node] : [node, leaf(moving)]
+  return split(dir, children, [1, 1])
+}
+
+/** Dock `moving` onto a single leaf: center → tab group; a side → split. */
+function wrapLeaf(node: LeafNode, moving: PaneId, side: DockSide): DockNode {
+  if (side === 'center') return tabs([node, leaf(moving)], 1) // focus the dropped pane
+  return wrapNode(node, moving, side)
+}
+
 /** Insert `moving` relative to the leaf rendering `targetPane`. center → tab group with the target;
- *  a side → wrap the target in a split with the moved pane on that side. */
+ *  a side → wrap the target in a split with the moved pane on that side. When the target lives inside
+ *  a tabs group, center adds another tab to that group and a side splits the WHOLE group (so we never
+ *  nest a split/tabs node inside `tabs.children`, which must stay LeafNode[]). */
 function insertRelative(node: DockNode, targetPane: PaneId, moving: PaneId, side: DockSide): DockNode {
   if (node.type === 'leaf') {
-    if (node.pane !== targetPane) return node
-    const movingLeaf = leaf(moving)
-    if (side === 'center') return tabs([node, movingLeaf], 1) // focus the dropped pane
-    const dir = side === 'left' || side === 'right' ? 'row' : 'col'
-    const children = side === 'left' || side === 'top' ? [movingLeaf, node] : [node, movingLeaf]
-    return split(dir, children, [1, 1])
+    return node.pane === targetPane ? wrapLeaf(node, moving, side) : node
   }
-  const children = node.children.map((c) => insertRelative(c, targetPane, moving, side))
-  return node.type === 'split' ? { ...node, children } : { ...node, children: children as LeafNode[] }
+  if (node.type === 'tabs') {
+    if (!node.children.some((c) => c.pane === targetPane)) return node
+    if (side === 'center') {
+      const children = [...node.children, leaf(moving)]
+      return { ...node, children, active: children.length - 1 } // focus the dropped pane
+    }
+    return wrapNode(node, moving, side) // split the entire tab group
+  }
+  return { ...node, children: node.children.map((c) => insertRelative(c, targetPane, moving, side)) }
 }
 
 /** Collapse single-child splits and merge a child split into its parent when they share a direction,
