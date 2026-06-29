@@ -9,7 +9,8 @@
 // Module-singleton (like usePreview) so the MediaStream survives the pane being re-docked, hidden, or
 // popped out — only an explicit Stop (or the user revoking the share) ends it.
 
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { usePreview } from './usePreview'
 
 /** `getDisplayMedia` exists only in a secure context (https / localhost) on supporting browsers. */
 const supported = typeof navigator !== 'undefined' && !!navigator.mediaDevices && typeof navigator.mediaDevices.getDisplayMedia === 'function'
@@ -19,13 +20,22 @@ const starting = ref(false)
 const error = ref<string | null>(null)
 const active = computed(() => !!stream.value)
 
+// Screen sharing is tied to the live in-game preview — it only makes sense while you're pushing the
+// layout to the game and designing against the real scene. It can only start while previewing, and it
+// stops automatically the moment previewing ends. The coupling lives here (a singleton), not in the
+// pane component, so it still fires when the pane is hidden/closed.
+const { previewing } = usePreview()
+watch(previewing, (on) => {
+  if (!on) stop()
+})
+
 function stop() {
   stream.value?.getTracks().forEach((t) => t.stop())
   stream.value = null
 }
 
 async function start() {
-  if (!supported || starting.value || stream.value) return
+  if (!supported || starting.value || stream.value || !previewing.value) return
   error.value = null
   starting.value = true
   try {
@@ -43,5 +53,5 @@ async function start() {
 }
 
 export function useScreenShare() {
-  return { supported, stream, active, starting, error, start, stop }
+  return { supported, stream, active, starting, error, start, stop, previewing }
 }
