@@ -491,10 +491,19 @@ export function parseCuiJson(data: unknown): ParsedCui | null {
       layerVotes.set(parent, (layerVotes.get(parent) ?? 0) + 1) // root parents to a layer string
     }
 
+    const btn = comps.find((c) => c.type === 'UnityEngine.UI.Button')
     const text = comps.find((c) => c.type === 'UnityEngine.UI.Text')
     const rawImg = comps.find((c) => c.type === 'UnityEngine.UI.RawImage')
     const img = comps.find((c) => c.type === 'UnityEngine.UI.Image')
-    if (text) {
+    if (btn) {
+      // A button node carries the command + color; any bundled label is dropped (we model labels as
+      // child Text elements). Checked first so a CuiButton's own image doesn't read as a plain panel.
+      elements.push({
+        ...base,
+        type: 'button',
+        props: { color: parseColor(btn.color, { r: 1, g: 1, b: 1, a: 1 }), command: typeof btn.command === 'string' ? btn.command : '', isProtected: true },
+      })
+    } else if (text) {
       const align = text.align as TextAlign
       elements.push({
         ...base,

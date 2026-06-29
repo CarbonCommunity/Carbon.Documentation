@@ -9,6 +9,7 @@
 
 // Element types whose Props/Element interfaces live beside their behavior (elements/<type>.ts) are
 // imported here purely to assemble the DesignerElement union below. Type-only — no runtime coupling.
+import type { ButtonElement } from './elements/button'
 import type { ContainerElement } from './elements/container'
 
 export interface Vec2 {
@@ -24,7 +25,7 @@ export interface ColorRGBA {
   a: number
 }
 
-export type ElementType = 'panel' | 'text' | 'container'
+export type ElementType = 'panel' | 'text' | 'container' | 'button'
 // The addable-type list (label + order) is derived from the element registry — see
 // elements/registry.ts (`ELEMENT_TYPES`). This file owns only the discriminated-union data model.
 //
@@ -219,7 +220,7 @@ export interface TextElement extends BaseElement {
 }
 
 /** Discriminated on `type` — narrow with `el.type === 'text'` to reach type-specific props. */
-export type DesignerElement = PanelElement | TextElement | ContainerElement
+export type DesignerElement = PanelElement | TextElement | ContainerElement | ButtonElement
 
 // --- Data sources --------------------------------------------------------------------
 //
@@ -309,7 +310,14 @@ export interface CuiTextComponent {
   color: string
 }
 
-export type CuiComponent = CuiImageComponent | CuiRawImageComponent | CuiTextComponent | CuiRectTransform
+/** Clickable button — `color` is the button image color; `command` runs on click. */
+export interface CuiButtonComponent {
+  type: 'UnityEngine.UI.Button'
+  command: string
+  color: string
+}
+
+export type CuiComponent = CuiImageComponent | CuiRawImageComponent | CuiTextComponent | CuiButtonComponent | CuiRectTransform
 
 /**
  * One CUI element. `update: true` patches the element in place (no destroy/recreate, no flicker) —

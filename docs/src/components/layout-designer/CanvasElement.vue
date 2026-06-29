@@ -67,8 +67,9 @@ const boxStyle = computed(() => {
     width: `${m.cuiW * props.scale}px`,
     height: `${m.cuiH * props.scale}px`,
   }
-  // Panels paint a background (color, or an image tint behind a URL fill). Text boxes stay
-  // transparent — their `color` is the font color, rendered on the inner text node below.
+  // Panels and buttons paint a background color (panels can also show a URL-image fill). Text boxes
+  // stay transparent — their `color` is the font color, rendered on the inner text node below; an
+  // empty container stays transparent too (it's invisible in-game).
   if (el.type === 'panel') {
     style.backgroundColor = cssColor(el.props.color)
     // URL image: preview the actual bitmap stretched to the box (matches Rust's default Image type).
@@ -77,6 +78,8 @@ const boxStyle = computed(() => {
       style.backgroundSize = '100% 100%'
       style.backgroundRepeat = 'no-repeat'
     }
+  } else if (el.type === 'button') {
+    style.backgroundColor = cssColor(el.props.color)
   }
   return style
 })

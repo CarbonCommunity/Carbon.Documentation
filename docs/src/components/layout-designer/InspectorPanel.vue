@@ -80,6 +80,15 @@ function setAlpha(el: DesignerElement, raw: string) {
 // Per-type prop views (null unless the selection is that type) — keep template access type-safe.
 const panelProps = computed(() => (selected.value?.type === 'panel' ? selected.value.props : null))
 const textProps = computed(() => (selected.value?.type === 'text' ? selected.value.props : null))
+const buttonProps = computed(() => (selected.value?.type === 'button' ? selected.value.props : null))
+
+// --- button props ---
+function setCommand(el: DesignerElement, raw: string) {
+  update(el.id, { props: { command: raw } })
+}
+function setProtected(el: DesignerElement, on: boolean) {
+  update(el.id, { props: { isProtected: on } })
+}
 
 // --- fill (panel only: solid color vs URL image) ---
 const fillMode = computed<'color' | 'image'>(() => (panelProps.value?.image ? 'image' : 'color'))
@@ -285,6 +294,23 @@ const computedRect = computed(() => (selected.value ? rectOf(selected.value.id) 
             <span class="ld-align-dot" />
           </button>
         </div>
+      </template>
+
+      <!-- BUTTON props (command + Carbon command protection); the label is a child Text element -->
+      <template v-if="buttonProps">
+        <div class="ld-section-title">
+          <span>Button</span>
+          <InfoTip text="The command run on click. Emitted as CuiButton.Button.Command (Oxide) / cui.v2.CreateButton (Carbon). The button's label is a child Text element — select it in the tree to edit the wording, font, or bind it to a data source." />
+        </div>
+        <label class="ld-field">
+          <span class="ld-field-label">Command <InfoTip text="Console/chat command sent when the button is clicked. Leave empty for a non-interactive colored box." /></span>
+          <input type="text" placeholder="e.g. myplugin.action" :value="buttonProps.command" @change="setCommand(selected, ($event.target as HTMLInputElement).value)" />
+        </label>
+        <label class="ld-border-enable">
+          <input type="checkbox" :checked="buttonProps.isProtected" @change="setProtected(selected, ($event.target as HTMLInputElement).checked)" />
+          <span>Protected</span>
+          <InfoTip text="Carbon command protection (Carbon-only; Oxide ignores it). Wraps the command so it can't be triggered by spoofed client input. Maps to the isProtected arg of cui.v2.CreateButton." />
+        </label>
       </template>
 
       <!-- PANEL fill (solid color vs URL image) -->
