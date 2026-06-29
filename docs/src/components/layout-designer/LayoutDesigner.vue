@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useEventListener, useStorage } from '@vueuse/core'
-import { Check, ChevronRight, Clipboard, ClipboardPaste, FolderOpen, HelpCircle, Lock, Pencil, Plus, Redo2, RotateCcw, Trash2, Undo2, X } from 'lucide-vue-next'
+import { Check, ChevronRight, Clipboard, ClipboardPaste, Folder, FolderInput, FolderOpen, HelpCircle, Lock, Pencil, Plus, Redo2, RotateCcw, Trash2, Undo2, X } from 'lucide-vue-next'
 import { computed, onBeforeUnmount, onMounted, provide, ref } from 'vue'
 import ContextMenu from './ContextMenu.vue'
 import DockNode from './DockNode.vue'
@@ -35,6 +35,7 @@ const {
   newLayout,
   switchLayout,
   renameLayout,
+  setLayoutFolder,
   deleteLayout,
   exportClipboard,
   importClipboard,
@@ -124,6 +125,26 @@ function doRename(id: string, current: string) {
 }
 function doDelete(id: string, name: string) {
   if (window.confirm(`Delete layout "${name}"?`)) deleteLayout(id)
+}
+// Saved layouts grouped for the Load selector (#10): ungrouped first (no header), then named folders
+// alphabetically. Folders are flat (one level) — enough to organise a long list of saved designs.
+const groupedLayouts = computed(() => {
+  const groups = new Map<string, typeof layouts.value>()
+  const ungrouped: typeof layouts.value = []
+  for (const l of layouts.value) {
+    if (l.folder) groups.set(l.folder, [...(groups.get(l.folder) ?? []), l])
+    else ungrouped.push(l)
+  }
+  const out: { folder: string | null; items: typeof layouts.value }[] = []
+  if (ungrouped.length) out.push({ folder: null, items: ungrouped })
+  for (const folder of [...groups.keys()].sort((a, b) => a.localeCompare(b))) out.push({ folder, items: groups.get(folder)! })
+  return out
+})
+function doMoveToFolder(id: string, current?: string) {
+  const existing = [...new Set(layouts.value.map((l) => l.folder).filter(Boolean))].sort()
+  const hint = existing.length ? `Move to folder (existing: ${existing.join(', ')}). Blank to ungroup.` : 'Move to folder — blank to ungroup.'
+  const folder = window.prompt(hint, current ?? '')
+  if (folder !== null) setLayoutFolder(id, folder)
 }
 
 // --- keyboard shortcuts ---
@@ -277,25 +298,30 @@ const { dragging: dockDragging, pointer: dockPointer } = useDockDrag()
             </div>
           </div>
 
-          <!-- Load: flyout of every saved layout (rename / delete inline) -->
+          <!-- Load: flyout of every saved layout, grouped into folders (#10); rename / move / delete inline -->
           <div class="ld-menu-flyout-anchor" @pointerenter="openFlyout('load')" @pointerleave="scheduleFlyoutClose">
             <button class="ld-menu-item" :class="{ active: loadFlyoutOpen }">
               <FolderOpen :size="13" /> <span class="ld-menu-name">Load</span> <ChevronRight :size="13" />
             </button>
             <div v-if="loadFlyoutOpen" class="ld-menu-pop ld-menu-flyout" @pointerdown.stop>
-              <button
-                v-for="l in layouts"
-                :key="l.id"
-                class="ld-menu-item"
-                :class="{ active: l.id === currentLayoutId }"
-                @click="chooseLayout(l.id)"
-              >
-                <span class="ld-menu-name">{{ l.name }}</span>
-                <span class="ld-menu-row-actions">
-                  <Pencil :size="12" title="Rename" @click.stop="doRename(l.id, l.name)" />
-                  <Trash2 :size="12" title="Delete" @click.stop="doDelete(l.id, l.name)" />
-                </span>
-              </button>
+              <template v-for="g in groupedLayouts" :key="g.folder ?? '__ungrouped'">
+                <div v-if="g.folder" class="ld-menu-section ld-folder-head"><Folder :size="11" /> {{ g.folder }}</div>
+                <button
+                  v-for="l in g.items"
+                  :key="l.id"
+                  class="ld-menu-item"
+                  :class="{ active: l.id === currentLayoutId, 'ld-in-folder': g.folder }"
+                  @click="chooseLayout(l.id)"
+                >
+                  <span class="ld-menu-name">{{ l.name }}</span>
+                  <span class="ld-menu-row-actions">
+                    <FolderInput :size="12" title="Move to folder" @click.stop="doMoveToFolder(l.id, l.folder)" />
+                    <Pencil :size="12" title="Rename" @click.stop="doRename(l.id, l.name)" />
+                    <Trash2 :size="12" title="Delete" @click.stop="doDelete(l.id, l.name)" />
+                  </span>
+                </button>
+              </template>
+              <div v-if="!layouts.length" class="ld-menu-section">No saved layouts yet.</div>
             </div>
           </div>
 
@@ -589,6 +615,20 @@ const { dragging: dockDragging, pointer: dockPointer } = useDockDrag()
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--vp-c-text-3);
+}
+
+/* folder grouping in the Load selector (#10) */
+.ld-folder-head {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--vp-c-text-2);
+}
+
+.ld-menu-item.ld-in-folder {
+  padding-left: 22px; /* nest layouts under their folder header */
 }
 
 .ld-menu-recent-idx {

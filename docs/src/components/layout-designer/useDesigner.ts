@@ -522,11 +522,13 @@ interface LayoutData {
   dataSources?: DataSource[]
   canvas: CanvasConfig
 }
-interface Layout {
+export interface Layout {
   id: string
   name: string
   data: LayoutData
   updatedAt: number
+  /** Optional grouping folder for the Load selector (#10). Absent = ungrouped (flat, one level). */
+  folder?: string
 }
 
 const STORAGE_KEY = 'carbon-layout-designer:v1'
@@ -689,6 +691,14 @@ function renameLayout(id: string, name: string) {
     l.name = name.trim() || l.name
     persist()
   }
+}
+/** Assign a saved layout to a grouping folder for the Load selector (#10); blank string = ungroup. */
+function setLayoutFolder(id: string, folder: string) {
+  const l = layouts.value.find((x) => x.id === id)
+  if (!l) return
+  if (folder.trim()) l.folder = folder.trim()
+  else delete l.folder
+  persist()
 }
 function deleteLayout(id: string) {
   const i = layouts.value.findIndex((x) => x.id === id)
@@ -864,6 +874,7 @@ export function useDesigner() {
     closeTab,
     closeAllTabs,
     renameLayout,
+    setLayoutFolder,
     deleteLayout,
     exportClipboard,
     importClipboard,
