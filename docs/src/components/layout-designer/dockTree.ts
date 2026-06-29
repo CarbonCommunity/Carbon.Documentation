@@ -75,3 +75,75 @@ export function isCompleteTree(node: DockNode): boolean {
 export function cloneTree<T extends DockNode>(node: T): T {
   return JSON.parse(JSON.stringify(node))
 }
+
+// --- mutations (drag-docking, 2b) ----------------------------------------------------
+
+/** Where a dragged pane is dropped relative to a target leaf. center = make a tab group; the four
+ *  sides = split the target, placing the moved pane on that side. */
+export type DockSide = 'center' | 'left' | 'right' | 'top' | 'bottom'
+
+/** Remove the leaf for `pane`, collapsing any split/tabs node left with a single child (or none).
+ *  Returns the new tree, or null if nothing remains. */
+export function removeLeaf(node: DockNode, pane: PaneId): DockNode | null {
+  if (node.type === 'leaf') return node.pane === pane ? null : node
+  const children: DockNode[] = []
+  const sizes: number[] = []
+  node.children.forEach((c, i) => {
+    const r = removeLeaf(c, pane)
+    if (r) {
+      children.push(r)
+      if (node.type === 'split') sizes.push(node.sizes[i])
+    }
+  })
+  if (children.length === 0) return null
+  if (children.length === 1) return children[0] // collapse single-child node
+  if (node.type === 'split') return { ...node, children, sizes }
+  return { ...node, children: children as LeafNode[], active: Math.min(node.active, children.length - 1) }
+}
+
+/** Insert `moving` relative to the leaf rendering `targetPane`. center → tab group with the target;
+ *  a side → wrap the target in a split with the moved pane on that side. */
+function insertRelative(node: DockNode, targetPane: PaneId, moving: PaneId, side: DockSide): DockNode {
+  if (node.type === 'leaf') {
+    if (node.pane !== targetPane) return node
+    const movingLeaf = leaf(moving)
+    if (side === 'center') return tabs([node, movingLeaf], 1) // focus the dropped pane
+    const dir = side === 'left' || side === 'right' ? 'row' : 'col'
+    const children = side === 'left' || side === 'top' ? [movingLeaf, node] : [node, movingLeaf]
+    return split(dir, children, [1, 1])
+  }
+  const children = node.children.map((c) => insertRelative(c, targetPane, moving, side))
+  return node.type === 'split' ? { ...node, children } : { ...node, children: children as LeafNode[] }
+}
+
+/** Collapse single-child splits and merge a child split into its parent when they share a direction,
+ *  preserving size ratios — keeps the tree canonical after a move. */
+export function normalize(node: DockNode): DockNode {
+  if (node.type !== 'split') return node
+  const norm = node.children.map(normalize)
+  const children: DockNode[] = []
+  const sizes: number[] = []
+  norm.forEach((c, i) => {
+    if (c.type === 'split' && c.dir === node.dir) {
+      const subTotal = c.sizes.reduce((a, b) => a + b, 0) || 1
+      c.children.forEach((cc, j) => {
+        children.push(cc)
+        sizes.push(node.sizes[i] * (c.sizes[j] / subTotal))
+      })
+    } else {
+      children.push(c)
+      sizes.push(node.sizes[i])
+    }
+  })
+  if (children.length === 1) return children[0]
+  return { ...node, children, sizes }
+}
+
+/** Drag-dock `moving` next to / onto `targetPane`. Returns a new normalized tree (no-op if the move
+ *  is degenerate, e.g. dropping a pane onto itself). */
+export function dockMove(tree: DockNode, moving: PaneId, targetPane: PaneId, side: DockSide): DockNode {
+  if (moving === targetPane) return tree
+  const removed = removeLeaf(cloneTree(tree), moving)
+  if (!removed) return tree
+  return normalize(insertRelative(removed, targetPane, moving, side))
+}
