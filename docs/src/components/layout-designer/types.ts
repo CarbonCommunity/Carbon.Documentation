@@ -386,18 +386,19 @@ export interface Rect {
 export type AspectPreset = '16:9' | '16:10' | '21:9' | '4:3' | '32:9'
 
 /**
- * The canvas models Rust's CUI canvas scaler, which scales to **match width**: the reference WIDTH is
- * constant (1280 — Rust's CUI reference width) and the reference HEIGHT grows as the screen gets taller
- * (lower aspect ratio), i.e. `height = width × ah/aw`. Fixed-px offsets keep their size across aspect
- * ratios while relative anchors reflow as the height changes — matching what Rust actually renders.
+ * The canvas models Rust's CUI canvas scaler: a fixed **1280×720 (16:9) reference resolution** in
+ * Unity's **Expand** screen-match mode — `scale = min(screenW/1280, screenH/720)`, so the canvas pins
+ * whichever dimension is more constrained (width below 16:9, height above it) and lets the other grow.
+ * `referenceHeight` (default 720) just scales the whole reference; the reference width is `h × 16/9`.
+ * The effective per-aspect canvas dimensions are `geometry.canvasWidth` / `geometry.canvasHeight`.
  *
- * NOTE: this was previously modelled the other way (constant height 720, width = height × aw/ah). That
- * only matched in-game at 16:9; every other aspect diverged. Verified against an in-game 4:3 capture.
- * See `geometry.referenceWidth` / `geometry.referenceHeight`.
+ * NOTE: earlier passes modelled this as pure match-height (constant 720) and then pure match-width
+ * (constant 1280) — each matched in-game at only some aspects. Expand is the correct rule; verified
+ * against in-game 4:3 (1280×960) and ultrawide (height stays 720) captures.
  */
 export interface CanvasConfig {
-  /** Constant reference width in CUI px. Rust's CUI reference width is 1280. */
-  referenceWidth: number
+  /** Reference-resolution height in CUI px (Rust's reference is 1280×720, so 720). Scales the canvas. */
+  referenceHeight: number
   aspect: AspectPreset
   /** Rust client UI layer the root attaches to (drives the generated parent). */
   rootLayer: ClientPanel

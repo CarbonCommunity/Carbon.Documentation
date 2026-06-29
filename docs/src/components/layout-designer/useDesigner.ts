@@ -51,7 +51,7 @@ const elements = ref<DesignerElement[]>([])
 /** Static data sources (shared strings / template lists) — see types.ts. Bound elements resolve through these. */
 const dataSources = ref<DataSource[]>([])
 const selectedIds = ref<string[]>([])
-const canvas = reactive<CanvasConfig>({ referenceWidth: 1280, aspect: '16:9', rootLayer: 'Overlay' })
+const canvas = reactive<CanvasConfig>({ referenceHeight: 720, aspect: '16:9', rootLayer: 'Overlay' })
 /** Target framework for the generated code (see codegen.ts). */
 const provider = ref<Provider>('both')
 
@@ -578,7 +578,7 @@ function nextLayoutName(): string {
   return `Layout ${max + 1}`
 }
 function defaultCanvas(): CanvasConfig {
-  return { referenceWidth: 1280, aspect: '16:9', rootLayer: 'Overlay' }
+  return { referenceHeight: 720, aspect: '16:9', rootLayer: 'Overlay' }
 }
 function cloneData(): LayoutData {
   return JSON.parse(JSON.stringify({ elements: elements.value, dataSources: dataSources.value, canvas }))
@@ -587,10 +587,14 @@ function applyData(data: LayoutData) {
   elements.value = JSON.parse(JSON.stringify(data.elements ?? []))
   dataSources.value = JSON.parse(JSON.stringify(data.dataSources ?? []))
   Object.assign(canvas, defaultCanvas(), data.canvas ?? {})
-  // Legacy migration: older layouts stored a constant `referenceHeight`; the model is now a constant
-  // `referenceWidth` (Rust's match-width scaler). Drop the stale field and fall back to the default.
-  delete (canvas as Partial<CanvasConfig> & { referenceHeight?: number }).referenceHeight
-  if (typeof canvas.referenceWidth !== 'number' || !Number.isFinite(canvas.referenceWidth)) canvas.referenceWidth = 1280
+  // Legacy migration: an interim model briefly stored `referenceWidth` (1280) instead of
+  // `referenceHeight` (720). Convert it back (height = width × 9/16) and drop the stale field.
+  const legacy = canvas as CanvasConfig & { referenceWidth?: number }
+  if (typeof canvas.referenceHeight !== 'number' && typeof legacy.referenceWidth === 'number') {
+    canvas.referenceHeight = Math.round((legacy.referenceWidth * 9) / 16)
+  }
+  delete legacy.referenceWidth
+  if (typeof canvas.referenceHeight !== 'number' || !Number.isFinite(canvas.referenceHeight)) canvas.referenceHeight = 720
   reindexIdCounter()
   selectedIds.value = []
 }

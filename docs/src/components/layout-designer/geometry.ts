@@ -10,21 +10,41 @@ import { ASPECT_RATIOS } from './types'
 const MIN_SIZE = 1 // CUI px — keeps an element from inverting while dragging
 
 // --- canvas dimensions ---------------------------------------------------------------
+//
+// Rust's CUI uses a Unity CanvasScaler with a fixed reference resolution (1280×720, i.e. 16:9) in
+// **Expand** screen-match mode: the scale factor is `min(screenW/1280, screenH/720)`, so the canvas
+// grows to never be smaller than the reference — it pins whichever dimension is MORE constrained.
+//   - screen WIDER than 16:9  → height is pinned to the reference height; width grows.
+//   - screen NARROWER (taller) → width is pinned to the reference width; height grows.
+//   - exactly 16:9 → both are 1280×720.
+// The reference is always 16:9; `cfg.referenceHeight` (default 720) just scales it (width = h × 16/9).
+// Verified against in-game 4:3 (1280×960) and ultrawide (height stays 720) captures.
 
-/** Reference width — the constant base (Rust's CUI canvas scales to MATCH WIDTH, so width is fixed). */
-export function referenceWidth(cfg: CanvasConfig): number {
-  return cfg.referenceWidth
+/** Reference aspect — Rust's CUI reference resolution is 1280×720. */
+const REFERENCE_ASPECT = 16 / 9
+
+function screenAspect(cfg: CanvasConfig): number {
+  const [aw, ah] = ASPECT_RATIOS[cfg.aspect]
+  return aw / ah
 }
 
-/** Reference height derived from the constant width and the chosen aspect ratio (match-width scaler). */
-export function referenceHeight(cfg: CanvasConfig): number {
-  const [aw, ah] = ASPECT_RATIOS[cfg.aspect]
-  return (cfg.referenceWidth * ah) / aw
+/** Effective canvas width in CUI px at the chosen aspect (Expand: pinned to the reference width when
+ *  the screen is narrower than 16:9, otherwise grows with the aspect). */
+export function canvasWidth(cfg: CanvasConfig): number {
+  const a = screenAspect(cfg)
+  return a >= REFERENCE_ASPECT ? cfg.referenceHeight * a : cfg.referenceHeight * REFERENCE_ASPECT
+}
+
+/** Effective canvas height in CUI px at the chosen aspect (Expand: pinned to the reference height when
+ *  the screen is wider than 16:9, otherwise grows as the screen gets taller). */
+export function canvasHeight(cfg: CanvasConfig): number {
+  const a = screenAspect(cfg)
+  return a >= REFERENCE_ASPECT ? cfg.referenceHeight : (cfg.referenceHeight * REFERENCE_ASPECT) / a
 }
 
 /** Root canvas rect in CUI space. */
 export function rootRect(cfg: CanvasConfig): Rect {
-  return { x: 0, y: 0, w: referenceWidth(cfg), h: referenceHeight(cfg) }
+  return { x: 0, y: 0, w: canvasWidth(cfg), h: canvasHeight(cfg) }
 }
 
 export interface Display {
@@ -36,8 +56,8 @@ export interface Display {
 
 /** Fit the reference canvas into the available container, preserving aspect ratio. */
 export function canvasDisplay(containerW: number, containerH: number, cfg: CanvasConfig): Display {
-  const refW = referenceWidth(cfg)
-  const refH = referenceHeight(cfg)
+  const refW = canvasWidth(cfg)
+  const refH = canvasHeight(cfg)
   const scale = Math.max(0, Math.min(containerW / refW, containerH / refH))
   return { displayW: refW * scale, displayH: refH * scale, scale }
 }

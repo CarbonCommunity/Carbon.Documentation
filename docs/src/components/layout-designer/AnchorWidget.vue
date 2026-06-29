@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { applyAnchorPreset, referenceHeight, referenceWidth } from './geometry'
+import { applyAnchorPreset, canvasHeight, canvasWidth } from './geometry'
 import { useDesigner } from './useDesigner'
 
 const { selected, canvas, rectOf, update } = useDesigner()
@@ -29,9 +29,9 @@ const V_OPTS: AxisOpt[] = [
 
 function parentDims(): { w: number; h: number } {
   const el = selected.value
-  if (!el || !el.parentId) return { w: referenceWidth(canvas), h: referenceHeight(canvas) }
+  if (!el || !el.parentId) return { w: canvasWidth(canvas), h: canvasHeight(canvas) }
   const r = rectOf(el.parentId)
-  return r ? { w: r.w, h: r.h } : { w: referenceWidth(canvas), h: referenceHeight(canvas) }
+  return r ? { w: r.w, h: r.h } : { w: canvasWidth(canvas), h: canvasHeight(canvas) }
 }
 
 const activeH = computed(() => {

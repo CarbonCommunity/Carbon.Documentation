@@ -2,7 +2,7 @@
 import { useElementSize } from '@vueuse/core'
 import { computed, ref } from 'vue'
 import CanvasElement from './CanvasElement.vue'
-import { canvasDisplay, referenceHeight, referenceWidth } from './geometry'
+import { canvasDisplay, canvasHeight, canvasWidth } from './geometry'
 import { useDesigner } from './useDesigner'
 
 const { canvas, rootElements, select, gridSize, guides } = useDesigner()
@@ -13,8 +13,8 @@ const { width: vw, height: vh } = useElementSize(viewport)
 // leave a margin so the frame doesn't touch the edges
 const PAD = 32
 
-const refW = computed(() => referenceWidth(canvas))
-const refH = computed(() => referenceHeight(canvas))
+const refW = computed(() => canvasWidth(canvas))
+const refH = computed(() => canvasHeight(canvas))
 const display = computed(() => canvasDisplay(Math.max(0, vw.value - PAD * 2), Math.max(0, vh.value - PAD * 2), canvas))
 
 const frameStyle = computed(() => ({
