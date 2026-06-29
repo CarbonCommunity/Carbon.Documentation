@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useEventListener } from '@vueuse/core'
-import { ChevronDown, PictureInPicture2, Plus, X } from 'lucide-vue-next'
+import { ChevronDown, PanelLeftClose, PictureInPicture2, Plus, X } from 'lucide-vue-next'
 import { computed, ref, type Component } from 'vue'
 import CanvasPane from './CanvasPane.vue'
 import CodeOutput from './CodeOutput.vue'
@@ -18,7 +18,11 @@ import DockDropOverlay from './DockDropOverlay.vue'
 import type { PaneId } from './dockTree'
 import { useDockDrag } from './useDockDrag'
 
-const props = defineProps<{ pane: PaneId }>()
+// `collapsible` (#8): this pane is a row child that can minimise to an edge strip. Framed panes show
+// the control in their header; self-framed code/debug get an overlay button. Emitting `collapse`
+// lets the parent DockNode flip the flag on this node (it owns the tree reference).
+const props = defineProps<{ pane: PaneId; collapsible?: boolean }>()
+const emit = defineEmits<{ collapse: [] }>()
 const { addElement, addDataSource } = useDesigner()
 const { startPaneDrag } = useDockDrag()
 
@@ -66,6 +70,11 @@ useEventListener(
     <CodeOutput v-else-if="pane === 'code'" />
     <DebugPanel v-else-if="pane === 'debug'" />
 
+    <!-- code/debug are self-framed (own header), so they get an overlay collapse handle (#8) -->
+    <button v-if="collapsible && (pane === 'code' || pane === 'debug')" class="ld-leaf-collapse-overlay" title="Collapse to the edge" @click="emit('collapse')">
+      <PanelLeftClose :size="14" />
+    </button>
+
     <div v-else-if="meta" class="ld-dock-pane">
     <Teleport :to="pip.pipTarget.value" :disabled="!pip.pipTarget.value">
       <div class="ld-dock-pane-inner">
@@ -86,6 +95,9 @@ useEventListener(
             </div>
             <button v-else-if="pane === 'dataSources'" class="ld-add-head-btn" title="Add a text data source" @click="addDataSource('text')">
               <Plus :size="13" /> Add
+            </button>
+            <button v-if="collapsible" class="ld-pane-pop-btn" title="Collapse to the edge" @click="emit('collapse')">
+              <PanelLeftClose :size="14" />
             </button>
             <button
               v-if="pip.supported"
@@ -128,6 +140,30 @@ useEventListener(
   flex: 1;
   min-width: 0;
   min-height: 0;
+}
+
+/* overlay collapse handle for self-framed panes (code/debug) — they have no shared header (#8) */
+.ld-leaf-collapse-overlay {
+  position: absolute;
+  top: 7px;
+  right: 8px;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px;
+  color: var(--vp-c-text-3);
+  background: var(--vp-c-bg-soft);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 4px;
+  opacity: 0.7;
+  transition: opacity 0.12s;
+}
+
+.ld-leaf-collapse-overlay:hover {
+  opacity: 1;
+  color: var(--c-carbon-1);
+  border-color: var(--c-carbon-1);
 }
 
 .ld-dock-pane,

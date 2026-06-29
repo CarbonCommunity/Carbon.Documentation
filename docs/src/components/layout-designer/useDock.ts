@@ -45,6 +45,13 @@ function setActiveTab(node: TabsNode, index: number) {
   persist()
 }
 
+/** Minimise/restore a row-split child to an edge strip (#8). The flag lives on the node, so it
+ *  persists with the tree and is honoured by the renderer only while the node is a row child. */
+function toggleCollapse(node: DockNode, value = !node.collapsed) {
+  node.collapsed = value
+  persist()
+}
+
 /** Drag-dock `moving` onto `target` at `side`. Replaces the whole tree (dockMove returns a fresh,
  *  normalized tree); a degenerate move (e.g. drop onto self) returns the same tree → no-op + no save. */
 function movePane(moving: PaneId, target: PaneId, side: DockSide) {
@@ -76,5 +83,5 @@ function hasPane(pane: PaneId): boolean {
 }
 
 export function useDock() {
-  return { tree, persist, resetTree, setSizes, setActiveTab, movePane, addPane, closePane, hasPane }
+  return { tree, persist, resetTree, setSizes, setActiveTab, toggleCollapse, movePane, addPane, closePane, hasPane }
 }

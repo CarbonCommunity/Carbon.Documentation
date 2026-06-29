@@ -23,20 +23,26 @@ export const PANE_TITLES: Record<PaneId, string> = {
   screenShare: 'Screen Share',
 }
 
+// `collapsed` (#8): a node that is the direct child of a ROW split can be minimised to a thin strip
+// on its outer edge — present, just shrunk, click the strip to restore. Honoured only inside a row
+// split (left/right edges); ignored in a col (the bottom dock never collapses) and on the canvas.
 export interface LeafNode {
   type: 'leaf'
   pane: PaneId
+  collapsed?: boolean
 }
 export interface TabsNode {
   type: 'tabs'
   children: LeafNode[]
   active: number
+  collapsed?: boolean
 }
 export interface SplitNode {
   type: 'split'
   dir: 'row' | 'col' // row = children side by side (vertical dividers); col = stacked (horizontal dividers)
   children: DockNode[]
   sizes: number[] // flex weights, one per child (normalised lazily; only ratios matter)
+  collapsed?: boolean
 }
 export type DockNode = SplitNode | TabsNode | LeafNode
 
@@ -73,6 +79,12 @@ export function leavesOf(node: DockNode, out: PaneId[] = []): PaneId[] {
   if (node.type === 'leaf') out.push(node.pane)
   else node.children.forEach((c) => leavesOf(c, out))
   return out
+}
+
+/** Titles of every leaf under a node, in order — used to label a collapsed edge strip
+ *  (e.g. a collapsed left column reads "Elements / Data Sources"). */
+export function titlesOf(node: DockNode): string[] {
+  return leavesOf(node).map((p) => PANE_TITLES[p])
 }
 
 /** A tree is usable if it contains every REQUIRED pane exactly once, no duplicates, and only known
@@ -127,10 +139,12 @@ export function removeLeaf(node: DockNode, pane: PaneId): DockNode | null {
   return { ...node, children: children as LeafNode[], active: Math.min(node.active, children.length - 1) }
 }
 
-/** Wrap a node in a 2-child split, the moved pane on `side`. */
+/** Wrap a node in a 2-child split, the moved pane on `side`. Clears any collapsed flag on the
+ *  wrapped node: its row context just changed, so a stale "minimised" state would be misleading. */
 function wrapNode(node: DockNode, moving: PaneId, side: DockSide): SplitNode {
   const dir = side === 'left' || side === 'right' ? 'row' : 'col'
-  const children = side === 'left' || side === 'top' ? [leaf(moving), node] : [node, leaf(moving)]
+  const target = node.collapsed ? { ...node, collapsed: false } : node
+  const children = side === 'left' || side === 'top' ? [leaf(moving), target] : [target, leaf(moving)]
   return split(dir, children, [1, 1])
 }
 
