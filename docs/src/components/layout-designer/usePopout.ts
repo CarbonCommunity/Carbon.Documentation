@@ -38,6 +38,11 @@ export function usePopout(title: () => string, opts: PopoutOptions = {}) {
     body.style.margin = '0'
     body.style.height = '100vh'
     body.style.overflow = 'hidden'
+    // The copied stylesheets include the docs' global noise/speckle overlay (body::after) AND the
+    // designer's suppression of it (body.layout-designer-page::after { display:none }). Tag this
+    // window's body so the suppression applies here too — otherwise the grain bleeds over a popped
+    // pane (very visible over the screen-share video).
+    body.classList.add('layout-designer-page')
 
     const host = w.document.createElement('div')
     host.style.height = '100vh'
