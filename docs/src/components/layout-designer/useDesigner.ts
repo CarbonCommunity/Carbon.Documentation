@@ -167,6 +167,7 @@ function select(id: string | null, additive = false) {
 // --- actions -------------------------------------------------------------------------
 
 function addPanel(parentId: string | null = null): DesignerElement {
+  ensureLayout() // adding from the empty state spins up a fresh layout to hold it
   const color = COLORS[elements.value.length % COLORS.length]
   let panel: DesignerElement
   if (parentId === null) {
@@ -184,6 +185,7 @@ function addPanel(parentId: string | null = null): DesignerElement {
 }
 
 function addText(parentId: string | null = null): DesignerElement {
+  ensureLayout() // adding from the empty state spins up a fresh layout to hold it
   // Text defaults to a centered fixed-size box (a title/label), staggered like child panels so
   // successive adds don't fully overlap. Color defaults to opaque white (the text color).
   const c = (elements.value.length % 6) * 24
@@ -400,6 +402,7 @@ function nextDataSourceName(): string {
 
 /** Create a data source of the given kind (text default) and return it. */
 function addDataSource(kind: DataSourceKind = 'text', name?: string): DataSource {
+  ensureLayout() // a data source needs a layout to live in too
   const { id } = nextDataSourceId()
   const finalName = name ?? nextDataSourceName()
   const ds: DataSource =
@@ -537,8 +540,16 @@ interface Layout {
 const STORAGE_KEY = 'carbon-layout-designer:v1'
 const layouts = ref<Layout[]>([])
 const currentLayoutId = ref<string | null>(null)
+// Open document tabs: an ordered list of layout ids shown as tabs across the canvas. Distinct from
+// `layouts` (every saved design) — closing a tab just removes the id here, the layout still exists.
+// currentLayoutId === null (and openTabs empty) is the "nothing open" state (canvas empty state).
+const openTabs = ref<string[]>([])
 const currentLayout = computed(() => layouts.value.find((l) => l.id === currentLayoutId.value) ?? null)
 const currentLayoutName = computed(() => currentLayout.value?.name ?? 'Untitled')
+const openTabLayouts = computed(() => openTabs.value.map((id) => layouts.value.find((l) => l.id === id)).filter((l): l is Layout => !!l))
+function openTab(id: string) {
+  if (!openTabs.value.includes(id)) openTabs.value.push(id)
+}
 
 let layoutSeq = 0
 function newLayoutId(): string {
@@ -573,7 +584,7 @@ function persist() {
     cur.updatedAt = Date.now()
   }
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 1, layouts: layouts.value, currentLayoutId: currentLayoutId.value }))
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 1, layouts: layouts.value, currentLayoutId: currentLayoutId.value, openTabs: openTabs.value }))
   } catch {
     /* storage may be unavailable */
   }
@@ -585,8 +596,15 @@ function loadFromStorage(): boolean {
     const o = JSON.parse(raw)
     if (!o?.layouts?.length) return false
     layouts.value = o.layouts
-    currentLayoutId.value = o.layouts.some((l: Layout) => l.id === o.currentLayoutId) ? o.currentLayoutId : o.layouts[0].id
-    applyData(currentLayout.value!.data)
+    const valid = new Set(layouts.value.map((l) => l.id))
+    const storedCurrent: string | null = valid.has(o.currentLayoutId) ? o.currentLayoutId : null
+    // Restore open tabs (filtered to layouts that still exist). Legacy stores have no openTabs — open
+    // the previously-active layout so the workspace isn't suddenly empty for existing users.
+    let tabs: string[] = Array.isArray(o.openTabs) ? o.openTabs.filter((id: string) => valid.has(id)) : []
+    if (!tabs.length && storedCurrent) tabs = [storedCurrent]
+    openTabs.value = tabs
+    currentLayoutId.value = storedCurrent && tabs.includes(storedCurrent) ? storedCurrent : (tabs[0] ?? null)
+    applyData(currentLayout.value ? currentLayout.value.data : { elements: [], canvas: defaultCanvas() })
     return true
   } catch {
     return false
@@ -598,19 +616,48 @@ function newLayout(name?: string, preset: 'empty' | 'default' = 'default') {
   const id = newLayoutId()
   layouts.value.push({ id, name: finalName, data: { elements: [], canvas: defaultCanvas() }, updatedAt: Date.now() })
   currentLayoutId.value = id
+  openTab(id)
   applyData({ elements: [], canvas: defaultCanvas() })
   if (preset === 'default') seedSample() // 'default' seeds the sample content; 'empty' starts blank
   persist()
   resetHistory()
 }
 function switchLayout(id: string) {
-  if (id === currentLayoutId.value) return
-  persist()
   const l = layouts.value.find((x) => x.id === id)
   if (!l) return
+  openTab(id) // selecting a layout (re)opens it as a tab
+  if (id === currentLayoutId.value) return
+  persist()
   currentLayoutId.value = id
   applyData(l.data)
   resetHistory()
+}
+/** Close a document tab (the layout itself is kept). Activates a neighbour, or the empty state. */
+function closeTab(id: string) {
+  const idx = openTabs.value.indexOf(id)
+  if (idx < 0) return
+  if (currentLayoutId.value === id) persist() // save edits before leaving
+  openTabs.value.splice(idx, 1)
+  if (currentLayoutId.value === id) {
+    const next = openTabs.value[idx] ?? openTabs.value[idx - 1] ?? null
+    currentLayoutId.value = next
+    applyData(next ? currentLayout.value!.data : { elements: [], canvas: defaultCanvas() })
+    resetHistory()
+  }
+  persist()
+}
+/** Close every open tab → the empty state (no layout deleted). */
+function closeAllTabs() {
+  if (currentLayoutId.value) persist()
+  openTabs.value = []
+  currentLayoutId.value = null
+  applyData({ elements: [], canvas: defaultCanvas() })
+  resetHistory()
+  persist()
+}
+/** Edits need a layout to live in; spin up a blank one if the workspace is at the empty state. */
+function ensureLayout() {
+  if (!currentLayoutId.value) newLayout(undefined, 'empty')
 }
 function renameLayout(id: string, name: string) {
   const l = layouts.value.find((x) => x.id === id)
@@ -623,18 +670,13 @@ function deleteLayout(id: string) {
   const i = layouts.value.findIndex((x) => x.id === id)
   if (i < 0) return
   layouts.value.splice(i, 1)
+  const tabIdx = openTabs.value.indexOf(id)
+  if (tabIdx >= 0) openTabs.value.splice(tabIdx, 1)
   if (currentLayoutId.value === id) {
-    if (!layouts.value.length) {
-      // deleted the last one — fall back to a fresh default "Layout 1"
-      const nid = newLayoutId()
-      layouts.value.push({ id: nid, name: nextLayoutName(), data: { elements: [], canvas: defaultCanvas() }, updatedAt: Date.now() })
-      currentLayoutId.value = nid
-      applyData({ elements: [], canvas: defaultCanvas() })
-      seedSample()
-    } else {
-      currentLayoutId.value = layouts.value[Math.max(0, i - 1)].id
-      applyData(currentLayout.value!.data)
-    }
+    // activate a neighbouring open tab, else drop to the empty state (no auto-reseed)
+    const next = openTabs.value[tabIdx] ?? openTabs.value[tabIdx - 1] ?? null
+    currentLayoutId.value = next
+    applyData(next ? currentLayout.value!.data : { elements: [], canvas: defaultCanvas() })
     resetHistory()
   }
   persist()
@@ -740,6 +782,7 @@ function init() {
     const id = newLayoutId()
     layouts.value = [{ id, name: nextLayoutName(), data: { elements: [], canvas: defaultCanvas() }, updatedAt: Date.now() }]
     currentLayoutId.value = id
+    openTabs.value = [id]
     elements.value = []
     Object.assign(canvas, defaultCanvas())
     seedSample()
@@ -789,8 +832,12 @@ export function useDesigner() {
     layouts,
     currentLayoutId,
     currentLayoutName,
+    openTabs,
+    openTabLayouts,
     newLayout,
     switchLayout,
+    closeTab,
+    closeAllTabs,
     renameLayout,
     deleteLayout,
     exportClipboard,

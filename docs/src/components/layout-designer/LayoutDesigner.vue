@@ -33,6 +33,9 @@ const {
   canRedo,
   layouts,
   currentLayoutId,
+  openTabLayouts,
+  closeTab,
+  closeAllTabs,
   newLayout,
   switchLayout,
   renameLayout,
@@ -40,6 +43,11 @@ const {
   exportClipboard,
   importClipboard,
 } = useDesigner()
+
+function fileCloseAll() {
+  closeAllTabs()
+  closeFileMenu()
+}
 
 const GRID_SIZES = [1, 2, 4, 8, 16, 32]
 
@@ -376,7 +384,7 @@ function chooseArrangement(id: Arrangement) {
           <button class="ld-menu-item" @click="fileExport"><Clipboard :size="13" /> Export to clipboard</button>
 
           <div class="ld-menu-sep" />
-          <button class="ld-menu-item" disabled title="Close all open layout tabs (arrives with the tabbed canvas)"><X :size="13" /> Close All</button>
+          <button class="ld-menu-item" :disabled="!openTabLayouts.length" title="Close all open layout tabs (the layouts are kept)" @click="fileCloseAll"><X :size="13" /> Close All</button>
 
           <template v-if="recentLayouts.length">
             <div class="ld-menu-sep" />
@@ -585,7 +593,44 @@ function chooseArrangement(id: Arrangement) {
       <div v-if="leftColVisible && !(elementsPop.pipTarget.value && dataSourcesPop.pipTarget.value)" class="ld-divider-v" title="Drag to resize" :style="{ order: bodyOrder.elementsDiv }" @pointerdown="startLeftResize" />
 
       <main class="ld-center" :style="{ order: bodyOrder.center }">
-        <DesignerCanvas />
+        <!-- canvas pane title bar = document tabs (each open layout); closing a tab keeps the layout -->
+        <div v-if="currentLayoutId" class="ld-canvas-tabs" role="tablist">
+          <div
+            v-for="t in openTabLayouts"
+            :key="t.id"
+            class="ld-canvas-tab"
+            :class="{ active: t.id === currentLayoutId }"
+            role="tab"
+            :title="t.name"
+            @click="switchLayout(t.id)"
+            @mousedown.middle.prevent
+            @mouseup.middle="closeTab(t.id)"
+          >
+            <span class="ld-canvas-tab-name">{{ t.name }}</span>
+            <button class="ld-canvas-tab-close" title="Close tab (keeps the layout)" @click.stop="closeTab(t.id)"><X :size="12" /></button>
+          </div>
+        </div>
+
+        <div class="ld-canvas-stage">
+          <DesignerCanvas v-if="currentLayoutId" />
+          <!-- empty state: nothing open (all tabs closed) -->
+          <div v-else class="ld-canvas-empty">
+            <div class="ld-canvas-empty-card">
+              <LayoutDashboard :size="34" class="ld-canvas-empty-icon" />
+              <div class="ld-canvas-empty-title">No layout open</div>
+              <div class="ld-canvas-empty-sub">Create a new layout or open a saved one.</div>
+              <button class="ld-btn primary ld-canvas-empty-new" @click="newLayout()"><Plus :size="14" /> New layout</button>
+              <div v-if="layouts.length" class="ld-canvas-empty-saved">
+                <div class="ld-canvas-empty-saved-label">Open a saved layout</div>
+                <div class="ld-canvas-empty-saved-list">
+                  <button v-for="l in layouts" :key="l.id" class="ld-canvas-empty-saved-item" @click="switchLayout(l.id)">
+                    <FolderOpen :size="13" /> <span>{{ l.name }}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </main>
 
       <div v-if="paneVisible.inspector && !inspectorPop.pipTarget.value" class="ld-divider-v" title="Drag to resize" :style="{ order: bodyOrder.inspectorDiv }" @pointerdown="startRightResize" />
@@ -1024,6 +1069,153 @@ function chooseArrangement(id: Arrangement) {
      horizontally rather than crushing the canvas to nothing (e.g. Code-side-panel on a narrow window) */
   min-width: 240px;
   min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* canvas document tabs (one per open layout) — the canvas pane's title bar */
+.ld-canvas-tabs {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  min-height: 33px;
+  padding: 3px 6px 0;
+  border-bottom: 1px solid var(--vp-c-divider);
+  background: var(--vp-c-bg-soft);
+  overflow-x: auto;
+  flex-shrink: 0;
+}
+
+.ld-canvas-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 200px;
+  padding: 4px 6px 4px 11px;
+  font-size: 12.5px;
+  color: var(--vp-c-text-2);
+  background: transparent;
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: 5px 5px 0 0;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ld-canvas-tab:hover {
+  color: var(--vp-c-text-1);
+  background: var(--vp-c-bg);
+}
+
+.ld-canvas-tab.active {
+  color: var(--vp-c-text-1);
+  background: var(--c-carbon-bg-dark);
+  border-color: var(--vp-c-divider);
+}
+
+.ld-canvas-tab-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ld-canvas-tab-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1px;
+  border-radius: 3px;
+  color: var(--vp-c-text-3);
+  opacity: 0.65;
+}
+
+.ld-canvas-tab-close:hover {
+  opacity: 1;
+  color: var(--c-carbon-1);
+  background: var(--c-carbon-soft);
+}
+
+.ld-canvas-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+/* empty state when no tab is open */
+.ld-canvas-empty {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  overflow: auto; /* scroll rather than clip the card top on a short stage */
+}
+
+.ld-canvas-empty-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  max-width: 360px;
+  text-align: center;
+}
+
+.ld-canvas-empty-icon {
+  color: var(--vp-c-text-3);
+  opacity: 0.7;
+}
+
+.ld-canvas-empty-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--vp-c-text-1);
+}
+
+.ld-canvas-empty-sub {
+  font-size: 13px;
+  color: var(--vp-c-text-3);
+}
+
+.ld-canvas-empty-new {
+  margin-top: 6px;
+}
+
+.ld-canvas-empty-saved {
+  margin-top: 14px;
+  width: 100%;
+}
+
+.ld-canvas-empty-saved-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--vp-c-text-3);
+  margin-bottom: 6px;
+}
+
+.ld-canvas-empty-saved-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.ld-canvas-empty-saved-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 10px;
+  font-size: 13px;
+  color: var(--vp-c-text-2);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 5px;
+}
+
+.ld-canvas-empty-saved-item:hover {
+  color: var(--vp-c-text-1);
+  border-color: var(--c-carbon-1);
 }
 
 .ld-divider-v {
