@@ -156,6 +156,9 @@ function setTextBinding(el: DesignerElement, dsId: string) {
 // Heading for the shared color picker: text color, or a panel's fill color / image tint.
 const colorLabel = computed(() => (textProps.value ? 'Text color' : fillMode.value === 'image' ? 'Tint' : 'Color'))
 
+// Whether the selected element exposes a `color` prop (containers don't — they're rect-only).
+const hasColor = computed(() => !!selected.value && selected.value.type !== 'container')
+
 const computedRect = computed(() => (selected.value ? rectOf(selected.value.id) : undefined))
 </script>
 
@@ -300,16 +303,18 @@ const computedRect = computed(() => (selected.value ? rectOf(selected.value.id) 
         </label>
       </template>
 
-      <div class="ld-section-title">
-        <span>{{ colorLabel }}</span>
-        <InfoTip :text="textProps ? 'The text (font) color and opacity (α). Maps to CuiTextComponent.Color / the color arg of cui.v2.CreateText.' : fillMode === 'image' ? 'Color multiplied over the image (white = original colors, lower α = more transparent). Maps to the image Color arg / CuiRawImageComponent.Color.' : 'Panel background color and opacity (α). Stored as CUI 0–1 channels — see the \'r g b a\' string in the Captured values panel.'" />
-      </div>
-      <div class="ld-vec-row">
-        <input class="ld-color" type="color" :value="toHex(selected.props.color)" :title="colorLabel" @input="setHex(selected, ($event.target as HTMLInputElement).value)" />
-        <span class="ld-vec-label ld-alpha-label" title="Opacity (alpha), 0–1">α</span>
-        <input class="ld-range" type="range" min="0" max="1" step="0.01" :value="selected.props.color.a" title="Opacity (alpha)" @input="setAlpha(selected, ($event.target as HTMLInputElement).value)" />
-        <input class="ld-num" type="number" min="0" max="1" step="0.05" :value="round(selected.props.color.a)" @change="setAlpha(selected, ($event.target as HTMLInputElement).value)" />
-      </div>
+      <template v-if="hasColor">
+        <div class="ld-section-title">
+          <span>{{ colorLabel }}</span>
+          <InfoTip :text="textProps ? 'The text (font) color and opacity (α). Maps to CuiTextComponent.Color / the color arg of cui.v2.CreateText.' : fillMode === 'image' ? 'Color multiplied over the image (white = original colors, lower α = more transparent). Maps to the image Color arg / CuiRawImageComponent.Color.' : 'Panel background color and opacity (α). Stored as CUI 0–1 channels — see the \'r g b a\' string in the Captured values panel.'" />
+        </div>
+        <div class="ld-vec-row">
+          <input class="ld-color" type="color" :value="toHex(selected.props.color)" :title="colorLabel" @input="setHex(selected, ($event.target as HTMLInputElement).value)" />
+          <span class="ld-vec-label ld-alpha-label" title="Opacity (alpha), 0–1">α</span>
+          <input class="ld-range" type="range" min="0" max="1" step="0.01" :value="selected.props.color.a" title="Opacity (alpha)" @input="setAlpha(selected, ($event.target as HTMLInputElement).value)" />
+          <input class="ld-num" type="number" min="0" max="1" step="0.05" :value="round(selected.props.color.a)" @change="setAlpha(selected, ($event.target as HTMLInputElement).value)" />
+        </div>
+      </template>
 
       <!-- PANEL border (optional inset frame → four edge subpanels) -->
       <template v-if="panelProps">

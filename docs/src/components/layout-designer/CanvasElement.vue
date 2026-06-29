@@ -11,6 +11,7 @@ import {
   type OffsetPatch,
   type ResizeEdge,
 } from './geometry'
+import { definitionOf } from './elements/registry'
 import { fontDef, resolveText } from './types'
 import type { DesignerElement, TextAlign } from './types'
 import { useDesigner } from './useDesigner'
@@ -157,10 +158,7 @@ function cloneEl(el: DesignerElement): DesignerElement {
     anchorMax: { ...el.anchorMax },
     offsetMin: { ...el.offsetMin },
     offsetMax: { ...el.offsetMax },
-    props:
-      el.type === 'text'
-        ? { ...el.props, color: { ...el.props.color } }
-        : { ...el.props, color: { ...el.props.color }, image: el.props.image ? { ...el.props.image } : el.props.image },
+    props: definitionOf(el).cloneProps(el),
   } as DesignerElement
 }
 

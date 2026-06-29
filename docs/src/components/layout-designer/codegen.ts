@@ -509,8 +509,11 @@ export function parseCuiJson(data: unknown): ParsedCui | null {
       })
     } else if (rawImg && typeof rawImg.url === 'string') {
       elements.push({ ...base, type: 'panel', props: { color: parseColor(rawImg.color, { r: 1, g: 1, b: 1, a: 1 }), image: { kind: 'url', url: rawImg.url } } })
+    } else if (img) {
+      elements.push({ ...base, type: 'panel', props: { color: parseColor(img.color, { r: 1, g: 1, b: 1, a: 1 }), image: null } })
     } else {
-      elements.push({ ...base, type: 'panel', props: { color: parseColor(img?.color, { r: 1, g: 1, b: 1, a: 1 }), image: null } })
+      // No graphic component — a RectTransform-only node is an empty container / section.
+      elements.push({ ...base, type: 'container', props: {} })
     }
   }
 

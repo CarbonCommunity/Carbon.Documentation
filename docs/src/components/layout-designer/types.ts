@@ -7,6 +7,10 @@
 //   - Y axis is BOTTOM-UP (origin bottom-left), exactly like Unity RectTransform / CUI
 // The DOM (top-down) conversion happens only at render time in geometry.ts.
 
+// Element types whose Props/Element interfaces live beside their behavior (elements/<type>.ts) are
+// imported here purely to assemble the DesignerElement union below. Type-only — no runtime coupling.
+import type { ContainerElement } from './elements/container'
+
 export interface Vec2 {
   x: number
   y: number
@@ -20,9 +24,13 @@ export interface ColorRGBA {
   a: number
 }
 
-export type ElementType = 'panel' | 'text'
+export type ElementType = 'panel' | 'text' | 'container'
 // The addable-type list (label + order) is derived from the element registry — see
 // elements/registry.ts (`ELEMENT_TYPES`). This file owns only the discriminated-union data model.
+//
+// Convention: an element type's Props/Element interface and behavior live in its own module under
+// elements/ (e.g. elements/container.ts). This file imports the Element type and adds it to the
+// DesignerElement union + the ElementType string below.
 
 /** Target framework for code generation. */
 export type Provider = 'oxide' | 'carbon' | 'both'
@@ -174,8 +182,8 @@ export interface TextProps {
   font?: TextFont
 }
 
-/** Fields shared by every element regardless of type. */
-interface BaseElement {
+/** Fields shared by every element regardless of type. Extended by each element module's type. */
+export interface BaseElement {
   id: string
   name: string
   /** null => positioned against the root canvas. */
@@ -211,7 +219,7 @@ export interface TextElement extends BaseElement {
 }
 
 /** Discriminated on `type` — narrow with `el.type === 'text'` to reach type-specific props. */
-export type DesignerElement = PanelElement | TextElement
+export type DesignerElement = PanelElement | TextElement | ContainerElement
 
 // --- Data sources --------------------------------------------------------------------
 //

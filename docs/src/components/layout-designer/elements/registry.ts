@@ -7,6 +7,7 @@
 
 import type { DesignerElement, ElementType } from '../types'
 import type { ElementDefinition } from './emit'
+import { containerDefinition } from './container'
 import { panelDefinition } from './panel'
 import { textDefinition } from './text'
 
@@ -20,7 +21,7 @@ function widen<E extends DesignerElement>(def: ElementDefinition<E>): ElementDef
 }
 
 /** Every element definition, in the order shown by the "Add element" picker. */
-export const ELEMENT_DEFINITIONS: ElementDefinition[] = [widen(panelDefinition), widen(textDefinition)]
+export const ELEMENT_DEFINITIONS: ElementDefinition[] = [widen(panelDefinition), widen(textDefinition), widen(containerDefinition)]
 
 const BY_TYPE = new Map<ElementType, ElementDefinition>(ELEMENT_DEFINITIONS.map((d) => [d.type, d]))
 

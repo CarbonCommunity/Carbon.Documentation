@@ -105,6 +105,33 @@ export interface CreateArgs {
   color: ColorRGBA
 }
 
+/** The four rect fields an element factory must produce — shared default-geometry shape. */
+export interface BoxGeometry {
+  anchorMin: Vec2
+  anchorMax: Vec2
+  offsetMin: Vec2
+  offsetMax: Vec2
+}
+
+/** Full-stretch geometry: fills the parent with zero offsets (the default for a root container). */
+export function fullStretch(): BoxGeometry {
+  return { anchorMin: { x: 0, y: 0 }, anchorMax: { x: 1, y: 1 }, offsetMin: { x: 0, y: 0 }, offsetMax: { x: 0, y: 0 } }
+}
+
+/**
+ * A centered, fixed-size box (half-extents `halfW`×`halfH` in reference px), staggered by creation
+ * `index` so successive adds don't fully overlap. Shared default for child panels / text / containers.
+ */
+export function staggeredBox(index: number, halfW: number, halfH: number): BoxGeometry {
+  const c = (index % 6) * 24
+  return {
+    anchorMin: { x: 0.5, y: 0.5 },
+    anchorMax: { x: 0.5, y: 0.5 },
+    offsetMin: { x: -halfW + c, y: -halfH + c },
+    offsetMax: { x: halfW + c, y: halfH + c },
+  }
+}
+
 /** Build a default child element of `type` parented under `parentId` (store-backed id allocation). */
 export type ChildFactory = (type: ElementType, parentId: string) => DesignerElement
 

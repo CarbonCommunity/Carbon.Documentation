@@ -2,7 +2,7 @@
 // client asset under both frameworks (see types.ts TEXT_FONTS); Oxide emits the filename, Carbon
 // chains .SetTextFont only for a non-default font. A bound `text` prop emits a field reference.
 
-import { anchorPair, color, esc, intNum, intStr, nameRef, offExpr, offsetPair, parentRef, posExpr, textExpr } from './emit'
+import { anchorPair, color, esc, intNum, intStr, nameRef, offExpr, offsetPair, parentRef, posExpr, staggeredBox, textExpr } from './emit'
 import type { CreateArgs, ElementDefinition, EmitContext } from './emit'
 import { DEFAULT_TEXT_FONT, fontDef } from '../types'
 import type { CuiComponent, TextElement } from '../types'
@@ -67,17 +67,12 @@ export const textDefinition: ElementDefinition<TextElement> = {
   create({ id, n, parentId, index }: CreateArgs): TextElement {
     // Text defaults to a centered fixed-size box (a title/label), staggered like child panels so
     // successive adds don't fully overlap. Color defaults to opaque white (the text color).
-    const c = (index % 6) * 24
-    const half = { w: 140, h: 24 }
     return {
       id,
       name: `Text.${n}`,
       parentId,
       type: 'text',
-      anchorMin: { x: 0.5, y: 0.5 },
-      anchorMax: { x: 0.5, y: 0.5 },
-      offsetMin: { x: -half.w + c, y: -half.h + c },
-      offsetMax: { x: half.w + c, y: half.h + c },
+      ...staggeredBox(index, 140, 24),
       props: { color: { r: 1, g: 1, b: 1, a: 1 }, text: 'New Text', fontSize: 14, align: 'MiddleCenter', font: 'RobotoCondensedRegular' },
     }
   },

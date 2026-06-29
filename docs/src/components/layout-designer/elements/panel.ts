@@ -3,7 +3,7 @@
 // subpanels are plain color panels, so they emit through this same definition. Image-fill *variants*
 // (sprite / png / item icon / …) extend `ImageFill.kind` and slot into the switches below.
 
-import { anchorPair, color, esc, nameRef, offExpr, offsetPair, parentRef, posExpr } from './emit'
+import { anchorPair, color, esc, fullStretch, nameRef, offExpr, offsetPair, parentRef, posExpr, staggeredBox } from './emit'
 import type { CreateArgs, ElementDefinition, EmitContext } from './emit'
 import type { CuiComponent, PanelElement } from '../types'
 
@@ -73,20 +73,8 @@ export const panelDefinition: ElementDefinition<PanelElement> = {
   label: 'Panel',
   create({ id, n, parentId, index, color: fill }: CreateArgs): PanelElement {
     const base = { id, name: `Panel.${n}`, parentId, type: 'panel' as const, props: { color: fill } }
-    if (parentId === null) {
-      // Base/root panels default to filling the canvas (full-stretch container).
-      return { ...base, anchorMin: { x: 0, y: 0 }, anchorMax: { x: 1, y: 1 }, offsetMin: { x: 0, y: 0 }, offsetMax: { x: 0, y: 0 } }
-    }
-    // Child panels default to a centered fixed-size box, staggered so they don't fully overlap.
-    const c = (index % 6) * 24
-    const half = { w: 120, h: 70 }
-    return {
-      ...base,
-      anchorMin: { x: 0.5, y: 0.5 },
-      anchorMax: { x: 0.5, y: 0.5 },
-      offsetMin: { x: -half.w + c, y: -half.h + c },
-      offsetMax: { x: half.w + c, y: half.h + c },
-    }
+    // Base/root panels fill the canvas; child panels default to a staggered centered box.
+    return { ...base, ...(parentId === null ? fullStretch() : staggeredBox(index, 120, 70)) }
   },
   cloneProps(el) {
     return { ...el.props, color: { ...el.props.color }, image: el.props.image ? { ...el.props.image } : el.props.image }
