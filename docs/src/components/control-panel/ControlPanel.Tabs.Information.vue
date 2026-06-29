@@ -79,7 +79,7 @@ onUnmounted(() => {
         </div>
       </div>
     </div>
-    <div>
+    <div v-if="selectedServer?.hasPermission('map_view')">
       <div class="w-[500px] h-[500px]">
         <ServerMapImage
           :src="selectedServer?.MapInfo?.imageUrl"

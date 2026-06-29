@@ -577,6 +577,9 @@ export class Server {
       this.RpcPermissions['profiler_edit'] = read.bool()
       this.RpcPermissions['plugins_view'] = read.bool()
       this.RpcPermissions['plugins_edit'] = read.bool()
+      this.RpcPermissions['map_view'] = read.bool()
+      this.RpcPermissions['map_entities'] = read.bool()
+      this.RpcPermissions['draw_ui'] = read.bool()
     })
     this.setRpc('ProfilesList', (read) => {
       ClearProfileFiles()
