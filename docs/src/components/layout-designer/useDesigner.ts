@@ -551,6 +551,27 @@ function openTab(id: string) {
   if (!openTabs.value.includes(id)) openTabs.value.push(id)
 }
 
+// "Recent" = recently CLOSED layouts (quick re-open). A layout lands here when its tab is closed,
+// pushed to the top; switching tabs does NOT touch it, and anything still open is filtered out below.
+const RECENT_MAX = 6
+const recentIds = ref<string[]>([])
+function pushRecent(...ids: string[]) {
+  const incoming = ids.filter(Boolean)
+  if (!incoming.length) return
+  recentIds.value = [...incoming, ...recentIds.value.filter((id) => !incoming.includes(id))].slice(0, 30)
+}
+const recentLayouts = computed(() => {
+  const open = new Set(openTabs.value)
+  const out: Layout[] = []
+  for (const id of recentIds.value) {
+    if (open.has(id)) continue // never list a layout that's currently open in a tab
+    const l = layouts.value.find((x) => x.id === id)
+    if (l) out.push(l)
+    if (out.length >= RECENT_MAX) break
+  }
+  return out
+})
+
 let layoutSeq = 0
 function newLayoutId(): string {
   return `layout-${Date.now()}-${++layoutSeq}`
@@ -584,7 +605,7 @@ function persist() {
     cur.updatedAt = Date.now()
   }
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 1, layouts: layouts.value, currentLayoutId: currentLayoutId.value, openTabs: openTabs.value }))
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 1, layouts: layouts.value, currentLayoutId: currentLayoutId.value, openTabs: openTabs.value, recentIds: recentIds.value }))
   } catch {
     /* storage may be unavailable */
   }
@@ -603,6 +624,7 @@ function loadFromStorage(): boolean {
     let tabs: string[] = Array.isArray(o.openTabs) ? o.openTabs.filter((id: string) => valid.has(id)) : []
     if (!tabs.length && storedCurrent) tabs = [storedCurrent]
     openTabs.value = tabs
+    recentIds.value = Array.isArray(o.recentIds) ? o.recentIds.filter((id: string) => valid.has(id)) : []
     currentLayoutId.value = storedCurrent && tabs.includes(storedCurrent) ? storedCurrent : (tabs[0] ?? null)
     applyData(currentLayout.value ? currentLayout.value.data : { elements: [], canvas: defaultCanvas() })
     return true
@@ -638,6 +660,7 @@ function closeTab(id: string) {
   if (idx < 0) return
   if (currentLayoutId.value === id) persist() // save edits before leaving
   openTabs.value.splice(idx, 1)
+  pushRecent(id) // closing a tab makes the layout "recent" (quick re-open)
   if (currentLayoutId.value === id) {
     const next = openTabs.value[idx] ?? openTabs.value[idx - 1] ?? null
     currentLayoutId.value = next
@@ -649,6 +672,7 @@ function closeTab(id: string) {
 /** Close every open tab → the empty state (no layout deleted). */
 function closeAllTabs() {
   if (currentLayoutId.value) persist()
+  pushRecent(...openTabs.value) // every closed tab becomes recent
   openTabs.value = []
   currentLayoutId.value = null
   applyData({ elements: [], canvas: defaultCanvas() })
@@ -834,6 +858,7 @@ export function useDesigner() {
     currentLayoutName,
     openTabs,
     openTabLayouts,
+    recentLayouts,
     newLayout,
     switchLayout,
     closeTab,

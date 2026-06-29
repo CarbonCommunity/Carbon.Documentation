@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useEventListener, useStorage } from '@vueuse/core'
 import { Check, ChevronDown, ChevronRight, Clipboard, ClipboardPaste, FolderOpen, HelpCircle, LayoutDashboard, Lock, Pencil, PictureInPicture2, Plus, Redo2, Trash2, Undo2, X } from 'lucide-vue-next'
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { usePopout } from './usePopout'
 import ContextMenu from './ContextMenu.vue'
 import DataSourcePanel from './DataSourcePanel.vue'
@@ -34,6 +34,7 @@ const {
   layouts,
   currentLayoutId,
   openTabLayouts,
+  recentLayouts,
   closeTab,
   closeAllTabs,
   newLayout,
@@ -136,29 +137,6 @@ function doRename(id: string, current: string) {
 function doDelete(id: string, name: string) {
   if (window.confirm(`Delete layout "${name}"?`)) deleteLayout(id)
 }
-
-// --- recent layouts (most-recently-opened quick-load list at the bottom of File) ---
-const RECENT_MAX = 6
-const recentIds = useStorage<string[]>('carbon-layout-designer:workspace:recent', [])
-watch(
-  currentLayoutId,
-  (id) => {
-    if (!id) return
-    recentIds.value = [id, ...recentIds.value.filter((x) => x !== id)].slice(0, 20)
-  },
-  { immediate: true }
-)
-// most-recent-first, excluding the layout already open and any that were since deleted
-const recentLayouts = computed(() => {
-  const out: { id: string; name: string }[] = []
-  for (const id of recentIds.value) {
-    if (id === currentLayoutId.value) continue
-    const l = layouts.value.find((x) => x.id === id)
-    if (l) out.push({ id: l.id, name: l.name })
-    if (out.length >= RECENT_MAX) break
-  }
-  return out
-})
 
 // --- keyboard shortcuts ---
 function isTyping(e: KeyboardEvent) {
