@@ -38,6 +38,9 @@ const previewPlayerId = ref<bigint | null>(null)
 let lastNames = new Set<string>()
 // name → parent on the previous push — a changed parent is a reparent (destroy + recreate, not update).
 let lastParents = new Map<string, string>()
+// name → content on the previous push — lets the diff leave an UNCHANGED dynamic element (countdown /
+// input) running untouched, and destroy+recreate it only when its own content actually changes.
+let lastContent = new Map<string, string>()
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
 let stopWatch: (() => void) | null = null
 
@@ -77,16 +80,19 @@ function pushSnapshot() {
   const sv = previewServer.value
   const pid = previewPlayerId.value
   if (!sv || pid == null) return
-  const { payload, reparentDestroys } = diffPreview(buildPayload(), lastNames, lastParents)
-  // Tear down moved subtrees BEFORE re-adding, so they recreate cleanly under their new parent.
-  for (const name of reparentDestroys) sv.sendCall(RPC_DESTROY, pid, name)
+  const all = buildPayload()
+  const { payload, destroys, liveNames, content } = diffPreview(all, lastNames, lastParents, lastContent)
+  // Tear down moved subtrees and changed dynamic widgets BEFORE re-adding, so they recreate cleanly.
+  for (const name of destroys) sv.sendCall(RPC_DESTROY, pid, name)
   sv.sendCall(RPC_ADD, pid, JSON.stringify(payload))
-  const names = new Set(payload.map((e) => e.name))
+  // DestroyUi anything that vanished since the last push (gone from the tree entirely — note an
+  // untouched dynamic stays in `liveNames`, so it is NOT destroyed even though it's omitted from AddUi).
   for (const old of lastNames) {
-    if (!names.has(old)) sv.sendCall(RPC_DESTROY, pid, old)
+    if (!liveNames.has(old)) sv.sendCall(RPC_DESTROY, pid, old)
   }
-  lastNames = names
-  lastParents = new Map(payload.map((e) => [e.name, e.parent]))
+  lastNames = liveNames
+  lastParents = new Map(all.map((e) => [e.name, e.parent]))
+  lastContent = content
 }
 
 function destroyPreview() {
@@ -95,6 +101,7 @@ function destroyPreview() {
   if (sv && pid != null) sv.sendCall(RPC_DESTROY, pid, PREVIEW_ROOT)
   lastNames = new Set()
   lastParents = new Map()
+  lastContent = new Map()
 }
 
 function schedulePush() {
