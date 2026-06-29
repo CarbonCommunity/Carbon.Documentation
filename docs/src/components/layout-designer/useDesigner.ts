@@ -6,8 +6,9 @@
 
 import { computed, reactive, ref, watch } from 'vue'
 import { parseCuiJson } from './codegen'
+import { definitionOf, getDefinition } from './elements/registry'
 import { resolveRect, rootRect } from './geometry'
-import type { CanvasConfig, ColorRGBA, DataSource, DataSourceKind, DesignerElement, ElementType, ListDataSource, PanelElement, PanelProps, Provider, Rect, TextDataSource, TextElement, TextProps, Vec2 } from './types'
+import type { CanvasConfig, ColorRGBA, DataSource, DataSourceKind, DesignerElement, ElementType, ListDataSource, PanelProps, Provider, Rect, TextDataSource, TextProps, Vec2 } from './types'
 
 let idCounter = 0
 function nextId(): { id: string; n: number } {
@@ -21,20 +22,20 @@ function nextDataSourceId(): { id: string; n: number } {
   return { id: `ds-${n}`, n }
 }
 
-function makePanel(parentId: string | null, anchorMin: Vec2, anchorMax: Vec2, offsetMin: Vec2, offsetMax: Vec2, color: ColorRGBA): PanelElement {
+/**
+ * Build a fresh element of `type` (parented under `parentId`) with that type's default geometry/props,
+ * via the element registry. The store owns the bits that depend on the current tree: a freshly
+ * allocated id, the position in the array (for child staggering), and the cycled default fill color.
+ */
+function createByType(type: ElementType, parentId: string | null): DesignerElement {
   const { id, n } = nextId()
-  return { id, type: 'panel', name: `Panel.${n}`, parentId, anchorMin, anchorMax, offsetMin, offsetMax, props: { color } }
+  const index = elements.value.length
+  return getDefinition(type).create({ id, n, parentId, index, color: COLORS[index % COLORS.length] })
 }
 
-function makeText(parentId: string | null, anchorMin: Vec2, anchorMax: Vec2, offsetMin: Vec2, offsetMax: Vec2, color: ColorRGBA): TextElement {
-  const { id, n } = nextId()
-  return { id, type: 'text', name: `Text.${n}`, parentId, anchorMin, anchorMax, offsetMin, offsetMax, props: { color, text: 'New Text', fontSize: 14, align: 'MiddleCenter', font: 'RobotoCondensedRegular' } }
-}
-
-/** Deep-clone an element's props, preserving its concrete type. */
+/** Deep-clone an element's props, preserving its concrete type (delegated to its definition). */
 function cloneProps(el: DesignerElement): DesignerElement['props'] {
-  if (el.type === 'text') return { ...el.props, color: { ...el.props.color } }
-  return { ...el.props, color: { ...el.props.color }, image: el.props.image ? { ...el.props.image } : el.props.image }
+  return definitionOf(el).cloneProps(el)
 }
 
 const COLORS: ColorRGBA[] = [
@@ -166,46 +167,28 @@ function select(id: string | null, additive = false) {
 
 // --- actions -------------------------------------------------------------------------
 
-function addPanel(parentId: string | null = null): DesignerElement {
-  ensureLayout() // adding from the empty state spins up a fresh layout to hold it
-  const color = COLORS[elements.value.length % COLORS.length]
-  let panel: DesignerElement
-  if (parentId === null) {
-    // Base/root panels default to filling the canvas (full-stretch container).
-    panel = makePanel(null, { x: 0, y: 0 }, { x: 1, y: 1 }, { x: 0, y: 0 }, { x: 0, y: 0 }, color)
-  } else {
-    // Child panels default to a centered fixed-size box, staggered so they don't fully overlap.
-    const c = (elements.value.length % 6) * 24
-    const half = { w: 120, h: 70 }
-    panel = makePanel(parentId, { x: 0.5, y: 0.5 }, { x: 0.5, y: 0.5 }, { x: -half.w + c, y: -half.h + c }, { x: half.w + c, y: half.h + c }, color)
-  }
-  elements.value.push(panel)
-  selectedIds.value = [panel.id]
-  return panel
-}
-
-function addText(parentId: string | null = null): DesignerElement {
-  ensureLayout() // adding from the empty state spins up a fresh layout to hold it
-  // Text defaults to a centered fixed-size box (a title/label), staggered like child panels so
-  // successive adds don't fully overlap. Color defaults to opaque white (the text color).
-  const c = (elements.value.length % 6) * 24
-  const half = { w: 140, h: 24 }
-  const text = makeText(
-    parentId,
-    { x: 0.5, y: 0.5 },
-    { x: 0.5, y: 0.5 },
-    { x: -half.w + c, y: -half.h + c },
-    { x: half.w + c, y: half.h + c },
-    { r: 1, g: 1, b: 1, a: 1 }
-  )
-  elements.value.push(text)
-  selectedIds.value = [text.id]
-  return text
-}
-
-/** Add an element of the given type on the root canvas (or inside `parentId`). */
+/**
+ * Add an element of the given type on the root canvas (or inside `parentId`), select it, and seed any
+ * related children the type defines (e.g. a button's label). The per-type defaults + seeding live in
+ * the element registry, so this stays type-agnostic.
+ */
 function addElement(type: ElementType, parentId: string | null = null): DesignerElement {
-  return type === 'text' ? addText(parentId) : addPanel(parentId)
+  ensureLayout() // adding from the empty state spins up a fresh layout to hold it
+  const def = getDefinition(type)
+  const el = createByType(type, parentId)
+  elements.value.push(el)
+  const seeds = def.seedChildren?.(el, (t, pid) => createByType(t, pid)) ?? []
+  if (seeds.length) elements.value.push(...seeds)
+  selectedIds.value = [el.id]
+  return el
+}
+
+/** Add a panel / text on the root canvas (or inside `parentId`). Thin wrappers over {@link addElement}. */
+function addPanel(parentId: string | null = null): DesignerElement {
+  return addElement('panel', parentId)
+}
+function addText(parentId: string | null = null): DesignerElement {
+  return addElement('text', parentId)
 }
 
 function remove(id: string) {
@@ -379,12 +362,21 @@ function fill(id: string, mode: 'both' | 'x' | 'y' = 'both') {
 }
 
 function seedSample() {
-  const bg = makePanel(null, { x: 0, y: 0 }, { x: 1, y: 1 }, { x: 0, y: 0 }, { x: 0, y: 0 }, { r: 0.09, g: 0.09, b: 0.11, a: 0.92 })
-  elements.value.push(bg)
-  const title = makePanel(bg.id, { x: 0, y: 1 }, { x: 1, y: 1 }, { x: 8, y: -56 }, { x: -8, y: -8 }, { r: 0.99, g: 0.35, b: 0.23, a: 0.95 })
-  elements.value.push(title)
-  const corner = makePanel(bg.id, { x: 1, y: 0 }, { x: 1, y: 0 }, { x: -132, y: 12 }, { x: -12, y: 52 }, { r: 0.2, g: 0.55, b: 0.85, a: 0.95 })
-  elements.value.push(corner)
+  // Build sample panels through the registry factory, then override geometry/color for the specific
+  // sample layout (the factory's defaults are a starting point; this is a hand-placed composition).
+  const place = (parentId: string | null, aMin: Vec2, aMax: Vec2, oMin: Vec2, oMax: Vec2, color: ColorRGBA): DesignerElement => {
+    const el = createByType('panel', parentId)
+    el.anchorMin = aMin
+    el.anchorMax = aMax
+    el.offsetMin = oMin
+    el.offsetMax = oMax
+    el.props.color = color
+    elements.value.push(el)
+    return el
+  }
+  const bg = place(null, { x: 0, y: 0 }, { x: 1, y: 1 }, { x: 0, y: 0 }, { x: 0, y: 0 }, { r: 0.09, g: 0.09, b: 0.11, a: 0.92 })
+  const title = place(bg.id, { x: 0, y: 1 }, { x: 1, y: 1 }, { x: 8, y: -56 }, { x: -8, y: -8 }, { r: 0.99, g: 0.35, b: 0.23, a: 0.95 })
+  place(bg.id, { x: 1, y: 0 }, { x: 1, y: 0 }, { x: -132, y: 12 }, { x: -12, y: 52 }, { r: 0.2, g: 0.55, b: 0.85, a: 0.95 })
   selectedIds.value = [title.id]
 }
 

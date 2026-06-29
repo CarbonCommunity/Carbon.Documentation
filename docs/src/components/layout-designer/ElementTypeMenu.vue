@@ -4,7 +4,8 @@
 // so the set of types (and their order) lives in exactly one place: ELEMENT_TYPES.
 import { computed } from 'vue'
 import { Plus } from 'lucide-vue-next'
-import { ELEMENT_TYPES, type ElementType } from './types'
+import { ELEMENT_TYPES } from './elements/registry'
+import type { ElementType } from './types'
 
 const props = defineProps<{
   /** Where the popover sits relative to its (position:relative) anchor. Ignored when x/y are set. */

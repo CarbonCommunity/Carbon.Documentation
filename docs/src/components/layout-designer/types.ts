@@ -21,16 +21,8 @@ export interface ColorRGBA {
 }
 
 export type ElementType = 'panel' | 'text'
-
-/** Addable element types, in the order shown by the toolbar's "Add" picker. */
-export interface ElementTypeDef {
-  type: ElementType
-  label: string
-}
-export const ELEMENT_TYPES: ElementTypeDef[] = [
-  { type: 'panel', label: 'Panel' },
-  { type: 'text', label: 'Text' },
-]
+// The addable-type list (label + order) is derived from the element registry — see
+// elements/registry.ts (`ELEMENT_TYPES`). This file owns only the discriminated-union data model.
 
 /** Target framework for code generation. */
 export type Provider = 'oxide' | 'carbon' | 'both'

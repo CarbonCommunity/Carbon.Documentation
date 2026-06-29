@@ -8,10 +8,17 @@
 // The designer stores everything in CUI-native convention already (anchors 0..1, offsets in
 // reference px, +y up, color channels 0..1), so generation is a straight formatting pass — no
 // coordinate math here. Keep it that way: geometry lives in geometry.ts.
+//
+// Per-element emit lives in elements/<type>.ts (the registry); this file owns the shared machinery
+// the emitters depend on — naming, parent-before-child ordering, border expansion, data-source field
+// emission — and dispatches to `definitionOf(el).oxide/carbon/adduiComponents` rather than branching
+// on `el.type`. Adding an element type does not change this file.
 
-import { cuiColorString, round } from './geometry'
-import { CLIENT_PANELS, DEFAULT_TEXT_FONT, fontDef, resolveText, TEXT_ALIGNS, TEXT_FONTS } from './types'
-import type { ClientPanel, ClientPanelDef, ColorRGBA, CuiComponent, CuiElement, DataSource, DesignerElement, PanelElement, Provider, TextAlign, TextElement, TextFont, Vec2 } from './types'
+import { anchorPair, esc, nameRef, offsetPair, parentRef } from './elements/emit'
+import type { EmitContext } from './elements/emit'
+import { definitionOf } from './elements/registry'
+import { CLIENT_PANELS, resolveText, TEXT_ALIGNS, TEXT_FONTS } from './types'
+import type { ClientPanel, ClientPanelDef, ColorRGBA, CuiElement, DataSource, DesignerElement, PanelElement, Provider, TextAlign, TextFont, Vec2 } from './types'
 
 // --- data-source fields --------------------------------------------------------------
 //
@@ -22,12 +29,8 @@ import type { ClientPanel, ClientPanelDef, ColorRGBA, CuiComponent, CuiElement, 
 // (`resolveBindings` below), since the AddUi wire format has no place for a C# field. Only text
 // sources are emitted today; `list` is reserved for the repeat/template work.
 
-interface CodeCtx {
-  /** All data sources in scope (for resolving a binding's value / fallback literal). */
-  sources: DataSource[]
-  /** dsId -> C# field identifier (sanitised, de-duped). Empty when there are no sources. */
-  fields: Map<string, string>
-}
+/** The data-source state an EmitContext needs — a structural subset for the field-decl helpers. */
+type FieldCtx = Pick<EmitContext, 'sources' | 'fields'>
 
 /**
  * Sanitise a data-source name into a valid C# identifier: each run of invalid chars becomes a single
@@ -63,18 +66,11 @@ function usedSourceIds(elements: DesignerElement[]): Set<string> {
   return s
 }
 
-/** C# expression for a text element's text: a bound field reference, else a quoted literal. */
-function textCode(el: TextElement, ctx: CodeCtx): string {
-  const dsId = el.bindings?.text
-  if (dsId && ctx.fields.has(dsId)) return ctx.fields.get(dsId)!
-  return `"${esc(resolveText(el, ctx.sources))}"`
-}
-
 /**
  * Declaration lines for every text source in `usedIds`. `style:'field'` => class members
  * (`private string X = "v";`); `style:'local'` => snippet-local vars (`string X = "v";`).
  */
-function genFieldDecls(ctx: CodeCtx, usedIds: Set<string>, style: 'field' | 'local'): string[] {
+function genFieldDecls(ctx: FieldCtx, usedIds: Set<string>, style: 'field' | 'local'): string[] {
   const lines: string[] = []
   for (const ds of ctx.sources) {
     if (ds.kind !== 'text' || !usedIds.has(ds.id)) continue
@@ -89,7 +85,7 @@ function genFieldDecls(ctx: CodeCtx, usedIds: Set<string>, style: 'field' | 'loc
  * Inline-resolve every bound prop to its data-source value — the JSON / live-preview strategy (the
  * AddUi wire format has no field concept). Only bound elements are cloned; an unbound layout passes
  * through unchanged, so JSON for layouts with no data sources is byte-identical. (The code outputs use
- * `textCode` instead, which emits a field reference.) Reserved for later: expanding `repeat` templates.
+ * a field reference instead, via `textExpr`.) Reserved for later: expanding `repeat` templates.
  */
 function resolveBindings(elements: DesignerElement[], dataSources: DataSource[]): DesignerElement[] {
   if (!dataSources.length) return elements
@@ -106,34 +102,6 @@ function resolveBindings(elements: DesignerElement[], dataSources: DataSource[])
   })
   return changed ? out : elements
 }
-
-/** Format a rounded number without a trailing ".0" or a stray "-0". */
-function num(v: number, decimals: number): string {
-  const r = round(v, decimals)
-  return Object.is(r, -0) ? '0' : String(r)
-}
-
-/** Escape a value so it is safe inside a C# double-quoted string literal (incl. newlines/tabs). */
-function esc(s: string): string {
-  return s
-    .replace(/\\/g, '\\\\')
-    .replace(/"/g, '\\"')
-    .replace(/\n/g, '\\n')
-    .replace(/\r/g, '\\r')
-    .replace(/\t/g, '\\t')
-}
-
-/** Integer for emitted C# (font sizes are whole px). */
-const intStr = (v: number) => String(Math.max(1, Math.round(v)))
-
-/** Same clamp as intStr, but as a number (AddUi JSON wants a numeric fontSize, not a string). */
-const intNum = (v: number) => Math.max(1, Math.round(v))
-
-// Anchors are fractions (need precision); offsets are reference px (usually whole, grid-snapped).
-const anchorPair = (v: Vec2) => `${num(v.x, 4)} ${num(v.y, 4)}`
-const offsetPair = (v: Vec2) => `${num(v.x, 2)} ${num(v.y, 2)}`
-// LUI takes float args; 0.5 is a `double` literal in C# and won't implicitly narrow, so suffix `f`.
-const lf = (v: number, decimals: number) => `${num(v, decimals)}f`
 
 /**
  * Assign each element a stable, unique UI name. The element's display name is used verbatim
@@ -152,11 +120,6 @@ function buildNames(elements: DesignerElement[]): Map<string, string> {
     map.set(el.id, name)
   }
   return map
-}
-
-/** Resolve an element's parent: a named sibling, else the supplied root parent. */
-function parentName(el: DesignerElement, names: Map<string, string>, rootParent: string): string {
-  return el.parentId ? names.get(el.parentId) ?? rootParent : rootParent
 }
 
 /**
@@ -239,138 +202,41 @@ function rootContainerName(names: Map<string, string>): string {
 
 // --- Oxide CUI -----------------------------------------------------------------------
 
-/** Emit a single Oxide element. Text → CuiLabel; URL fills → raw-image CuiElement; else CuiPanel. */
-function oxideElement(el: DesignerElement, names: Map<string, string>, layer: ClientPanelDef, ctx: CodeCtx): string[] {
-  const parent = esc(parentName(el, names, layer.oxide))
-  const name = esc(names.get(el.id)!)
-  if (el.type === 'text') {
-    const t = el.props
-    // CuiLabel bundles a CuiTextComponent (Text) + RectTransform. Font is the same Rust client asset
-    // Carbon's FontTypes maps to, emitted as the filename here. A bound Text references its field.
-    return [
-      'container.Add(new CuiLabel',
-      '{',
-      '    Text =',
-      '    {',
-      `        Text = ${textCode(el, ctx)},`,
-      `        FontSize = ${intStr(t.fontSize)},`,
-      `        Font = "${fontDef(t.font).oxide}",`,
-      `        Align = TextAnchor.${t.align},`,
-      `        Color = "${cuiColorString(t.color)}"`,
-      '    },',
-      '    RectTransform =',
-      '    {',
-      `        AnchorMin = "${anchorPair(el.anchorMin)}",`,
-      `        AnchorMax = "${anchorPair(el.anchorMax)}",`,
-      `        OffsetMin = "${offsetPair(el.offsetMin)}",`,
-      `        OffsetMax = "${offsetPair(el.offsetMax)}"`,
-      '    }',
-      `}, "${parent}", "${name}");`,
-      '',
-    ]
-  }
-  if (el.props.image?.kind === 'url') {
-    // Raw/URL images use CuiRawImageComponent (the panel's Color becomes the image tint).
-    return [
-      'container.Add(new CuiElement',
-      '{',
-      `    Name = "${name}",`,
-      `    Parent = "${parent}",`,
-      '    Components =',
-      '    {',
-      `        new CuiRawImageComponent { Url = "${esc(el.props.image.url)}", Color = "${cuiColorString(el.props.color)}" },`,
-      '        new CuiRectTransformComponent',
-      '        {',
-      `            AnchorMin = "${anchorPair(el.anchorMin)}",`,
-      `            AnchorMax = "${anchorPair(el.anchorMax)}",`,
-      `            OffsetMin = "${offsetPair(el.offsetMin)}",`,
-      `            OffsetMax = "${offsetPair(el.offsetMax)}"`,
-      '        }',
-      '    }',
-      '});',
-      '',
-    ]
-  }
-  return [
-    'container.Add(new CuiPanel',
-    '{',
-    `    Image = { Color = "${cuiColorString(el.props.color)}" },`,
-    '    RectTransform =',
-    '    {',
-    `        AnchorMin = "${anchorPair(el.anchorMin)}",`,
-    `        AnchorMax = "${anchorPair(el.anchorMax)}",`,
-    `        OffsetMin = "${offsetPair(el.offsetMin)}",`,
-    `        OffsetMax = "${offsetPair(el.offsetMax)}"`,
-    '    }',
-    `}, "${parent}", "${name}");`,
-    '',
-  ]
-}
-
-function genOxide(elements: DesignerElement[], names: Map<string, string>, layer: ClientPanelDef, ctx: CodeCtx): string {
+function genOxide(elements: DesignerElement[], ctx: EmitContext): string {
   // Oxide has no CreateParent equivalent — root elements parent to the layer string directly.
   const out: string[] = ['var container = new CuiElementContainer();', '']
-  for (const el of elements) out.push(...oxideElement(el, names, layer, ctx))
+  for (const el of elements) out.push(...definitionOf(el).oxide(el, ctx))
   out.push('CuiHelper.AddUi(player, container);')
   return out.join('\n')
 }
 
 // --- Carbon LUI ----------------------------------------------------------------------
 
-function genCarbon(elements: DesignerElement[], names: Map<string, string>, layer: ClientPanelDef, ctx: CodeCtx): string {
+function genCarbon(elements: DesignerElement[], names: Map<string, string>, layer: ClientPanelDef, base: FieldCtx): string {
   // Carbon attaches to a client panel via CreateParent; root elements then nest under it.
   const root = rootContainerName(names)
+  const ctx: EmitContext = { names, rootParent: root, sources: base.sources, fields: base.fields }
   const out: string[] = [
     'using CUI cui = new CUI(CuiHandler);',
     '',
     `cui.v2.CreateParent(CUI.ClientPanels.${layer.carbon}, LuiPosition.Full, "${esc(root)}");`,
     '',
   ]
-  for (const el of elements) out.push(...carbonElement(el, names, root, ctx))
+  for (const el of elements) out.push(...definitionOf(el).carbon(el, ctx))
   out.push('cui.v2.SendUi(player);')
   return out.join('\n')
-}
-
-/** Emit a single Carbon LUI element. Text → CreateText; URL fills → CreateUrlImage; else CreatePanel. */
-function carbonElement(el: DesignerElement, names: Map<string, string>, root: string, ctx: CodeCtx): string[] {
-  const parent = esc(parentName(el, names, root))
-  const name = esc(names.get(el.id)!)
-  const pos = `new LuiPosition(${lf(el.anchorMin.x, 4)}, ${lf(el.anchorMin.y, 4)}, ${lf(el.anchorMax.x, 4)}, ${lf(el.anchorMax.y, 4)})`
-  const off = `new LuiOffset(${lf(el.offsetMin.x, 2)}, ${lf(el.offsetMin.y, 2)}, ${lf(el.offsetMax.x, 2)}, ${lf(el.offsetMax.y, 2)})`
-  if (el.type === 'text') {
-    const t = el.props
-    // CreateText(parent, pos, offset, fontSize, color, text, alignment, name). Font isn't a param —
-    // LUI defaults to robotocondensed-regular; a non-default font is set by chaining .SetTextFont
-    // (the FontTypes member resolves to the same file Oxide's Font string points at).
-    const head = [
-      `cui.v2.CreateText("${parent}",`,
-      `    ${pos},`,
-      `    ${off},`,
-      `    ${intStr(t.fontSize)}, "${cuiColorString(t.color)}", ${textCode(el, ctx)}, TextAnchor.${t.align}, "${name}")`,
-    ]
-    if ((t.font ?? DEFAULT_TEXT_FONT) === DEFAULT_TEXT_FONT) {
-      head[head.length - 1] += ';'
-      return [...head, '']
-    }
-    return [...head, `    .SetTextFont(CUI.Handler.FontTypes.${fontDef(t.font).id});`, '']
-  }
-  const color = cuiColorString(el.props.color)
-  if (el.props.image?.kind === 'url') {
-    // CreateUrlImage(parent, pos, offset, url, color/tint, name).
-    return [`cui.v2.CreateUrlImage("${parent}",`, `    ${pos},`, `    ${off},`, `    "${esc(el.props.image.url)}", "${color}", "${name}");`, '']
-  }
-  return [`cui.v2.CreatePanel("${parent}",`, `    ${pos},`, `    ${off},`, `    "${color}", "${name}");`, '']
 }
 
 // --- AddUi JSON (live preview, issue #3) ---------------------------------------------
 
 /**
- * Build one CUI element as the wire `CuiElement` that `CuiHelper.AddUi` consumes. Mirrors
- * `oxideElement` 1:1 (same parent resolution, same anchor/offset/color formatting) but emits the
- * deserializer's JSON shape instead of C# source: a primary component (Image / RawImage / Text)
- * plus a RectTransform. No string escaping here — JSON.stringify handles that at send time.
+ * Build one CUI element as the wire `CuiElement` that `CuiHelper.AddUi` consumes. Same parent
+ * resolution and anchor/offset formatting as the code emit, but the deserializer's JSON shape: the
+ * element's primary component(s) (from its definition) plus a RectTransform. No string escaping here —
+ * JSON.stringify handles that at send time. Bindings are pre-resolved by the caller, so primary
+ * components read literal values.
  */
-function adduiElement(el: DesignerElement, names: Map<string, string>, rootParent: string): CuiElement {
+function adduiElement(el: DesignerElement, ctx: EmitContext): CuiElement {
   const rect = {
     type: 'RectTransform' as const,
     anchormin: anchorPair(el.anchorMin),
@@ -378,27 +244,10 @@ function adduiElement(el: DesignerElement, names: Map<string, string>, rootParen
     offsetmin: offsetPair(el.offsetMin),
     offsetmax: offsetPair(el.offsetMax),
   }
-  let primary: CuiComponent
-  if (el.type === 'text') {
-    const t = el.props
-    primary = {
-      type: 'UnityEngine.UI.Text',
-      text: t.text,
-      fontSize: intNum(t.fontSize),
-      font: fontDef(t.font).oxide,
-      align: t.align,
-      color: cuiColorString(t.color),
-    }
-  } else if (el.props.image?.kind === 'url') {
-    // Raw/URL image — the panel's color becomes the image tint (matches oxideElement).
-    primary = { type: 'UnityEngine.UI.RawImage', url: el.props.image.url, color: cuiColorString(el.props.color) }
-  } else {
-    primary = { type: 'UnityEngine.UI.Image', color: cuiColorString(el.props.color) }
-  }
   return {
-    name: names.get(el.id)!,
-    parent: parentName(el, names, rootParent),
-    components: [primary, rect],
+    name: nameRef(el, ctx),
+    parent: parentRef(el, ctx),
+    components: [...definitionOf(el).adduiComponents(el, ctx), rect],
   }
 }
 
@@ -422,7 +271,9 @@ export function generateAddUiJson(
   const expanded = expandBorders(resolveBindings(elements, opts.dataSources ?? []))
   const names = buildNames(expanded)
   const ordered = treeOrder(expanded)
-  return ordered.map((el) => adduiElement(el, names, rootParent))
+  // JSON inlines bound values (resolveBindings above) — no fields needed in the wire format.
+  const ctx: EmitContext = { names, rootParent, sources: [], fields: new Map() }
+  return ordered.map((el) => adduiElement(el, ctx))
 }
 
 // --- public --------------------------------------------------------------------------
@@ -443,19 +294,21 @@ export function generateCode(
   if (!elements.length) return '// Add an element to generate code.'
   const layer = CLIENT_PANELS.find((p) => p.id === rootLayer) ?? CLIENT_PANELS[0]
   // Bordered panels expand into edge subpanels; names are built from this order (stable collision
-  // suffixes); emission is parent-first. Bound props reference fields via `ctx`.
+  // suffixes); emission is parent-first. Bound props reference fields via the EmitContext.
   const expanded = expandBorders(elements)
   const names = buildNames(expanded)
   const ordered = treeOrder(expanded)
-  const ctx: CodeCtx = { sources: dataSources, fields: fieldNames(dataSources) }
+  const fieldCtx: FieldCtx = { sources: dataSources, fields: fieldNames(dataSources) }
   // Declarations for the sources this snippet actually uses, emitted once at the very top (for `both`,
   // before the #if — they are plain C# valid under either framework).
-  const decls = (opts.declStyle ?? 'local') === 'local' ? genFieldDecls(ctx, usedSourceIds(ordered), 'local') : []
+  const decls = (opts.declStyle ?? 'local') === 'local' ? genFieldDecls(fieldCtx, usedSourceIds(ordered), 'local') : []
   const head = decls.length ? [...decls, ''] : []
-  if (provider === 'oxide') return [...head, genOxide(ordered, names, layer, ctx)].join('\n')
-  if (provider === 'carbon') return [...head, genCarbon(ordered, names, layer, ctx)].join('\n')
+  const oxide = () => genOxide(ordered, { names, rootParent: layer.oxide, sources: dataSources, fields: fieldCtx.fields })
+  const carbon = () => genCarbon(ordered, names, layer, fieldCtx)
+  if (provider === 'oxide') return [...head, oxide()].join('\n')
+  if (provider === 'carbon') return [...head, carbon()].join('\n')
   // both: Carbon compiles with the CARBON symbol defined; Oxide does not.
-  return [...head, '#if CARBON', genCarbon(ordered, names, layer, ctx), '#else', genOxide(ordered, names, layer, ctx), '#endif'].join('\n')
+  return [...head, '#if CARBON', carbon(), '#else', oxide(), '#endif'].join('\n')
 }
 
 /** Indent every non-empty line by `spaces` (used to nest the UX snippet inside a method body). */
@@ -477,8 +330,8 @@ export function generateFullClass(elements: DesignerElement[], provider: Provide
   // Data sources become `private` class fields (outside the method); the body references them, so the
   // snippet is generated with declStyle:'none' (no in-method locals). Plain C#, valid under either
   // framework, so the field block is emitted once even for `both`.
-  const ctx: CodeCtx = { sources: dataSources, fields: fieldNames(dataSources) }
-  const fieldLines = genFieldDecls(ctx, usedSourceIds(expandBorders(elements)), 'field')
+  const fieldCtx: FieldCtx = { sources: dataSources, fields: fieldNames(dataSources) }
+  const fieldLines = genFieldDecls(fieldCtx, usedSourceIds(expandBorders(elements)), 'field')
   const members = fieldLines.length ? [...fieldLines.map((l) => `    ${l}`), ''] : []
   const body = indent(generateCode(elements, provider, rootLayer, dataSources, { declStyle: 'none' }), 8)
   const info = '[Info("Test Plugin", "hizen", "0.0.1")]'
@@ -555,11 +408,13 @@ export function generateSelected(elements: DesignerElement[], selectedIds: strin
   const chosen = treeOrder(expanded).filter((el) => sel.has(el.id) || [...sel].some((s) => el.id.startsWith(`${s}.border-`)))
   if (!chosen.length) return HINT
   // Bound props reference fields; declare the locals the chosen elements use, once at the top.
-  const ctx: CodeCtx = { sources: dataSources, fields: fieldNames(dataSources) }
-  const decls = genFieldDecls(ctx, usedSourceIds(chosen), 'local')
+  const fields = fieldNames(dataSources)
+  const decls = genFieldDecls({ sources: dataSources, fields }, usedSourceIds(chosen), 'local')
   const head = decls.length ? [...decls, ''] : []
-  const oxide = () => chosen.flatMap((el) => oxideElement(el, names, layer, ctx)).join('\n').trimEnd()
-  const carbon = () => chosen.flatMap((el) => carbonElement(el, names, root, ctx)).join('\n').trimEnd()
+  const oxideCtx: EmitContext = { names, rootParent: layer.oxide, sources: dataSources, fields }
+  const carbonCtx: EmitContext = { names, rootParent: root, sources: dataSources, fields }
+  const oxide = () => chosen.flatMap((el) => definitionOf(el).oxide(el, oxideCtx)).join('\n').trimEnd()
+  const carbon = () => chosen.flatMap((el) => definitionOf(el).carbon(el, carbonCtx)).join('\n').trimEnd()
   if (provider === 'oxide') return [...head, oxide()].join('\n')
   if (provider === 'carbon') return [...head, carbon()].join('\n')
   return [...head, '#if CARBON', carbon(), '#else', oxide(), '#endif'].join('\n')
