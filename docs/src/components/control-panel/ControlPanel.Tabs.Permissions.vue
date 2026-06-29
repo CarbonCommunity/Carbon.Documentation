@@ -206,8 +206,8 @@ export function refreshPermissions() {
       <tr class="select-none" v-if="userInfo == null || userInfo.Users == null || userInfo.Users.length == 0">
         <td colspan="1" class="text-sm text-slate-600 pt-2">Start typing to search</td>
       </tr>
-      <tr>
-        <td v-for="user in userInfo?.Users" :key="user.SteamId" class="vp-doc td">
+      <tr v-for="user in userInfo?.Users" :key="user.SteamId">
+        <td class="vp-doc td">
           <button class="r-send-button justify-self-center" :class="'r-send-button ' + (user.SteamId == selectedUser?.SteamId ? 'toggled' : null)" @click="selectUser(user, false)">
             <span class="text-neutral-400">{{ user.DisplayName }}</span>
           </button>
