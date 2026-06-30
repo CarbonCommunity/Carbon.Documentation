@@ -11,14 +11,23 @@ const { canvas, rootElements, select, gridSize, guides } = useDesigner()
 // Design-over-scene compositing (#7): the captured stream renders as a backdrop behind the design,
 // and `layoutOpacity` fades the whole design over it (the per-element opacity slider in the Inspector
 // is unrelated — this dims the entire rendered layout so you can see/edit against the real game).
-const { stream, active, asBackdrop, layoutOpacity, videoOpacity, backdropFit, backdropZoom, backdropX, backdropY } = useScreenShare()
+const { stream, active, asBackdrop, layoutOpacity, videoOpacity, cropTop, cropRight, cropBottom, cropLeft } = useScreenShare()
 const showBackdrop = computed(() => active.value && asBackdrop.value)
-// Manual registration of the captured game viewport onto the canvas (pan % of frame + uniform zoom).
-const backdropStyle = computed(() => ({
-  opacity: videoOpacity.value,
-  objectFit: backdropFit.value,
-  transform: `translate(${backdropX.value}%, ${backdropY.value}%) scale(${backdropZoom.value})`,
-}))
+// Crop-to-fill: trim each edge by its % and stretch the remaining game region to fill the canvas. The
+// <video> fills the frame (object-fit: fill), then we scale up by 1/(visible fraction) per axis and
+// shift so the cropped region's top-left lands at the frame origin (transform-origin: 0 0).
+const backdropStyle = computed(() => {
+  const l = cropLeft.value / 100
+  const t = cropTop.value / 100
+  const sx = 1 / Math.max(0.05, 1 - l - cropRight.value / 100)
+  const sy = 1 / Math.max(0.05, 1 - t - cropBottom.value / 100)
+  return {
+    opacity: videoOpacity.value,
+    objectFit: 'fill',
+    transformOrigin: '0 0',
+    transform: `translate(${-sx * l * 100}%, ${-sy * t * 100}%) scale(${sx}, ${sy})`,
+  }
+})
 
 const viewport = ref<HTMLElement | null>(null)
 const { width: vw, height: vh } = useElementSize(viewport)
