@@ -58,30 +58,34 @@ const metrics = computed(() => {
   return { left, right, bottom, top, cuiW: right - left, cuiH: top - bottom }
 })
 
+// Geometry only (position + size). The visual fill lives on a separate `.ld-el-fill` layer (below)
+// so the "Layout opacity" compositing control (#7) can fade fills/text/borders without dimming the
+// selection chrome — handles stay crisp even at 0% so boxes can be placed against the real game.
 const boxStyle = computed(() => {
   const m = metrics.value
-  const el = props.element
-  const style: Record<string, string> = {
+  return {
     left: `${m.left * props.scale}px`,
     top: `${(props.parentH - m.top) * props.scale}px`, // flip y
     width: `${m.cuiW * props.scale}px`,
     height: `${m.cuiH * props.scale}px`,
   }
-  // Panels and buttons paint a background color (panels can also show a URL-image fill). Text boxes
-  // stay transparent — their `color` is the font color, rendered on the inner text node below; an
-  // empty container stays transparent too (it's invisible in-game).
+})
+
+// Fill paint for the box: panels/buttons paint a background color (panels can also show a URL-image
+// fill). Text boxes and empty containers stay transparent (invisible in-game) → null, no fill layer.
+const fillStyle = computed<Record<string, string> | null>(() => {
+  const el = props.element
   if (el.type === 'panel') {
-    style.backgroundColor = cssColor(el.props.color)
-    // URL image: preview the actual bitmap stretched to the box (matches Rust's default Image type).
+    const s: Record<string, string> = { backgroundColor: cssColor(el.props.color) }
     if (el.props.image?.url) {
-      style.backgroundImage = `url("${el.props.image.url.replace(/"/g, '\\"')}")`
-      style.backgroundSize = '100% 100%'
-      style.backgroundRepeat = 'no-repeat'
+      s.backgroundImage = `url("${el.props.image.url.replace(/"/g, '\\"')}")`
+      s.backgroundSize = '100% 100%'
+      s.backgroundRepeat = 'no-repeat'
     }
-  } else if (el.type === 'button') {
-    style.backgroundColor = cssColor(el.props.color)
+    return s
   }
-  return style
+  if (el.type === 'button') return { backgroundColor: cssColor(el.props.color) }
+  return null
 })
 
 // Border preview. Rendered as a separate overlay AFTER the children (see template) so it paints on
@@ -289,6 +293,9 @@ const HANDLES: { edge: ResizeEdge; cls: string; cursor: string }[] = [
     @pointerdown="startMove"
     @contextmenu.prevent.stop="onContextMenu"
   >
+    <!-- fill layer (behind everything): faded by the Layout-opacity control, so handles stay crisp -->
+    <div v-if="fillStyle" class="ld-el-fill" :style="fillStyle" />
+
     <!-- text content (text / input / countdown); pointer-events off so the box stays draggable -->
     <div v-if="isTexty" class="ld-text" :style="textStyle ?? undefined">{{ textContent }}</div>
 
@@ -324,16 +331,28 @@ const HANDLES: { edge: ResizeEdge; cls: string; cursor: string }[] = [
 </template>
 
 <style scoped>
+/* --ld-layout-opacity (0..1, set on the frame, default 1) fades the DESIGN — fills, text, borders and
+   the wireframe outline — over a screen-share backdrop, while selection chrome stays crisp (#7). */
+.ld-el-fill {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: var(--ld-layout-opacity, 1);
+}
+
 .ld-border-overlay {
   position: absolute;
   inset: 0;
   pointer-events: none;
+  opacity: var(--ld-layout-opacity, 1);
 }
 
 .ld-element {
   position: absolute;
   box-sizing: border-box;
-  outline: 1px solid rgba(255, 255, 255, 0.12);
+  /* wireframe hairline — alpha tracks the layout-opacity var so boxes vanish at 0% (calc in the
+     alpha channel), leaving only the selected box's chrome visible over the real game. */
+  outline: 1px solid rgb(255 255 255 / calc(0.12 * var(--ld-layout-opacity, 1)));
   user-select: none;
   touch-action: none;
 }
@@ -354,6 +373,7 @@ const HANDLES: { edge: ResizeEdge; cls: string; cursor: string }[] = [
   white-space: pre-wrap;
   word-break: break-word;
   pointer-events: none;
+  opacity: var(--ld-layout-opacity, 1);
   font-family: 'Roboto Condensed', system-ui, sans-serif;
 }
 

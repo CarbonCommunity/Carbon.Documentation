@@ -19,6 +19,14 @@ const starting = ref(false)
 const error = ref<string | null>(null)
 const active = computed(() => !!stream.value)
 
+// --- design-over-scene compositing (#7) ---
+// Render the captured stream as a backdrop *behind the canvas* and fade the design over it. These are
+// view settings (not persisted) shared via the singleton so the pane's controls drive the canvas.
+const asBackdrop = ref(false) // composite the stream behind the design canvas
+const layoutOpacity = ref(1) // 0..1 opacity of the whole design overlay (NOT per-element opacity — at
+// 0 the design vanishes but selection chrome stays, so you can place boxes against the real game)
+const videoOpacity = ref(1) // 0..1 opacity of the backdrop video itself
+
 // Screen sharing is standalone (#7): a user can capture their Rust window any time — it no longer
 // requires a live in-game preview to be running (that coupling was removed so the capture, and the
 // design-over-scene compositing it powers, work on their own).
@@ -47,5 +55,5 @@ async function start() {
 }
 
 export function useScreenShare() {
-  return { supported, stream, active, starting, error, start, stop }
+  return { supported, stream, active, starting, error, start, stop, asBackdrop, layoutOpacity, videoOpacity }
 }

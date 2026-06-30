@@ -6,7 +6,8 @@ import { useScreenShare } from './useScreenShare'
 
 defineOptions({ name: 'ScreenSharePane' })
 
-const { supported, stream, active, starting, error, start, stop } = useScreenShare()
+const { supported, stream, active, starting, error, start, stop, asBackdrop, layoutOpacity, videoOpacity } = useScreenShare()
+const pct = (v: number) => `${Math.round(v * 100)}%`
 
 const video = ref<HTMLVideoElement | null>(null)
 // Bind the stream to the <video> whenever either changes (also re-binds after a re-dock remount).
@@ -33,6 +34,25 @@ watch(
         </button>
         <button v-else class="ss-btn ss-stop" @click="stop">Stop sharing</button>
         <span v-if="active" class="ss-live"><span class="ss-dot" /> live · local only</span>
+      </div>
+
+      <!-- design-over-scene compositing controls (#7): render the capture behind the design canvas -->
+      <div v-if="active" class="ss-compose">
+        <label class="ss-check">
+          <input type="checkbox" v-model="asBackdrop" />
+          Show behind canvas
+        </label>
+        <div v-if="asBackdrop" class="ss-sliders">
+          <label class="ss-slider">
+            <span>Layout opacity <b>{{ pct(layoutOpacity) }}</b></span>
+            <input type="range" min="0" max="1" step="0.01" v-model.number="layoutOpacity" />
+          </label>
+          <label class="ss-slider">
+            <span>Backdrop opacity <b>{{ pct(videoOpacity) }}</b></span>
+            <input type="range" min="0" max="1" step="0.01" v-model.number="videoOpacity" />
+          </label>
+          <p class="ss-hint">Layout opacity fades the whole design (not element opacity) — drop it to 0 to place boxes against the real game.</p>
+        </div>
       </div>
 
       <div class="ss-stage">
@@ -111,6 +131,51 @@ watch(
   border-radius: 50%;
   background: #36d399;
   box-shadow: 0 0 0 3px rgba(54, 211, 153, 0.18);
+}
+
+.ss-compose {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--vp-c-bg-soft);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+}
+
+.ss-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--vp-c-text-1);
+  cursor: pointer;
+}
+
+.ss-sliders {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ss-slider {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 11.5px;
+  color: var(--vp-c-text-2);
+}
+
+.ss-slider b {
+  color: var(--vp-c-text-1);
+  font-variant-numeric: tabular-nums;
+}
+
+.ss-slider input[type='range'] {
+  width: 100%;
+  accent-color: var(--c-carbon-1);
 }
 
 .ss-stage {
