@@ -6,7 +6,7 @@ import { useScreenShare } from './useScreenShare'
 
 defineOptions({ name: 'ScreenSharePane' })
 
-const { supported, stream, active, starting, error, start, stop, previewing } = useScreenShare()
+const { supported, stream, active, starting, error, start, stop } = useScreenShare()
 
 const video = ref<HTMLVideoElement | null>(null)
 // Bind the stream to the <video> whenever either changes (also re-binds after a re-dock remount).
@@ -28,7 +28,7 @@ watch(
 
     <template v-else>
       <div class="ss-bar">
-        <button v-if="!active" class="ss-btn" :disabled="starting || !previewing" :title="previewing ? '' : 'Start a live preview first'" @click="start">
+        <button v-if="!active" class="ss-btn" :disabled="starting" @click="start">
           {{ starting ? 'Choose a window…' : 'Share screen' }}
         </button>
         <button v-else class="ss-btn ss-stop" @click="stop">Stop sharing</button>
@@ -38,11 +38,7 @@ watch(
       <div class="ss-stage">
         <!-- v-show (not v-if) so the element persists and keeps its srcObject while idle -->
         <video v-show="active" ref="video" class="ss-video" autoplay muted playsinline />
-        <div v-if="!active && !previewing" class="ss-empty">
-          <p>Screen sharing runs <strong>during a live preview</strong>.</p>
-          <p class="ss-hint">Start a live preview (the <em>Live preview</em> button up top) to share your Rust window and design against the real scene. Sharing stops automatically when the preview does.</p>
-        </div>
-        <div v-else-if="!active" class="ss-empty">
+        <div v-if="!active" class="ss-empty">
           <p>Share your <strong>Rust window</strong> to preview a layout against the real scene.</p>
           <p class="ss-hint">
             Pick the Rust window in the browser prompt. If it shows black, run Rust in
