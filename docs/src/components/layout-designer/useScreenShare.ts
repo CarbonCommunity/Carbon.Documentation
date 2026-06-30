@@ -27,6 +27,20 @@ const layoutOpacity = ref(1) // 0..1 opacity of the whole design overlay (NOT pe
 // 0 the design vanishes but selection chrome stays, so you can place boxes against the real game)
 const videoOpacity = ref(1) // 0..1 opacity of the backdrop video itself
 
+// Manual backdrop alignment — the game viewport sits at an unknown offset/scale inside the capture
+// (window borders, title bar, borderless, monitor-vs-window all differ), and nothing in the stream
+// tells us where, so the user registers it by eye against the canvas frame.
+const backdropFit = ref<'contain' | 'cover' | 'fill'>('contain') // object-fit base before transform
+const backdropZoom = ref(1) // uniform scale multiplier
+const backdropX = ref(0) // pan, % of the frame width
+const backdropY = ref(0) // pan, % of the frame height
+function resetBackdropAlign() {
+  backdropFit.value = 'contain'
+  backdropZoom.value = 1
+  backdropX.value = 0
+  backdropY.value = 0
+}
+
 // Screen sharing is standalone (#7): a user can capture their Rust window any time — it no longer
 // requires a live in-game preview to be running (that coupling was removed so the capture, and the
 // design-over-scene compositing it powers, work on their own).
@@ -55,5 +69,5 @@ async function start() {
 }
 
 export function useScreenShare() {
-  return { supported, stream, active, starting, error, start, stop, asBackdrop, layoutOpacity, videoOpacity }
+  return { supported, stream, active, starting, error, start, stop, asBackdrop, layoutOpacity, videoOpacity, backdropFit, backdropZoom, backdropX, backdropY, resetBackdropAlign }
 }

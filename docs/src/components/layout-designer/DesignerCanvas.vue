@@ -11,8 +11,14 @@ const { canvas, rootElements, select, gridSize, guides } = useDesigner()
 // Design-over-scene compositing (#7): the captured stream renders as a backdrop behind the design,
 // and `layoutOpacity` fades the whole design over it (the per-element opacity slider in the Inspector
 // is unrelated — this dims the entire rendered layout so you can see/edit against the real game).
-const { stream, active, asBackdrop, layoutOpacity, videoOpacity } = useScreenShare()
+const { stream, active, asBackdrop, layoutOpacity, videoOpacity, backdropFit, backdropZoom, backdropX, backdropY } = useScreenShare()
 const showBackdrop = computed(() => active.value && asBackdrop.value)
+// Manual registration of the captured game viewport onto the canvas (pan % of frame + uniform zoom).
+const backdropStyle = computed(() => ({
+  opacity: videoOpacity.value,
+  objectFit: backdropFit.value,
+  transform: `translate(${backdropX.value}%, ${backdropY.value}%) scale(${backdropZoom.value})`,
+}))
 
 const viewport = ref<HTMLElement | null>(null)
 const { width: vw, height: vh } = useElementSize(viewport)
@@ -67,7 +73,7 @@ const hGuideStyle = computed(() => {
   <div ref="viewport" class="ld-viewport" @pointerdown="select(null)">
     <div class="ld-frame" :style="frameStyle" @pointerdown.stop="select(null)">
       <!-- live screen-share backdrop (#7): behind the design; the layout fades over it -->
-      <video v-show="showBackdrop" ref="backdrop" class="ld-backdrop" :style="{ opacity: videoOpacity }" autoplay muted playsinline />
+      <video v-show="showBackdrop" ref="backdrop" class="ld-backdrop" :style="backdropStyle" autoplay muted playsinline />
       <div class="ld-grid" :style="gridStyle" />
       <CanvasElement
         v-for="el in rootElements"

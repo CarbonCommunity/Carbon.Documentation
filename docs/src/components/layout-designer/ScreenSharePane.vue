@@ -6,7 +6,7 @@ import { useScreenShare } from './useScreenShare'
 
 defineOptions({ name: 'ScreenSharePane' })
 
-const { supported, stream, active, starting, error, start, stop, asBackdrop, layoutOpacity, videoOpacity } = useScreenShare()
+const { supported, stream, active, starting, error, start, stop, asBackdrop, layoutOpacity, videoOpacity, backdropFit, backdropZoom, backdropX, backdropY, resetBackdropAlign } = useScreenShare()
 const pct = (v: number) => `${Math.round(v * 100)}%`
 
 const video = ref<HTMLVideoElement | null>(null)
@@ -52,6 +52,29 @@ watch(
             <input type="range" min="0" max="1" step="0.01" v-model.number="videoOpacity" />
           </label>
           <p class="ss-hint">Layout opacity fades the whole design (not element opacity) — drop it to 0 to place boxes against the real game.</p>
+
+          <!-- manual alignment: register the captured game viewport onto the canvas frame -->
+          <div class="ss-align">
+            <div class="ss-align-head">
+              <span>Align backdrop</span>
+              <button class="ss-reset" title="Reset alignment" @click="resetBackdropAlign">Reset</button>
+            </div>
+            <label class="ss-field">
+              <span>Fit</span>
+              <select v-model="backdropFit">
+                <option value="contain">Contain</option>
+                <option value="cover">Cover</option>
+                <option value="fill">Fill (stretch)</option>
+              </select>
+            </label>
+            <label class="ss-field">
+              <span>Zoom</span>
+              <input type="number" v-model.number="backdropZoom" min="0.2" max="6" step="0.01" />
+            </label>
+            <label class="ss-field"><span>Offset X %</span><input type="number" v-model.number="backdropX" step="0.5" /></label>
+            <label class="ss-field"><span>Offset Y %</span><input type="number" v-model.number="backdropY" step="0.5" /></label>
+            <p class="ss-hint">Tip: drop Layout opacity to 0, then nudge Zoom/Offset until the game's UI lines up with the canvas edges.</p>
+          </div>
         </div>
       </div>
 
@@ -176,6 +199,67 @@ watch(
 .ss-slider input[type='range'] {
   width: 100%;
   accent-color: var(--c-carbon-1);
+}
+
+.ss-align {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding-top: 8px;
+  border-top: 1px solid var(--vp-c-divider);
+}
+
+.ss-align-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--vp-c-text-3);
+}
+
+.ss-reset {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--vp-c-text-2);
+  padding: 2px 8px;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 4px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.ss-reset:hover {
+  color: var(--c-carbon-1);
+  border-color: var(--c-carbon-1);
+}
+
+.ss-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex: 1;
+  font-size: 11.5px;
+  color: var(--vp-c-text-2);
+}
+
+.ss-field span {
+  white-space: nowrap;
+}
+
+.ss-field select,
+.ss-field input[type='number'] {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  padding: 3px 6px;
+  color: var(--vp-c-text-1);
+  background: var(--vp-c-bg);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 4px;
 }
 
 .ss-stage {
