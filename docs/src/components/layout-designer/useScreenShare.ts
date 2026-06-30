@@ -19,19 +19,15 @@ const starting = ref(false)
 const error = ref<string | null>(null)
 const active = computed(() => !!stream.value)
 
-// --- design-over-scene compositing (#7) ---
-// Render the captured stream as a backdrop *behind the canvas* and fade the design over it. These are
-// view settings (not persisted) shared via the singleton so the pane's controls drive the canvas.
-const asBackdrop = ref(false) // composite the stream behind the design canvas
-const layoutOpacity = ref(1) // 0..1 opacity of the whole design overlay (NOT per-element opacity — at
-// 0 the design vanishes but selection chrome stays, so you can place boxes against the real game)
-const videoOpacity = ref(1) // 0..1 opacity of the backdrop video itself
+// --- design-over-scene compositing (#7) — view settings (not persisted); the pane's controls drive them ---
+const asBackdrop = ref(false)
+const layoutOpacity = ref(1) // 0..1 over the whole design (NOT per-element opacity — at 0 the design
+// vanishes but selection chrome stays, so you can place boxes against the real game)
+const videoOpacity = ref(1) // 0..1 of the backdrop video
 
-// Manual backdrop alignment — the game viewport sits at an unknown sub-rectangle of the capture (the
-// OS title bar, window borders, or whole-monitor framing all push it around) and nothing in the
-// stream says where. So the user crops the capture down to just the game: each value trims that % off
-// the corresponding edge, and the remaining region is stretched to fill the canvas. Trimming the top
-// removes a title bar; trimming all four isolates a windowed game inside a full-monitor capture.
+// Manual alignment: the game viewport is an unknown sub-rectangle of the capture (OS title bar, window
+// borders, monitor framing) and nothing in the stream says where. Each value trims that % off its
+// edge; the remaining region is stretched to fill the canvas (top → drops a title bar).
 const cropTop = ref(0)
 const cropRight = ref(0)
 const cropBottom = ref(0)
@@ -43,9 +39,7 @@ function resetBackdropAlign() {
   cropLeft.value = 0
 }
 
-// Screen sharing is standalone (#7): a user can capture their Rust window any time — it no longer
-// requires a live in-game preview to be running (that coupling was removed so the capture, and the
-// design-over-scene compositing it powers, work on their own).
+// Standalone (#7): capture works any time, independent of the live in-game preview.
 
 function stop() {
   stream.value?.getTracks().forEach((t) => t.stop())

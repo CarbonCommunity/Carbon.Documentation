@@ -36,7 +36,7 @@ watch(
         <span v-if="active" class="ss-live"><span class="ss-dot" /> live · local only</span>
       </div>
 
-      <!-- design-over-scene compositing controls (#7): render the capture behind the design canvas -->
+      <!-- compositing controls (#7) -->
       <div v-if="active" class="ss-compose">
         <label class="ss-check">
           <input type="checkbox" v-model="asBackdrop" />
@@ -53,7 +53,7 @@ watch(
           </label>
           <p class="ss-hint">Layout opacity fades the whole design (not element opacity) — drop it to 0 to place boxes against the real game.</p>
 
-          <!-- manual alignment: crop the capture down to the game viewport, then it fills the canvas -->
+          <!-- crop alignment -->
           <div class="ss-align">
             <div class="ss-align-head">
               <span>Crop backdrop</span>

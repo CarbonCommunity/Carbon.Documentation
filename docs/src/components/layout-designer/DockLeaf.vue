@@ -18,9 +18,8 @@ import DockDropOverlay from './DockDropOverlay.vue'
 import type { PaneId } from './dockTree'
 import { useDockDrag } from './useDockDrag'
 
-// `collapsible` (#8): this pane is a row child that can minimise to an edge strip. Framed panes show
-// the control in their header; self-framed code/debug get an overlay button. Emitting `collapse`
-// lets the parent DockNode flip the flag on this node (it owns the tree reference).
+// `collapsible` (#8): a row child that can minimise to an edge strip. Framed panes show the control in
+// the header, self-framed code/debug get an overlay; `collapse` lets the parent flip the flag.
 const props = defineProps<{ pane: PaneId; collapsible?: boolean }>()
 const emit = defineEmits<{ collapse: [] }>()
 const { addElement, addDataSource } = useDesigner()

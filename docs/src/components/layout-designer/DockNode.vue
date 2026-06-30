@@ -7,9 +7,8 @@ import { leavesOf, PANE_TITLES, titlesOf, type DockNode, type SplitNode } from '
 import { useDock } from './useDock'
 import { useDockDrag } from './useDockDrag'
 
-// `collapsible` is set by the parent split for a row child that may minimise to an edge strip (#8)
-// — leaf/tabs children render their own collapse control from it; sub-split children get one from
-// the parent (they have no header). The root has no parent, so it's undefined → not collapsible.
+// `collapsible` (#8): set by the parent for a row child that may minimise to an edge strip. Leaf/tabs
+// children render their own control from it; header-less sub-split children get one from the parent.
 const props = defineProps<{ node: DockNode; collapsible?: boolean }>()
 const { setSizes, setActiveTab, toggleCollapse, persist } = useDock()
 const { startPaneDrag } = useDockDrag()
@@ -18,8 +17,7 @@ const titleOf = PANE_TITLES
 
 // --- split ---
 const splitEl = ref<HTMLElement>()
-// Children paired with their original index. Since #9 a hidden pane is removed from the tree outright
-// (View is folded into the tree), so there's nothing to filter — every child renders.
+// Children paired with their original index. Since #9 hidden panes are removed from the tree, nothing to filter.
 const visIdx = computed(() => (props.node.type === 'split' ? props.node.children.map((c, i) => ({ c, i })) : []))
 
 // --- edge-collapse (#8) ---
@@ -27,8 +25,7 @@ const isRow = computed(() => props.node.type === 'split' && props.node.dir === '
 // A row child may collapse unless it holds the pinned canvas (never minimise the canvas away).
 const childCollapsible = (i: number) => isRow.value && props.node.type === 'split' && !leavesOf(props.node.children[i]).includes('canvas')
 const isStrip = (c: DockNode) => isRow.value && !!c.collapsed
-// Which edge a strip hugs — left for children in the first half of the row, right otherwise; drives
-// the chevron direction and the strip's flex order so it sits against the outer edge it shrank toward.
+// Which edge a strip hugs (left for first-half children, else right) — drives the chevron + flex order.
 const sideOf = (k: number) => (k < (visIdx.value.length - 1) / 2 ? 'left' : 'right')
 const labelOf = (c: DockNode) => titlesOf(c).join(' / ')
 

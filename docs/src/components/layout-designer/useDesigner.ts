@@ -589,9 +589,8 @@ function applyData(data: LayoutData) {
   elements.value = JSON.parse(JSON.stringify(data.elements ?? []))
   dataSources.value = JSON.parse(JSON.stringify(data.dataSources ?? []))
   Object.assign(canvas, defaultCanvas(), data.canvas ?? {})
-  // The CUI reference is a FIXED 1280×720 (Rust's CanvasScaler — see geometry.ts), so referenceHeight
-  // is always 720. Pin it, and drop any stale per-layout value (an earlier build let users change it,
-  // and an interim model stored `referenceWidth` instead) so old layouts render at the correct scale.
+  // The CUI reference is a fixed 1280×720 (see geometry.ts), so referenceHeight is always 720 — pin it
+  // and drop any stale per-layout value (older builds let users change it, or stored `referenceWidth`).
   const legacy = canvas as CanvasConfig & { referenceWidth?: number }
   delete legacy.referenceWidth
   canvas.referenceHeight = 720

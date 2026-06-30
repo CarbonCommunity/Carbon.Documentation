@@ -8,9 +8,7 @@ import { useScreenShare } from './useScreenShare'
 
 const { canvas, rootElements, select, gridSize, guides } = useDesigner()
 
-// Design-over-scene compositing (#7): the captured stream renders as a backdrop behind the design,
-// and `layoutOpacity` fades the whole design over it (the per-element opacity slider in the Inspector
-// is unrelated — this dims the entire rendered layout so you can see/edit against the real game).
+// #7 backdrop compositing: the stream renders behind the design; layoutOpacity fades the whole design.
 const { stream, active, asBackdrop, layoutOpacity, videoOpacity, cropTop, cropRight, cropBottom, cropLeft } = useScreenShare()
 const showBackdrop = computed(() => active.value && asBackdrop.value)
 // Crop-to-fill: trim each edge by its % and stretch the remaining game region to fill the canvas. The
@@ -81,7 +79,7 @@ const hGuideStyle = computed(() => {
 <template>
   <div ref="viewport" class="ld-viewport" @pointerdown="select(null)">
     <div class="ld-frame" :style="frameStyle" @pointerdown.stop="select(null)">
-      <!-- live screen-share backdrop (#7): behind the design; the layout fades over it -->
+      <!-- screen-share backdrop (#7) -->
       <video v-show="showBackdrop" ref="backdrop" class="ld-backdrop" :style="backdropStyle" autoplay muted playsinline />
       <div class="ld-grid" :style="gridStyle" />
       <CanvasElement

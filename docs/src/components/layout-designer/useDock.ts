@@ -45,8 +45,7 @@ function setActiveTab(node: TabsNode, index: number) {
   persist()
 }
 
-/** Minimise/restore a row-split child to an edge strip (#8). The flag lives on the node, so it
- *  persists with the tree and is honoured by the renderer only while the node is a row child. */
+/** Minimise/restore a row-split child to an edge strip (#8); the flag lives on the node so it persists with the tree. */
 function toggleCollapse(node: DockNode, value = !node.collapsed) {
   node.collapsed = value
   persist()
