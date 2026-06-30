@@ -17,11 +17,16 @@ const MIN_SIZE = 1 // CUI px — keeps an element from inverting while dragging
 //   - screen WIDER than 16:9  → height is pinned to the reference height; width grows.
 //   - screen NARROWER (taller) → width is pinned to the reference width; height grows.
 //   - exactly 16:9 → both are 1280×720.
-// The reference is always 16:9; `cfg.referenceHeight` (default 720) just scales it (width = h × 16/9).
-// Verified against in-game 4:3 (1280×960) and ultrawide (height stays 720) captures.
+// CRUCIALLY this reference is FIXED, not the screen resolution: Expand makes the logical canvas
+// resolution-INDEPENDENT for a given aspect, so 16:9 is 1280×720 at 720p/1080p/1440p alike, 4:3 is
+// always 1280×960, 32:9 always 2560×720. Only the ASPECT changes the logical size. So the reference
+// height is a constant 720 — it must never track the screen resolution (doing so renders the design at
+// the wrong scale vs. the game). Verified 1:1 in-game at 16:9 1440p and against 4:3 (1280×960) captures.
 
 /** Reference aspect — Rust's CUI reference resolution is 1280×720. */
 const REFERENCE_ASPECT = 16 / 9
+/** Rust's CUI reference height in CUI px — fixed (see above), never the screen resolution. */
+const REFERENCE_HEIGHT = 720
 
 function screenAspect(cfg: CanvasConfig): number {
   const [aw, ah] = ASPECT_RATIOS[cfg.aspect]
@@ -32,14 +37,14 @@ function screenAspect(cfg: CanvasConfig): number {
  *  the screen is narrower than 16:9, otherwise grows with the aspect). */
 export function canvasWidth(cfg: CanvasConfig): number {
   const a = screenAspect(cfg)
-  return a >= REFERENCE_ASPECT ? cfg.referenceHeight * a : cfg.referenceHeight * REFERENCE_ASPECT
+  return a >= REFERENCE_ASPECT ? REFERENCE_HEIGHT * a : REFERENCE_HEIGHT * REFERENCE_ASPECT
 }
 
 /** Effective canvas height in CUI px at the chosen aspect (Expand: pinned to the reference height when
  *  the screen is wider than 16:9, otherwise grows as the screen gets taller). */
 export function canvasHeight(cfg: CanvasConfig): number {
   const a = screenAspect(cfg)
-  return a >= REFERENCE_ASPECT ? cfg.referenceHeight : (cfg.referenceHeight * REFERENCE_ASPECT) / a
+  return a >= REFERENCE_ASPECT ? REFERENCE_HEIGHT : (REFERENCE_HEIGHT * REFERENCE_ASPECT) / a
 }
 
 /** Root canvas rect in CUI space. */

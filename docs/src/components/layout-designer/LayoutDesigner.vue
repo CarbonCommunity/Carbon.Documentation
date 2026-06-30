@@ -391,18 +391,6 @@ const { dragging: dockDragging, pointer: dockPointer } = useDockDrag()
         <InfoTip text="The screen shape to preview. Switching it shows how the layout responds: relative (anchored/stretched) elements reflow, while fixed-px elements keep their reference size." />
       </div>
 
-      <label class="ld-tool-field">
-        <span>Ref. height</span>
-        <input
-          type="number"
-          min="120"
-          step="10"
-          :value="canvas.referenceHeight"
-          title="Reference-resolution height in pixels — scales Rust's fixed 1280×720 (16:9) reference. The canvas dimensions per aspect follow Rust's Expand scaler."
-          @change="setCanvas({ referenceHeight: Math.max(120, Number(($event.target as HTMLInputElement).value) || 720) })"
-        />
-        <InfoTip text="Rust's CUI reference resolution is 1280×720 (16:9) and scales in Expand mode — it pins whichever screen dimension is more constrained (width below 16:9, height above) and lets the other grow. This sets the reference height (720); width is height × 16/9. All offset pixels are measured in the resulting space." />
-      </label>
 
       <label class="ld-tool-field">
         <span>Layer</span>
