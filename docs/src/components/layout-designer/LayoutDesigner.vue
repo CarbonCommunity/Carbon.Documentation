@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import './fonts/index.css' // self-hosted Rust CUI fonts; here so they load on the tool page only
 import { useEventListener, useStorage } from '@vueuse/core'
 import { Check, ChevronRight, Clipboard, ClipboardPaste, Folder, FolderInput, FolderOpen, HelpCircle, Lock, Pencil, Plus, Redo2, RotateCcw, Trash2, Undo2, X } from 'lucide-vue-next'
 import { computed, onBeforeUnmount, onMounted, provide, ref } from 'vue'
@@ -126,8 +127,7 @@ function doRename(id: string, current: string) {
 function doDelete(id: string, name: string) {
   if (window.confirm(`Delete layout "${name}"?`)) deleteLayout(id)
 }
-// Saved layouts grouped for the Load selector (#10): ungrouped first (no header), then named folders
-// alphabetically. Folders are flat (one level) — enough to organise a long list of saved designs.
+// Grouped for the Load selector (#10): ungrouped first, then folders alphabetically.
 const groupedLayouts = computed(() => {
   const groups = new Map<string, typeof layouts.value>()
   const ungrouped: typeof layouts.value = []
@@ -212,11 +212,9 @@ const VIEW_PANES = computed<{ key: PaneKey; label: string }[]>(() => {
   if (leavesOf(tree.value).includes('screenShare')) list.push({ key: 'screenShare', label: 'Screen Share' })
   return list
 })
-// --- dock workspace (recursive tree of tool panes around the pinned centre canvas) ---
-// Since #9 the tree is the single source of truth for what's docked: a pane is "shown" iff it's a
-// leaf in the tree. View hides a pane by *removing* it (remembering where it sat) and shows it by
-// re-docking there — no parallel visibility flag, so the layout can never reserve empty space for a
-// pane that isn't really there (the old "blank hole" when panes were hidden).
+// Since #9 the tree is the single source of truth: a pane is "shown" iff it's a leaf in it. View hides
+// a pane by *removing* it (remembering where it sat) and shows it by re-docking — no parallel
+// visibility flag, so a hidden pane can't reserve empty space (the old "blank hole").
 const { tree, addPane, closePane, resetTree } = useDock()
 
 const isShown = (key: PaneKey) => leavesOf(tree.value).includes(key)
@@ -253,8 +251,7 @@ function togglePane(key: PaneKey) {
   else showPane(key)
 }
 
-// Reset the whole workspace arrangement: dock tree back to the default layout AND every pane shown
-// again (so a stranded pane or an odd post-docking tree is recoverable in one click).
+// Recover from a stranded/odd workspace in one click: default tree + every pane shown.
 function resetWorkspaceLayout() {
   resetTree()
   hiddenSpots.value = {}

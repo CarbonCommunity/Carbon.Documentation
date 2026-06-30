@@ -152,7 +152,6 @@ export type TextFont =
   | 'PermanentMarker'
   | 'DroidSansMono'
   | 'PressStart'
-  | 'LCD'
   | 'Poxel'
 
 export interface FontDef {
@@ -169,9 +168,8 @@ export const TEXT_FONTS: FontDef[] = [
   { id: 'RobotoCondensedRegular', label: 'Roboto Condensed', oxide: 'robotocondensed-regular.ttf', css: "'Roboto Condensed', system-ui, sans-serif" },
   { id: 'RobotoCondensedBold', label: 'Roboto Condensed Bold', oxide: 'robotocondensed-bold.ttf', css: "'Roboto Condensed', system-ui, sans-serif", weight: 700 },
   { id: 'PermanentMarker', label: 'Permanent Marker', oxide: 'permanentmarker.ttf', css: "'Permanent Marker', 'Comic Sans MS', cursive" },
-  { id: 'DroidSansMono', label: 'Droid Sans Mono', oxide: 'droidsansmono.ttf', css: "ui-monospace, 'Droid Sans Mono', monospace" },
+  { id: 'DroidSansMono', label: 'Droid Sans Mono', oxide: 'droidsansmono.ttf', css: "'Droid Sans Mono', ui-monospace, monospace" },
   { id: 'PressStart', label: 'Press Start 2P', oxide: 'pressstart2p-regular.ttf', css: "'Press Start 2P', ui-monospace, monospace" },
-  { id: 'LCD', label: 'LCD', oxide: 'lcd.ttf', css: "'LCD', ui-monospace, monospace" },
   { id: 'Poxel', label: 'Poxel', oxide: 'poxel.otf', css: "'Poxel', system-ui, sans-serif" },
 ]
 
