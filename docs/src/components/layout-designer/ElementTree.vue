@@ -3,11 +3,12 @@ import { useEventListener } from '@vueuse/core'
 import { Plus, Trash2 } from 'lucide-vue-next'
 import { computed, reactive, ref } from 'vue'
 import ElementTypeMenu from './ElementTypeMenu.vue'
+import type { AddPreset } from './addPresets'
 import { cssColor } from './geometry'
 import type { ColorRGBA, DesignerElement, ElementType } from './types'
 import { useDesigner } from './useDesigner'
 
-const { byId, childrenOf, isSelected, isAncestor, select, addElement, moveElement, remove, openContextMenu } = useDesigner()
+const { byId, childrenOf, isSelected, isAncestor, select, addElement, addTextWithBackground, moveElement, remove, openContextMenu } = useDesigner()
 
 /** Tree-row swatch background: the element's color, or transparent for colorless types (container). */
 function swatchColor(el: DesignerElement): string {
@@ -40,8 +41,11 @@ function toggleAddMenu(rowId: string, ev: MouseEvent) {
   addMenu.x = r.left
   addMenu.y = r.bottom + 2
 }
-function onAddChild(type: ElementType) {
-  if (addMenu.id) addElement(type, addMenu.id)
+function onAddChild(choice: ElementType | AddPreset) {
+  if (addMenu.id) {
+    if (choice === 'textbg') addTextWithBackground(addMenu.id)
+    else addElement(choice, addMenu.id)
+  }
   addMenu.id = null
 }
 // close on any outside pointerdown (ignore the menu itself and the "+" buttons so clicks toggle)

@@ -8,8 +8,10 @@ import DataSourcePanel from './DataSourcePanel.vue'
 import DebugPanel from './DebugPanel.vue'
 import ElementTree from './ElementTree.vue'
 import ElementTypeMenu from './ElementTypeMenu.vue'
+import type { AddPreset } from './addPresets'
 import InfoTip from './InfoTip.vue'
 import InspectorPanel from './InspectorPanel.vue'
+import ProjectPanel from './ProjectPanel.vue'
 import ScreenSharePane from './ScreenSharePane.vue'
 import type { ElementType } from './types'
 import { usePopout } from './usePopout'
@@ -22,7 +24,7 @@ import { useDockDrag } from './useDockDrag'
 // the header, self-framed code/debug get an overlay; `collapse` lets the parent flip the flag.
 const props = defineProps<{ pane: PaneId; collapsible?: boolean }>()
 const emit = defineEmits<{ collapse: [] }>()
-const { addElement, addDataSource } = useDesigner()
+const { addElement, addTextWithBackground, addDataSource } = useDesigner()
 const { startPaneDrag } = useDockDrag()
 
 // Start a drag from the pane header (framed panes) or the self-framed code/debug header — but never
@@ -38,6 +40,7 @@ function onHeaderPointerDown(e: PointerEvent) {
 // Framed tool panes: a header (title + actions + pop-out) wraps the body. canvas/code/debug are
 // "self-framed" (render their own component with its own header) and skip this.
 const FRAMED: Partial<Record<PaneId, { title: string; body: Component; scroll: boolean }>> = {
+  project: { title: 'Project', body: ProjectPanel, scroll: true },
   elements: { title: 'Elements', body: ElementTree, scroll: true },
   dataSources: { title: 'Data Sources', body: DataSourcePanel, scroll: false },
   inspector: { title: 'Inspector', body: InspectorPanel, scroll: true },
@@ -48,8 +51,9 @@ const meta = computed(() => FRAMED[props.pane])
 const pip = usePopout(() => meta.value?.title ?? props.pane, { width: 340, height: 660 })
 
 const addMenuOpen = ref(false)
-function onAddRoot(type: ElementType) {
-  addElement(type, null)
+function onAddRoot(choice: ElementType | AddPreset) {
+  if (choice === 'textbg') addTextWithBackground(null)
+  else addElement(choice, null)
   addMenuOpen.value = false
 }
 useEventListener(

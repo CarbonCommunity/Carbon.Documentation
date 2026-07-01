@@ -328,6 +328,8 @@ export function clampPatchToParent(
   if (keepSize) {
     const w = right - left
     const h = top - bottom
+    // Contain each axis: an element that fills or exceeds the parent is pinned flush, so Bounds holds it
+    // in place. (To move a full-bleed label, grab its parent via "Move with parent", or turn Bounds off.)
     if (w <= parentW) {
       if (left < 0) (right -= left), (left = 0)
       if (right > parentW) (left -= right - parentW), (right = parentW)

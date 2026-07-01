@@ -32,6 +32,8 @@ const {
   selectedIds,
   isSelected: isSelectedFn,
   select,
+  surfaceOf,
+  groupMembersOf,
   update,
   childrenOf,
   byId,
@@ -181,31 +183,70 @@ function cloneEl(el: DesignerElement): DesignerElement {
 }
 
 type GroupItem = { id: string; snap: DesignerElement }
-type Drag = { mode: 'move' | 'resize'; edge?: ResizeEdge; startX: number; startY: number; snapshot: DesignerElement; group?: GroupItem[] }
+// `snapshot` is the drag SUBJECT (the element actually being moved/resized) — for a move inside a group
+// that's the group, not the clicked child — and parentW/H are the subject's parent dims.
+type Drag = { mode: 'move' | 'resize'; edge?: ResizeEdge; startX: number; startY: number; snapshot: DesignerElement; parentW: number; parentH: number; group?: GroupItem[] }
 const drag = ref<Drag | null>(null)
+
+// Ordered (top → bottom) list of element ids under a screen point — the canvas's z-stack at that spot.
+// Lets Alt-click reach a box hidden beneath a full-bleed sibling (a plain click only ever hits the top).
+function elementsUnderPoint(clientX: number, clientY: number): string[] {
+  const ids: string[] = []
+  for (const node of document.elementsFromPoint(clientX, clientY)) {
+    const id = node instanceof HTMLElement ? node.dataset.elId : undefined
+    if (id && !ids.includes(id)) ids.push(id)
+  }
+  return ids
+}
 
 function startMove(e: PointerEvent) {
   e.stopPropagation()
-  const additive = e.shiftKey || e.ctrlKey || e.metaKey
-  if (additive) {
-    select(props.element.id, true) // toggle selection, no drag
+  // Alt-click drills DOWN the z-stack at the cursor: each Alt-click selects the next element below the
+  // current one (wrapping), so an occluded box is reachable on the canvas. Once selected it floats above
+  // its siblings (.selected z-index), so it can then be dragged normally. No drag starts on this click.
+  if (e.altKey) {
+    const stack = elementsUnderPoint(e.clientX, e.clientY)
+    if (stack.length) {
+      const idx = selectedId.value ? stack.indexOf(selectedId.value) : -1
+      select(stack[(idx + 1) % stack.length])
+    }
     return
   }
-  if (!isSelected.value) select(props.element.id)
-  const ids = selectedIds.value.includes(props.element.id) ? selectedIds.value.slice() : [props.element.id]
+  // A full-bleed child (e.g. a label filling its button) defers to its parent, and the click then acts
+  // on the whole group the target belongs to. Alt-click (above) bypasses both to reach the raw element.
+  const subjectId = surfaceOf(props.element.id)
+  const members = groupMembersOf(subjectId)
+  const additive = e.shiftKey || e.ctrlKey || e.metaKey
+  if (additive) {
+    const allSel = members.every((m) => selectedIds.value.includes(m))
+    selectedIds.value = allSel ? selectedIds.value.filter((id) => !members.includes(id)) : [...new Set([...selectedIds.value, ...members])]
+    return // toggle selection, no drag
+  }
+  if (!members.every((m) => selectedIds.value.includes(m))) selectedIds.value = members
+  const subject = byId.value.get(subjectId) ?? props.element
+  const ids = selectedIds.value.slice()
   const group = ids
     .map((id) => {
       const el = byId.value.get(id)
       return el ? { id, snap: cloneEl(el) } : null
     })
     .filter((g): g is GroupItem => !!g)
-  drag.value = { mode: 'move', startX: e.clientX, startY: e.clientY, snapshot: cloneEl(props.element), group }
+  const pr = subject.parentId ? rectOf(subject.parentId) : rootRect(canvas)
+  drag.value = {
+    mode: 'move',
+    startX: e.clientX,
+    startY: e.clientY,
+    snapshot: cloneEl(subject),
+    parentW: pr?.w ?? props.parentW,
+    parentH: pr?.h ?? props.parentH,
+    group,
+  }
 }
 
 function startResize(e: PointerEvent, edge: ResizeEdge) {
   e.stopPropagation()
   select(props.element.id)
-  drag.value = { mode: 'resize', edge, startX: e.clientX, startY: e.clientY, snapshot: cloneEl(props.element) }
+  drag.value = { mode: 'resize', edge, startX: e.clientX, startY: e.clientY, snapshot: cloneEl(props.element), parentW: props.parentW, parentH: props.parentH }
 }
 
 useEventListener(window, 'pointermove', (e: PointerEvent) => {
@@ -216,13 +257,13 @@ useEventListener(window, 'pointermove', (e: PointerEvent) => {
   let patch: OffsetPatch | null = null
   if (d.mode === 'move') {
     const threshold = 6 / props.scale // ~6 screen px
-    const pg = props.element.parentId ? rectOf(props.element.parentId) : rootRect(canvas)
+    const pg = d.snapshot.parentId ? rectOf(d.snapshot.parentId) : rootRect(canvas)
     // alignment candidates from sibling elements (in parent-local coords)
     const extraX: number[] = []
     const extraY: number[] = []
     if (pg) {
-      for (const sib of childrenOf(props.element.parentId)) {
-        if (sib.id === props.element.id) continue
+      for (const sib of childrenOf(d.snapshot.parentId)) {
+        if (sib.id === d.snapshot.id) continue
         const sr = rectOf(sib.id)
         if (!sr) continue
         const lx = sr.x - pg.x
@@ -233,18 +274,18 @@ useEventListener(window, 'pointermove', (e: PointerEvent) => {
         extraY.push(by, (by + ty) / 2, ty)
       }
     }
-    const res = snapAndAlignMove(d.snapshot, dxCui, dyCui, props.parentW, props.parentH, gridSize.value, threshold, extraX, extraY)
+    const res = snapAndAlignMove(d.snapshot, dxCui, dyCui, d.parentW, d.parentH, gridSize.value, threshold, extraX, extraY)
     patch = { offsetMin: res.offsetMin, offsetMax: res.offsetMax }
-    if (constrain.value) patch = clampPatchToParent(d.snapshot, patch, props.parentW, props.parentH, true)
-    const v = res.guideX !== null && pg ? { x: pg.x + res.guideX, y0: pg.y, y1: pg.y + props.parentH } : null
-    const h = res.guideY !== null && pg ? { y: pg.y + res.guideY, x0: pg.x, x1: pg.x + props.parentW } : null
+    if (constrain.value) patch = clampPatchToParent(d.snapshot, patch, d.parentW, d.parentH, true)
+    const v = res.guideX !== null && pg ? { x: pg.x + res.guideX, y0: pg.y, y1: pg.y + d.parentH } : null
+    const h = res.guideY !== null && pg ? { y: pg.y + res.guideY, x0: pg.x, x1: pg.x + d.parentW } : null
     setGuides(v, h)
     // move the rest of the selection by the same applied delta (clamped per their own parent)
     if (d.group && d.group.length > 1) {
       const ddx = patch.offsetMin.x - d.snapshot.offsetMin.x
       const ddy = patch.offsetMin.y - d.snapshot.offsetMin.y
       for (const g of d.group) {
-        if (g.id === props.element.id) continue
+        if (g.id === d.snapshot.id) continue
         let gp: OffsetPatch = {
           offsetMin: { x: g.snap.offsetMin.x + ddx, y: g.snap.offsetMin.y + ddy },
           offsetMax: { x: g.snap.offsetMax.x + ddx, y: g.snap.offsetMax.y + ddy },
@@ -257,14 +298,15 @@ useEventListener(window, 'pointermove', (e: PointerEvent) => {
       }
     }
   } else if (d.edge) {
-    patch = snapResizePatch(applyResize(d.snapshot, props.parentW, props.parentH, d.edge, dxCui, dyCui, e.altKey), gridSize.value)
-    if (constrain.value && !e.altKey) patch = clampPatchToParent(d.snapshot, patch, props.parentW, props.parentH, false)
+    patch = snapResizePatch(applyResize(d.snapshot, d.parentW, d.parentH, d.edge, dxCui, dyCui, e.altKey), gridSize.value)
+    if (constrain.value && !e.altKey) patch = clampPatchToParent(d.snapshot, patch, d.parentW, d.parentH, false)
   }
-  if (patch) update(props.element.id, patch)
+  if (patch) update(d.snapshot.id, patch)
 })
 
 function onContextMenu(e: MouseEvent) {
-  openContextMenu(props.element.id, e.clientX, e.clientY)
+  // Right-click, like a plain click, acts on the surface element (a full-bleed caption defers to its host).
+  openContextMenu(surfaceOf(props.element.id), e.clientX, e.clientY, elementsUnderPoint(e.clientX, e.clientY))
 }
 
 useEventListener(window, 'pointerup', () => {
@@ -289,7 +331,8 @@ const HANDLES: { edge: ResizeEdge; cls: string; cursor: string }[] = [
     class="ld-element"
     :class="{ selected: isSelected }"
     :style="boxStyle"
-    :title="`${element.name} — drag to move, drag a handle to resize, right-click for options`"
+    :data-el-id="element.id"
+    :title="`${element.name} — drag to move, drag a handle to resize, Alt-click to reach what's underneath, right-click for options`"
     @pointerdown="startMove"
     @contextmenu.prevent.stop="onContextMenu"
   >

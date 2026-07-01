@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import AnchorWidget from './AnchorWidget.vue'
 import InfoTip from './InfoTip.vue'
 import { round } from './geometry'
@@ -7,8 +7,40 @@ import { TEXT_ALIGNS, TEXT_FONTS } from './types'
 import type { ColorRGBA, DesignerElement, TextAlign, TextDataSource, TextFont } from './types'
 import { useDesigner } from './useDesigner'
 
-const { selected, selectedIds, elements, dataSources, descendantIds, update, reparent, rectOf, fill, removeSelected, duplicateSelected, setBinding } =
+const { selected, selectedIds, elements, dataSources, descendantIds, update, reparent, rectOf, fill, snapSelection, textEditSignal, removeSelected, duplicateSelected, setBinding } =
   useDesigner()
+
+// Focus + select the content field when asked (e.g. context-menu "Edit label text"), after it renders.
+const textArea = ref<HTMLTextAreaElement | null>(null)
+watch(textEditSignal, () =>
+  nextTick(() => {
+    textArea.value?.focus()
+    textArea.value?.select()
+  }),
+)
+
+// "Place in parent": a 3×3 grid that slams the element into a corner/edge/centre, plus an anchor-aware
+// padding slider (re-applies the last-picked cell). Padding is "fake" — it just writes offsets.
+const placePad = ref(0)
+const lastPlace = ref<{ h: 'left' | 'center' | 'right'; v: 'top' | 'middle' | 'bottom' }>({ h: 'center', v: 'middle' })
+const PLACE_CELLS = [
+  ['left', 'top'],
+  ['center', 'top'],
+  ['right', 'top'],
+  ['left', 'middle'],
+  ['center', 'middle'],
+  ['right', 'middle'],
+  ['left', 'bottom'],
+  ['center', 'bottom'],
+  ['right', 'bottom'],
+] as const
+function onPlace(h: 'left' | 'center' | 'right', v: 'top' | 'middle' | 'bottom') {
+  lastPlace.value = { h, v }
+  snapSelection(h, v, placePad.value)
+}
+function onPadInput() {
+  snapSelection(lastPlace.value.h, lastPlace.value.v, placePad.value)
+}
 
 // Plain-English summary of how the selected element responds to resizing.
 const anchoringText = computed(() => {
@@ -268,6 +300,24 @@ const computedRect = computed(() => (selected.value ? rectOf(selected.value.id) 
         </select>
       </label>
 
+      <label v-if="selected.parentId" class="ld-passthrough">
+        <input type="checkbox" :checked="!!selected.passthrough" @change="update(selected.id, { passthrough: ($event.target as HTMLInputElement).checked })" />
+        <span>Move with parent <InfoTip text="Clicking or dragging this element on the canvas grabs its PARENT instead — useful for a label that fills its button. Alt-click still selects this element, and the element tree always reaches it directly." /></span>
+      </label>
+
+      <div class="ld-place">
+        <span class="ld-field-label">Place in parent <InfoTip text="Slam the selection into a corner, edge or centre of its parent. Padding isn't a real CUI property — it just writes this element's offsets: a stretched (fill) axis is inset on both sides, a pinned axis is pushed that far off its edge, and a centred axis ignores it." /></span>
+        <div class="ld-place-row">
+          <div class="ld-place-grid">
+            <button v-for="[h, v] in PLACE_CELLS" :key="`${h}-${v}`" :title="`${v} ${h}`" @click="onPlace(h, v)" />
+          </div>
+          <div class="ld-place-pad">
+            <div class="ld-place-pad-head"><span>Padding</span><b>{{ placePad }}px</b></div>
+            <input type="range" min="0" max="64" step="1" v-model.number="placePad" @input="onPadInput" />
+          </div>
+        </div>
+      </div>
+
       <div class="ld-section-title">
         <span>Anchoring <small>(resize behavior)</small></span>
         <InfoTip text="Anchors decide how this box repositions and stretches when the screen size or parent changes. Setting them doesn't move the box now — it changes how it will react. Switch the Aspect buttons up top to watch it." />
@@ -334,6 +384,7 @@ const computedRect = computed(() => (selected.value ? rectOf(selected.value.id) 
             <span v-if="textBinding" class="ld-bound-tag">bound</span>
           </span>
           <textarea
+            ref="textArea"
             class="ld-textarea"
             rows="2"
             :value="textLikeProps.text"
@@ -580,6 +631,69 @@ const computedRect = computed(() => (selected.value ? rectOf(selected.value.id) 
 
 .ld-border-enable input {
   cursor: pointer;
+}
+
+.ld-passthrough {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 2px 0 8px;
+  font-size: 13px;
+  color: var(--vp-c-text-2);
+  cursor: pointer;
+}
+.ld-passthrough input {
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.ld-place {
+  margin: 2px 0 10px;
+}
+.ld-place-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 6px;
+}
+.ld-place-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3px;
+  width: 66px;
+  height: 66px;
+  padding: 3px;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 5px;
+  flex-shrink: 0;
+}
+.ld-place-grid button {
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 3px;
+  background: var(--vp-c-bg-soft);
+}
+.ld-place-grid button:hover {
+  border-color: var(--c-carbon-1);
+  background: var(--c-carbon-soft);
+}
+.ld-place-pad {
+  flex: 1;
+  min-width: 0;
+  font-size: 12.5px;
+  color: var(--vp-c-text-2);
+}
+.ld-place-pad-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+.ld-place-pad-head b {
+  color: var(--vp-c-text-1);
+  font-variant-numeric: tabular-nums;
+}
+.ld-place-pad input[type='range'] {
+  width: 100%;
 }
 
 .ld-multi-actions button.danger:hover {

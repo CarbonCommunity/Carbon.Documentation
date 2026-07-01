@@ -4,11 +4,12 @@
 // src/stores/*.ts), scoped to this tool. A single module-level store is fine because the
 // designer is mounted once.
 
+import { useStorage } from '@vueuse/core'
 import { computed, reactive, ref, watch } from 'vue'
 import { parseCuiJson } from './codegen'
 import { definitionOf, getDefinition } from './elements/registry'
 import { resolveRect, rootRect } from './geometry'
-import type { CanvasConfig, ColorRGBA, DataSource, DataSourceKind, DesignerElement, ElementType, ListDataSource, PanelProps, Provider, Rect, TextDataSource, TextProps, Vec2 } from './types'
+import type { CanvasConfig, ColorRGBA, DataSource, DataSourceKind, DesignerElement, ElementType, LayoutPreset, ListDataSource, PanelProps, Provider, Rect, TextAlign, TextDataSource, TextProps, Vec2 } from './types'
 
 let idCounter = 0
 function nextId(): { id: string; n: number } {
@@ -53,12 +54,19 @@ const dataSources = ref<DataSource[]>([])
 const selectedIds = ref<string[]>([])
 const canvas = reactive<CanvasConfig>({ referenceHeight: 720, aspect: '16:9', rootLayer: 'Overlay' })
 /** Target framework for the generated code (see codegen.ts). */
-const provider = ref<Provider>('both')
+const provider = ref<Provider>('carbon')
 
 /** Snap grid in reference px — drag/resize land on multiples, keeping pixel values clean. */
 const gridSize = ref(8)
 /** Keep elements inside their parent (and root panels inside the canvas) while editing. */
 const constrain = ref(true)
+/** When on (default), undo/redo history carries across layout switches instead of resetting (Settings). */
+const preserveHistory = useStorage('carbon-layout-designer:settings:preserveHistory', true)
+/** Cap on the undo stack's size in KB — the oldest steps are trimmed once it's exceeded (Settings). */
+const historyLimitKb = useStorage('carbon-layout-designer:settings:historyLimitKb', 256)
+/** Live size of the undo history (for the Settings readout): steps = undo depth, bytes ≈ snapshot chars. */
+const historySteps = ref(0)
+const historyBytes = ref(0)
 
 // Active alignment guides (global CUI coords), shown while dragging.
 const guides = reactive<{
@@ -75,13 +83,16 @@ function clearGuides() {
 }
 
 // Right-click context menu state (shared by the canvas and the element tree).
-const contextMenu = reactive<{ open: boolean; x: number; y: number; targetId: string | null }>({ open: false, x: 0, y: 0, targetId: null })
-function openContextMenu(id: string, x: number, y: number) {
+// `under` = the z-stack of element ids at the click point (top → bottom), so the menu can offer a
+// "Select under" list to reach a box occluded by a full-bleed sibling.
+const contextMenu = reactive<{ open: boolean; x: number; y: number; targetId: string | null; under: string[] }>({ open: false, x: 0, y: 0, targetId: null, under: [] })
+function openContextMenu(id: string, x: number, y: number, under: string[] = []) {
   if (!selectedIds.value.includes(id)) selectedIds.value = [id]
   contextMenu.open = true
   contextMenu.x = x
   contextMenu.y = y
   contextMenu.targetId = id
+  contextMenu.under = under
 }
 function closeContextMenu() {
   contextMenu.open = false
@@ -191,6 +202,25 @@ function addText(parentId: string | null = null): DesignerElement {
   return addElement('text', parentId)
 }
 
+/** Add a Text child that FILLS `parentId` — a caption for a panel/button/container (a real nested
+ *  element, so it stays independently editable and can be ungrouped via "Move out of parent"). */
+function addLabel(parentId: string): DesignerElement {
+  const parent = byId.value.get(parentId)
+  const label = addElement('text', parentId) // selects the new label
+  fill(label.id, 'both')
+  update(label.id, { name: parent ? `${parent.name} Label` : 'Label', passthrough: true, props: { text: 'Label' } })
+  return label
+}
+
+/** "Text + background": a panel with a filled Text child — a captioned box in one action. The panel is
+ *  left selected (the group root). Built from the same nesting primitives as {@link addLabel}. */
+function addTextWithBackground(parentId: string | null = null): DesignerElement {
+  const panel = addElement('panel', parentId)
+  addLabel(panel.id)
+  selectedIds.value = [panel.id]
+  return panel
+}
+
 function remove(id: string) {
   const toRemove = new Set([id, ...descendantIds(id)])
   elements.value = elements.value.filter((e) => !toRemove.has(e.id))
@@ -256,7 +286,137 @@ function moveElement(id: string, newParentId: string | null, beforeId: string | 
   elements.value = arr
 }
 
-type ElementPatch = Partial<Pick<DesignerElement, 'name' | 'anchorMin' | 'anchorMax' | 'offsetMin' | 'offsetMax'>> & {
+// Bumped to ask the Inspector to focus + select its text field (e.g. from "Edit label text").
+const textEditSignal = ref(0)
+function requestTextEdit() {
+  textEditSignal.value++
+}
+
+// --- grouping (editor-only: a shared `groupId` tag, not a CUI node — codegen ignores it) -------------
+
+/** All elements that share `id`'s group (so a canvas click can select them together), or just [id] when
+ *  it isn't grouped. */
+function groupMembersOf(id: string): string[] {
+  const g = byId.value.get(id)?.groupId
+  if (!g) return [id]
+  return elements.value.filter((e) => e.groupId === g).map((e) => e.id)
+}
+
+/** The element a click/drag should actually act on: climb out of any child flagged `passthrough` (it
+ *  hands interactions to its parent — e.g. a label filling its button). Alt-click bypasses this. */
+function surfaceOf(id: string): string {
+  let cur = id
+  let el = byId.value.get(cur)
+  while (el?.passthrough && el.parentId) {
+    cur = el.parentId
+    el = byId.value.get(cur)
+  }
+  return cur
+}
+
+/** The selected ids that aren't nested inside another selected id — the top-level "roots" to group. */
+function selectionRoots(): string[] {
+  const sel = new Set(selectedIds.value)
+  return selectedIds.value.filter((id) => {
+    let p = byId.value.get(id)?.parentId ?? null
+    while (p) {
+      if (sel.has(p)) return false
+      p = byId.value.get(p)?.parentId ?? null
+    }
+    return true
+  })
+}
+
+const canGroup = computed(() => selectionRoots().length > 1)
+const selectionHasGroup = computed(() => selectedIds.value.some((id) => !!byId.value.get(id)?.groupId))
+
+/** Tag the selected top-level elements with a shared `groupId` so they select and move as one. */
+function groupSelection() {
+  const roots = selectionRoots()
+  if (roots.length < 2) return
+  const gid = nextId().id
+  for (const id of roots) {
+    const el = byId.value.get(id)
+    if (el) el.groupId = gid
+  }
+  selectedIds.value = roots
+}
+
+/** Remove the group tag from every member of `id`'s group. */
+function ungroup(id: string) {
+  const g = byId.value.get(id)?.groupId
+  if (!g) return
+  for (const el of elements.value) if (el.groupId === g) delete el.groupId
+}
+
+/** Ungroup every group represented in the current selection (the Ungroup command / Ctrl+Shift+G). */
+function ungroupSelection() {
+  const gids = new Set(selectedIds.value.map((id) => byId.value.get(id)?.groupId).filter((g): g is string => !!g))
+  if (!gids.size) return
+  for (const el of elements.value) if (el.groupId && gids.has(el.groupId)) delete el.groupId
+}
+
+/** Align each selected element within its parent (keeping size + anchors), on one axis or centred. */
+type AlignMode = 'left' | 'centerH' | 'right' | 'top' | 'centerV' | 'bottom'
+function alignSelection(mode: AlignMode) {
+  for (const id of selectedIds.value) {
+    const el = byId.value.get(id)
+    if (!el) continue
+    const pr = el.parentId ? rectOf(el.parentId) : rootRect(canvas)
+    const er = rectOf(id)
+    if (!pr || !er) continue
+    const offsetMin = { ...el.offsetMin }
+    const offsetMax = { ...el.offsetMax }
+    if (mode === 'left' || mode === 'centerH' || mode === 'right') {
+      const left = mode === 'left' ? pr.x : mode === 'right' ? pr.x + pr.w - er.w : pr.x + (pr.w - er.w) / 2
+      offsetMin.x = left - pr.x - el.anchorMin.x * pr.w
+      offsetMax.x = left + er.w - pr.x - el.anchorMax.x * pr.w
+    } else {
+      // CUI y is up: 'top' pins the element's top edge to the parent's top.
+      const bottom = mode === 'bottom' ? pr.y : mode === 'top' ? pr.y + pr.h - er.h : pr.y + (pr.h - er.h) / 2
+      offsetMin.y = bottom - pr.y - el.anchorMin.y * pr.h
+      offsetMax.y = bottom + er.h - pr.y - el.anchorMax.y * pr.h
+    }
+    update(id, { offsetMin, offsetMax })
+  }
+}
+
+/** Place each selected element in its parent, inset by `pad` px. `pad` is anchor-aware "padding" — there
+ *  is no real CUI padding, so it just writes offsets: a STRETCHED axis is inset on both sides (works even
+ *  when the element fills its parent); a PINNED axis is positioned by h/v and pushed `pad` off that edge;
+ *  a CENTERED placement ignores pad. Keeps size + anchors. */
+type HPlace = 'left' | 'center' | 'right'
+type VPlace = 'top' | 'middle' | 'bottom'
+function snapSelection(h: HPlace, v: VPlace, pad = 0) {
+  for (const id of selectedIds.value) {
+    const el = byId.value.get(id)
+    if (!el) continue
+    const pr = el.parentId ? rectOf(el.parentId) : rootRect(canvas)
+    const er = rectOf(id)
+    if (!pr || !er) continue
+    const offsetMin = { ...el.offsetMin }
+    const offsetMax = { ...el.offsetMax }
+    if (el.anchorMin.x !== el.anchorMax.x) {
+      offsetMin.x = pad // stretched → inset both sides
+      offsetMax.x = -pad
+    } else {
+      const left = h === 'left' ? pr.x + pad : h === 'right' ? pr.x + pr.w - er.w - pad : pr.x + (pr.w - er.w) / 2
+      offsetMin.x = left - pr.x - el.anchorMin.x * pr.w
+      offsetMax.x = left + er.w - pr.x - el.anchorMax.x * pr.w
+    }
+    if (el.anchorMin.y !== el.anchorMax.y) {
+      offsetMin.y = pad
+      offsetMax.y = -pad
+    } else {
+      const bottom = v === 'bottom' ? pr.y + pad : v === 'top' ? pr.y + pr.h - er.h - pad : pr.y + (pr.h - er.h) / 2
+      offsetMin.y = bottom - pr.y - el.anchorMin.y * pr.h
+      offsetMax.y = bottom + er.h - pr.y - el.anchorMax.y * pr.h
+    }
+    update(id, { offsetMin, offsetMax })
+  }
+}
+
+type ElementPatch = Partial<Pick<DesignerElement, 'name' | 'anchorMin' | 'anchorMax' | 'offsetMin' | 'offsetMax' | 'passthrough'>> & {
   // Accept any prop from either element type; the inspector only sends fields valid for the
   // selected element, so a panel never receives text props and vice-versa.
   props?: Partial<PanelProps & TextProps>
@@ -270,6 +430,7 @@ function update(id: string, patch: ElementPatch) {
   if (patch.anchorMax) el.anchorMax = patch.anchorMax
   if (patch.offsetMin) el.offsetMin = patch.offsetMin
   if (patch.offsetMax) el.offsetMax = patch.offsetMax
+  if (patch.passthrough !== undefined) el.passthrough = patch.passthrough
   if (patch.props) el.props = { ...(el.props as PanelProps & TextProps), ...patch.props }
 }
 
@@ -380,6 +541,74 @@ function seedSample() {
   selectedIds.value = [title.id]
 }
 
+// Shared placement helpers for the seed presets below: build an element through the registry factory,
+// then override geometry (+ props) for a hand-placed composition. Same pattern as seedSample's local
+// `place`, hoisted so every preset can drop in panels and text labels.
+function seedPanel(parentId: string | null, aMin: Vec2, aMax: Vec2, oMin: Vec2, oMax: Vec2, color: ColorRGBA, name?: string): DesignerElement {
+  const el = createByType('panel', parentId)
+  el.anchorMin = aMin
+  el.anchorMax = aMax
+  el.offsetMin = oMin
+  el.offsetMax = oMax
+  if (el.type === 'panel') el.props.color = color
+  if (name) el.name = name
+  elements.value.push(el)
+  return el
+}
+function seedText(parentId: string | null, aMin: Vec2, aMax: Vec2, oMin: Vec2, oMax: Vec2, text: string, opts?: { fontSize?: number; align?: TextAlign; color?: ColorRGBA; name?: string; passthrough?: boolean }): DesignerElement {
+  const el = createByType('text', parentId)
+  el.anchorMin = aMin
+  el.anchorMax = aMax
+  el.offsetMin = oMin
+  el.offsetMax = oMax
+  if (el.type === 'text') {
+    el.props.text = text
+    if (opts?.fontSize != null) el.props.fontSize = opts.fontSize
+    if (opts?.align) el.props.align = opts.align
+    if (opts?.color) el.props.color = opts.color
+  }
+  if (opts?.name) el.name = opts.name
+  if (opts?.passthrough) el.passthrough = true
+  elements.value.push(el)
+  return el
+}
+
+/** Seed a real button element (not a panel) with the given geometry, colour and caption. The button's
+ *  own definition seeds a centred, "move with parent" child Text label — we just override its text. */
+function seedButton(parentId: string | null, aMin: Vec2, aMax: Vec2, oMin: Vec2, oMax: Vec2, color: ColorRGBA, label: string, opts?: { command?: string; name?: string; fontSize?: number }): DesignerElement {
+  const el = createByType('button', parentId)
+  el.anchorMin = aMin
+  el.anchorMax = aMax
+  el.offsetMin = oMin
+  el.offsetMax = oMax
+  if (el.type === 'button') {
+    el.props.color = color
+    if (opts?.command) el.props.command = opts.command
+  }
+  if (opts?.name) el.name = opts.name
+  elements.value.push(el)
+  const seeds = getDefinition('button').seedChildren?.(el, (t, pid) => createByType(t, pid)) ?? []
+  for (const s of seeds) {
+    if (s.type === 'text') {
+      s.props.text = label
+      if (opts?.fontSize != null) s.props.fontSize = opts.fontSize
+    }
+  }
+  elements.value.push(...seeds)
+  return el
+}
+
+/** A plain centered menu window: title bar with a title + close (X) button, and one action button. */
+function seedMenu() {
+  const white = { r: 0.95, g: 0.95, b: 0.97, a: 1 }
+  const window = seedPanel(null, { x: 0.5, y: 0.5 }, { x: 0.5, y: 0.5 }, { x: -180, y: -130 }, { x: 180, y: 130 }, { r: 0.12, g: 0.13, b: 0.16, a: 0.98 }, 'Menu')
+  const titleBar = seedPanel(window.id, { x: 0, y: 1 }, { x: 1, y: 1 }, { x: 0, y: -44 }, { x: 0, y: 0 }, { r: 0.99, g: 0.35, b: 0.23, a: 1 }, 'Title Bar')
+  seedText(titleBar.id, { x: 0, y: 0 }, { x: 1, y: 1 }, { x: 14, y: 0 }, { x: -44, y: 0 }, 'Menu Title', { fontSize: 16, align: 'MiddleLeft', color: white, name: 'Title', passthrough: true })
+  seedButton(titleBar.id, { x: 1, y: 1 }, { x: 1, y: 1 }, { x: -40, y: -40 }, { x: -4, y: -4 }, { r: 0.82, g: 0.24, b: 0.2, a: 1 }, 'X', { name: 'Close Button', fontSize: 16 })
+  seedButton(window.id, { x: 0, y: 0 }, { x: 1, y: 0 }, { x: 24, y: 24 }, { x: -24, y: 68 }, { r: 0.2, g: 0.55, b: 0.85, a: 1 }, 'Button', { name: 'Button', fontSize: 15 })
+  selectedIds.value = [window.id]
+}
+
 // --- data sources --------------------------------------------------------------------
 
 /** Next generic data-source name: "Data N" past the highest existing one. */
@@ -478,6 +707,17 @@ function applySnapshot(s: string) {
 function updateHistoryFlags() {
   canUndo.value = past.length > 0
   canRedo.value = future.length > 0
+  historySteps.value = past.length
+  let bytes = current ? current.length : 0
+  for (const s of past) bytes += s.length
+  for (const s of future) bytes += s.length
+  historyBytes.value = bytes
+}
+/** Drop the oldest undo steps until the whole history fits the user's KB budget (Settings). */
+function trimHistory() {
+  const cap = Math.max(1, historyLimitKb.value) * 1024
+  let bytes = (current?.length ?? 0) + future.reduce((a, s) => a + s.length, 0) + past.reduce((a, s) => a + s.length, 0)
+  while (past.length > 1 && bytes > cap) bytes -= past.shift()!.length
 }
 function commitHistory() {
   const snap = snapshot()
@@ -488,12 +728,25 @@ function commitHistory() {
   }
   if (snap === current) return // no change (also covers post-undo/redo state)
   past.push(current)
-  if (past.length > 100) past.shift()
   current = snap
   future = []
+  trimHistory()
   updateHistoryFlags()
 }
 function resetHistory() {
+  // With "preserve history" on, a layout load doesn't wipe the stacks — it just records the loaded
+  // state as another step, so undo/redo can walk back across layout switches.
+  if (preserveHistory.value) {
+    commitHistory()
+    return
+  }
+  past = []
+  future = []
+  current = snapshot()
+  updateHistoryFlags()
+}
+/** Drop the undo/redo stacks but keep the current state (Settings → Clear history). */
+function clearHistory() {
   past = []
   future = []
   current = snapshot()
@@ -631,7 +884,7 @@ function loadFromStorage(): boolean {
     return false
   }
 }
-function newLayout(name?: string, preset: 'empty' | 'default' = 'default') {
+function newLayout(name?: string, preset: LayoutPreset = 'default') {
   persist()
   const finalName = name ?? nextLayoutName()
   const id = newLayoutId()
@@ -639,7 +892,9 @@ function newLayout(name?: string, preset: 'empty' | 'default' = 'default') {
   currentLayoutId.value = id
   openTab(id)
   applyData({ elements: [], canvas: defaultCanvas() })
-  if (preset === 'default') seedSample() // 'default' seeds the sample content; 'empty' starts blank
+  // 'empty' starts blank; every other preset seeds a hand-placed starter composition.
+  if (preset === 'default') seedSample()
+  else if (preset === 'menu') seedMenu()
   persist()
   resetHistory()
 }
@@ -678,17 +933,117 @@ function closeAllTabs() {
   resetHistory()
   persist()
 }
+/** Reorder an open tab, dropping it before `beforeId` (null = move to the end). */
+function reorderTab(id: string, beforeId: string | null) {
+  if (id === beforeId) return
+  const from = openTabs.value.indexOf(id)
+  if (from < 0) return
+  const arr = openTabs.value.slice()
+  arr.splice(from, 1)
+  let to = arr.length
+  if (beforeId) {
+    const idx = arr.indexOf(beforeId)
+    if (idx >= 0) to = idx
+  }
+  arr.splice(to, 0, id)
+  openTabs.value = arr
+  persist()
+}
+
+/** Close a set of tabs at once (keeping the layouts), activating the nearest survivor if the current
+ *  tab is among them. Backs the "Close others / to the left / to the right" tab commands. */
+function closeTabs(ids: string[]) {
+  const set = new Set(ids.filter((id) => openTabs.value.includes(id)))
+  if (!set.size) return
+  const cur = currentLayoutId.value
+  if (cur && set.has(cur)) persist() // save edits before leaving the active tab
+  pushRecent(...openTabs.value.filter((id) => set.has(id)))
+  let next = cur
+  if (cur && set.has(cur)) {
+    const i = openTabs.value.indexOf(cur)
+    next =
+      openTabs.value.slice(i).find((id) => !set.has(id)) ?? // nearest survivor to the right
+      [...openTabs.value.slice(0, i)].reverse().find((id) => !set.has(id)) ?? // else to the left
+      null
+  }
+  openTabs.value = openTabs.value.filter((id) => !set.has(id))
+  if (next !== currentLayoutId.value) {
+    currentLayoutId.value = next
+    applyData(next ? layouts.value.find((l) => l.id === next)!.data : { elements: [], canvas: defaultCanvas() })
+    resetHistory()
+  }
+  persist()
+}
+function closeOtherTabs(id: string) {
+  closeTabs(openTabs.value.filter((t) => t !== id))
+}
+function closeTabsToLeft(id: string) {
+  const i = openTabs.value.indexOf(id)
+  if (i > 0) closeTabs(openTabs.value.slice(0, i))
+}
+function closeTabsToRight(id: string) {
+  const i = openTabs.value.indexOf(id)
+  if (i >= 0) closeTabs(openTabs.value.slice(i + 1))
+}
+
+/** Duplicate a saved layout (deep-copied data, a unique name), open it as a tab and switch to it. */
+function duplicateLayout(id: string) {
+  const src = layouts.value.find((l) => l.id === id)
+  if (!src) return
+  if (currentLayoutId.value) persist()
+  const nid = newLayoutId()
+  const data = JSON.parse(JSON.stringify(src.data)) // plain JSON — a deep clone with no shared refs
+  layouts.value.push({ id: nid, name: uniqueLayoutName(`${src.name} copy`), data, updatedAt: Date.now(), folder: src.folder })
+  openTab(nid)
+  currentLayoutId.value = nid
+  applyData(data)
+  resetHistory()
+  persist()
+}
+
 /** Edits need a layout to live in; spin up a blank one if the workspace is at the empty state. */
 function ensureLayout() {
   if (!currentLayoutId.value) newLayout(undefined, 'empty')
 }
+/** Is `name` already used by another layout? Drives the inline-rename conflict hint. */
+function layoutNameTaken(name: string, exceptId?: string): boolean {
+  const n = name.trim().toLowerCase()
+  return !!n && layouts.value.some((l) => l.id !== exceptId && l.name.trim().toLowerCase() === n)
+}
+/** `name`, or `name (2)`, `name (3)`… — the first variant not already taken by another layout. */
+function uniqueLayoutName(name: string, exceptId?: string): string {
+  const base = name.trim() || 'Layout'
+  if (!layoutNameTaken(base, exceptId)) return base
+  let i = 2
+  while (layoutNameTaken(`${base} (${i})`, exceptId)) i++
+  return `${base} (${i})`
+}
 function renameLayout(id: string, name: string) {
   const l = layouts.value.find((x) => x.id === id)
-  if (l) {
-    l.name = name.trim() || l.name
-    persist()
-  }
+  if (!l) return
+  const trimmed = name.trim()
+  if (!trimmed) return // empty keeps the old name
+  l.name = uniqueLayoutName(trimmed, id) // never let two layouts share a name
+  persist()
 }
+/** Reorder a saved layout in the master list (drives Project-explorer drag-drop ordering), dropping it
+ *  before `beforeId` (null = end). Order within a folder follows this array order. */
+function moveLayout(id: string, beforeId: string | null) {
+  if (id === beforeId) return
+  const from = layouts.value.findIndex((l) => l.id === id)
+  if (from < 0) return
+  const arr = layouts.value.slice()
+  const [moved] = arr.splice(from, 1)
+  let to = arr.length
+  if (beforeId) {
+    const idx = arr.findIndex((l) => l.id === beforeId)
+    if (idx >= 0) to = idx
+  }
+  arr.splice(to, 0, moved)
+  layouts.value = arr
+  persist()
+}
+
 /** Assign a saved layout to a grouping folder for the Load selector (#10); blank string = ungroup. */
 function setLayoutFolder(id: string, folder: string) {
   const l = layouts.value.find((x) => x.id === id)
@@ -850,6 +1205,11 @@ export function useDesigner() {
     provider,
     gridSize,
     constrain,
+    preserveHistory,
+    historyLimitKb,
+    historySteps,
+    historyBytes,
+    clearHistory,
     contextMenu,
     guides,
     setGuides,
@@ -870,7 +1230,14 @@ export function useDesigner() {
     switchLayout,
     closeTab,
     closeAllTabs,
+    reorderTab,
+    closeOtherTabs,
+    closeTabsToLeft,
+    closeTabsToRight,
+    duplicateLayout,
     renameLayout,
+    layoutNameTaken,
+    moveLayout,
     setLayoutFolder,
     deleteLayout,
     exportClipboard,
@@ -888,12 +1255,25 @@ export function useDesigner() {
     // actions
     addPanel,
     addText,
+    addLabel,
+    addTextWithBackground,
     addElement,
     select,
     remove,
     removeSelected,
     reparent,
     moveElement,
+    groupMembersOf,
+    surfaceOf,
+    groupSelection,
+    ungroup,
+    ungroupSelection,
+    alignSelection,
+    snapSelection,
+    textEditSignal,
+    requestTextEdit,
+    canGroup,
+    selectionHasGroup,
     update,
     setCanvas,
     nudge,

@@ -20,3 +20,6 @@ docs/.vitepress/dist
 docs/.vitepress/.temp
 docs/public/rss.xml
 node_modules
+
+# Vite data-loader transient files
+docs/src/**/*.timestamp-*.mjs

@@ -69,6 +69,7 @@ function seedChildren(btn: ButtonElement, mk: ChildFactory) {
   label.anchorMax = { x: 1, y: 1 }
   label.offsetMin = { x: 0, y: 0 }
   label.offsetMax = { x: 0, y: 0 }
+  label.passthrough = true // grabbing the caption grabs the button; Alt-click to reach the caption
   if (label.type === 'text') label.props.text = 'Button'
   return [label]
 }

@@ -1,15 +1,17 @@
 <script setup lang="ts">
 import './fonts/index.css' // self-hosted Rust CUI fonts; here so they load on the tool page only
 import { useEventListener, useStorage } from '@vueuse/core'
-import { Check, ChevronRight, Clipboard, ClipboardPaste, Folder, FolderInput, FolderOpen, HelpCircle, Lock, Pencil, Plus, Redo2, RotateCcw, Trash2, Undo2, X } from 'lucide-vue-next'
+import { Check, ChevronRight, Clipboard, ClipboardPaste, Folder, FolderInput, FolderOpen, Lock, Pencil, Plus, Redo2, RotateCcw, Settings, Trash2, Undo2, X } from 'lucide-vue-next'
 import { computed, onBeforeUnmount, onMounted, provide, ref } from 'vue'
 import ContextMenu from './ContextMenu.vue'
 import DockNode from './DockNode.vue'
 import InfoTip from './InfoTip.vue'
+import LayoutSettingsModal from './LayoutSettingsModal.vue'
 import LivePreviewControls from './LivePreviewControls.vue'
 import { PANE_TITLES, leavesOf, locate, type DockSide, type PaneId } from './dockTree'
-import { ASPECT_PRESETS, CLIENT_PANELS, type AspectPreset, type ClientPanel } from './types'
+import { ASPECT_PRESETS, CLIENT_PANELS, type AspectPreset, type ClientPanel, type LayoutPreset } from './types'
 import { useDesigner } from './useDesigner'
+import { comboFromEvent, useKeybinds, type KeyActionId } from './useKeybinds'
 import { useDock } from './useDock'
 import { useScreenShare } from './useScreenShare'
 import { useDockDrag } from './useDockDrag'
@@ -23,6 +25,8 @@ const {
   selectedIds,
   removeSelected,
   duplicateSelected,
+  groupSelection,
+  ungroupSelection,
   nudge,
   undo,
   redo,
@@ -65,7 +69,7 @@ const fileMenuOpen = ref(false)
 const newFlyoutOpen = ref(false)
 const loadFlyoutOpen = ref(false)
 const viewMenuOpen = ref(false)
-const helpOpen = ref(false)
+const settingsModalOpen = ref(false)
 
 // Flyouts (New / Load) open on hover. A short close-delay bridges the gap between a row and its
 // flyout so moving the mouse diagonally onto the submenu doesn't dismiss it (the timer is cancelled
@@ -98,13 +102,13 @@ function closeFileMenu() {
   loadFlyoutOpen.value = false
 }
 
-// File ▸ New presets. Today there's just Empty + Default (the seeded sample); more starters can be
-// added here once the tool supports richer UX.
-const NEW_PRESETS: { id: 'empty' | 'default'; name: string; hint: string }[] = [
+// File ▸ New presets. Each id maps to a seeder in useDesigner (newLayout); 'empty' starts blank.
+const NEW_PRESETS: { id: LayoutPreset; name: string; hint: string }[] = [
   { id: 'empty', name: 'Empty', hint: 'A blank layout' },
   { id: 'default', name: 'Default', hint: 'The starter sample (panel + title + corner)' },
+  { id: 'menu', name: 'Menu', hint: 'A centered menu: title bar with title + close button, and one action button' },
 ]
-function fileNew(preset: 'empty' | 'default') {
+function fileNew(preset: LayoutPreset) {
   newLayout(undefined, preset) // auto-named "Layout N"; rename via the pencil
   closeFileMenu()
 }
@@ -152,28 +156,23 @@ function isTyping(e: KeyboardEvent) {
   const t = e.target as HTMLElement | null
   return !!t && (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA' || t.isContentEditable)
 }
+// Shortcuts are data-driven (Settings → Keyboard shortcuts can rebind them); arrow-nudge stays fixed.
+const { actionForCombo } = useKeybinds()
+function runKeyAction(id: KeyActionId) {
+  if (id === 'undo') undo()
+  else if (id === 'redo') redo()
+  else if (id === 'duplicate') duplicateSelected()
+  else if (id === 'group') groupSelection()
+  else if (id === 'ungroup') ungroupSelection()
+  else if (id === 'delete') removeSelected()
+}
 useEventListener(window, 'keydown', (e: KeyboardEvent) => {
   if (isTyping(e)) return
-  const mod = e.ctrlKey || e.metaKey
-  const k = e.key.toLowerCase()
-  if (mod && k === 'z') {
+  const action = actionForCombo(comboFromEvent(e))
+  if (action) {
+    if (action === 'delete' && !selectedIds.value.length) return
     e.preventDefault()
-    e.shiftKey ? redo() : undo()
-    return
-  }
-  if (mod && k === 'y') {
-    e.preventDefault()
-    redo()
-    return
-  }
-  if (mod && k === 'd') {
-    e.preventDefault()
-    duplicateSelected()
-    return
-  }
-  if ((e.key === 'Delete' || e.key === 'Backspace') && selectedIds.value.length) {
-    e.preventDefault()
-    removeSelected()
+    runKeyAction(action)
     return
   }
   if (!selectedIds.value.length) return
@@ -192,17 +191,17 @@ useEventListener(
     const t = e.target as HTMLElement
     if (!t.closest('.ld-file-menu')) closeFileMenu()
     if (!t.closest('.ld-view-menu')) viewMenuOpen.value = false
-    if (!t.closest('.ld-help')) helpOpen.value = false
   },
   true
 )
 
 // --- pane visibility (the View menu; show/hide each aux pane, persisted) ---
-type PaneKey = 'elements' | 'dataSources' | 'inspector' | 'code' | 'debug' | 'screenShare'
+type PaneKey = 'project' | 'elements' | 'dataSources' | 'inspector' | 'code' | 'debug' | 'screenShare'
 // Screen Share is an OPTIONAL pane (added on demand, see addScreenShare) — it only appears in View
 // once it's in the dock tree, so the View menu is computed from the current tree.
 const VIEW_PANES = computed<{ key: PaneKey; label: string }[]>(() => {
   const list: { key: PaneKey; label: string }[] = [
+    { key: 'project', label: 'Project' },
     { key: 'elements', label: 'Elements' },
     { key: 'dataSources', label: 'Data Sources' },
     { key: 'inspector', label: 'Inspector' },
@@ -219,21 +218,38 @@ const { tree, addPane, closePane, resetTree } = useDock()
 
 const isShown = (key: PaneKey) => leavesOf(tree.value).includes(key)
 
+// Toolbar controls the View menu can show/hide (the secondary ones also reachable in File → Settings).
+// Stored as overrides; a control is shown unless explicitly turned off, so a missing/empty store is safe.
+const toolbarStore = useStorage<Record<string, boolean>>('carbon-layout-designer:workspace:toolbar', {})
+const tbShown = (key: string) => toolbarStore.value?.[key] !== false
+const tbToggle = (key: string) => (toolbarStore.value = { ...(toolbarStore.value ?? {}), [key]: !tbShown(key) })
+const TOOLBAR_TOGGLES = [
+  { key: 'history', label: 'Undo / Redo' },
+  { key: 'aspect', label: 'Aspect' },
+  { key: 'layer', label: 'Layer' },
+  { key: 'grid', label: 'Grid' },
+  { key: 'bounds', label: 'Bounds' },
+]
+
 // Last spot each hidden pane occupied, so re-showing lands it back where it was. Persisted so it
 // survives reloads; falls back to a sensible default home when the remembered neighbour is gone.
 const hiddenSpots = useStorage<Partial<Record<PaneKey, { target: PaneId; side: DockSide }>>>('carbon-layout-designer:workspace:hiddenSpots', {}, undefined)
 const DEFAULT_HOME: Record<PaneKey, { target: PaneId; side: DockSide }> = {
+  project: { target: 'canvas', side: 'left' },
   elements: { target: 'canvas', side: 'left' },
   dataSources: { target: 'canvas', side: 'left' },
   inspector: { target: 'canvas', side: 'right' },
   code: { target: 'canvas', side: 'bottom' },
   debug: { target: 'canvas', side: 'bottom' },
-  screenShare: { target: 'canvas', side: 'bottom' },
+  screenShare: { target: 'canvas', side: 'right' },
 }
 
 function hidePane(key: PaneKey) {
   const spot = locate(tree.value, key)
   if (spot) hiddenSpots.value[key] = spot
+  // Removing the Screen Share pane ends the capture, so the design opacity returns to normal (popping out
+  // leaves the pane in the tree, so this only fires on a genuine close — not a pop-out).
+  if (key === 'screenShare') stopScreenShare()
   closePane(key)
 }
 function showPane(key: PaneKey) {
@@ -259,12 +275,11 @@ function resetWorkspaceLayout() {
 }
 
 // --- screen share (issue #7): an opt-in local screen-capture pane, added on demand ---
-const { supported: screenShareSupported } = useScreenShare()
-/** Add the Screen Share pane to the dock (a bottom tab with Code by default; canvas-bottom if Code is
- *  hidden). No-op if it's already docked. */
+const { supported: screenShareSupported, stop: stopScreenShare } = useScreenShare()
+/** Add the Screen Share pane to the right of the canvas, where it splits off a collapsible edge strip.
+ *  No-op if it's already docked. */
 function addScreenShare() {
-  if (isShown('code')) addPane('screenShare', 'code', 'center')
-  else addPane('screenShare', 'canvas', 'bottom')
+  addPane('screenShare', 'canvas', 'right')
 }
 // Let LivePreviewControls (and anyone else) offer the action without reaching into the dock/visibility.
 provide('ld-screen-share', { supported: screenShareSupported, add: addScreenShare })
@@ -329,6 +344,9 @@ const { dragging: dockDragging, pointer: dockPointer } = useDockDrag()
           <div class="ld-menu-sep" />
           <button class="ld-menu-item" :disabled="!openTabLayouts.length" title="Close all open layout tabs (the layouts are kept)" @click="fileCloseAll"><X :size="13" /> Close All</button>
 
+          <div class="ld-menu-sep" />
+          <button class="ld-menu-item" title="Editor options & customizable keyboard shortcuts" @click="(settingsModalOpen = true), closeFileMenu()"><Settings :size="13" /> Settings</button>
+
           <template v-if="recentLayouts.length">
             <div class="ld-menu-sep" />
             <div class="ld-menu-section">Recent</div>
@@ -350,20 +368,30 @@ const { dragging: dockDragging, pointer: dockPointer } = useDockDrag()
             <span class="ld-menu-name">{{ p.label }}</span>
           </button>
           <div class="ld-menu-sep" />
+          <div class="ld-menu-section">Toolbar</div>
+          <button v-for="t in TOOLBAR_TOGGLES" :key="t.key" class="ld-menu-item ld-menu-check" @click="tbToggle(t.key)">
+            <Check v-if="tbShown(t.key)" :size="13" class="ld-check-on" />
+            <span v-else class="ld-check-spacer" />
+            <span class="ld-menu-name">{{ t.label }}</span>
+          </button>
+          <div class="ld-menu-sep" />
           <button class="ld-menu-item" title="Restore the default pane arrangement and show every pane" @click="resetWorkspaceLayout">
             <RotateCcw :size="13" /> <span class="ld-menu-name">Reset Layout</span>
           </button>
         </div>
       </div>
 
-      <button class="ld-icon-btn" :disabled="!canUndo" title="Undo (Ctrl+Z)" @click="undo"><Undo2 :size="15" /></button>
-      <button class="ld-icon-btn" :disabled="!canRedo" title="Redo (Ctrl+Shift+Z)" @click="redo"><Redo2 :size="15" /></button>
+
+      <template v-if="tbShown('history')">
+        <button class="ld-icon-btn" :disabled="!canUndo" title="Undo" @click="undo"><Undo2 :size="15" /></button>
+        <button class="ld-icon-btn" :disabled="!canRedo" title="Redo" @click="redo"><Redo2 :size="15" /></button>
+      </template>
 
       <LivePreviewControls />
 
       <div class="ld-spacer" />
 
-      <div class="ld-tool-field">
+      <div v-if="tbShown('aspect')" class="ld-tool-field">
         <span>Aspect</span>
         <div class="ld-segmented ld-collapsible" role="group" aria-label="Aspect ratio">
           <button
@@ -389,7 +417,7 @@ const { dragging: dockDragging, pointer: dockPointer } = useDockDrag()
       </div>
 
 
-      <label class="ld-tool-field">
+      <label v-if="tbShown('layer')" class="ld-tool-field">
         <span>Layer</span>
         <select
           :value="canvas.rootLayer"
@@ -401,7 +429,7 @@ const { dragging: dockDragging, pointer: dockPointer } = useDockDrag()
         <InfoTip text="The Rust client UI layer the root of your layout attaches to. Oxide parents root elements to this layer string; Carbon emits cui.v2.CreateParent(CUI.ClientPanels.X). Overlay is the standard full-screen menu layer." />
       </label>
 
-      <label class="ld-tool-field">
+      <label v-if="tbShown('grid')" class="ld-tool-field">
         <span>Grid</span>
         <select
           :value="gridSize"
@@ -413,33 +441,19 @@ const { dragging: dockDragging, pointer: dockPointer } = useDockDrag()
         <InfoTip text="Snap grid in reference pixels. Dragging and resizing land on multiples of this, so offsets stay whole numbers. Use 1px for fine control." />
       </label>
 
-      <button
-        class="ld-btn"
-        :class="{ toggled: constrain }"
-        :title="constrain ? 'Bounds on: elements stay inside their parent' : 'Bounds off: elements may overflow'"
-        @click="constrain = !constrain"
-      >
-        <Lock :size="14" /> Bounds
-      </button>
-      <InfoTip text="When on, elements can't be dragged or resized outside their parent, and root panels stay within the canvas." />
+      <template v-if="tbShown('bounds')">
+        <button
+          class="ld-btn"
+          :class="{ toggled: constrain }"
+          :title="constrain ? 'Bounds on: elements stay inside their parent' : 'Bounds off: elements may overflow'"
+          @click="constrain = !constrain"
+        >
+          <Lock :size="14" /> Bounds
+        </button>
+        <InfoTip text="When on, elements can't be dragged or resized outside their parent, and root panels stay within the canvas." />
+      </template>
 
 
-      <div class="ld-help">
-        <button class="ld-icon-btn" title="Shortcuts & help" @click.stop="helpOpen = !helpOpen"><HelpCircle :size="16" /></button>
-        <div v-if="helpOpen" class="ld-help-pop" @pointerdown.stop>
-          <div class="ld-help-title">Shortcuts</div>
-          <ul>
-            <li><b>Drag</b> a box to move · <b>drag a handle</b> to resize</li>
-            <li><b>Alt + resize</b> — resize from the center (mirror)</li>
-            <li><b>Shift / Ctrl + click</b> — add to selection</li>
-            <li><b>Drag a selection</b> — move all · <b>arrow keys</b> nudge (Shift = ×5)</li>
-            <li><b>Right-click</b> — element menu (front/back, duplicate, nest…)</li>
-            <li><b>Ctrl+Z / Ctrl+Shift+Z</b> — undo / redo</li>
-            <li><b>Ctrl+D</b> duplicate · <b>Delete</b> remove</li>
-          </ul>
-          <div class="ld-help-note">Snapping: boxes snap to the grid and to the edges/centers of the parent and sibling elements (magenta guides).</div>
-        </div>
-      </div>
     </div>
 
     <!-- body: recursive dock tree (tool panes around the pinned centre canvas) -->
@@ -455,6 +469,10 @@ const { dragging: dockDragging, pointer: dockPointer } = useDockDrag()
     </Teleport>
 
     <ContextMenu />
+
+    <Teleport to="body">
+      <LayoutSettingsModal v-if="settingsModalOpen" @close="settingsModalOpen = false" />
+    </Teleport>
   </div>
 </template>
 
@@ -546,8 +564,7 @@ const { dragging: dockDragging, pointer: dockPointer } = useDockDrag()
 
 /* dropdown menus (layouts) */
 .ld-file-menu,
-.ld-view-menu,
-.ld-help {
+.ld-view-menu {
   position: relative;
   display: inline-flex;
 }
@@ -691,47 +708,6 @@ const { dragging: dockDragging, pointer: dockPointer } = useDockDrag()
   height: 1px;
   margin: 4px 6px;
   background: var(--vp-c-divider);
-}
-
-/* help popover */
-.ld-help-pop {
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
-  z-index: 80;
-  width: 320px;
-  padding: 12px 14px;
-  background: var(--vp-c-bg);
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 6px;
-  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.5);
-  font-size: 12.5px;
-  line-height: 1.5;
-}
-
-.ld-help-title {
-  font-weight: 700;
-  margin-bottom: 6px;
-}
-
-.ld-help-pop ul {
-  margin: 0;
-  padding-left: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  color: var(--vp-c-text-2);
-}
-
-.ld-help-pop b {
-  color: var(--vp-c-text-1);
-}
-
-.ld-help-note {
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid var(--vp-c-divider);
-  color: var(--vp-c-text-3);
 }
 
 .ld-btn.primary:hover {

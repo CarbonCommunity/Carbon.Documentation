@@ -213,6 +213,17 @@ export interface BaseElement {
    * needs no model change later. Absent/null => a normal, single element.
    */
   repeat?: { source: string } | null
+  /**
+   * Editor-only grouping tag (NOT a CUI node): elements sharing a `groupId` are one group — clicking any
+   * member selects them all and they move together. Ignored by codegen; the element tree keeps the real
+   * parent hierarchy. Absent => ungrouped.
+   */
+  groupId?: string
+  /**
+   * Editor-only: when set, canvas clicks/drags pass through to the PARENT (you grab the parent, not this
+   * element) — e.g. a label filling its button. Alt-click still reaches this element; codegen ignores it.
+   */
+  passthrough?: boolean
 }
 
 export interface PanelElement extends BaseElement {
@@ -227,6 +238,9 @@ export interface TextElement extends BaseElement {
 
 /** Discriminated on `type` — narrow with `el.type === 'text'` to reach type-specific props. */
 export type DesignerElement = PanelElement | TextElement | ContainerElement | ButtonElement | InputElement | CountdownElement
+
+/** File ▸ New starters. 'empty' seeds nothing; the rest seed a hand-placed sample composition. */
+export type LayoutPreset = 'empty' | 'default' | 'menu'
 
 // --- Data sources --------------------------------------------------------------------
 //

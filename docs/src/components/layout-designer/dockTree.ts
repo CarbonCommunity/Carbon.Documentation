@@ -5,15 +5,16 @@
 //   - leaf:  a single pane
 // The canvas is a leaf too, but pinned (never dragged/closed) so the fragile canvas math is untouched.
 
-export type PaneId = 'elements' | 'dataSources' | 'inspector' | 'canvas' | 'code' | 'debug' | 'screenShare'
-/** Every known pane. `screenShare` is OPTIONAL (added on demand) — see REQUIRED_PANES. */
-export const PANE_IDS: PaneId[] = ['elements', 'dataSources', 'inspector', 'canvas', 'code', 'debug', 'screenShare']
-/** Panes that must be present in a valid tree. The optional ones (screen share) may be present 0/1×. */
+export type PaneId = 'project' | 'elements' | 'dataSources' | 'inspector' | 'canvas' | 'code' | 'debug' | 'screenShare'
+/** Every known pane. `project`/`screenShare` are OPTIONAL (may be absent from a saved tree) — see REQUIRED_PANES. */
+export const PANE_IDS: PaneId[] = ['project', 'elements', 'dataSources', 'inspector', 'canvas', 'code', 'debug', 'screenShare']
+/** Panes that must be present in a valid tree. The optional ones (project, screen share) may be present 0/1×. */
 export const REQUIRED_PANES: PaneId[] = ['elements', 'dataSources', 'inspector', 'canvas', 'code', 'debug']
 /** Panes that can be hidden via View / dragged / closed. The canvas is pinned. */
-export const DOCKABLE_PANES: PaneId[] = ['elements', 'dataSources', 'inspector', 'code', 'debug', 'screenShare']
+export const DOCKABLE_PANES: PaneId[] = ['project', 'elements', 'dataSources', 'inspector', 'code', 'debug', 'screenShare']
 /** Display titles, shared by the dock renderer, the drop overlay and the drag ghost. */
 export const PANE_TITLES: Record<PaneId, string> = {
+  project: 'Project',
   elements: 'Elements',
   dataSources: 'Data Sources',
   inspector: 'Inspector',
@@ -55,20 +56,19 @@ export const split = (dir: 'row' | 'col', children: DockNode[], sizes?: number[]
   sizes: sizes ?? children.map(() => 1),
 })
 
-/** The default workspace: left column (Elements over Data Sources), centre canvas, right Inspector,
- *  and a full-width Code/Debug tab group docked along the bottom. Mirrors the pre-dock-tree layout. */
+/** The default workspace: a left column (Elements over Data Sources), a centre column (canvas on top,
+ *  Code/Debug split left/right beneath it), and the Inspector down the right. Screen Share is added on
+ *  demand to the right of the canvas (see addScreenShare). */
 export function defaultDockTree(): SplitNode {
   return split(
-    'col',
+    'row',
     [
-      split(
-        'row',
-        [split('col', [leaf('elements'), leaf('dataSources')], [1.6, 1]), leaf('canvas'), leaf('inspector')],
-        [1.25, 3.2, 1.4],
-      ),
-      tabs([leaf('code'), leaf('debug')], 0),
+      // Project shares a tab group with Elements (Elements is the active tab); Data Sources sits below.
+      split('col', [tabs([leaf('project'), leaf('elements')], 1), leaf('dataSources')], [1.9, 1]),
+      split('col', [leaf('canvas'), split('row', [leaf('code'), leaf('debug')], [1, 1])], [3.6, 1]),
+      leaf('inspector'),
     ],
-    [3, 1.1],
+    [1.15, 3.7, 1.25],
   )
 }
 

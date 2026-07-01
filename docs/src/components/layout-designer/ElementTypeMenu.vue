@@ -3,8 +3,9 @@
 // Reused by the toolbar "Add element" button, the tree row "+", and the canvas context menu,
 // so the set of types (and their order) lives in exactly one place: ELEMENT_TYPES.
 import { computed } from 'vue'
-import { Plus } from 'lucide-vue-next'
+import { Plus, SquarePlus } from 'lucide-vue-next'
 import { ELEMENT_TYPES } from './elements/registry'
+import { ADD_PRESETS, type AddPreset } from './addPresets'
 import type { ElementType } from './types'
 
 const props = defineProps<{
@@ -14,7 +15,7 @@ const props = defineProps<{
   x?: number
   y?: number
 }>()
-const emit = defineEmits<{ pick: [type: ElementType] }>()
+const emit = defineEmits<{ pick: [choice: ElementType | AddPreset] }>()
 
 const fixed = computed(() => props.x != null && props.y != null)
 const fixedStyle = computed(() => (fixed.value ? { position: 'fixed', left: `${props.x}px`, top: `${props.y}px`, zIndex: '1000' } : undefined))
@@ -30,6 +31,16 @@ const fixedStyle = computed(() => (fixed.value ? { position: 'fixed', left: `${p
       @click="emit('pick', t.type)"
     >
       <Plus :size="13" /> <span>{{ t.label }}</span>
+    </button>
+    <div class="ld-type-sep" />
+    <button
+      v-for="p in ADD_PRESETS"
+      :key="p.preset"
+      class="ld-type-item"
+      :title="`Add ${p.label.toLowerCase()}`"
+      @click="emit('pick', p.preset)"
+    >
+      <SquarePlus :size="13" /> <span>{{ p.label }}</span>
     </button>
   </div>
 </template>
@@ -59,6 +70,12 @@ const fixedStyle = computed(() => (fixed.value ? { position: 'fixed', left: `${p
 .p-right {
   top: -5px;
   left: calc(100% + 4px);
+}
+
+.ld-type-sep {
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--vp-c-divider);
 }
 
 .ld-type-item {
