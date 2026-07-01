@@ -87,13 +87,18 @@ export const CLIENT_PANELS: ClientPanelDef[] = [
  *  - `sprite`   a Rust client sprite asset — `CuiImageComponent.Sprite` / `cui.v2.CreateSprite`
  *  - `png`      a stored file by SQL data id — `CuiImageComponent.Png` / `cui.v2.CreateImage`
  *  - `itemicon` an item's inventory icon — `CuiImageComponent.ItemId/SkinId` / `cui.v2.CreateItemIcon`
- * (steam-avatar and image-DB fills are deferred — they need a ulong id / asset-preload step.)
+ *  - `steamavatar` a player's Steam avatar — `CuiRawImageComponent.SteamId` / `cui.v2.CreateSteamAvatar`
+ *  - `imagedb`  a preloaded stored image by name — ImageLibrary png (Oxide) / `cui.v2.CreateImageFromDb`
  */
 export type ImageFill =
   | { kind: 'url'; url: string }
   | { kind: 'sprite'; sprite: string }
   | { kind: 'png'; png: string }
   | { kind: 'itemicon'; itemId: number; skinId: number }
+  // SteamID64 exceeds JS's safe integer range, so keep it a string to preserve precision.
+  | { kind: 'steamavatar'; steamId: string }
+  // A named image loaded into the framework's image DB from `url` (preloaded in the plugin lifecycle).
+  | { kind: 'imagedb'; dbName: string; url: string }
 
 /**
  * Optional border. CUI has no border primitive, so codegen renders it as four edge subpanels
@@ -374,10 +379,11 @@ export interface CuiImageComponent {
   skinId?: number
 }
 
-/** URL/raw image fill — `color` is the image tint. */
+/** URL/raw image fill — `color` is the image tint. `url` XOR `steamid` sources the texture. */
 export interface CuiRawImageComponent {
   type: 'UnityEngine.UI.RawImage'
-  url: string
+  url?: string
+  steamid?: string
   color: string
 }
 

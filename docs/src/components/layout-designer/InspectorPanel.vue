@@ -4,7 +4,7 @@ import AnchorWidget from './AnchorWidget.vue'
 import InfoTip from './InfoTip.vue'
 import { round } from './geometry'
 import { TEXT_ALIGNS, TEXT_FONTS } from './types'
-import type { ColorRGBA, DesignerElement, OutlineModifier, TextAlign, TextDataSource, TextFont } from './types'
+import type { ColorRGBA, DesignerElement, ImageFill, OutlineModifier, TextAlign, TextDataSource, TextFont } from './types'
 import { useDesigner } from './useDesigner'
 
 const { selected, selectedIds, elements, dataSources, descendantIds, update, reparent, rectOf, fill, snapSelection, textEditSignal, removeSelected, duplicateSelected, setBinding } =
@@ -216,27 +216,42 @@ function setImageUrl(el: DesignerElement, raw: string) {
 
 // Image-fill kind (url / sprite / png / item icon) + per-kind field setters. The panel color is the
 // image tint for every kind. Switching kind resets to that kind's default fields.
-type ImageKind = 'url' | 'sprite' | 'png' | 'itemicon'
+type ImageKind = ImageFill['kind']
 const IMAGE_KINDS: { id: ImageKind; label: string }[] = [
   { id: 'url', label: 'URL' },
   { id: 'sprite', label: 'Sprite' },
   { id: 'png', label: 'File (id)' },
   { id: 'itemicon', label: 'Item icon' },
+  { id: 'steamavatar', label: 'Steam avatar' },
+  { id: 'imagedb', label: 'Image DB' },
 ]
+const IMAGE_DEFAULTS: Record<ImageKind, ImageFill> = {
+  url: { kind: 'url', url: '' },
+  sprite: { kind: 'sprite', sprite: '' },
+  png: { kind: 'png', png: '' },
+  itemicon: { kind: 'itemicon', itemId: 0, skinId: 0 },
+  steamavatar: { kind: 'steamavatar', steamId: '' },
+  imagedb: { kind: 'imagedb', dbName: '', url: '' },
+}
 const imageKind = computed<ImageKind>(() => panelProps.value?.image?.kind ?? 'url')
 
 function setImageKind(el: DesignerElement, kind: ImageKind) {
   if (el.type !== 'panel') return
   if (el.props.image?.kind === kind) return
-  const image =
-    kind === 'url'
-      ? { kind: 'url' as const, url: '' }
-      : kind === 'sprite'
-        ? { kind: 'sprite' as const, sprite: '' }
-        : kind === 'png'
-          ? { kind: 'png' as const, png: '' }
-          : { kind: 'itemicon' as const, itemId: 0, skinId: 0 }
-  update(el.id, { props: { image } })
+  update(el.id, { props: { image: { ...IMAGE_DEFAULTS[kind] } } })
+}
+function setSteamId(el: DesignerElement, raw: string) {
+  update(el.id, { props: { image: { kind: 'steamavatar', steamId: raw.trim() } } })
+}
+/** Image-DB fields keep the sibling intact (read the current image for the other value). */
+function curImageDb(el: DesignerElement): { dbName: string; url: string } {
+  return el.type === 'panel' && el.props.image?.kind === 'imagedb' ? el.props.image : { dbName: '', url: '' }
+}
+function setImageDbName(el: DesignerElement, raw: string) {
+  update(el.id, { props: { image: { kind: 'imagedb', dbName: raw.trim(), url: curImageDb(el).url } } })
+}
+function setImageDbUrl(el: DesignerElement, raw: string) {
+  update(el.id, { props: { image: { kind: 'imagedb', dbName: curImageDb(el).dbName, url: raw.trim() } } })
 }
 function setSprite(el: DesignerElement, raw: string) {
   update(el.id, { props: { image: { kind: 'sprite', sprite: raw.trim() } } })
@@ -624,6 +639,20 @@ const computedRect = computed(() => (selected.value ? rectOf(selected.value.id) 
               <input class="ld-num" type="number" step="1" :value="panelProps.image?.kind === 'itemicon' ? panelProps.image.skinId : 0" title="Skin id (0 = default skin)" @change="setSkinId(selected, ($event.target as HTMLInputElement).value)" />
             </div>
             <p class="ld-help-intro">Item icon by id. Emitted as CuiImageComponent.ItemId/SkinId (Oxide) / cui.v2.CreateItemIcon (Carbon, no tint).</p>
+          </template>
+          <label v-else-if="imageKind === 'steamavatar'" class="ld-field">
+            <span class="ld-field-label">SteamID64 <InfoTip text="A player's SteamID64. Renders their Steam avatar — CuiRawImageComponent.SteamId (Oxide) / cui.v2.CreateSteamAvatar (Carbon). No preload needed; the client fetches it." /></span>
+            <input type="text" inputmode="numeric" placeholder="76561198000000000" :value="panelProps.image?.kind === 'steamavatar' ? panelProps.image.steamId : ''" @change="setSteamId(selected, ($event.target as HTMLInputElement).value)" />
+          </label>
+          <template v-else-if="imageKind === 'imagedb'">
+            <label class="ld-field">
+              <span class="ld-field-label">Image name <InfoTip text="A name you assign the image in the framework's image database. Emitted as cui.v2.CreateImageFromDb (Carbon) / an ImageLibrary GetImage reference (Oxide). The plugin lifecycle preloads it from the URL below." /></span>
+              <input type="text" placeholder="e.g. my_logo" :value="panelProps.image?.kind === 'imagedb' ? panelProps.image.dbName : ''" @change="setImageDbName(selected, ($event.target as HTMLInputElement).value)" />
+            </label>
+            <label class="ld-field">
+              <span class="ld-field-label">Preload URL <InfoTip text="Where the image is downloaded from at plugin load. The generated Class output queues it into the image DB under the name above; the designer preview renders straight from this URL." /></span>
+              <input type="text" placeholder="https://example.com/logo.png" :value="panelProps.image?.kind === 'imagedb' ? panelProps.image.url : ''" @change="setImageDbUrl(selected, ($event.target as HTMLInputElement).value)" />
+            </label>
           </template>
         </template>
       </template>

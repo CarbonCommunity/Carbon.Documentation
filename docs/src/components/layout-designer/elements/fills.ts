@@ -19,6 +19,12 @@ export function oxideImageFill(el: PanelElement, ctx: EmitContext, fill: ImageFi
       return cuiPanelLines(el, ctx, `Png = "${esc(fill.png)}", Color = "${c}"`)
     case 'itemicon':
       return cuiPanelLines(el, ctx, `ItemId = ${fill.itemId}, SkinId = ${fill.skinId}, Color = "${c}"`)
+    case 'steamavatar':
+      return cuiRawImageLines(el, ctx, `SteamId = "${esc(fill.steamId)}", Color = "${c}"`)
+    case 'imagedb':
+      // Oxide has no built-in image DB — reference a preloaded image by name via ImageLibrary (the
+      // load itself is emitted in the plugin lifecycle). Requires the ImageLibrary plugin at runtime.
+      return cuiPanelLines(el, ctx, `Png = (string)ImageLibrary?.Call("GetImage", "${esc(fill.dbName)}"), Color = "${c}"`)
   }
 }
 
@@ -39,6 +45,10 @@ export function carbonImageFill(el: PanelElement, ctx: EmitContext, fill: ImageF
     case 'itemicon':
       // CreateItemIcon has no color/tint parameter — the icon renders at its natural colors.
       return [`cui.v2.CreateItemIcon("${parent}",`, `    ${pos},`, `    ${off},`, `    ${fill.itemId}, ${fill.skinId}, "${name}");`, '']
+    case 'steamavatar':
+      return [`cui.v2.CreateSteamAvatar("${parent}",`, `    ${pos},`, `    ${off},`, `    "${esc(fill.steamId)}", "${c}", "${name}");`, '']
+    case 'imagedb':
+      return [`cui.v2.CreateImageFromDb("${parent}",`, `    ${pos},`, `    ${off},`, `    "${esc(fill.dbName)}", "${c}", "${name}");`, '']
   }
 }
 
@@ -53,5 +63,11 @@ export function adduiImageFill(fill: ImageFill, colorStr: string): CuiComponent 
       return { type: 'UnityEngine.UI.Image', color: colorStr, png: fill.png }
     case 'itemicon':
       return { type: 'UnityEngine.UI.Image', color: colorStr, itemId: fill.itemId, skinId: fill.skinId }
+    case 'steamavatar':
+      return { type: 'UnityEngine.UI.RawImage', steamid: fill.steamId, color: colorStr }
+    case 'imagedb':
+      // No concrete stored-image id at author time — preview/JSON render from the preload url so the
+      // image still shows; the generated Class/UX code uses the proper image-DB reference instead.
+      return { type: 'UnityEngine.UI.RawImage', url: fill.url, color: colorStr }
   }
 }
