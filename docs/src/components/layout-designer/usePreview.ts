@@ -29,7 +29,7 @@ const PERM = 'draw_ui' // PermissionTypes.DrawUi — frontend gate only; the ser
 const PREVIEW_ROOT = 'layoutdesigner.preview'
 const DEBOUNCE_MS = 200
 
-const { elements, dataSources, canvas } = useDesigner()
+const { elements, dataSources, canvas, currentLayoutId } = useDesigner()
 const { logAddUi, logDestroyUi, logInfo } = useDebugLog()
 
 const previewing = ref(false)
@@ -45,6 +45,9 @@ let lastParents = new Map<string, string>()
 let lastContent = new Map<string, string>()
 // name → image source signature on the previous push — a changed source type forces recreate (not update).
 let lastImageSource = new Map<string, string>()
+// Which layout the on-screen preview belongs to. A change means the user switched layouts (a wholesale
+// tree swap), so we tear down + rebuild instead of diffing name-by-name across two unrelated layouts.
+let lastPushedLayoutId: string | null = null
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
 let stopWatch: (() => void) | null = null
 
@@ -84,6 +87,13 @@ function pushSnapshot() {
   const sv = previewServer.value
   const pid = previewPlayerId.value
   if (!sv || pid == null) return
+  // Switching layouts is not an incremental edit — the name-diff would emit update-in-place for
+  // elements that happen to share a name across the two layouts, then destroy the leftovers (messy and
+  // error-prone). Tear the whole tree down first, so the build below is a single clean create.
+  if (currentLayoutId.value !== lastPushedLayoutId) {
+    destroyPreview() // one DestroyUi(root) + resets the diff state
+    lastPushedLayoutId = currentLayoutId.value
+  }
   const all = buildPayload()
   const { payload, destroys, liveNames, content, imageSource } = diffPreview(all, lastNames, lastParents, lastContent, lastImageSource)
   // Tear down moved subtrees and changed dynamic widgets BEFORE re-adding, so they recreate cleanly.
@@ -118,6 +128,8 @@ function destroyPreview() {
   lastParents = new Map()
   lastContent = new Map()
   lastImageSource = new Map()
+  // NB: lastPushedLayoutId is NOT reset here — destroyPreview runs mid-push on a layout switch, and the
+  // caller sets it to the new layout right after. It's cleared in stopPreview instead.
 }
 
 function schedulePush() {
@@ -133,6 +145,7 @@ function startPreview() {
   previewing.value = true
   logInfo(`Preview started → ${previewServer.value?.CachedHostname || 'server'} / player ${previewPlayerId.value}`)
   destroyPreview() // clear any stale root on the client → next push is a clean create
+  lastPushedLayoutId = currentLayoutId.value // first push is already clean; don't re-tear-down for it
   pushSnapshot()
   // Re-push on any edit to elements or canvas (rootLayer/aspect). The name diff handles add/move/remove
   // and even a full layout switch, so no special-casing here.
@@ -141,6 +154,7 @@ function startPreview() {
 
 function stopPreview() {
   previewing.value = false
+  lastPushedLayoutId = null // a fresh start re-detects the current layout as a clean create
   if (stopWatch) {
     stopWatch()
     stopWatch = null
