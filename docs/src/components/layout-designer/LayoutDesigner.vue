@@ -6,6 +6,7 @@ import { computed, onBeforeUnmount, onMounted, provide, ref } from 'vue'
 import ContextMenu from './ContextMenu.vue'
 import DockNode from './DockNode.vue'
 import InfoTip from './InfoTip.vue'
+import HelpModal from './HelpModal.vue'
 import LayoutSettingsModal from './LayoutSettingsModal.vue'
 import LivePreviewControls from './LivePreviewControls.vue'
 import { PANE_TITLES, leavesOf, locate, type DockSide, type PaneId } from './dockTree'
@@ -71,6 +72,7 @@ const newFlyoutOpen = ref(false)
 const loadFlyoutOpen = ref(false)
 const viewMenuOpen = ref(false)
 const settingsModalOpen = ref(false)
+const helpModalOpen = ref(false)
 
 // Flyouts (New / Load) open on hover. A short close-delay bridges the gap between a row and its
 // flyout so moving the mouse diagonally onto the submenu doesn't dismiss it (the timer is cancelled
@@ -387,6 +389,8 @@ const { dragging: dockDragging, pointer: dockPointer } = useDockDrag()
         </div>
       </div>
 
+      <button class="ld-menubar-btn" title="Help — what every element, fill and modifier does" @click.stop="helpModalOpen = true">Help</button>
+
 
       <template v-if="tbShown('history')">
         <button class="ld-icon-btn" :disabled="!canUndo" title="Undo" @click="undo"><Undo2 :size="15" /></button>
@@ -478,6 +482,10 @@ const { dragging: dockDragging, pointer: dockPointer } = useDockDrag()
 
     <Teleport to="body">
       <LayoutSettingsModal v-if="settingsModalOpen" @close="settingsModalOpen = false" />
+    </Teleport>
+
+    <Teleport to="body">
+      <HelpModal v-if="helpModalOpen" @close="helpModalOpen = false" />
     </Teleport>
   </div>
 </template>
