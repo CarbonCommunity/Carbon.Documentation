@@ -31,7 +31,10 @@ const ELEMENTS: { name: string; desc: string }[] = [
   { name: 'Button', desc: 'A clickable box that runs a console command on click; its caption is a child Text element.' },
   { name: 'Input field', desc: 'A box the player can type into, submitting its text to a command.' },
   { name: 'Countdown', desc: 'A client-side timer that counts down, replacing %TIME_LEFT% in its text.' },
-  { name: 'Empty container', desc: 'An invisible box used only to group and position its children.' },
+]
+const CONTAINERS: { name: string; desc: string }[] = [
+  { name: 'Empty container', desc: 'An invisible box (RectTransform only) used purely to group and position its children — a section/wrapper with no graphic.' },
+  { name: 'Nesting', desc: 'Any element can hold children — drop elements onto a panel/button in the tree and they parent to it. The empty container is just the graphic-less version for pure grouping.' },
 ]
 const FILLS: { name: string; desc: string }[] = [
   { name: 'URL image', desc: 'Downloads a remote image at runtime (any https image URL).' },
@@ -67,35 +70,48 @@ const MODIFIERS: { name: string; desc: string }[] = [
           <span class="ld-help-tip-mark">?</span> in the inspector for the same notes in place.
         </p>
 
-        <section class="ld-help-section">
-          <h3>Elements</h3>
-          <dl>
-            <template v-for="e in ELEMENTS" :key="e.name">
-              <dt>{{ e.name }}</dt>
-              <dd>{{ e.desc }}</dd>
-            </template>
-          </dl>
-        </section>
-
-        <section class="ld-help-section">
-          <h3>Image fills <span class="ld-help-note">(a panel's <em>Image</em> mode — the panel color becomes the tint)</span></h3>
-          <dl>
-            <template v-for="f in FILLS" :key="f.name">
-              <dt>{{ f.name }}</dt>
-              <dd>{{ f.desc }}</dd>
-            </template>
-          </dl>
-        </section>
-
-        <section class="ld-help-section">
-          <h3>Modifiers <span class="ld-help-note">(the inspector's <em>Behavior</em> section)</span></h3>
-          <dl>
-            <template v-for="m in MODIFIERS" :key="m.name">
-              <dt>{{ m.name }}</dt>
-              <dd>{{ m.desc }}</dd>
-            </template>
-          </dl>
-        </section>
+        <div class="ld-help-cols">
+          <div class="ld-help-col">
+            <section class="ld-help-section">
+              <h3>Elements</h3>
+              <dl>
+                <template v-for="e in ELEMENTS" :key="e.name">
+                  <dt>{{ e.name }}</dt>
+                  <dd>{{ e.desc }}</dd>
+                </template>
+              </dl>
+            </section>
+            <section class="ld-help-section">
+              <h3>Containers</h3>
+              <dl>
+                <template v-for="c in CONTAINERS" :key="c.name">
+                  <dt>{{ c.name }}</dt>
+                  <dd>{{ c.desc }}</dd>
+                </template>
+              </dl>
+            </section>
+          </div>
+          <div class="ld-help-col">
+            <section class="ld-help-section">
+              <h3>Image fills <span class="ld-help-note">(a panel's <em>Image</em> mode — the panel color becomes the tint)</span></h3>
+              <dl>
+                <template v-for="f in FILLS" :key="f.name">
+                  <dt>{{ f.name }}</dt>
+                  <dd>{{ f.desc }}</dd>
+                </template>
+              </dl>
+            </section>
+            <section class="ld-help-section">
+              <h3>Modifiers <span class="ld-help-note">(the inspector's <em>Behavior</em> section)</span></h3>
+              <dl>
+                <template v-for="m in MODIFIERS" :key="m.name">
+                  <dt>{{ m.name }}</dt>
+                  <dd>{{ m.desc }}</dd>
+                </template>
+              </dl>
+            </section>
+          </div>
+        </div>
 
         <section class="ld-help-section">
           <div class="ld-help-gallery-head">
@@ -150,7 +166,20 @@ const MODIFIERS: { name: string; desc: string }[] = [
   overflow: hidden;
 }
 .ld-help {
-  width: 640px;
+  width: 900px;
+}
+.ld-help-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 26px;
+}
+.ld-help-col {
+  min-width: 0;
+}
+@media (max-width: 720px) {
+  .ld-help-cols {
+    grid-template-columns: 1fr;
+  }
 }
 .ld-modal-head {
   display: flex;
