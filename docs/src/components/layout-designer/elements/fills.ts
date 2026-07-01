@@ -43,8 +43,9 @@ export function carbonImageFill(el: PanelElement, ctx: EmitContext, fill: ImageF
     case 'png':
       return [`cui.v2.CreateImage("${parent}",`, `    ${pos},`, `    ${off},`, `    "${esc(fill.png)}", "${c}", "${name}");`, '']
     case 'itemicon':
-      // CreateItemIcon has no color/tint parameter — the icon renders at its natural colors.
-      return [`cui.v2.CreateItemIcon("${parent}",`, `    ${pos},`, `    ${off},`, `    ${fill.itemId}, ${fill.skinId}, "${name}");`, '']
+      // CreateItemIcon(parent, pos, offset, itemId, skinId, color, name) — the color arg (tint) sits
+      // BEFORE name; omitting it puts the name in the color slot and produces an invalid color.
+      return [`cui.v2.CreateItemIcon("${parent}",`, `    ${pos},`, `    ${off},`, `    ${fill.itemId}, ${fill.skinId}, "${c}", "${name}");`, '']
     case 'steamavatar':
       return [`cui.v2.CreateSteamAvatar("${parent}",`, `    ${pos},`, `    ${off},`, `    "${esc(fill.steamId)}", "${c}", "${name}");`, '']
     case 'imagedb':
