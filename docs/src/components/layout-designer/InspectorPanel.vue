@@ -111,6 +111,29 @@ function setAlpha(el: DesignerElement, raw: string) {
 
 // --- outline modifier ---
 const outline = computed(() => selected.value?.modifiers?.outline ?? null)
+const draggable = computed(() => selected.value?.modifiers?.draggable ?? null)
+const slot = computed(() => selected.value?.modifiers?.slot ?? null)
+function toggleDraggable(on: boolean) {
+  const el = selected.value
+  if (!el) return
+  // Default to drop-anywhere so both frameworks make it freely draggable out of the box.
+  update(el.id, { modifiers: { draggable: on ? { dropAnywhere: true } : null } })
+}
+function patchDraggable(patch: Partial<NonNullable<typeof draggable.value>>) {
+  const el = selected.value
+  if (!el?.modifiers?.draggable) return
+  update(el.id, { modifiers: { draggable: { ...el.modifiers.draggable, ...patch } } })
+}
+function toggleSlot(on: boolean) {
+  const el = selected.value
+  if (!el) return
+  update(el.id, { modifiers: { slot: on ? {} : null } })
+}
+function setSlotFilter(raw: string) {
+  const el = selected.value
+  if (!el?.modifiers?.slot) return
+  update(el.id, { modifiers: { slot: { filter: raw.trim() || undefined } } })
+}
 function toggleOutline(on: boolean) {
   const el = selected.value
   if (!el) return
@@ -353,6 +376,27 @@ const computedRect = computed(() => (selected.value ? rectOf(selected.value.id) 
             <input type="checkbox" :checked="!!outline.useGraphicAlpha" @change="patchOutline({ useGraphicAlpha: ($event.target as HTMLInputElement).checked })" />
             <span>α</span>
           </label>
+        </div>
+        <label class="ld-passthrough">
+          <input type="checkbox" :checked="!!draggable" @change="toggleDraggable(($event.target as HTMLInputElement).checked)" />
+          <span>Draggable</span>
+        </label>
+        <div v-if="draggable" class="ld-outline">
+          <label class="ld-passthrough" title="Player can only drag within the parent rectangle">
+            <input type="checkbox" :checked="!!draggable.limitToParent" @change="patchDraggable({ limitToParent: ($event.target as HTMLInputElement).checked })" />
+            <span>Limit to parent</span>
+          </label>
+          <label class="ld-passthrough" title="Can be dropped anywhere, not only on a matching slot">
+            <input type="checkbox" :checked="draggable.dropAnywhere !== false" @change="patchDraggable({ dropAnywhere: ($event.target as HTMLInputElement).checked })" />
+            <span>Drop anywhere</span>
+          </label>
+        </div>
+        <label class="ld-passthrough">
+          <input type="checkbox" :checked="!!slot" @change="toggleSlot(($event.target as HTMLInputElement).checked)" />
+          <span>Slot (drop target)</span>
+        </label>
+        <div v-if="slot" class="ld-outline">
+          <label class="ld-outline-dist">Filter <input type="text" :value="slot.filter ?? ''" placeholder="(any)" @input="setSlotFilter(($event.target as HTMLInputElement).value)" /></label>
         </div>
       </div>
 

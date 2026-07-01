@@ -243,6 +243,10 @@ export interface ElementModifiers {
   keyboard?: boolean
   /** UnityEngine.UI.Outline — a shadow-style outline around this element's graphic. */
   outline?: OutlineModifier
+  /** Draggable — the player can drag this element around (Carbon `.SetDraggable` / CuiDraggableComponent). */
+  draggable?: DraggableModifier
+  /** Slot — an inventory-style drop target (Carbon `.SetSlot` / CuiSlotComponent). */
+  slot?: SlotModifier
 }
 
 /** Outline modifier: a colored offset outline (Carbon `.SetOutline` / Oxide `CuiOutlineComponent`). */
@@ -252,6 +256,27 @@ export interface OutlineModifier {
   distance: Vec2
   /** When true, the outline fades with the graphic's own alpha. */
   useGraphicAlpha?: boolean
+}
+
+/** Draggable modifier — fields mirror Carbon `.SetDraggable(...)`; omitted fields use framework defaults. */
+export interface DraggableModifier {
+  /** Only drop targets whose filter matches accept this element (free-form tag). */
+  filter?: string
+  /** Allow dropping anywhere, not just on a matching slot (Carbon default true). */
+  dropAnywhere?: boolean
+  /** Keep this element rendered above its siblings while dragging. */
+  keepOnTop?: boolean
+  /** Constrain dragging to the parent's rectangle. */
+  limitToParent?: boolean
+  /** Max drag distance in px; -1 = unlimited. */
+  maxDistance?: number
+  /** Swap positions with the element dropped onto instead of stacking. */
+  allowSwapping?: boolean
+}
+
+/** Slot modifier — a drop target; `filter` gates which draggables it accepts. */
+export interface SlotModifier {
+  filter?: string
 }
 
 export interface PanelElement extends BaseElement {
@@ -407,6 +432,19 @@ export interface CuiOutlineComponent {
   distance: string
   useGraphicAlpha?: boolean
 }
+export interface CuiDraggableComponent {
+  type: 'Draggable'
+  filter?: string
+  dropAnywhere?: boolean
+  keepOnTop?: boolean
+  limitToParent?: boolean
+  maxDistance?: number
+  allowSwapping?: boolean
+}
+export interface CuiSlotComponent {
+  type: 'Slot'
+  filter?: string
+}
 
 export type CuiComponent =
   | CuiImageComponent
@@ -418,6 +456,8 @@ export type CuiComponent =
   | CuiNeedsCursorComponent
   | CuiNeedsKeyboardComponent
   | CuiOutlineComponent
+  | CuiDraggableComponent
+  | CuiSlotComponent
   | CuiRectTransform
 
 /**
