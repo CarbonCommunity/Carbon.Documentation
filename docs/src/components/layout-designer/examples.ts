@@ -735,7 +735,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
   {
     "id": "fill-sprite",
     "name": "Image: Sprite",
-    "hint": "A panel filled with a built-in Rust client sprite.",
+    "hint": "A panel filled with a built-in Rust client sprite (a tiling UI texture).",
     "category": "fill",
     "data": {
       "elements": [
@@ -817,7 +817,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
             },
             "image": {
               "kind": "sprite",
-              "sprite": "assets/icons/gear.png"
+              "sprite": "assets/content/ui/ui.background.tile.psd"
             }
           },
           "anchorMin": {

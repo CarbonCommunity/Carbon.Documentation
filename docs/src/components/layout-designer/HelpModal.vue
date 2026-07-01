@@ -35,7 +35,7 @@ const ELEMENTS: { name: string; desc: string }[] = [
 ]
 const FILLS: { name: string; desc: string }[] = [
   { name: 'URL image', desc: 'Downloads a remote image at runtime (any https image URL).' },
-  { name: 'Sprite', desc: 'A built-in Rust client sprite by asset path, e.g. assets/icons/gear.png.' },
+  { name: 'Sprite', desc: 'A built-in Rust client sprite by asset path, e.g. assets/content/ui/ui.background.tile.psd. Must be a real asset — an invalid path can crash the client CUI.' },
   { name: 'File (id)', desc: 'A stored image by its SQL data id — must be loaded server-side first.' },
   { name: 'Item icon', desc: "An item's inventory icon by item id (+ optional skin id)." },
   { name: 'Steam avatar', desc: "A player's Steam avatar by SteamID64 — the client fetches it, no preload needed." },

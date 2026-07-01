@@ -627,8 +627,8 @@ const computedRect = computed(() => (selected.value ? rectOf(selected.value.id) 
             <input type="text" placeholder="https://example.com/image.png" :value="panelProps.image?.kind === 'url' ? panelProps.image.url : ''" @change="setImageUrl(selected, ($event.target as HTMLInputElement).value)" />
           </label>
           <label v-else-if="imageKind === 'sprite'" class="ld-field">
-            <span class="ld-field-label">Sprite path <InfoTip text="A Rust client sprite asset path (e.g. assets/icons/examplemap.png). Emitted as CuiImageComponent.Sprite (Oxide) / cui.v2.CreateSprite (Carbon)." /></span>
-            <input type="text" placeholder="assets/icons/example.png" :value="panelProps.image?.kind === 'sprite' ? panelProps.image.sprite : ''" @change="setSprite(selected, ($event.target as HTMLInputElement).value)" />
+            <span class="ld-field-label">Sprite path <InfoTip text="A Rust client sprite asset path, e.g. assets/content/ui/ui.background.tile.psd. Emitted as CuiImageComponent.Sprite (Oxide) / cui.v2.CreateSprite (Carbon). Use a real in-game asset path — an invalid one can crash the CUI on the client." /></span>
+            <input type="text" placeholder="assets/content/ui/ui.background.tile.psd" :value="panelProps.image?.kind === 'sprite' ? panelProps.image.sprite : ''" @change="setSprite(selected, ($event.target as HTMLInputElement).value)" />
           </label>
           <label v-else-if="imageKind === 'png'" class="ld-field">
             <span class="ld-field-label">File data id <InfoTip text="The SQL data id of a stored image (e.g. from ImageLibrary / FileStorage). Emitted as CuiImageComponent.Png (Oxide) / cui.v2.CreateImage (Carbon). The image must be loaded server-side first." /></span>
