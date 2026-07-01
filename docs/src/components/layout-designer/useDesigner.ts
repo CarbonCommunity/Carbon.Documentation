@@ -1170,31 +1170,25 @@ function importClipboard() {
 }
 
 /** Load the bundled example layouts (one per element / fill / modifier) into an "Examples" folder.
- *  Re-loading REFRESHES an existing example's data in place (stable id keeps open tabs valid) so bug
- *  fixes to the bundled samples reach anyone who loaded them earlier — no duplicates pile up. */
+ *  Re-loading DROPS the whole existing "Examples" folder first and recreates it from the current
+ *  bundled data — so a stale or corrupted example copy can never survive a reload (fixes reach anyone
+ *  who loaded them earlier). Only the Examples folder is touched; the user's own layouts are untouched. */
 function loadExampleLayouts() {
+  const removed = new Set(layouts.value.filter((l) => l.folder === 'Examples').map((l) => l.id))
+  if (removed.size) {
+    layouts.value = layouts.value.filter((l) => !removed.has(l.id))
+    openTabs.value = openTabs.value.filter((id) => !removed.has(id))
+    recentIds.value = recentIds.value.filter((id) => !removed.has(id))
+    if (currentLayoutId.value && removed.has(currentLayoutId.value)) currentLayoutId.value = null
+  }
   let target: string | null = null
   for (const ex of EXAMPLE_LAYOUTS) {
-    const name = `Example — ${ex.name}`
-    const data = JSON.parse(JSON.stringify(ex.data))
-    const existing = layouts.value.find((l) => l.name === name && l.folder === 'Examples')
-    if (existing) {
-      existing.data = data
-      existing.updatedAt = Date.now()
-      target = existing.id
-    } else {
-      const id = newLayoutId()
-      layouts.value.push({ id, name, folder: 'Examples', data, updatedAt: Date.now() })
-      target = id
-    }
+    const id = newLayoutId()
+    layouts.value.push({ id, name: `Example — ${ex.name}`, folder: 'Examples', data: JSON.parse(JSON.stringify(ex.data)), updatedAt: Date.now() })
+    target = id
   }
   persist()
-  if (target) {
-    openTab(target)
-    currentLayoutId.value = target
-    applyData(currentLayout.value!.data) // force re-apply even if `target` was already open (data changed)
-    resetHistory()
-  }
+  if (target) switchLayout(target)
 }
 
 // --- init + autosave/history watcher -------------------------------------------------
