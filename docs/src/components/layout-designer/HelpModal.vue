@@ -5,11 +5,18 @@
 // Escape. Content is data-driven (the three *_HELP arrays) so entries track the tool's feature set.
 import { useEventListener } from '@vueuse/core'
 import { ExternalLink, X } from 'lucide-vue-next'
+import { ref } from 'vue'
 import { EXAMPLE_LAYOUTS } from './examples'
 import { useDesigner } from './useDesigner'
 
 const emit = defineEmits<{ close: [] }>()
 const { loadExampleLayouts } = useDesigner()
+
+// Gallery screenshots live at a path derived from the example id — drop a PNG named <id>.png into
+// public/layout-designer/examples/ and it appears; ids with no file yet fall back to a placeholder.
+const noShot = ref(new Set<string>())
+const shotSrc = (id: string) => `/layout-designer/examples/${id}.png`
+const onShotError = (id: string) => (noShot.value = new Set(noShot.value).add(id))
 
 useEventListener(window, 'keydown', (e: KeyboardEvent) => {
   if (e.key === 'Escape') emit('close')
@@ -101,7 +108,7 @@ const MODIFIERS: { name: string; desc: string }[] = [
           <div class="ld-help-gallery">
             <figure v-for="ex in EXAMPLE_LAYOUTS" :key="ex.id" class="ld-help-card">
               <div class="ld-help-shot">
-                <img v-if="ex.image" :src="ex.image" :alt="`${ex.name} in-game`" loading="lazy" />
+                <img v-if="!noShot.has(ex.id)" :src="shotSrc(ex.id)" :alt="`${ex.name} in-game`" loading="lazy" @error="onShotError(ex.id)" />
                 <span v-else class="ld-help-shot-empty">no screenshot yet</span>
               </div>
               <figcaption>

@@ -704,7 +704,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
             },
             "image": {
               "kind": "url",
-              "url": "https://carbonmod.gg/assets/img/logo.png"
+              "url": "https://placehold.co/256x256/2b6cb0/ffffff.png?text=URL"
             }
           },
           "anchorMin": {
