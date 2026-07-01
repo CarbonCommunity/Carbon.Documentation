@@ -63,7 +63,9 @@ export function adduiImageFill(fill: ImageFill, colorStr: string): CuiComponent 
     case 'png':
       return { type: 'UnityEngine.UI.Image', color: colorStr, png: fill.png }
     case 'itemicon':
-      return { type: 'UnityEngine.UI.Image', color: colorStr, itemid: fill.itemId, skinid: fill.skinId }
+      // Match Carbon LUI's serialization: skinid is written ONLY when non-zero. Sending skinid:0 makes
+      // the client attempt a skin-0 lookup and null-ref in AddUi (crashes the connection); omit it.
+      return { type: 'UnityEngine.UI.Image', color: colorStr, itemid: fill.itemId, ...(fill.skinId ? { skinid: fill.skinId } : {}) }
     case 'steamavatar':
       return { type: 'UnityEngine.UI.RawImage', steamid: fill.steamId, color: colorStr }
     case 'imagedb':
