@@ -373,15 +373,15 @@ const computedRect = computed(() => (selected.value ? rectOf(selected.value.id) 
         <span class="ld-field-label">Behavior <InfoTip text="Extra CUI components on this element. Needs cursor frees the mouse so the player can click the UI; Needs keyboard captures typing (required to type into an input field). Usually set on the root panel." /></span>
         <label class="ld-passthrough">
           <input type="checkbox" :checked="!!selected.modifiers?.cursor" @change="update(selected.id, { modifiers: { cursor: ($event.target as HTMLInputElement).checked } })" />
-          <span>Needs cursor</span>
+          <span>Needs cursor <InfoTip text="Frees the mouse cursor while this UI is open so the player can point and click it. Without it the player stays in normal look/move mode and can't interact. Set it on one element per menu (usually the root panel)." /></span>
         </label>
         <label class="ld-passthrough">
           <input type="checkbox" :checked="!!selected.modifiers?.keyboard" @change="update(selected.id, { modifiers: { keyboard: ($event.target as HTMLInputElement).checked } })" />
-          <span>Needs keyboard</span>
+          <span>Needs keyboard <InfoTip text="Captures keyboard focus while this UI is open — required for the player to type into an input field. Set it on the menu (usually the root panel)." /></span>
         </label>
         <label class="ld-passthrough">
           <input type="checkbox" :checked="!!outline" @change="toggleOutline(($event.target as HTMLInputElement).checked)" />
-          <span>Outline</span>
+          <span>Outline <InfoTip text="Draws a colored outline (a duplicate of the graphic offset by the distance below) behind this element — the usual way to add a drop-shadow or border-glow to panels and text." /></span>
         </label>
         <div v-if="outline" class="ld-outline">
           <input class="ld-color" type="color" :value="toHex(outline.color)" title="Outline color" @input="setOutlineHex(($event.target as HTMLInputElement).value)" />
@@ -394,24 +394,27 @@ const computedRect = computed(() => (selected.value ? rectOf(selected.value.id) 
         </div>
         <label class="ld-passthrough">
           <input type="checkbox" :checked="!!draggable" @change="toggleDraggable(($event.target as HTMLInputElement).checked)" />
-          <span>Draggable</span>
+          <span>Draggable <InfoTip text="Lets the player pick this element up and drag it around the screen with the mouse. Pair it with a Slot (below, on another element) to build drag-and-drop UIs like inventories. Needs cursor to be on so the mouse is free." /></span>
         </label>
         <div v-if="draggable" class="ld-outline">
-          <label class="ld-passthrough" title="Player can only drag within the parent rectangle">
+          <label class="ld-passthrough">
             <input type="checkbox" :checked="!!draggable.limitToParent" @change="patchDraggable({ limitToParent: ($event.target as HTMLInputElement).checked })" />
-            <span>Limit to parent</span>
+            <span>Limit to parent <InfoTip text="Confines dragging to the parent element's rectangle — the player can't drag it outside its container." /></span>
           </label>
-          <label class="ld-passthrough" title="Can be dropped anywhere, not only on a matching slot">
+          <label class="ld-passthrough">
             <input type="checkbox" :checked="draggable.dropAnywhere !== false" @change="patchDraggable({ dropAnywhere: ($event.target as HTMLInputElement).checked })" />
-            <span>Drop anywhere</span>
+            <span>Drop anywhere <InfoTip text="On: the element stays wherever it's released. Off: it only stays if dropped onto a matching Slot (drop target), otherwise it snaps back to its start — the behavior you want for inventory-style UIs." /></span>
           </label>
+          <label class="ld-outline-dist">Filter <input type="text" :value="draggable.filter ?? ''" placeholder="(any)" @input="patchDraggable({ filter: ($event.target as HTMLInputElement).value.trim() || undefined })" /></label>
+          <InfoTip text="A tag matched against a Slot's filter — this element can only drop onto slots with the same tag. Leave blank to drop onto any slot." />
         </div>
         <label class="ld-passthrough">
           <input type="checkbox" :checked="!!slot" @change="toggleSlot(($event.target as HTMLInputElement).checked)" />
-          <span>Slot (drop target)</span>
+          <span>Slot (drop target) <InfoTip text="Makes this element a drop zone that catches Draggable elements dropped onto it — like one inventory cell. Use the Filter to control which draggables it accepts." /></span>
         </label>
         <div v-if="slot" class="ld-outline">
           <label class="ld-outline-dist">Filter <input type="text" :value="slot.filter ?? ''" placeholder="(any)" @input="setSlotFilter(($event.target as HTMLInputElement).value)" /></label>
+          <InfoTip text="Only accepts draggables whose filter tag matches this text (and set the same tag on the draggable). Leave blank to accept any draggable." />
         </div>
       </div>
 
