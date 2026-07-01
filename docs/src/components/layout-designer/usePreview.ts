@@ -41,6 +41,8 @@ let lastParents = new Map<string, string>()
 // name → content on the previous push — lets the diff leave an UNCHANGED dynamic element (countdown /
 // input) running untouched, and destroy+recreate it only when its own content actually changes.
 let lastContent = new Map<string, string>()
+// name → image source signature on the previous push — a changed source type forces recreate (not update).
+let lastImageSource = new Map<string, string>()
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
 let stopWatch: (() => void) | null = null
 
@@ -81,7 +83,7 @@ function pushSnapshot() {
   const pid = previewPlayerId.value
   if (!sv || pid == null) return
   const all = buildPayload()
-  const { payload, destroys, liveNames, content } = diffPreview(all, lastNames, lastParents, lastContent)
+  const { payload, destroys, liveNames, content, imageSource } = diffPreview(all, lastNames, lastParents, lastContent, lastImageSource)
   // Tear down moved subtrees and changed dynamic widgets BEFORE re-adding, so they recreate cleanly.
   for (const name of destroys) sv.sendCall(RPC_DESTROY, pid, name)
   sv.sendCall(RPC_ADD, pid, JSON.stringify(payload))
@@ -93,6 +95,7 @@ function pushSnapshot() {
   lastNames = liveNames
   lastParents = new Map(all.map((e) => [e.name, e.parent]))
   lastContent = content
+  lastImageSource = imageSource
 }
 
 function destroyPreview() {
@@ -102,6 +105,7 @@ function destroyPreview() {
   lastNames = new Set()
   lastParents = new Map()
   lastContent = new Map()
+  lastImageSource = new Map()
 }
 
 function schedulePush() {
