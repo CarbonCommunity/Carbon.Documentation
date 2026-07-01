@@ -1,61 +1,48 @@
 <script setup lang="ts">
-import { Check, Copy, PictureInPicture2, X } from 'lucide-vue-next'
-import { computed, ref } from 'vue'
-import { canvasHeight, canvasWidth, cuiColorString, round } from './geometry'
-import type { ColorRGBA } from './types'
+// Debug pane: a time-ordered console of the tool's runtime activity — every live-preview RPC the
+// transport sends (AddUi with its exact payload, DestroyUi by name) plus captured console.warn/error.
+// This is the only view of what actually goes over the wire (the Code panel's JSON tab shows the plain
+// layout; the live payload differs — wrapped under the reserved preview root, `update:true` on re-sends).
+// Click a row to expand its payload; Copy grabs it; Clear empties the log. (Replaces the old Debug pane,
+// which just duplicated File → Export.)
+import { Copy, PictureInPicture2, Trash2, X } from 'lucide-vue-next'
+import { computed, inject, nextTick, onMounted, ref, watch } from 'vue'
+import { installConsoleCapture, useDebugLog } from './useDebugLog'
 import { usePopout } from './usePopout'
-import { useShiki } from './useShiki'
 import { useDesigner } from './useDesigner'
 
-const { elements, canvas, provider, resolvedRects, copyText } = useDesigner()
+const { entries, clear } = useDebugLog()
+const { copyText } = useDesigner()
+const { supported: popoutSupported, pipTarget, toggle: togglePopout, close: closePopout } = usePopout(() => 'Debug', { width: 520, height: 620 })
+const closePaneFn = inject<(pane: 'debug') => void>('ld-pane-close')
 
-const { supported: popoutSupported, pipTarget, toggle: togglePopout, close: closePopout } = usePopout(() => 'Debug', { width: 460, height: 600 })
+onMounted(installConsoleCapture)
 
-// The captured intermediate representation every generator reads from — the values in CUI-native
-// form, handy for sanity-checking what the generated code was built from.
-const inventory = computed(() => {
-  const rects = resolvedRects.value
-  return {
-    canvas: {
-      aspect: canvas.aspect,
-      rootLayer: canvas.rootLayer,
-      referenceHeight: canvas.referenceHeight,
-      canvasWidth: round(canvasWidth(canvas), 1),
-      canvasHeight: round(canvasHeight(canvas), 1),
-    },
-    provider: provider.value,
-    elements: elements.value.map((el) => {
-      const r = rects.get(el.id)
-      // Not every element type has a color (an empty container is colorless), so read it defensively.
-      const color = (el.props as { color?: ColorRGBA }).color
-      return {
-        name: el.name,
-        type: el.type,
-        parent: el.parentId ? elements.value.find((e) => e.id === el.parentId)?.name ?? null : null,
-        anchorMin: [round(el.anchorMin.x), round(el.anchorMin.y)],
-        anchorMax: [round(el.anchorMax.x), round(el.anchorMax.y)],
-        offsetMin: [round(el.offsetMin.x), round(el.offsetMin.y)],
-        offsetMax: [round(el.offsetMax.x), round(el.offsetMax.y)],
-        color: color ? cuiColorString(color) : null,
-        image: el.type === 'panel' && el.props.image ? { ...el.props.image } : null,
-        text: el.type === 'text' || el.type === 'input' || el.type === 'countdown' ? { text: el.props.text, fontSize: el.props.fontSize, align: el.props.align } : null,
-        resolvedRect: r ? { x: round(r.x, 1), y: round(r.y, 1), w: round(r.w, 1), h: round(r.h, 1) } : null,
-      }
-    }),
-  }
-})
-
-const debugCode = computed(() => JSON.stringify(inventory.value, null, 2))
-const { html } = useShiki(() => debugCode.value, () => 'json')
-
-const copied = ref(false)
-async function copy() {
-  // copyText falls back to execCommand when navigator.clipboard is unavailable (insecure context).
-  if (await copyText(debugCode.value)) {
-    copied.value = true
-    setTimeout(() => (copied.value = false), 1200)
-  }
+const expanded = ref<Set<number>>(new Set())
+function toggleRow(id: number) {
+  const next = new Set(expanded.value)
+  next.has(id) ? next.delete(id) : next.add(id)
+  expanded.value = next
 }
+
+// Auto-scroll to newest unless the user has scrolled up to read history.
+const listEl = ref<HTMLElement | null>(null)
+const follow = ref(true)
+function onScroll() {
+  const el = listEl.value
+  if (!el) return
+  follow.value = el.scrollHeight - el.scrollTop - el.clientHeight < 24
+}
+watch(
+  () => entries.value.length,
+  async () => {
+    if (!follow.value) return
+    await nextTick()
+    if (listEl.value) listEl.value.scrollTop = listEl.value.scrollHeight
+  },
+)
+
+const count = computed(() => entries.value.length)
 </script>
 
 <template>
@@ -63,12 +50,9 @@ async function copy() {
     <Teleport :to="pipTarget" :disabled="!pipTarget">
       <div class="ld-out-inner">
         <div class="ld-out-head">
-          <span class="ld-out-title">Debug</span>
+          <span class="ld-out-title">Debug <span class="ld-dbg-count">{{ count }}</span></span>
           <div class="ld-out-actions">
-            <button class="ld-out-copy" :title="copied ? 'Copied' : 'Copy'" @click="copy">
-              <component :is="copied ? Check : Copy" :size="13" />
-              {{ copied ? 'Copied' : 'Copy' }}
-            </button>
+            <button class="ld-out-copy" :disabled="!count" title="Clear the log" @click="clear"><Trash2 :size="13" /> Clear</button>
             <button
               v-if="popoutSupported"
               class="ld-out-copy ld-out-pop"
@@ -77,11 +61,27 @@ async function copy() {
             >
               <component :is="pipTarget ? X : PictureInPicture2" :size="13" />
             </button>
+            <button v-if="closePaneFn" class="ld-out-copy ld-out-pop" title="Close this pane (View to bring it back)" @click="closePaneFn('debug')">
+              <X :size="13" />
+            </button>
           </div>
         </div>
-        <!-- eslint-disable-next-line vue/no-v-html — Shiki output is generated from our own IR -->
-        <div v-if="html" class="ld-shiki" v-html="html" />
-        <pre v-else class="ld-out-body">{{ debugCode }}</pre>
+
+        <div ref="listEl" class="ld-dbg-list" @scroll="onScroll">
+          <p v-if="!count" class="ld-dbg-empty">
+            Live-preview sends (AddUi / DestroyUi) and console warnings / errors show up here. Start the
+            live preview and edit the layout, or trigger a warning.
+          </p>
+          <div v-for="e in entries" :key="e.id" class="ld-dbg-row" :class="`k-${e.kind}`">
+            <button class="ld-dbg-line" @click="e.detail && toggleRow(e.id)">
+              <span class="ld-dbg-time">{{ e.time }}</span>
+              <span class="ld-dbg-kind">{{ e.kind }}</span>
+              <span class="ld-dbg-summary">{{ e.summary }}</span>
+              <Copy v-if="e.detail" :size="12" class="ld-dbg-copy" title="Copy payload" @click.stop="copyText(e.detail)" />
+            </button>
+            <pre v-if="e.detail && expanded.has(e.id)" class="ld-dbg-detail">{{ e.detail }}</pre>
+          </div>
+        </div>
       </div>
     </Teleport>
     <div v-if="pipTarget" class="ld-out-placeholder">
@@ -98,8 +98,6 @@ async function copy() {
   min-height: 0;
   height: 100%;
 }
-
-/* the part that actually pops out (teleported into the PiP window); fills its host either way */
 .ld-out-inner {
   display: flex;
   flex-direction: column;
@@ -107,27 +105,33 @@ async function copy() {
   flex: 1;
   height: 100%;
 }
-
 .ld-out-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 4px 10px;
   border-bottom: 1px solid var(--vp-c-divider);
+  flex-shrink: 0;
 }
-
 .ld-out-title {
   font-size: 12px;
   font-weight: 600;
   color: var(--vp-c-text-2);
 }
-
+.ld-dbg-count {
+  margin-left: 4px;
+  padding: 0 5px;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 8px;
+  background: var(--vp-c-bg-soft);
+  color: var(--vp-c-text-3);
+}
 .ld-out-actions {
   display: inline-flex;
   align-items: center;
   gap: 6px;
 }
-
 .ld-out-copy {
   display: inline-flex;
   align-items: center;
@@ -139,45 +143,110 @@ async function copy() {
   border: 1px solid var(--vp-c-divider);
   border-radius: 3px;
 }
-
-.ld-out-copy:hover {
+.ld-out-copy:hover:not(:disabled) {
   color: var(--vp-c-text-1);
   border-color: var(--c-carbon-1);
 }
-
+.ld-out-copy:disabled {
+  opacity: 0.5;
+}
 .ld-out-pop {
   padding: 2px 5px;
 }
 
-.ld-out-body {
-  margin: 0;
-  padding: 10px;
-  /* flex:1 + min-height:0 so the <pre> scrolls internally instead of stretching its column */
+.ld-dbg-list {
   flex: 1;
   min-height: 0;
-  overflow: auto;
-  font-size: 11.5px;
-  line-height: 1.5;
-  color: var(--vp-c-text-2);
-  font-variant-numeric: tabular-nums;
-  white-space: pre;
-}
-
-/* Shiki-highlighted output (v-html); container scrolls, injected <pre> carries padding + theme bg */
-.ld-shiki {
-  flex: 1;
-  min-height: 0;
-  overflow: auto;
-}
-
-.ld-shiki :deep(pre.shiki) {
-  margin: 0;
-  padding: 10px;
-  background: var(--vp-code-block-bg, #161618) !important;
+  overflow-y: auto;
   font-family: var(--vp-font-family-mono);
   font-size: 11.5px;
+}
+.ld-dbg-empty {
+  padding: 12px;
+  color: var(--vp-c-text-3);
   line-height: 1.5;
-  white-space: pre;
+  font-family: var(--vp-font-family-base);
+  font-size: 12px;
+}
+.ld-dbg-row {
+  border-bottom: 1px solid var(--vp-c-divider);
+}
+.ld-dbg-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 3px 8px;
+  text-align: left;
+  border-left: 2px solid transparent;
+}
+.ld-dbg-line:hover {
+  background: var(--vp-c-bg-soft);
+}
+.k-AddUi .ld-dbg-line {
+  border-left-color: #3b82f6;
+}
+.k-DestroyUi .ld-dbg-line {
+  border-left-color: #f59e0b;
+}
+.k-error .ld-dbg-line {
+  border-left-color: #ef4444;
+}
+.k-warn .ld-dbg-line {
+  border-left-color: #eab308;
+}
+.k-info .ld-dbg-line {
+  border-left-color: var(--vp-c-text-3);
+}
+.ld-dbg-time {
+  color: var(--vp-c-text-3);
+  flex-shrink: 0;
+}
+.ld-dbg-kind {
+  flex-shrink: 0;
+  font-weight: 700;
+  min-width: 64px;
+}
+.k-AddUi .ld-dbg-kind {
+  color: #3b82f6;
+}
+.k-DestroyUi .ld-dbg-kind {
+  color: #f59e0b;
+}
+.k-error .ld-dbg-kind {
+  color: #ef4444;
+}
+.k-warn .ld-dbg-kind {
+  color: #eab308;
+}
+.k-info .ld-dbg-kind {
+  color: var(--vp-c-text-3);
+}
+.ld-dbg-summary {
+  flex: 1;
+  color: var(--vp-c-text-1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ld-dbg-copy {
+  flex-shrink: 0;
+  color: var(--vp-c-text-3);
+}
+.ld-dbg-copy:hover {
+  color: var(--c-carbon-1);
+}
+.ld-dbg-detail {
+  margin: 0;
+  padding: 8px 10px;
+  max-height: 320px;
+  overflow: auto;
+  background: var(--vp-c-bg-alt);
+  border-top: 1px dashed var(--vp-c-divider);
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 11px;
+  line-height: 1.45;
 }
 
 .ld-out-placeholder {
@@ -190,7 +259,6 @@ async function copy() {
   font-size: 12px;
   color: var(--vp-c-text-3);
 }
-
 .ld-out-placeholder button {
   display: inline-flex;
   align-items: center;
@@ -202,7 +270,6 @@ async function copy() {
   border: 1px solid var(--vp-c-divider);
   border-radius: 4px;
 }
-
 .ld-out-placeholder button:hover {
   color: var(--vp-c-text-1);
   border-color: var(--c-carbon-1);

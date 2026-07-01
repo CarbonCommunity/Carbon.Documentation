@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Check, Copy, PictureInPicture2, X } from 'lucide-vue-next'
-import { computed, ref } from 'vue'
+import { computed, inject, ref } from 'vue'
 import { generateCode, generateFullClass, generateJson, generateSelected } from './codegen'
 import { usePopout } from './usePopout'
 import { useShiki } from './useShiki'
@@ -27,6 +27,7 @@ const tab = ref<Tab>('ux')
 const targetApplies = computed(() => tab.value === 'class' || tab.value === 'ux' || tab.value === 'selected')
 
 const { supported: popoutSupported, pipTarget, toggle: togglePopout, close: closePopout } = usePopout(() => 'Code', { width: 520, height: 640 })
+const closePaneFn = inject<(pane: 'code') => void>('ld-pane-close')
 
 // One computed per emission level (each only recomputes when its inputs change).
 const uxCode = computed(() => generateCode(elements.value, provider.value, canvas.rootLayer, dataSources.value))
@@ -103,6 +104,9 @@ async function copy() {
               @click="togglePopout"
             >
               <component :is="pipTarget ? X : PictureInPicture2" :size="13" />
+            </button>
+            <button v-if="closePaneFn" class="ld-out-copy ld-out-pop" title="Close this pane (View to bring it back)" @click="closePaneFn('code')">
+              <X :size="13" />
             </button>
           </div>
         </div>

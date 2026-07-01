@@ -13,6 +13,7 @@ import { computed, ref, watch } from 'vue'
 import { Server, load, servers } from '@/components/control-panel/ControlPanel.SaveLoad'
 import { generateAddUiJson } from './codegen'
 import { diffPreview } from './previewDiff'
+import { useDebugLog } from './useDebugLog'
 import { CLIENT_PANELS } from './types'
 import type { CuiElement } from './types'
 import { useDesigner } from './useDesigner'
@@ -29,6 +30,7 @@ const PREVIEW_ROOT = 'layoutdesigner.preview'
 const DEBOUNCE_MS = 200
 
 const { elements, dataSources, canvas } = useDesigner()
+const { logAddUi, logDestroyUi, logInfo } = useDebugLog()
 
 const previewing = ref(false)
 const previewServer = ref<Server | null>(null)
@@ -85,12 +87,19 @@ function pushSnapshot() {
   const all = buildPayload()
   const { payload, destroys, liveNames, content, imageSource } = diffPreview(all, lastNames, lastParents, lastContent, lastImageSource)
   // Tear down moved subtrees and changed dynamic widgets BEFORE re-adding, so they recreate cleanly.
-  for (const name of destroys) sv.sendCall(RPC_DESTROY, pid, name)
+  for (const name of destroys) {
+    sv.sendCall(RPC_DESTROY, pid, name)
+    logDestroyUi(name)
+  }
   sv.sendCall(RPC_ADD, pid, JSON.stringify(payload))
+  logAddUi(payload)
   // DestroyUi anything that vanished since the last push (gone from the tree entirely — note an
   // untouched dynamic stays in `liveNames`, so it is NOT destroyed even though it's omitted from AddUi).
   for (const old of lastNames) {
-    if (!liveNames.has(old)) sv.sendCall(RPC_DESTROY, pid, old)
+    if (!liveNames.has(old)) {
+      sv.sendCall(RPC_DESTROY, pid, old)
+      logDestroyUi(old)
+    }
   }
   lastNames = liveNames
   lastParents = new Map(all.map((e) => [e.name, e.parent]))
@@ -101,7 +110,10 @@ function pushSnapshot() {
 function destroyPreview() {
   const sv = previewServer.value
   const pid = previewPlayerId.value
-  if (sv && pid != null) sv.sendCall(RPC_DESTROY, pid, PREVIEW_ROOT)
+  if (sv && pid != null) {
+    sv.sendCall(RPC_DESTROY, pid, PREVIEW_ROOT)
+    logDestroyUi(PREVIEW_ROOT)
+  }
   lastNames = new Set()
   lastParents = new Map()
   lastContent = new Map()
@@ -119,6 +131,7 @@ function schedulePush() {
 function startPreview() {
   if (!canPreview.value) return
   previewing.value = true
+  logInfo(`Preview started → ${previewServer.value?.CachedHostname || 'server'} / player ${previewPlayerId.value}`)
   destroyPreview() // clear any stale root on the client → next push is a clean create
   pushSnapshot()
   // Re-push on any edit to elements or canvas (rootLayer/aspect). The name diff handles add/move/remove

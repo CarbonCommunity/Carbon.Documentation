@@ -290,6 +290,9 @@ function addScreenShare() {
 }
 // Let LivePreviewControls (and anyone else) offer the action without reaching into the dock/visibility.
 provide('ld-screen-share', { supported: screenShareSupported, add: addScreenShare })
+// Close-a-pane handle for pane headers (framed panes' X, and the self-framed Code/Debug headers). Uses
+// hidePane so the pane remembers its spot and comes back where it was when re-shown from View.
+provide('ld-pane-close', (key: PaneKey) => hidePane(key))
 
 // drag-docking (2b): a floating ghost that follows the cursor while a pane is being dragged
 const { dragging: dockDragging, pointer: dockPointer } = useDockDrag()

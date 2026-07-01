@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useEventListener } from '@vueuse/core'
 import { ChevronDown, PanelLeftClose, PictureInPicture2, Plus, X } from 'lucide-vue-next'
-import { computed, ref, type Component } from 'vue'
+import { computed, inject, ref, type Component } from 'vue'
 import CanvasPane from './CanvasPane.vue'
 import CodeOutput from './CodeOutput.vue'
 import DataSourcePanel from './DataSourcePanel.vue'
@@ -47,6 +47,9 @@ const FRAMED: Partial<Record<PaneId, { title: string; body: Component; scroll: b
   screenShare: { title: 'Screen Share', body: ScreenSharePane, scroll: false },
 }
 const meta = computed(() => FRAMED[props.pane])
+
+// Close this pane (X in the header). Provided by LayoutDesigner (remembers the spot for re-show via View).
+const closePane = inject<(pane: PaneId) => void>('ld-pane-close')
 
 const pip = usePopout(() => meta.value?.title ?? props.pane, { width: 340, height: 660 })
 
@@ -109,6 +112,9 @@ useEventListener(
               @click="pip.toggle()"
             >
               <component :is="pip.pipTarget.value ? X : PictureInPicture2" :size="14" />
+            </button>
+            <button v-if="closePane" class="ld-pane-pop-btn" title="Close this pane (View to bring it back)" @click="closePane(pane)">
+              <X :size="14" />
             </button>
           </div>
         </div>
