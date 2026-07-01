@@ -375,8 +375,10 @@ export interface CuiImageComponent {
   color: string
   sprite?: string
   png?: string
-  itemId?: number
-  skinId?: number
+  // Rust's CUI JSON keys are lowercase — an `itemId`/`skinId` mismatch is silently dropped (and an
+  // Image with no resolvable source can null-ref the client's AddUi RPC).
+  itemid?: number
+  skinid?: number
 }
 
 /** URL/raw image fill — `color` is the image tint. `url` XOR `steamid` sources the texture. */

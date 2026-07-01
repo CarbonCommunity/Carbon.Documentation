@@ -1170,19 +1170,31 @@ function importClipboard() {
 }
 
 /** Load the bundled example layouts (one per element / fill / modifier) into an "Examples" folder.
- *  Idempotent — skips any already present by name, so repeated clicks don't pile up duplicates. */
+ *  Re-loading REFRESHES an existing example's data in place (stable id keeps open tabs valid) so bug
+ *  fixes to the bundled samples reach anyone who loaded them earlier — no duplicates pile up. */
 function loadExampleLayouts() {
-  const existing = new Set(layouts.value.map((l) => l.name))
-  let lastId: string | null = currentLayoutId.value
+  let target: string | null = null
   for (const ex of EXAMPLE_LAYOUTS) {
     const name = `Example — ${ex.name}`
-    if (existing.has(name)) continue
-    const id = newLayoutId()
-    layouts.value.push({ id, name, folder: 'Examples', data: JSON.parse(JSON.stringify(ex.data)), updatedAt: Date.now() })
-    lastId = id
+    const data = JSON.parse(JSON.stringify(ex.data))
+    const existing = layouts.value.find((l) => l.name === name && l.folder === 'Examples')
+    if (existing) {
+      existing.data = data
+      existing.updatedAt = Date.now()
+      target = existing.id
+    } else {
+      const id = newLayoutId()
+      layouts.value.push({ id, name, folder: 'Examples', data, updatedAt: Date.now() })
+      target = id
+    }
   }
   persist()
-  if (lastId) switchLayout(lastId)
+  if (target) {
+    openTab(target)
+    currentLayoutId.value = target
+    applyData(currentLayout.value!.data) // force re-apply even if `target` was already open (data changed)
+    resetHistory()
+  }
 }
 
 // --- init + autosave/history watcher -------------------------------------------------

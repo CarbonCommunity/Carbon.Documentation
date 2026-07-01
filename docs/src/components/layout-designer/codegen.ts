@@ -635,7 +635,7 @@ export function parseCuiJson(data: unknown): ParsedCui | null {
       let image: ImageFill | null = null
       if (typeof img.sprite === 'string' && img.sprite) image = { kind: 'sprite', sprite: img.sprite }
       else if (typeof img.png === 'string' && img.png) image = { kind: 'png', png: img.png }
-      else if (img.itemId !== undefined) image = { kind: 'itemicon', itemId: Number(img.itemId) || 0, skinId: Number(img.skinId) || 0 }
+      else if (img.itemid !== undefined) image = { kind: 'itemicon', itemId: Number(img.itemid) || 0, skinId: Number(img.skinid) || 0 }
       elements.push({ ...base, type: 'panel', props: { color: parseColor(img.color, { r: 1, g: 1, b: 1, a: 1 }), image } })
     } else {
       // No graphic component — a RectTransform-only node is an empty container / section.

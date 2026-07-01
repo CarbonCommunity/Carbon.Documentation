@@ -62,7 +62,7 @@ export function adduiImageFill(fill: ImageFill, colorStr: string): CuiComponent 
     case 'png':
       return { type: 'UnityEngine.UI.Image', color: colorStr, png: fill.png }
     case 'itemicon':
-      return { type: 'UnityEngine.UI.Image', color: colorStr, itemId: fill.itemId, skinId: fill.skinId }
+      return { type: 'UnityEngine.UI.Image', color: colorStr, itemid: fill.itemId, skinid: fill.skinId }
     case 'steamavatar':
       return { type: 'UnityEngine.UI.RawImage', steamid: fill.steamId, color: colorStr }
     case 'imagedb':

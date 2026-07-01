@@ -848,7 +848,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
   {
     "id": "fill-itemicon",
     "name": "Image: Item icon",
-    "hint": "A panel showing an item inventory icon (AK-47).",
+    "hint": "An inventory icon rendered from an item id.",
     "category": "fill",
     "data": {
       "elements": [
@@ -930,7 +930,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
             },
             "image": {
               "kind": "itemicon",
-              "itemId": 1545779598,
+              "itemId": 200773292,
               "skinId": 0
             }
           },
