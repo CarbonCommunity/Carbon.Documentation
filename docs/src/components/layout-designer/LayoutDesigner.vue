@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import './fonts/index.css' // self-hosted Rust CUI fonts; here so they load on the tool page only
 import { useEventListener, useStorage } from '@vueuse/core'
-import { Check, ChevronRight, Clipboard, ClipboardPaste, Folder, FolderInput, FolderOpen, Lock, Pencil, Plus, Redo2, RotateCcw, Settings, Trash2, Undo2, X } from 'lucide-vue-next'
+import { Check, ChevronRight, Clipboard, ClipboardPaste, Folder, FolderInput, FolderOpen, Lock, Pencil, Plus, Redo2, RotateCcw, Settings, Shapes, Trash2, Undo2, X } from 'lucide-vue-next'
 import { computed, onBeforeUnmount, onMounted, provide, ref } from 'vue'
 import ContextMenu from './ContextMenu.vue'
 import DockNode from './DockNode.vue'
@@ -44,6 +44,7 @@ const {
   deleteLayout,
   exportClipboard,
   importClipboard,
+  loadExampleLayouts,
 } = useDesigner()
 
 function fileCloseAll() {
@@ -118,6 +119,10 @@ function chooseLayout(id: string) {
 }
 function fileImport() {
   importClipboard()
+  closeFileMenu()
+}
+function fileLoadExamples() {
+  loadExampleLayouts()
   closeFileMenu()
 }
 function fileExport() {
@@ -340,6 +345,7 @@ const { dragging: dockDragging, pointer: dockPointer } = useDockDrag()
           <div class="ld-menu-sep" />
           <button class="ld-menu-item" title="Accepts a designer export or raw CUI JSON from a plugin's CuiElementContainer.ToJson()" @click="fileImport"><ClipboardPaste :size="13" /> Import from clipboard</button>
           <button class="ld-menu-item" @click="fileExport"><Clipboard :size="13" /> Export to clipboard</button>
+          <button class="ld-menu-item" title="Load example layouts — one per element type, fill and modifier — as tabs in an Examples folder" @click="fileLoadExamples"><Shapes :size="13" /> Load examples</button>
 
           <div class="ld-menu-sep" />
           <button class="ld-menu-item" :disabled="!openTabLayouts.length" title="Close all open layout tabs (the layouts are kept)" @click="fileCloseAll"><X :size="13" /> Close All</button>

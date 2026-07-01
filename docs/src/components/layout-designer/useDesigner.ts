@@ -8,6 +8,7 @@ import { useStorage } from '@vueuse/core'
 import { computed, reactive, ref, watch } from 'vue'
 import { parseCuiJson } from './codegen'
 import { definitionOf, getDefinition } from './elements/registry'
+import { EXAMPLE_LAYOUTS } from './examples'
 import { resolveRect, rootRect } from './geometry'
 import type { CanvasConfig, ColorRGBA, DataSource, DataSourceKind, DesignerElement, ElementModifiers, ElementType, LayoutPreset, ListDataSource, PanelProps, Provider, Rect, TextAlign, TextDataSource, TextProps, Vec2 } from './types'
 
@@ -1168,6 +1169,22 @@ function importClipboard() {
   }
 }
 
+/** Load the bundled example layouts (one per element / fill / modifier) into an "Examples" folder.
+ *  Idempotent — skips any already present by name, so repeated clicks don't pile up duplicates. */
+function loadExampleLayouts() {
+  const existing = new Set(layouts.value.map((l) => l.name))
+  let lastId: string | null = currentLayoutId.value
+  for (const ex of EXAMPLE_LAYOUTS) {
+    const name = `Example — ${ex.name}`
+    if (existing.has(name)) continue
+    const id = newLayoutId()
+    layouts.value.push({ id, name, folder: 'Examples', data: JSON.parse(JSON.stringify(ex.data)), updatedAt: Date.now() })
+    lastId = id
+  }
+  persist()
+  if (lastId) switchLayout(lastId)
+}
+
 // --- init + autosave/history watcher -------------------------------------------------
 
 let inited = false
@@ -1252,6 +1269,7 @@ export function useDesigner() {
     deleteLayout,
     exportClipboard,
     importClipboard,
+    loadExampleLayouts,
     copyText,
     init,
     // derived
