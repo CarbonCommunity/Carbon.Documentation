@@ -4,7 +4,7 @@ import AnchorWidget from './AnchorWidget.vue'
 import InfoTip from './InfoTip.vue'
 import { round } from './geometry'
 import { TEXT_ALIGNS, TEXT_FONTS } from './types'
-import type { ColorRGBA, DesignerElement, TextAlign, TextDataSource, TextFont } from './types'
+import type { ColorRGBA, DesignerElement, OutlineModifier, TextAlign, TextDataSource, TextFont } from './types'
 import { useDesigner } from './useDesigner'
 
 const { selected, selectedIds, elements, dataSources, descendantIds, update, reparent, rectOf, fill, snapSelection, textEditSignal, removeSelected, duplicateSelected, setBinding } =
@@ -107,6 +107,32 @@ function setAlpha(el: DesignerElement, raw: string) {
   const a = Number.parseFloat(raw)
   if (Number.isNaN(a)) return
   update(el.id, { props: { color: { ...el.props.color, a } } })
+}
+
+// --- outline modifier ---
+const outline = computed(() => selected.value?.modifiers?.outline ?? null)
+function toggleOutline(on: boolean) {
+  const el = selected.value
+  if (!el) return
+  update(el.id, { modifiers: { outline: on ? { color: { r: 0, g: 0, b: 0, a: 1 }, distance: { x: 1, y: -1 } } : null } })
+}
+function patchOutline(patch: Partial<OutlineModifier>) {
+  const el = selected.value
+  if (!el?.modifiers?.outline) return
+  update(el.id, { modifiers: { outline: { ...el.modifiers.outline, ...patch } } })
+}
+function setOutlineHex(hex: string) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim())
+  const cur = outline.value
+  if (!m || !cur) return
+  const n = Number.parseInt(m[1], 16)
+  patchOutline({ color: { ...cur.color, r: ((n >> 16) & 255) / 255, g: ((n >> 8) & 255) / 255, b: (n & 255) / 255 } })
+}
+function setOutlineDistance(axis: 'x' | 'y', raw: string) {
+  const v = Number.parseFloat(raw)
+  const cur = outline.value
+  if (Number.isNaN(v) || !cur) return
+  patchOutline({ distance: { ...cur.distance, [axis]: v } })
 }
 
 // Per-type prop views (null unless the selection is that type) — keep template access type-safe.
@@ -315,6 +341,19 @@ const computedRect = computed(() => (selected.value ? rectOf(selected.value.id) 
           <input type="checkbox" :checked="!!selected.modifiers?.keyboard" @change="update(selected.id, { modifiers: { keyboard: ($event.target as HTMLInputElement).checked } })" />
           <span>Needs keyboard</span>
         </label>
+        <label class="ld-passthrough">
+          <input type="checkbox" :checked="!!outline" @change="toggleOutline(($event.target as HTMLInputElement).checked)" />
+          <span>Outline</span>
+        </label>
+        <div v-if="outline" class="ld-outline">
+          <input class="ld-color" type="color" :value="toHex(outline.color)" title="Outline color" @input="setOutlineHex(($event.target as HTMLInputElement).value)" />
+          <label class="ld-outline-dist">X <input type="number" step="0.5" :value="outline.distance.x" @input="setOutlineDistance('x', ($event.target as HTMLInputElement).value)" /></label>
+          <label class="ld-outline-dist">Y <input type="number" step="0.5" :value="outline.distance.y" @input="setOutlineDistance('y', ($event.target as HTMLInputElement).value)" /></label>
+          <label class="ld-passthrough" title="Fade the outline with the graphic's alpha">
+            <input type="checkbox" :checked="!!outline.useGraphicAlpha" @change="patchOutline({ useGraphicAlpha: ($event.target as HTMLInputElement).checked })" />
+            <span>α</span>
+          </label>
+        </div>
       </div>
 
       <div class="ld-place">
@@ -664,6 +703,25 @@ const computedRect = computed(() => (selected.value ? rectOf(selected.value.id) 
 }
 .ld-behavior .ld-passthrough {
   margin: 4px 0 0;
+}
+.ld-outline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0 0 20px;
+}
+.ld-outline .ld-outline-dist {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+  color: var(--vp-c-text-2);
+}
+.ld-outline .ld-outline-dist input {
+  width: 44px;
+}
+.ld-outline .ld-passthrough {
+  margin: 0;
 }
 
 .ld-place {

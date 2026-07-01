@@ -241,6 +241,17 @@ export interface ElementModifiers {
   cursor?: boolean
   /** NeedsKeyboard — captures keyboard focus while shown (needed to type into input fields). */
   keyboard?: boolean
+  /** UnityEngine.UI.Outline — a shadow-style outline around this element's graphic. */
+  outline?: OutlineModifier
+}
+
+/** Outline modifier: a colored offset outline (Carbon `.SetOutline` / Oxide `CuiOutlineComponent`). */
+export interface OutlineModifier {
+  color: ColorRGBA
+  /** Outline offset in reference px (x, y) — the outline is drawn shifted by this much. */
+  distance: Vec2
+  /** When true, the outline fades with the graphic's own alpha. */
+  useGraphicAlpha?: boolean
 }
 
 export interface PanelElement extends BaseElement {
@@ -390,6 +401,12 @@ export interface CuiNeedsCursorComponent {
 export interface CuiNeedsKeyboardComponent {
   type: 'NeedsKeyboard'
 }
+export interface CuiOutlineComponent {
+  type: 'UnityEngine.UI.Outline'
+  color: string
+  distance: string
+  useGraphicAlpha?: boolean
+}
 
 export type CuiComponent =
   | CuiImageComponent
@@ -400,6 +417,7 @@ export type CuiComponent =
   | CuiCountdownComponent
   | CuiNeedsCursorComponent
   | CuiNeedsKeyboardComponent
+  | CuiOutlineComponent
   | CuiRectTransform
 
 /**

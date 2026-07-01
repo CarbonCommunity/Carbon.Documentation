@@ -9,7 +9,7 @@ import { computed, reactive, ref, watch } from 'vue'
 import { parseCuiJson } from './codegen'
 import { definitionOf, getDefinition } from './elements/registry'
 import { resolveRect, rootRect } from './geometry'
-import type { CanvasConfig, ColorRGBA, DataSource, DataSourceKind, DesignerElement, ElementType, LayoutPreset, ListDataSource, PanelProps, Provider, Rect, TextAlign, TextDataSource, TextProps, Vec2 } from './types'
+import type { CanvasConfig, ColorRGBA, DataSource, DataSourceKind, DesignerElement, ElementModifiers, ElementType, LayoutPreset, ListDataSource, PanelProps, Provider, Rect, TextAlign, TextDataSource, TextProps, Vec2 } from './types'
 
 let idCounter = 0
 function nextId(): { id: string; n: number } {
@@ -416,7 +416,9 @@ function snapSelection(h: HPlace, v: VPlace, pad = 0) {
   }
 }
 
-type ElementPatch = Partial<Pick<DesignerElement, 'name' | 'anchorMin' | 'anchorMax' | 'offsetMin' | 'offsetMax' | 'passthrough' | 'modifiers'>> & {
+type ElementPatch = Partial<Pick<DesignerElement, 'name' | 'anchorMin' | 'anchorMax' | 'offsetMin' | 'offsetMax' | 'passthrough'>> & {
+  // A modifier key set to null/false clears it (merged in, then falsy keys are pruned).
+  modifiers?: { [K in keyof ElementModifiers]?: ElementModifiers[K] | null }
   // Accept any prop from either element type; the inspector only sends fields valid for the
   // selected element, so a panel never receives text props and vice-versa.
   props?: Partial<PanelProps & TextProps>
@@ -431,7 +433,13 @@ function update(id: string, patch: ElementPatch) {
   if (patch.offsetMin) el.offsetMin = patch.offsetMin
   if (patch.offsetMax) el.offsetMax = patch.offsetMax
   if (patch.passthrough !== undefined) el.passthrough = patch.passthrough
-  if (patch.modifiers) el.modifiers = { ...el.modifiers, ...patch.modifiers } // merge — a toggle sends one key
+  if (patch.modifiers) {
+    // Merge the sent key(s), then prune falsy ones so `?.modifier` checks + emit stay clean; an empty
+    // set collapses back to undefined so an element with no modifiers emits byte-identically.
+    const merged = { ...el.modifiers, ...patch.modifiers } as Record<string, unknown>
+    for (const k of Object.keys(merged)) if (!merged[k]) delete merged[k]
+    el.modifiers = Object.keys(merged).length ? (merged as ElementModifiers) : undefined
+  }
   if (patch.props) el.props = { ...(el.props as PanelProps & TextProps), ...patch.props }
 }
 
