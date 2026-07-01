@@ -305,6 +305,18 @@ const computedRect = computed(() => (selected.value ? rectOf(selected.value.id) 
         <span>Move with parent <InfoTip text="Clicking or dragging this element on the canvas grabs its PARENT instead — useful for a label that fills its button. Alt-click still selects this element, and the element tree always reaches it directly." /></span>
       </label>
 
+      <div class="ld-behavior">
+        <span class="ld-field-label">Behavior <InfoTip text="Extra CUI components on this element. Needs cursor frees the mouse so the player can click the UI; Needs keyboard captures typing (required to type into an input field). Usually set on the root panel." /></span>
+        <label class="ld-passthrough">
+          <input type="checkbox" :checked="!!selected.modifiers?.cursor" @change="update(selected.id, { modifiers: { cursor: ($event.target as HTMLInputElement).checked } })" />
+          <span>Needs cursor</span>
+        </label>
+        <label class="ld-passthrough">
+          <input type="checkbox" :checked="!!selected.modifiers?.keyboard" @change="update(selected.id, { modifiers: { keyboard: ($event.target as HTMLInputElement).checked } })" />
+          <span>Needs keyboard</span>
+        </label>
+      </div>
+
       <div class="ld-place">
         <span class="ld-field-label">Place in parent <InfoTip text="Slam the selection into a corner, edge or centre of its parent. Padding isn't a real CUI property — it just writes this element's offsets: a stretched (fill) axis is inset on both sides, a pinned axis is pushed that far off its edge, and a centred axis ignores it." /></span>
         <div class="ld-place-row">
@@ -645,6 +657,13 @@ const computedRect = computed(() => (selected.value ? rectOf(selected.value.id) 
 .ld-passthrough input {
   cursor: pointer;
   flex-shrink: 0;
+}
+
+.ld-behavior {
+  margin: 2px 0 10px;
+}
+.ld-behavior .ld-passthrough {
+  margin: 4px 0 0;
 }
 
 .ld-place {

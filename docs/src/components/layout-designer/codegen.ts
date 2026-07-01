@@ -16,6 +16,7 @@
 
 import { anchorPair, esc, nameRef, offsetPair, parentRef } from './elements/emit'
 import type { EmitContext } from './elements/emit'
+import { adduiModifierComponents, carbonModifierChain, oxideModifierLines } from './elements/modifiers'
 import { definitionOf } from './elements/registry'
 import { CLIENT_PANELS, resolveText, TEXT_ALIGNS, TEXT_FONTS } from './types'
 import type { ClientPanel, ClientPanelDef, ColorRGBA, CuiElement, DataSource, DesignerElement, ImageFill, PanelElement, Provider, TextAlign, TextFont, Vec2 } from './types'
@@ -205,9 +206,25 @@ function rootContainerName(names: Map<string, string>): string {
 function genOxide(elements: DesignerElement[], ctx: EmitContext): string {
   // Oxide has no CreateParent equivalent — root elements parent to the layer string directly.
   const out: string[] = ['var container = new CuiElementContainer();', '']
-  for (const el of elements) out.push(...definitionOf(el).oxide(el, ctx))
+  for (const el of elements) {
+    out.push(...definitionOf(el).oxide(el, ctx))
+    out.push(...oxideModifierLines(el, nameRef(el, ctx))) // cursor/keyboard as standalone child elements
+  }
   out.push('CuiHelper.AddUi(player, container);')
   return out.join('\n')
+}
+
+/** Splice a Carbon fluent modifier chain (`.AddCursor()…`) before the `;` of an element's Create call. */
+function withCarbonChain(lines: string[], chain: string): string[] {
+  if (!chain) return lines
+  const out = [...lines]
+  for (let i = out.length - 1; i >= 0; i--) {
+    if (out[i].endsWith(';')) {
+      out[i] = `${out[i].slice(0, -1)}${chain};`
+      break
+    }
+  }
+  return out
 }
 
 // --- Carbon LUI ----------------------------------------------------------------------
@@ -222,7 +239,7 @@ function genCarbon(elements: DesignerElement[], names: Map<string, string>, laye
     `cui.v2.CreateParent(CUI.ClientPanels.${layer.carbon}, LuiPosition.Full, "${esc(root)}");`,
     '',
   ]
-  for (const el of elements) out.push(...definitionOf(el).carbon(el, ctx))
+  for (const el of elements) out.push(...withCarbonChain(definitionOf(el).carbon(el, ctx), carbonModifierChain(el)))
   out.push('cui.v2.SendUi(player);')
   return out.join('\n')
 }
@@ -247,7 +264,7 @@ function adduiElement(el: DesignerElement, ctx: EmitContext): CuiElement {
   return {
     name: nameRef(el, ctx),
     parent: parentRef(el, ctx),
-    components: [...definitionOf(el).adduiComponents(el, ctx), rect],
+    components: [...definitionOf(el).adduiComponents(el, ctx), ...adduiModifierComponents(el), rect],
   }
 }
 

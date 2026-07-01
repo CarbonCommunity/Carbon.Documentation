@@ -224,6 +224,23 @@ export interface BaseElement {
    * element) — e.g. a label filling its button. Alt-click still reaches this element; codegen ignores it.
    */
   passthrough?: boolean
+  /**
+   * Optional CUI behavior components attached to this element (cursor/keyboard, …). Unlike props, these
+   * are cross-cutting — the same set applies to any element type — so their codegen lives in one shared
+   * place ({@link ElementModifiers}). Absent => no extra components.
+   */
+  modifiers?: ElementModifiers
+}
+
+/**
+ * Cross-cutting CUI components that can be attached to ANY element (they aren't tied to one element
+ * type the way props are). Emitted by the shared modifier layer, not by the per-type element modules.
+ */
+export interface ElementModifiers {
+  /** NeedsCursor — frees the mouse cursor while this element is shown (needed to click buttons). */
+  cursor?: boolean
+  /** NeedsKeyboard — captures keyboard focus while shown (needed to type into input fields). */
+  keyboard?: boolean
 }
 
 export interface PanelElement extends BaseElement {
@@ -366,6 +383,14 @@ export interface CuiCountdownComponent {
   command: string
 }
 
+/** Behavior components with no fields — presence alone frees the cursor / captures the keyboard. */
+export interface CuiNeedsCursorComponent {
+  type: 'NeedsCursor'
+}
+export interface CuiNeedsKeyboardComponent {
+  type: 'NeedsKeyboard'
+}
+
 export type CuiComponent =
   | CuiImageComponent
   | CuiRawImageComponent
@@ -373,6 +398,8 @@ export type CuiComponent =
   | CuiButtonComponent
   | CuiInputFieldComponent
   | CuiCountdownComponent
+  | CuiNeedsCursorComponent
+  | CuiNeedsKeyboardComponent
   | CuiRectTransform
 
 /**

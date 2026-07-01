@@ -416,7 +416,7 @@ function snapSelection(h: HPlace, v: VPlace, pad = 0) {
   }
 }
 
-type ElementPatch = Partial<Pick<DesignerElement, 'name' | 'anchorMin' | 'anchorMax' | 'offsetMin' | 'offsetMax' | 'passthrough'>> & {
+type ElementPatch = Partial<Pick<DesignerElement, 'name' | 'anchorMin' | 'anchorMax' | 'offsetMin' | 'offsetMax' | 'passthrough' | 'modifiers'>> & {
   // Accept any prop from either element type; the inspector only sends fields valid for the
   // selected element, so a panel never receives text props and vice-versa.
   props?: Partial<PanelProps & TextProps>
@@ -431,6 +431,7 @@ function update(id: string, patch: ElementPatch) {
   if (patch.offsetMin) el.offsetMin = patch.offsetMin
   if (patch.offsetMax) el.offsetMax = patch.offsetMax
   if (patch.passthrough !== undefined) el.passthrough = patch.passthrough
+  if (patch.modifiers) el.modifiers = { ...el.modifiers, ...patch.modifiers } // merge — a toggle sends one key
   if (patch.props) el.props = { ...(el.props as PanelProps & TextProps), ...patch.props }
 }
 
@@ -480,9 +481,10 @@ function cloneSubtree(id: string): string | null {
       offsetMin: { ...el.offsetMin },
       offsetMax: { ...el.offsetMax },
       props: cloneProps(el),
-      // bindings/repeat are objects — copy them so the clone doesn't share (and mutate) the original's.
+      // bindings/repeat/modifiers are objects — copy them so the clone doesn't share (and mutate) the original's.
       bindings: el.bindings ? { ...el.bindings } : el.bindings,
       repeat: el.repeat ? { ...el.repeat } : el.repeat,
+      modifiers: el.modifiers ? { ...el.modifiers } : el.modifiers,
     } as DesignerElement
   })
   clones.forEach((c, i) => {
