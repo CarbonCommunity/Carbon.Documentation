@@ -264,7 +264,11 @@ function adduiElement(el: DesignerElement, ctx: EmitContext): CuiElement {
   return {
     name: nameRef(el, ctx),
     parent: parentRef(el, ctx),
-    components: [...definitionOf(el).adduiComponents(el, ctx), ...adduiModifierComponents(el), rect],
+    // RectTransform FIRST — Carbon's LUI builds every element as an empty container (RectTransform)
+    // and then adds its graphic, so the transform exists before the graphic is set up. Some graphics
+    // (item icons) need that ordering: with the Image first the client sizes the icon against a
+    // not-yet-present RectTransform and null-refs the AddUi RPC. Colour panels are order-agnostic.
+    components: [rect, ...definitionOf(el).adduiComponents(el, ctx), ...adduiModifierComponents(el)],
   }
 }
 
