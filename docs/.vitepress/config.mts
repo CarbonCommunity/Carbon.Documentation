@@ -32,6 +32,7 @@ const tools = [
   { text: 'Profiler Panel', link: '/tools/profiler-panel/' },
   { text: 'Server Browser', link: '/tools/server-browser/' },
   { text: 'Changelog Generator', link: '/tools/changelog-generator/' },
+  { text: 'Layout Designer', link: '/tools/layout-designer/' },
 ]
 
 const siteDescription = 'A fully up-to-date documentation of all things: Carbon, Rust references and somewhat Oxide.'
