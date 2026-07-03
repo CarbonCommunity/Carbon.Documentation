@@ -1,0 +1,45 @@
+/* Rust CUI fonts, self-hosted (Latin subsets); upstream OFL/Apache originals, license per file here.
+ * Family names are referenced by TEXT_FONTS.css and .ld-text. */
+
+/* Roboto Condensed — OFL-1.1 (RobotoCondensed-LICENSE.txt) */
+@font-face {
+  font-family: 'Roboto Condensed';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./roboto-condensed-latin-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Roboto Condensed';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('./roboto-condensed-latin-700.woff2') format('woff2');
+}
+
+/* Permanent Marker — Apache-2.0 (PermanentMarker-LICENSE.txt) */
+@font-face {
+  font-family: 'Permanent Marker';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./permanent-marker-latin-400.woff2') format('woff2');
+}
+
+/* Press Start 2P — OFL-1.1 (PressStart2P-LICENSE.txt) */
+@font-face {
+  font-family: 'Press Start 2P';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./press-start-2p-latin-400.woff2') format('woff2');
+}
+
+/* Droid Sans Mono — Apache-2.0 (DroidSansMono-LICENSE.txt) */
+@font-face {
+  font-family: 'Droid Sans Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./DroidSansMono.ttf') format('truetype');
+}
