@@ -49,6 +49,7 @@ import ProfilerTab from './ControlPanel.Tabs.Profiler.vue'
 import PluginsTab from './ControlPanel.Tabs.Plugins.vue'
 import InformationTab from './ControlPanel.Tabs.Information.vue'
 import StatsTab from './ControlPanel.Tabs.Stats.vue'
+import Map3DTab from './ControlPanel.Tabs.Map3D.vue'
 
 let timerSwitch: ReturnType<typeof setTimeout> = null!
 
@@ -98,6 +99,11 @@ const subTabs = [
     Name: 'Stats',
     Description: 'General stats for nerds.',
     IsDisabled: () => false,
+  },
+  {
+    Name: '3D Map',
+    Description: 'An early, work-in-progress 3D viewer of the server map.',
+    IsDisabled: () => !selectedServer.value?.hasPermission('map_view'),
   },
 ]
 
@@ -342,6 +348,9 @@ onUnmounted(() => {
       </div>
       <div v-else-if="selectedSubTab == 8" style="overflow: auto">
         <StatsTab />
+      </div>
+      <div v-else-if="selectedSubTab == 9" style="overflow: auto">
+        <Map3DTab />
       </div>
     </div>
     <div v-if="!selectedServer" style="color: var(--category-misc); font-size: small; text-align: center; user-select: none">

@@ -20,3 +20,6 @@ docs/.vitepress/dist
 docs/.vitepress/.temp
 docs/public/rss.xml
 node_modules
+
+# Temporary local mirror of RustRelay.Assets for 3D map testing — not meant to be committed
+docs/public/assets
