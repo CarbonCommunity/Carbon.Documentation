@@ -25,7 +25,7 @@ const LOW_COLOR = 0x2f6b3a
 const HIGH_COLOR = 0xd8d8d8
 const OBJECT_MIN_SCENE_SIZE = 0.08
 const OBJECT_COLOR = 0xffaa00
-const MODEL_LOAD_CONCURRENCY = 6
+const MODEL_LOAD_CONCURRENCY = 64
 // Real props are grouped into a grid of spatial chunks (one InstancedMesh per chunk+model, rather
 // than one per whole-map+model) so draw distance can toggle whole chunks — checking a few hundred
 // chunk centers per frame — instead of needing per-instance visibility, which InstancedMesh can't
@@ -70,7 +70,7 @@ function isPrefabCategoryVisible(prefab: any): boolean {
   const path: string = prefab.path ?? ''
   const category: string = prefab.category ?? ''
 
-  if (path.includes('spawner') || path.includes('sound')) {
+  if (path.includes('spawner') || path.includes('trigger') || path.includes('sound') || path.includes('prevent') || path.includes('wire') || path.includes('zipline')) {
     return false
   }
   if (path.includes('monument')) {
