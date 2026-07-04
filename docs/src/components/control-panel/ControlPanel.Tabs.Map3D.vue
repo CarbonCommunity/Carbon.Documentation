@@ -50,6 +50,15 @@ const PAN_KEYS = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyQ', 'KeyE'])
 // camera is looking level or upward, where a literal ground intersection would shoot out to
 // infinity (or behind the camera).
 const MAX_ORBIT_PIVOT_DISTANCE = TERRAIN_TARGET_SIZE * 3
+// Animated shoreline wave (see installShoreWaveShader) — a single faded ring that traces the
+// coastline out at sea and steadily closes in toward the shore, fading out as it arrives, then
+// restarting further out. Depth (sea level minus terrain height at that point) stands in for
+// "distance from shore" here, so these are all in the same scene-unit space as terrain height —
+// tune alongside HEIGHT_EXAGGERATION if the terrain's vertical scale changes a lot.
+const WAVE_MAX_DEPTH = 0.2
+const WAVE_BAND_WIDTH = 0.01
+const WAVE_PERIOD_SECONDS = 10
+const WAVE_COLOR = 0xf3fbff
 
 // Which prefab categories to render, toggleable on-screen (see the panel in the template).
 // Prefabs only carry a coarse `category` field from WorldData (Monument/Dungeon/Decor/...) plus a
@@ -96,6 +105,7 @@ let cube: THREE.Mesh | null = null
 let terrain: THREE.Mesh | null = null
 let oceanDeep: THREE.Mesh | null = null
 let oceanShallow: THREE.Mesh | null = null
+let oceanShoreline: THREE.Mesh | null = null
 let lowland: THREE.Mesh | null = null
 let sky: Sky | null = null
 let fallbackCubeMeshes: THREE.InstancedMesh[] = []
@@ -115,6 +125,9 @@ let onContextLost: ((event: Event) => void) | null = null
 let onContextRestored: (() => void) | null = null
 let lastFrameTimestamp: number | null = null
 let objectDrawDistanceCursor = 0
+let oceanHeightMap: THREE.DataTexture | null = null
+let waveShaderUniforms: { uTime: { value: number } } | null = null
+let waveElapsedTime = 0
 const pressedPanKeys = new Set<string>()
 let onKeyDown: ((event: KeyboardEvent) => void) | null = null
 let onKeyUp: ((event: KeyboardEvent) => void) | null = null
@@ -200,6 +213,9 @@ function removeCube() {
 }
 
 function removeTerrain() {
+  oceanHeightMap?.dispose()
+  oceanHeightMap = null
+
   if (!terrain) {
     return
   }
@@ -242,19 +258,25 @@ function applyMapTexture(imageUrl: string) {
 }
 
 function removeOcean() {
-  if (!oceanDeep || !oceanShallow) {
+  waveShaderUniforms = null
+
+  if (!oceanDeep || !oceanShallow || !oceanShoreline) {
     return
   }
   scene?.remove(oceanDeep)
   scene?.remove(oceanShallow)
+  scene?.remove(oceanShoreline)
   oceanDeep.geometry.dispose()
   oceanShallow.geometry.dispose()
+  oceanShoreline.geometry.dispose()
 
   ;(oceanDeep.material as THREE.Material).dispose()
   ;(oceanShallow.material as THREE.Material).dispose()
+  ;(oceanShoreline.material as THREE.Material).dispose()
 
   oceanDeep = null
   oceanShallow = null
+  oceanShoreline = null
 }
 
 function removeLowland() {
@@ -282,7 +304,67 @@ function buildLowland() {
   scene.add(lowland)
 }
 
-function buildOcean(positionY: number, heightScale: number) {
+// Patches a couple of insertion points in MeshStandardMaterial's own shader (rather than a full
+// custom ShaderMaterial) so oceanShallow keeps its existing PBR lighting/transparency and only
+// gains a single animated wave ring. Reads terrain height back from oceanHeightMap — built
+// alongside the terrain mesh from the exact same heightmap samples — so the ring traces the real,
+// irregular coastline as it closes in, rather than a fixed-radius circle.
+function installShoreWaveShader(material: THREE.MeshStandardMaterial, heightMap: THREE.DataTexture, seaLevelY: number, heightWorldScale: number) {
+  material.onBeforeCompile = (shader) => {
+    shader.uniforms.uTime = { value: waveElapsedTime }
+    shader.uniforms.uHeightMap = { value: heightMap }
+    shader.uniforms.uSeaLevel = { value: seaLevelY }
+    shader.uniforms.uHeightWorldScale = { value: heightWorldScale }
+    shader.uniforms.uTerrainSize = { value: TERRAIN_TARGET_SIZE }
+    shader.uniforms.uWaveMaxDepth = { value: WAVE_MAX_DEPTH }
+    shader.uniforms.uWaveBandWidth = { value: WAVE_BAND_WIDTH }
+    shader.uniforms.uWavePeriod = { value: WAVE_PERIOD_SECONDS }
+    shader.uniforms.uWaveColor = { value: new THREE.Color(WAVE_COLOR) }
+
+    shader.vertexShader = shader.vertexShader
+      .replace('#include <common>', '#include <common>\nvarying vec3 vShoreWorldPos;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvShoreWorldPos = (modelMatrix * vec4(transformed, 1.0)).xyz;')
+
+    shader.fragmentShader = shader.fragmentShader
+      .replace('#include <common>', `#include <common>
+        varying vec3 vShoreWorldPos;
+        uniform sampler2D uHeightMap;
+        uniform float uTime;
+        uniform float uSeaLevel;
+        uniform float uHeightWorldScale;
+        uniform float uTerrainSize;
+        uniform float uWaveMaxDepth;
+        uniform float uWaveBandWidth;
+        uniform float uWavePeriod;
+        uniform vec3 uWaveColor;`)
+      .replace('#include <color_fragment>', `#include <color_fragment>
+        {
+          // Inverse of objectScenePosition/buildTerrain's vertex UV assignment — maps this
+          // fragment's world XZ back to the terrain's own [0,1] UV space so both sample the exact
+          // same heightmap texel layout.
+          vec2 shoreUv = vec2(0.5 - vShoreWorldPos.x / uTerrainSize, 0.5 + vShoreWorldPos.z / uTerrainSize);
+          float inBounds = step(0.0, shoreUv.x) * step(shoreUv.x, 1.0) * step(0.0, shoreUv.y) * step(shoreUv.y, 1.0);
+          float terrainHeight = texture2D(uHeightMap, shoreUv).r * uHeightWorldScale;
+          float depth = uSeaLevel - terrainHeight;
+
+          // The ring's target depth counts down from uWaveMaxDepth (out at sea) to 0 (right at the
+          // coast) once per uWavePeriod, then wraps — closing in on the island every cycle. The
+          // sine envelope fades it in as it starts, and back out as it reaches shore, instead of
+          // an abrupt cut, so it visibly "disappears" rather than snapping off.
+          float phase = fract(uTime / uWavePeriod);
+          float waveDepth = mix(uWaveMaxDepth, 0.0, phase);
+          float band = 1.0 - smoothstep(0.0, uWaveBandWidth, abs(depth - waveDepth));
+          float envelope = sin(3.14159265 * phase);
+          float intensity = inBounds * step(0.0, depth) * band * envelope;
+
+          diffuseColor.rgb = mix(diffuseColor.rgb, uWaveColor, clamp(intensity, 0.0, 1.0));
+        }`)
+
+    waveShaderUniforms = shader.uniforms as unknown as { uTime: { value: number } }
+  }
+}
+
+function buildOcean(positionY: number, heightScale: number, sizeY: number) {
   if (!scene) {
     return
   }
@@ -290,8 +372,10 @@ function buildOcean(positionY: number, heightScale: number) {
 
   const oceanDeepGeometry = new THREE.PlaneGeometry(OCEAN_SIZE, OCEAN_SIZE)
   const oceanShallowGeometry = new THREE.PlaneGeometry(OCEAN_SIZE, OCEAN_SIZE)
+  const oceanShorelineGeometry = new THREE.PlaneGeometry(OCEAN_SIZE, OCEAN_SIZE)
   oceanDeepGeometry.rotateX(-Math.PI / 2)
   oceanShallowGeometry.rotateX(-Math.PI / 2)
+  oceanShorelineGeometry.rotateX(-Math.PI / 2)
 
   oceanDeep = new THREE.Mesh(oceanDeepGeometry, new THREE.MeshStandardMaterial({
     color: new THREE.Color(0, 0, 0),
@@ -302,17 +386,33 @@ function buildOcean(positionY: number, heightScale: number) {
     side: THREE.DoubleSide
   }))
   oceanDeep.position.y = -(positionY + 40) * heightScale
+
+  const shallowMaterial = new THREE.MeshStandardMaterial({
+    color: 0x1c7ed6,
+    transparent: true,
+    opacity: 0.3,
+    roughness: 1,
+    metalness: 1,
+    side: THREE.DoubleSide
+  })
+  const seaLevelY = -positionY * heightScale
+  if (oceanHeightMap) {
+    installShoreWaveShader(shallowMaterial, oceanHeightMap, seaLevelY, sizeY * heightScale)
+  }
   oceanShallow = new THREE.Mesh(oceanShallowGeometry, new THREE.MeshStandardMaterial({
     color: 0x1c7ed6,
     transparent: true,
-    opacity: 0.85,
-    roughness: .25,
+    opacity: 0.5,
+    roughness: .5,
     metalness: 0,
     side: THREE.DoubleSide
   }))
-  oceanShallow.position.y = -positionY * heightScale
+  oceanShallow.position.y = seaLevelY
+  oceanShoreline = new THREE.Mesh(oceanShorelineGeometry, shallowMaterial)
+  oceanShoreline.position.y = seaLevelY
   scene.add(oceanDeep)
   scene.add(oceanShallow)
+  scene.add(oceanShoreline)
 }
 
 function objectScenePosition(p: { x: number; y: number; z: number }, worldSize: number, positionY: number, planarScale: number, heightScale: number) {
@@ -889,6 +989,10 @@ async function buildTerrain(info: any) {
     const low = new THREE.Color(LOW_COLOR)
     const high = new THREE.Color(HIGH_COLOR)
     let invalidSamples = 0
+    // Low-res copy of the same height samples below, as a texture the ocean's shore-wave shader
+    // can sample to find the coastline (see installShoreWaveShader) — an 8-bit channel is plenty
+    // of precision for that, and avoids depending on float-texture support.
+    const shoreHeightData = new Uint8Array(gridSize * gridSize)
 
     for (let row = 0; row < gridSize; row++) {
       const z = Math.round((row * (res - 1)) / (gridSize - 1))
@@ -908,6 +1012,7 @@ async function buildTerrain(info: any) {
         const height01 = Number.isFinite(rawHeight) ? Math.max(0, rawHeight / 32766) : 0
 
         position.setY(vertexIndex, height01 * sizeY * heightScale)
+        shoreHeightData[vertexIndex] = Math.round(height01 * 255)
 
         const color = low.clone().lerp(high, height01)
         colors[vertexIndex * 3] = color.r
@@ -933,8 +1038,21 @@ async function buildTerrain(info: any) {
     terrain = new THREE.Mesh(geometry, material)
     scene.add(terrain)
 
+    oceanHeightMap?.dispose()
+    oceanHeightMap = new THREE.DataTexture(shoreHeightData, gridSize, gridSize, THREE.RedFormat, THREE.UnsignedByteType)
+    // Matches the mirrored-X/row-major convention used for the terrain's own `uv` attribute above
+    // (and, in turn, the map-image texture in applyMapTexture) — without this the wave shader would
+    // sample flipped/mirrored terrain heights and trace the coastline on the wrong side.
+    oceanHeightMap.flipY = true
+    oceanHeightMap.wrapS = THREE.ClampToEdgeWrapping
+    oceanHeightMap.wrapT = THREE.ClampToEdgeWrapping
+    oceanHeightMap.minFilter = THREE.LinearFilter
+    oceanHeightMap.magFilter = THREE.LinearFilter
+    oceanHeightMap.generateMipmaps = false
+    oceanHeightMap.needsUpdate = true
+
     buildLowland()
-    buildOcean(positionY, heightScale)
+    buildOcean(positionY, heightScale, sizeY)
 
     if (selectedServer.value?.MapInfo?.imageUrl) {
       applyMapTexture(selectedServer.value.MapInfo.imageUrl)
@@ -1010,6 +1128,11 @@ function animate(timestamp?: number) {
 
   updateKeyboardPan(deltaSeconds)
   controls?.update()
+
+  waveElapsedTime += deltaSeconds
+  if (waveShaderUniforms) {
+    waveShaderUniforms.uTime.value = waveElapsedTime
+  }
 
   stepObjectDrawDistance()
 
@@ -1211,6 +1334,7 @@ onUnmounted(() => {
   pressedPanKeys.clear()
   lastFrameTimestamp = null
   objectDrawDistanceCursor = 0
+  waveElapsedTime = 0
   objectLoadStatus.value = null
   hoveredPrefabPath.value = null
   visibleObjectCount.value = 0
