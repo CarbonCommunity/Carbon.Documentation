@@ -185,6 +185,8 @@ function exportToJson(): string {
       case 'PluginsInfo':
       case 'MapInfo':
       case 'MapEntityUpdateInterval':
+      case 'TerrainInfo':
+      case 'MapObjects':
       case 'HeaderImage':
       case 'Description':
       case 'CommandCallbacks':
@@ -346,6 +348,8 @@ export class Server {
   MapSettings: any = {}
   MapInfo: any | null = null
   MapEntityUpdateInterval: any | null = null
+  TerrainInfo: any | null = null
+  MapObjects: any[] | null = null
   HeaderImage = ''
   Description = ''
   ProfileFiles: ProfileFile[] = []
@@ -721,6 +725,58 @@ export class Server {
         else {
           this.MapInfo.entities.push(element)
         }
+      }
+    })
+    this.setRpc('LoadTerrain', read => {
+      try {
+        const res = read.int32()
+        const worldSize = read.int32()
+        const positionY = read.float()
+        const sizeY = read.float()
+        const heightMapLength = read.int32()
+        const heightMapBytes = read.bytes(heightMapLength)
+
+        const heights = new Int16Array(heightMapLength / 2)
+        const heightView = new DataView(heightMapBytes.buffer, heightMapBytes.byteOffset, heightMapBytes.byteLength)
+        for (let i = 0; i < heights.length; i++) {
+          heights[i] = heightView.getInt16(i * 2, true)
+        }
+
+        if (heights.length !== res * res) {
+          console.error(`DeliverInitialWorld: heightmap length mismatch — expected ${res * res} texels (res=${res}) but got ${heights.length}. Terrain will likely render incorrectly or not at all.`)
+        }
+
+        this.TerrainInfo = {
+          res,
+          worldSize,
+          positionY,
+          sizeY,
+          heights
+        }
+      } catch (ex) {
+        console.error('DeliverInitialWorld: failed to parse response', ex)
+      }
+    })
+    this.setRpc('LoadMap', read => {
+      try {
+        const count = read.int32()
+        const prefabs = new Array(count)
+        for (let i = 0; i < count; i++) {
+          prefabs[i] = {
+            category: read.string(),
+            id: read.uint32(),
+            path: read.string(),
+            position: { x: read.float(), y: read.float(), z: read.float() },
+            rotation: { x: read.float(), y: read.float(), z: read.float() },
+            scale: { x: read.float(), y: read.float(), z: read.float() }
+          }
+          if(prefabs[i].path.includes('monuments/')) { 
+            console.log(prefabs[i])
+          }
+        }
+        this.MapObjects = prefabs
+      } catch (ex) {
+        console.error('DeliverInitialMap: failed to parse response (likely a malformed prefab entry desyncing the reader)', ex)
       }
     })
   }
