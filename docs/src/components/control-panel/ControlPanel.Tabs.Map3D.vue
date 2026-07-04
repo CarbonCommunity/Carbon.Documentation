@@ -55,7 +55,7 @@ const MAX_ORBIT_PIVOT_DISTANCE = TERRAIN_TARGET_SIZE * 3
 // restarting further out. Depth (sea level minus terrain height at that point) stands in for
 // "distance from shore" here, so these are all in the same scene-unit space as terrain height —
 // tune alongside HEIGHT_EXAGGERATION if the terrain's vertical scale changes a lot.
-const WAVE_MAX_DEPTH = 0.2
+const WAVE_MAX_DEPTH = 0.4
 const WAVE_BAND_WIDTH = 0.01
 const WAVE_PERIOD_SECONDS = 10
 const WAVE_COLOR = 0xf3fbff
