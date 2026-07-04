@@ -161,6 +161,12 @@ const children = computed(() => childrenOf(props.element.id))
 // codegen uses, so a slot previews exactly what that row emits). Ghosts are synthetic, not elements:
 // there is exactly one thing to edit and N things rendered.
 
+/** A scrolling layout container clips its children on canvas, matching the in-game viewport. */
+const isScrollViewport = computed(() => {
+  const el = props.element
+  return el.type === 'container' && !!el.props.layout?.scroll
+})
+
 /** The repeated list's rows when this element is a repeating layout container, else null. */
 const repeatRows = computed(() => {
   const el = props.element
@@ -606,20 +612,24 @@ const HANDLES: { edge: ResizeEdge; cls: string; cursor: string }[] = [
       />
     </template>
 
-    <!-- children render inside, relative to this element's box -->
-    <CanvasElement
-      v-for="child in children"
-      :key="child.id"
-      :element="child"
-      :parent-w="metrics.cuiW"
-      :parent-h="metrics.cuiH"
-      :scale="scale"
-    />
+    <!-- children render inside, relative to this element's box. A scroll container clips them to
+         the viewport like the game does (the wrapper carries overflow, not the box itself, so the
+         name tag / handles at negative offsets stay visible). -->
+    <div class="ld-children" :class="{ 'ld-clip': isScrollViewport }">
+      <CanvasElement
+        v-for="child in children"
+        :key="child.id"
+        :element="child"
+        :parent-w="metrics.cuiW"
+        :parent-h="metrics.cuiH"
+        :scale="scale"
+      />
 
-    <!-- repeat ghosts: rows 1..N stamped from the template into the next slots (see ghostBoxes) -->
-    <div v-if="ghostBoxes.length" class="ld-ghosts">
-      <div v-for="g in ghostBoxes" :key="g.key" class="ld-ghost" :style="ghostStyle(g)">
-        <div v-if="g.text !== null" class="ld-text" :style="g.textStyle ?? undefined">{{ g.text }}</div>
+      <!-- repeat ghosts: rows 1..N stamped from the template into the next slots (see ghostBoxes) -->
+      <div v-if="ghostBoxes.length" class="ld-ghosts">
+        <div v-for="g in ghostBoxes" :key="g.key" class="ld-ghost" :style="ghostStyle(g)">
+          <div v-if="g.text !== null" class="ld-text" :style="g.textStyle ?? undefined">{{ g.text }}</div>
+        </div>
       </div>
     </div>
     <span v-if="repeatRows" class="ld-repeat-badge" :title="`Repeating: the first child is the template (row 0); ${repeatRows.length - 1} more row(s) render as ghosts`">×{{ repeatRows.length }}</span>
@@ -705,6 +715,22 @@ const HANDLES: { edge: ResizeEdge; cls: string; cursor: string }[] = [
 .ld-ghost {
   position: absolute;
   outline: 1px dashed rgb(255 255 255 / calc(0.18 * var(--ld-layout-opacity, 1)));
+}
+
+/* children pass-through wrapper; carries the scroll-viewport clip so the box's own chrome
+   (name tag, handles at negative offsets) stays outside the overflow */
+.ld-children {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.ld-children > * {
+  pointer-events: auto;
+}
+
+.ld-children.ld-clip {
+  overflow: hidden;
 }
 
 /* scroll-view viewport hint: a slim scrollbar track on the scrolling edge(s) */

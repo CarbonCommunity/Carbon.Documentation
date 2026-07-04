@@ -22,7 +22,7 @@ import type { EmitContext } from './elements/emit'
 import { inputDefinition } from './elements/input'
 import { adduiModifierComponents, carbonModifierChain, oxideModifierLines } from './elements/modifiers'
 import { definitionOf } from './elements/registry'
-import { layoutContentSize, layoutSlot } from './elements/container'
+import { layoutContentSize, layoutSlot, scrollContentRect } from './elements/container'
 import type { ContainerLayout } from './elements/container'
 import { applyItemBindings, CLIENT_PANELS, resolveText, TEXT_ALIGNS, TEXT_FONTS } from './types'
 import type { ClientPanel, ClientPanelDef, ColorRGBA, CuiElement, DataSource, DesignerElement, ImageFill, ListColumn, ListDataSource, PanelElement, PanelProps, Provider, TextAlign, TextFont, Vec2 } from './types'
@@ -213,6 +213,17 @@ function expandBorders(elements: DesignerElement[]): DesignerElement[] {
  * flashing the whole list. Mirrors expandBorders: a pure pre-pass producing synthetic elements;
  * layouts without a repeat pass through unchanged (byte-identical).
  */
+/**
+ * Append the row index to a template element's command (`kit.claim` -> `kit.claim 0`) so the
+ * handler knows which item was clicked. One shared command per button, distinguished by argument —
+ * matches the deduped stub, which parses args[0] back into the item index.
+ */
+function withItemIndexCommand<T extends DesignerElement>(el: T, i: number): T {
+  const cmd = (el.props as { command?: string }).command
+  if (!cmd) return el
+  return { ...el, props: { ...el.props, command: `${cmd} ${i}` } } as T
+}
+
 function expandRepeats(elements: DesignerElement[], dataSources: DataSource[]): DesignerElement[] {
   const repeaters = elements.filter((e) => e.type === 'container' && e.props.layout && e.repeat?.source)
   if (!repeaters.length) return elements
@@ -231,8 +242,9 @@ function expandRepeats(elements: DesignerElement[], dataSources: DataSource[]): 
     }
     collect(template)
 
-    // Row 0: resolve the template's own item bindings in place (same array positions, same order).
-    const row0 = new Map(subtree.map((el) => [el.id, applyItemBindings(el, ds.items[0])]))
+    // Row 0: resolve the template's own item bindings + index its commands in place (same array
+    // positions, same order).
+    const row0 = new Map(subtree.map((el) => [el.id, withItemIndexCommand(applyItemBindings(el, ds.items[0]), 0)]))
     out = out.map((el) => row0.get(el.id) ?? el)
 
     // Rows 1..N: translated clones. Slots share a size, so a clone is the template shifted by the
@@ -245,7 +257,7 @@ function expandRepeats(elements: DesignerElement[], dataSources: DataSource[]): 
       const dx = slot.offsetMin.x - slot0.offsetMin.x
       const dy = slot.offsetMin.y - slot0.offsetMin.y
       for (const el of subtree) {
-        const bound = applyItemBindings(el, ds.items[i])
+        const bound = withItemIndexCommand(applyItemBindings(el, ds.items[i]), i)
         const isRoot = el.id === template.id
         clones.push({
           ...bound,
@@ -327,6 +339,7 @@ const LOOP_NAME_MARK = '\u0001' // appended to every subtree name → $"Name.{i}
 const LOOP_EXPR_OPEN = '\u0002' // wraps a string prop whose quoted literal becomes a bare expression
 const LOOP_EXPR_CLOSE = '\u0003'
 const LOOP_INT_BASE = 2100000000 // reserved item-id range; each use maps back to `item.<Column>`
+const LOOP_IDX_MARK = '\u0004' // command suffix -> $"cmd {i}" (the row-index argument)
 
 function csColumnType(kind: ListColumn['kind']): string {
   return kind === 'itemid' ? 'int' : 'string'
@@ -387,9 +400,12 @@ function loopClones(loop: RepeatLoop): { els: DesignerElement[]; intSubs: Map<st
   let nextInt = LOOP_INT_BASE
   const cols = new Map(loop.ds.columns.map((c) => [c.key, c]))
   const els = loop.subtree.map((el) => {
-    if (!el.itemBindings) return el
+    const cmd = (el.props as { command?: string }).command
+    if (!el.itemBindings && !cmd) return el
     const out = { ...el, props: { ...el.props } } as DesignerElement
-    for (const [path, key] of Object.entries(el.itemBindings)) {
+    // Commands gain the row-index argument (mirrors withItemIndexCommand in the expanded paths).
+    if (cmd) (out.props as { command: string }).command = `${cmd} ${LOOP_IDX_MARK}`
+    for (const [path, key] of Object.entries(el.itemBindings ?? {})) {
       const col = cols.get(key)
       if (!col) continue
       const expr = `item.${sanitizeIdent(col.key)}`
@@ -438,6 +454,37 @@ function rootOffsetSubs(loop: RepeatLoop, root: DesignerElement, provider: 'oxid
   ]
 }
 
+/**
+ * For a repeating SCROLL container, rewrite the content-rect literal (sized from the sample rows by
+ * annotateScroll) into a runtime expression over the list's count, so the generated plugin scrolls
+ * correctly however many rows the list holds. Only the stacking axis varies with the count; the
+ * cross axis is bounded by items-per-line and stays a literal. Same exact-literal philosophy as the
+ * loop sentinels: the from-string is the precise text the container emitter produced.
+ */
+function scrollCountSubs(loop: RepeatLoop, listIdent: string, countProp: 'Count' | 'Length', provider: 'oxide' | 'carbon'): { from: string; to: string } | null {
+  const l = loop.layout
+  if (!l.scroll || !l.content) return null // content injected by annotateScroll on the annotated pass
+  const r = scrollContentRect(l.scroll, l.content)
+  const per = Math.max(1, Math.floor(l.itemsPerLine))
+  const vertical = l.direction === 'vertical' // stacking axis: vertical -> content height, horizontal -> width
+  if (l.scroll === (vertical ? 'horizontal' : 'vertical')) return null // scrolling only the cross axis: literal is fine
+  const pitch = vertical ? l.itemHeight + l.gapY : l.itemWidth + l.gapX
+  const base = l.padding * 2 - (vertical ? l.gapY : l.gapX)
+  const count = `${listIdent}.${countProp}`
+  const lines = per > 1 ? `(${count} + ${per - 1}) / ${per}` : count
+  if (provider === 'carbon') {
+    const extent = `${lf(base, 2)} + ${lines} * ${lf(pitch, 2)}`
+    const part = (v: number, replace: boolean, negate: boolean) => (replace ? (negate ? `-(${extent})` : extent) : lf(v, 2))
+    return {
+      from: `new LuiOffset(${lf(r.offsetMin.x, 2)}, ${lf(r.offsetMin.y, 2)}, ${lf(r.offsetMax.x, 2)}, ${lf(r.offsetMax.y, 2)})`,
+      to: `new LuiOffset(${part(r.offsetMin.x, false, false)}, ${part(r.offsetMin.y, vertical, true)}, ${part(r.offsetMax.x, !vertical, false)}, ${part(r.offsetMax.y, false, false)})`,
+    }
+  }
+  const extent = `${num(base, 2)} + ${lines} * ${num(pitch, 2)}`
+  if (vertical) return { from: `"${offsetPair(r.offsetMin)}"`, to: `$"${num(r.offsetMin.x, 2)} {-(${extent})}"` }
+  return { from: `"${offsetPair(r.offsetMax)}"`, to: `$"{${extent}} ${num(r.offsetMax.y, 2)}"` }
+}
+
 /** One repeating container's for-loop: the parameterized template emitted once. */
 function genLoopLines(
   loop: RepeatLoop,
@@ -463,7 +510,8 @@ function genLoopLines(
   body = body.map((ln) =>
     ln
       .replace(/"([^"\u0001]*)\u0001([^"]*)"/g, (_m, a: string, b: string) => `$"${a}.{i}${b}"`)
-      .replace(/"\u0002([^"\u0003]*)\u0003"/g, '$1'),
+      .replace(/"\u0002([^"\u0003]*)\u0003"/g, '$1')
+      .replace(/"([^"\u0004]*)\u0004"/g, (_m, a: string) => `$"${a}{i}"`),
   )
   for (const [sentinel, expr] of intSubs) body = body.map((ln) => ln.split(sentinel).join(expr))
   while (body.length && body[body.length - 1] === '') body.pop()
@@ -497,11 +545,17 @@ function rootContainerName(names: Map<string, string>): string {
 
 // --- Oxide CUI -----------------------------------------------------------------------
 
-function genOxide(elements: DesignerElement[], ctx: EmitContext, emitAfter?: (el: DesignerElement, ctx: EmitContext) => string[]): string {
+function genOxide(
+  elements: DesignerElement[],
+  ctx: EmitContext,
+  emitAfter?: (el: DesignerElement, ctx: EmitContext) => string[],
+  transformEl?: (el: DesignerElement, lines: string[]) => string[],
+): string {
   // Oxide has no CreateParent equivalent — root elements parent to the layer string directly.
   const out: string[] = ['var container = new CuiElementContainer();', '']
   for (const el of elements) {
-    out.push(...definitionOf(el).oxide(el, ctx))
+    const lines = definitionOf(el).oxide(el, ctx)
+    out.push(...(transformEl ? transformEl(el, lines) : lines))
     out.push(...oxideModifierLines(el, nameRef(el, ctx))) // cursor/keyboard as standalone child elements
     if (emitAfter) out.push(...emitAfter(el, ctx)) // a repeating container's for-loop follows it
   }
@@ -524,7 +578,14 @@ function withCarbonChain(lines: string[], chain: string): string[] {
 
 // --- Carbon LUI ----------------------------------------------------------------------
 
-function genCarbon(elements: DesignerElement[], names: Map<string, string>, layer: ClientPanelDef, base: FieldCtx, emitAfter?: (el: DesignerElement, ctx: EmitContext) => string[]): string {
+function genCarbon(
+  elements: DesignerElement[],
+  names: Map<string, string>,
+  layer: ClientPanelDef,
+  base: FieldCtx,
+  emitAfter?: (el: DesignerElement, ctx: EmitContext) => string[],
+  transformEl?: (el: DesignerElement, lines: string[]) => string[],
+): string {
   // Carbon attaches to a client panel via CreateParent; root elements then nest under it.
   const root = rootContainerName(names)
   const ctx: EmitContext = { names, rootParent: root, sources: base.sources, fields: base.fields }
@@ -535,7 +596,8 @@ function genCarbon(elements: DesignerElement[], names: Map<string, string>, laye
     '',
   ]
   for (const el of elements) {
-    out.push(...withCarbonChain(definitionOf(el).carbon(el, ctx), carbonModifierChain(el)))
+    const lines = withCarbonChain(definitionOf(el).carbon(el, ctx), carbonModifierChain(el))
+    out.push(...(transformEl ? transformEl(el, lines) : lines))
     if (emitAfter) out.push(...emitAfter(el, ctx)) // a repeating container's for-loop follows it
   }
   out.push('cui.v2.SendUi(player);')
@@ -638,8 +700,16 @@ export function generateCode(
       const loop = loops.get(el.id)
       return loop ? genLoopLines(loop, names, ctx, provider2, idents.get(loop.ds.id)!.list, countProp) : []
     }
-  const oxide = () => genOxide(ordered, { names, rootParent: layer.oxide, sources: dataSources, fields: fieldCtx.fields }, loops.size ? loopsFor('oxide') : undefined)
-  const carbon = () => genCarbon(ordered, names, layer, fieldCtx, loops.size ? loopsFor('carbon') : undefined)
+  // A repeating scroll container's content extent becomes a runtime Count/Length expression.
+  const scrollFor =
+    (provider2: 'oxide' | 'carbon') =>
+    (el: DesignerElement, lines: string[]): string[] => {
+      const loop = loops.get(el.id)
+      const sub = loop ? scrollCountSubs(loop, idents.get(loop.ds.id)!.list, countProp, provider2) : null
+      return sub ? lines.map((ln) => ln.replace(sub.from, sub.to)) : lines
+    }
+  const oxide = () => genOxide(ordered, { names, rootParent: layer.oxide, sources: dataSources, fields: fieldCtx.fields }, loops.size ? loopsFor('oxide') : undefined, loops.size ? scrollFor('oxide') : undefined)
+  const carbon = () => genCarbon(ordered, names, layer, fieldCtx, loops.size ? loopsFor('carbon') : undefined, loops.size ? scrollFor('carbon') : undefined)
   if (provider === 'oxide') return [...head, oxide()].join('\n')
   if (provider === 'carbon') return [...head, carbon()].join('\n')
   // both: Carbon compiles with the CARBON symbol defined; Oxide does not.
@@ -684,7 +754,7 @@ function commandMethodName(cmd: string): string {
 
 /** A `[ConsoleCommand]` handler stub per distinct command — valid under both frameworks
  *  (Carbon is Oxide-command compatible), so no `#if` split is needed. Empty when no element binds one. */
-function commandStubs(elements: DesignerElement[]): string[] {
+function commandStubs(elements: DesignerElement[], indexedCommands: Set<string> = new Set()): string[] {
   const names = commandNames(elements)
   // PascalCasing is lossy ("ui.open" and "ui_open" both become UiOpenCommand), so dedupe the METHOD
   // names too — a numeric suffix on later collisions keeps the generated class compiling.
@@ -695,6 +765,8 @@ function commandStubs(elements: DesignerElement[]): string[] {
     let n = 2
     while (used.has(method)) method = `${base}${n++}`
     used.add(method)
+    // A command fired from a repeating template carries the clicked row as its first argument.
+    const indexed = indexedCommands.has(cmd)
     return [
       ...(i > 0 ? [''] : []), // blank line between successive stubs
       `    [ConsoleCommand("${esc(cmd)}")]`,
@@ -702,10 +774,23 @@ function commandStubs(elements: DesignerElement[]): string[] {
       '    {',
       '        var player = arg.Player();',
       '        if (player == null) return;',
-      `        // TODO: handle the "${esc(cmd)}" button`,
+      ...(indexed ? ['        var index = arg.GetInt(0); // which list item was clicked'] : []),
+      `        // TODO: handle the "${esc(cmd)}" button${indexed ? ' for item [index]' : ''}`,
       '    }',
     ]
   })
+}
+
+/** Base commands that live inside a repeating template — their stubs parse the row-index argument. */
+function indexedCommandsOf(loops: Map<string, RepeatLoop>): Set<string> {
+  const out = new Set<string>()
+  for (const loop of loops.values()) {
+    for (const el of loop.subtree) {
+      const cmd = (el.props as { command?: string }).command
+      if (cmd) out.add(cmd)
+    }
+  }
+  return out
 }
 
 /** Distinct image-DB fills used by panels (deduped by name) — the images the plugin must preload. */
@@ -777,7 +862,7 @@ export function generateFullClass(elements: DesignerElement[], provider: Provide
   // Image-DB fills need a preload lifecycle; elements that capture a command (button/input/countdown)
   // get a handler stub. Both go after the builder method, each section separated by a blank line.
   const imgs = imagedbFills(elements)
-  const sections = [method, preloadLines(imgs, provider), commandStubs(elements)].filter((s) => s.length)
+  const sections = [method, preloadLines(imgs, provider), commandStubs(elements, indexedCommandsOf(loops))].filter((s) => s.length)
   const methods = sections.flatMap((s, i) => (i === 0 ? s : ['', ...s]))
   if (provider === 'both') {
     return [
