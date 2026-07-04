@@ -94,7 +94,8 @@ let renderer: THREE.WebGLRenderer | null = null
 let controls: OrbitControls | null = null
 let cube: THREE.Mesh | null = null
 let terrain: THREE.Mesh | null = null
-let ocean: THREE.Mesh | null = null
+let oceanDeep: THREE.Mesh | null = null
+let oceanShallow: THREE.Mesh | null = null
 let lowland: THREE.Mesh | null = null
 let sky: Sky | null = null
 let fallbackCubeMeshes: THREE.InstancedMesh[] = []
@@ -241,13 +242,19 @@ function applyMapTexture(imageUrl: string) {
 }
 
 function removeOcean() {
-  if (!ocean) {
+  if (!oceanDeep || !oceanShallow) {
     return
   }
-  scene?.remove(ocean)
-  ocean.geometry.dispose()
-  ;(ocean.material as THREE.Material).dispose()
-  ocean = null
+  scene?.remove(oceanDeep)
+  scene?.remove(oceanShallow)
+  oceanDeep.geometry.dispose()
+  oceanShallow.geometry.dispose()
+
+  ;(oceanDeep.material as THREE.Material).dispose()
+  ;(oceanShallow.material as THREE.Material).dispose()
+
+  oceanDeep = null
+  oceanShallow = null
 }
 
 function removeLowland() {
@@ -281,21 +288,31 @@ function buildOcean(positionY: number, heightScale: number) {
   }
   removeOcean()
 
-  const geometry = new THREE.PlaneGeometry(OCEAN_SIZE, OCEAN_SIZE)
-  geometry.rotateX(-Math.PI / 2)
+  const oceanDeepGeometry = new THREE.PlaneGeometry(OCEAN_SIZE, OCEAN_SIZE)
+  const oceanShallowGeometry = new THREE.PlaneGeometry(OCEAN_SIZE, OCEAN_SIZE)
+  oceanDeepGeometry.rotateX(-Math.PI / 2)
+  oceanShallowGeometry.rotateX(-Math.PI / 2)
 
-  const material = new THREE.MeshStandardMaterial({
+  oceanDeep = new THREE.Mesh(oceanDeepGeometry, new THREE.MeshStandardMaterial({
+    color: new THREE.Color(0, 0, 0),
+    transparent: false,
+    opacity: 1,
+    roughness: 1,
+    metalness: 0,
+    side: THREE.DoubleSide
+  }))
+  oceanDeep.position.y = -(positionY + 40) * heightScale
+  oceanShallow = new THREE.Mesh(oceanShallowGeometry, new THREE.MeshStandardMaterial({
     color: 0x1c7ed6,
     transparent: true,
-    opacity: 0.75,
-    roughness: 0.15,
-    metalness: 0.1,
+    opacity: 0.85,
+    roughness: .25,
+    metalness: 0,
     side: THREE.DoubleSide
-  })
-
-  ocean = new THREE.Mesh(geometry, material)
-  ocean.position.y = -positionY * heightScale
-  scene.add(ocean)
+  }))
+  oceanShallow.position.y = -positionY * heightScale
+  scene.add(oceanDeep)
+  scene.add(oceanShallow)
 }
 
 function objectScenePosition(p: { x: number; y: number; z: number }, worldSize: number, positionY: number, planarScale: number, heightScale: number) {
@@ -453,7 +470,8 @@ function computeOrbitPivot(): THREE.Vector3 | null {
 
   const surfaces: THREE.Mesh[] = []
   if (terrain) surfaces.push(terrain)
-  if (ocean) surfaces.push(ocean)
+  if (oceanDeep) surfaces.push(oceanDeep)
+  if (oceanShallow) surfaces.push(oceanShallow)
   if (lowland) surfaces.push(lowland)
 
   if (surfaces.length > 0) {
