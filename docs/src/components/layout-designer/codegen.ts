@@ -909,15 +909,11 @@ export function generateFullClass(elements: DesignerElement[], provider: Provide
   if (provider === 'both') {
     return [
       ...(loops.size ? ['using System.Collections.Generic;'] : []), // List<T> item lists
-      ...(hasScrollContainers(elements) ? ['using UnityEngine.UI;'] : []), // ScrollRect.MovementType
+      'using Oxide.Game.Rust.Cui;', // Cui* types; under Carbon via the Oxide-compat shim
       '#if CARBON',
       'using Carbon.Components;',
-      'using Oxide.Game.Rust.Cui;', // CuiHelper (Carbon ships the Oxide-compat shim)
-      'using static Carbon.Components.CUI;',
       ...(imgs.length ? ['using Carbon.Modules;'] : []),
-      '#else',
-      'using Oxide.Game.Rust.Cui;',
-      'using Oxide.Plugins;',
+      ...(hasScrollContainers(elements) ? ['#else', 'using UnityEngine.UI;'] : []), // ScrollRect.MovementType (oxide emit only)
       '#endif',
       '',
       '#if CARBON',
@@ -944,9 +940,8 @@ export function generateFullClass(elements: DesignerElement[], provider: Provide
   return [
     ...(loops.size ? ['using System.Collections.Generic;'] : []), // List<T> item lists
     ...(!carbon && hasScrollContainers(elements) ? ['using UnityEngine.UI;'] : []), // ScrollRect.MovementType
-    carbon ? 'using Carbon.Components;' : 'using Oxide.Game.Rust.Cui;',
-    ...(carbon ? ['using Oxide.Game.Rust.Cui;'] : []), // CuiHelper (Carbon ships the Oxide-compat shim)
-    carbon ? 'using static Carbon.Components.CUI;' : 'using Oxide.Plugins;',
+    ...(carbon ? ['using Carbon.Components;'] : []),
+    'using Oxide.Game.Rust.Cui;', // Cui* types; under Carbon via the Oxide-compat shim
     ...(carbon && imgs.length ? ['using Carbon.Modules;'] : []), // ImageDatabaseModule / BaseModule
     '',
     carbon ? 'namespace Carbon.Plugins;' : 'namespace Oxide.Plugins;',
