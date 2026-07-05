@@ -14,7 +14,7 @@
 // expandTabs (JSON/live preview — active page only, buttons resolved concretely) and the tabs
 // emission in generateCode (Class/UX — per-page local functions + a switch over the runtime `tab`).
 
-import { anchorPair, esc, fullStretch, nameRef, offExpr, offsetPair, parentRef, posExpr, staggeredBox } from './emit'
+import { anchorPair, esc, nameRef, offExpr, offsetPair, parentRef, posExpr, staggeredBox } from './emit'
 import type { CreateArgs, ChildFactory, ElementDefinition, EmitContext } from './emit'
 import type { BaseElement, CuiComponent } from '../types'
 
@@ -129,7 +129,10 @@ export const tabsDefinition: ElementDefinition<TabsElement> = {
       name: `Tabs.${n}`,
       parentId,
       type: 'tabs',
-      ...(parentId === null ? fullStretch() : staggeredBox(0, 160, 110)),
+      // ALWAYS a centered point-anchored box (never full-stretch, even at root): the seeded bar's
+      // geometry is derived from these offsets, and stretch anchors would blow the bar and its two
+      // buttons up to the whole canvas.
+      ...staggeredBox(0, parentId === null ? 220 : 160, parentId === null ? 140 : 110),
       props: { command: 'ui.tab', activeTab: 0 },
     }
   },
