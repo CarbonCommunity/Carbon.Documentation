@@ -8,7 +8,7 @@ import type { ElementType } from './types'
 import { useDesigner } from './useDesigner'
 import { useDismiss } from './useDismiss'
 
-const { contextMenu, byId, childrenOf, select, closeContextMenu, addElement, addLabel, addTextWithBackground, duplicate, groupSelection, ungroup, canGroup, alignSelection, requestTextEdit, bringToFront, sendToBack, reparent, fill, remove } =
+const { contextMenu, byId, childrenOf, select, closeContextMenu, addElement, addLabel, addTextWithBackground, addTabPage, addTabButton, duplicate, groupSelection, ungroup, canGroup, alignSelection, requestTextEdit, bringToFront, sendToBack, reparent, fill, remove } =
   useDesigner()
 
 const target = computed(() => (contextMenu.targetId ? byId.value.get(contextMenu.targetId) ?? null : null))
@@ -123,11 +123,16 @@ const items = computed<MenuItem[]>(() => {
   // Blank spot (canvas background / empty tree area): just the add flyout, at root.
   if (!t) return [{ label: 'Add element', icon: Plus, submenu: true }]
   const grandparent = t.parentId ? byId.value.get(t.parentId)?.parentId ?? null : null
-  const list: MenuItem[] = [
-    { label: 'Add child', icon: Plus, submenu: true },
-  ]
-  // A caption nested inside another label is pointless, so offer "Add label" only on non-text boxes.
-  if (t.type !== 'text') list.push({ label: 'Add label', icon: Type, act: () => addLabel(t.id) })
+  // A tab view's children are PAGES, never arbitrary elements — its menu adds pages and tab buttons.
+  const list: MenuItem[] =
+    t.type === 'tabs'
+      ? [
+          { label: 'Add page', icon: Plus, act: () => addTabPage(t.id) },
+          { label: 'Add tab button', icon: Plus, act: () => addTabButton(t.id) },
+        ]
+      : [{ label: 'Add child', icon: Plus, submenu: true }]
+  // A caption nested inside another label is pointless (and a tab view holds only pages).
+  if (t.type !== 'text' && t.type !== 'tabs') list.push({ label: 'Add label', icon: Type, act: () => addLabel(t.id) })
   list.push({ label: 'Duplicate', icon: Copy, act: () => duplicate(t.id) })
   if (canGroup.value) list.push({ label: 'Group selection', icon: Group, act: () => groupSelection() })
   if (t.groupId) list.push({ label: 'Ungroup', icon: Ungroup, act: () => ungroup(t.id) })

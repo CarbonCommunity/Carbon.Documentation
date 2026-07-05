@@ -8,7 +8,7 @@ import { cssColor } from './geometry'
 import type { ColorRGBA, DesignerElement, ElementType } from './types'
 import { useDesigner } from './useDesigner'
 
-const { byId, childrenOf, isSelected, isAncestor, select, addElement, addTextWithBackground, moveElement, remove, openContextMenu, selectedId } = useDesigner()
+const { byId, childrenOf, isSelected, isAncestor, select, addElement, addTextWithBackground, addTabPage, moveElement, remove, openContextMenu, selectedId } = useDesigner()
 
 // --- collapse/expand -------------------------------------------------------------------------
 // Collapsed node ids — a browsing aid, not document state (component-local, resets with the pane).
@@ -54,6 +54,12 @@ const flat = computed(() => {
 // --- per-row "add child" type menu (fixed-positioned: the tree is a scroll container) ---
 const addMenu = reactive<{ id: string | null; x: number; y: number }>({ id: null, x: 0, y: 0 })
 function toggleAddMenu(rowId: string, ev: MouseEvent) {
+  // A tab view's children are pages — the + adds one directly instead of offering element types.
+  if (byId.value.get(rowId)?.type === 'tabs') {
+    addTabPage(rowId)
+    addMenu.id = null
+    return
+  }
   if (addMenu.id === rowId) {
     addMenu.id = null
     return

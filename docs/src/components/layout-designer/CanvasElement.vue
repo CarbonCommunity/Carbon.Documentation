@@ -566,8 +566,15 @@ function endDrag() {
 }
 
 function onContextMenu(e: MouseEvent) {
-  // Right-click, like a plain click, acts on the surface element (a full-bleed caption defers to its host).
-  openContextMenu(surfaceOf(props.element.id), e.clientX, e.clientY, elementsUnderPoint(e.clientX, e.clientY))
+  // Right-click climbs passthrough captions to their host but NOT tab pages — the menu on a page
+  // must belong to the page (its Add child fills the page), not to the view around it.
+  let cur = props.element.id
+  let el = byId.value.get(cur)
+  while (el?.passthrough && el.parentId) {
+    cur = el.parentId
+    el = byId.value.get(cur)
+  }
+  openContextMenu(cur, e.clientX, e.clientY, elementsUnderPoint(e.clientX, e.clientY))
 }
 
 // If this element unmounts mid-drag (e.g. deleted, or its subtree re-parented) tear the drag down so

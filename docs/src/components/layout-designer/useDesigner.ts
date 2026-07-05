@@ -348,6 +348,68 @@ function applyContainerLayout(id: string | null) {
   })
 }
 
+/** Add an empty page to a tab view (a container child; reflow slams it to the page rect) and show it. */
+function addTabPage(tabsId: string): DesignerElement | null {
+  const tv = byId.value.get(tabsId)
+  if (!tv || tv.type !== 'tabs') return null
+  const page = createByType('container', tabsId)
+  page.name = `Page ${childrenOf(tabsId).length + 1}`
+  elements.value.push(page)
+  applyContainerLayout(tabsId)
+  tv.props.activeTab = childrenOf(tabsId).length - 1
+  selectedIds.value = [page.id]
+  return page
+}
+
+/** Add a switch button wired to a tab view. If every existing switch button lives in one container
+ *  (the bar) the row is re-split equally to fit the newcomer; otherwise it lands just above the view.
+ *  Buttons stay ordinary elements — restyle or move them freely afterwards. */
+function addTabButton(tabsId: string): DesignerElement | null {
+  const tv = byId.value.get(tabsId)
+  if (!tv || tv.type !== 'tabs') return null
+  const siblings = elements.value.filter((e): e is DesignerElement & { type: 'button' } => e.type === 'button' && (e.props as ButtonProps).tabSwitch?.target === tabsId)
+  const page = Math.min(siblings.length, Math.max(0, childrenOf(tabsId).length - 1))
+  const barId = siblings.length && siblings.every((b) => b.parentId === siblings[0].parentId) ? siblings[0].parentId : null
+  const btn = createByType('button', barId ?? tv.parentId)
+  btn.name = `${tv.name} Tab ${siblings.length + 1}`
+  if (btn.type === 'button') {
+    btn.props.color = { r: 0.12, g: 0.13, b: 0.16, a: 1 }
+    btn.props.tabSwitch = { target: tabsId, page }
+    btn.props.activeColor = { r: 0.99, g: 0.35, b: 0.23, a: 1 }
+  }
+  if (barId) {
+    // uniform default: equal horizontal split across the bar for the whole set
+    const all = [...siblings, btn]
+    const w = 1 / all.length
+    all.forEach((b, i) => {
+      b.anchorMin = { x: i * w, y: 0 }
+      b.anchorMax = { x: (i + 1) * w, y: 1 }
+      b.offsetMin = { x: i === 0 ? 0 : 1, y: 0 }
+      b.offsetMax = { x: i === all.length - 1 ? 0 : -1, y: 0 }
+    })
+  } else {
+    btn.anchorMin = { ...tv.anchorMin }
+    btn.anchorMax = { ...tv.anchorMax }
+    btn.offsetMin = { x: tv.offsetMin.x, y: tv.offsetMax.y + 2 }
+    btn.offsetMax = { x: tv.offsetMin.x + 100, y: tv.offsetMax.y + 26 }
+  }
+  elements.value.push(btn)
+  const label = createByType('text', btn.id)
+  label.name = `${btn.name} Label`
+  label.anchorMin = { x: 0, y: 0 }
+  label.anchorMax = { x: 1, y: 1 }
+  label.offsetMin = { x: 0, y: 0 }
+  label.offsetMax = { x: 0, y: 0 }
+  label.passthrough = true
+  if (label.type === 'text') {
+    label.props.text = `Page ${page + 1}`
+    label.props.fontSize = 12
+  }
+  elements.value.push(label)
+  selectedIds.value = [btn.id]
+  return btn
+}
+
 // Bumped to ask the Inspector to focus + select its text field (e.g. from "Edit label text").
 const textEditSignal = ref(0)
 function requestTextEdit() {
@@ -1519,6 +1581,8 @@ export function useDesigner() {
     openContextMenu,
     closeContextMenu,
     // data sources
+    addTabPage,
+    addTabButton,
     addDataSource,
     updateDataSource,
     removeDataSource,
