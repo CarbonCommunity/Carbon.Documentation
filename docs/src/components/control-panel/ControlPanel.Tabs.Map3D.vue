@@ -39,7 +39,7 @@ const CHUNK_SIZE = TERRAIN_TARGET_SIZE / CHUNK_GRID_DIVISIONS
 // Max horizontal (XZ) distance from the camera, in scene units, at which a chunk of real props
 // still renders. Tune to taste — this is the main lever for large/dense maps; lower trades visible
 // coverage for more headroom.
-const OBJECT_DRAW_DISTANCE = 5
+const OBJECT_DRAW_DISTANCE = 4
 // How many chunks get their visibility re-checked per animation frame (see
 // stepObjectDrawDistance). Rather than re-evaluating every chunk at once on a timer — which pops
 // every newly in/out-of-range chunk visible/invisible in the same instant — a small slice is swept

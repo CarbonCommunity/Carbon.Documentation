@@ -809,13 +809,31 @@ export class Server {
         console.error('DeliverInitialMap: failed to parse response (likely a malformed prefab entry desyncing the reader)', ex)
       }
     })
+    this.setRpc('SendFakePlayerSnapshot', read => {
+      const entityCount = read.int32()
+      for(let i = 0; i < entityCount; i++) {
+          const entityid = read.uint64()
+          const prefabid = read.uint32()
+          const posX = read.float()
+          const posY = read.float()
+          const posZ = read.float()
+          const rotX = read.float()
+          const rotY = read.float()
+          const rotZ = read.float()
+          this.LiveEntities.set(entityid, {
+            entId: entityid,
+            prefabId: prefabid,
+            path: this.PrefabPathsById.get(prefabid) ?? null,
+            position: { x: posX, y: posY, z: posZ },
+            rotation: { x: rotX, y: rotY, z: rotZ }
+          })
+      }
+    })
     this.setRpc('LoadStringPool', read => {
       const count = read.int32()
       for(let i = 0; i < count; i++) {
         this.PrefabPathsById.set(read.uint32(), read.string())
       }
-      console.log(count)
-      console.log(this.PrefabPathsById.size)
     })
     this.setRpc('OnFakePlayerRPC', read => {
       const packetId = read.byte() - 140

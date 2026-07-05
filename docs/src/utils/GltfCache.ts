@@ -39,6 +39,42 @@ function stripEmbeddedLights(root: THREE.Object3D) {
   }
 }
 
+// GLTFLoader already honors a glTF material's declared alphaMode (MASK/BLEND), but Rust's asset
+// conversion pipeline doesn't reliably set that even for prefabs whose textures clearly need real
+// transparency, leaving them OPAQUE. Rather than inspecting texture pixels, prefab paths matching
+// one of these known-transparent categories get transparency forced on instead — extend this list
+// as more categories turn up looking wrong (opaque where they should be see-through).
+const TRANSPARENT_PATH_PATTERN = /grass|glass|leaf|foliage|bush|palm|substation|road|slab|vine|rubble|tunnel|fence|net|curtain|tarp/i;
+
+// Enables blending for every textured material in a model whose resolved URL (and therefore
+// prefab path — see resolveModelUrl) matches TRANSPARENT_PATH_PATTERN. Materials that already
+// declare transparency or a MASK alphaTest cutout are left alone since GLTFLoader already
+// configured those correctly.
+// Note: this trades away depth-writing for affected materials (standard for blended transparency),
+// which — combined with InstancedMesh not depth-sorting its own instances — can show minor
+// draw-order artifacts where several transparent instances of the same model overlap.
+function applyTextureTransparency(root: THREE.Object3D, url: string) {
+  if (!TRANSPARENT_PATH_PATTERN.test(url)) {
+    return;
+  }
+  root.traverse((child) => {
+    if (!(child instanceof THREE.Mesh)) {
+      return;
+    }
+    const materials = Array.isArray(child.material) ? child.material : [child.material];
+    for (const material of materials) {
+      if (!(material instanceof THREE.MeshStandardMaterial) || material.transparent || material.alphaTest > 0) {
+        continue;
+      }
+      if (material.map) {
+        material.transparent = true;
+        material.depthWrite = false;
+        material.needsUpdate = true;
+      }
+    }
+  });
+}
+
 // Loads (and caches) a GLB by URL. Multiple calls for the same URL share one in-flight/loaded promise.
 export function loadModel(url: string): Promise<THREE.Object3D | null> {
   let pending = modelCache.get(url);
@@ -48,6 +84,7 @@ export function loadModel(url: string): Promise<THREE.Object3D | null> {
         url,
         (gltf) => {
           stripEmbeddedLights(gltf.scene);
+          applyTextureTransparency(gltf.scene, url);
           resolve(gltf.scene);
         },
         undefined,
