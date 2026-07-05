@@ -305,7 +305,7 @@ export interface TextElement extends BaseElement {
 export type DesignerElement = PanelElement | TextElement | ContainerElement | ButtonElement | InputElement | CountdownElement
 
 /** File ▸ New starters. 'empty' seeds nothing; the rest seed a hand-placed sample composition. */
-export type LayoutPreset = 'empty' | 'default' | 'menu'
+export type LayoutPreset = 'empty' | 'default' | 'menu' | 'list'
 
 // --- Data sources --------------------------------------------------------------------
 //

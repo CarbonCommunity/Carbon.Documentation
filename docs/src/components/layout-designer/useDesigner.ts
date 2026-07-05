@@ -667,6 +667,71 @@ function seedMenu() {
   selectedIds.value = [window.id]
 }
 
+/** "List menu" preset: the Menu window, but the body is a scrolling repeat container stamped from a
+ *  seeded Kits list -- the working starting point for kit/shop/leaderboard style UIs. */
+function seedListMenu() {
+  const white = { r: 0.95, g: 0.95, b: 0.97, a: 1 }
+  const window = seedPanel(null, { x: 0.5, y: 0.5 }, { x: 0.5, y: 0.5 }, { x: -180, y: -150 }, { x: 180, y: 150 }, { r: 0.12, g: 0.13, b: 0.16, a: 0.98 }, 'Menu')
+  window.modifiers = { cursor: true }
+  const titleBar = seedPanel(window.id, { x: 0, y: 1 }, { x: 1, y: 1 }, { x: 0, y: -44 }, { x: 0, y: 0 }, { r: 0.99, g: 0.35, b: 0.23, a: 1 }, 'Title Bar')
+  seedText(titleBar.id, { x: 0, y: 0 }, { x: 1, y: 1 }, { x: 14, y: 0 }, { x: -44, y: 0 }, 'Kits', { fontSize: 16, align: 'MiddleLeft', color: white, name: 'Title', passthrough: true })
+  seedButton(titleBar.id, { x: 1, y: 1 }, { x: 1, y: 1 }, { x: -40, y: -40 }, { x: -4, y: -4 }, { r: 0.82, g: 0.24, b: 0.2, a: 1 }, 'X', { name: 'Close Button', fontSize: 16 })
+
+  // The list source the template stamps from (real item ids only -- invalid ids crash the client).
+  const kits: ListDataSource = {
+    id: nextDataSourceId().id,
+    name: 'Kits',
+    kind: 'list',
+    typeName: 'Kit',
+    columns: [
+      { key: 'Title', kind: 'text' },
+      { key: 'ItemId', kind: 'itemid' },
+    ],
+    items: [
+      { Title: 'Starter', ItemId: '-97956382' },
+      { Title: 'Builder', ItemId: '-2099697608' },
+      { Title: 'Lumberjack', ItemId: '-151838493' },
+      { Title: 'Scrapper', ItemId: '69511070' },
+      { Title: 'Raider', ItemId: '-97956382' },
+      { Title: 'Farmer', ItemId: '-151838493' },
+    ],
+  }
+  dataSources.value.push(kits)
+
+  // Scrolling repeat container filling the window body below the title bar.
+  const layout: ContainerLayout = { direction: 'vertical', itemsPerLine: 1, itemWidth: 312, itemHeight: 44, gapX: 8, gapY: 8, padding: 0, scroll: 'vertical' }
+  const list = createByType('container', window.id)
+  list.name = 'Kit List'
+  list.anchorMin = { x: 0, y: 0 }
+  list.anchorMax = { x: 1, y: 1 }
+  list.offsetMin = { x: 24, y: 24 }
+  list.offsetMax = { x: -24, y: -56 }
+  if (list.type === 'container') list.props.layout = layout
+  list.repeat = { source: kits.id }
+  elements.value.push(list)
+
+  // Template row on slot 0: a button whose caption binds Title and whose icon binds ItemId.
+  const slot = layoutSlot(layout, 0)
+  const row = seedButton(list.id, { x: 0, y: 1 }, { x: 0, y: 1 }, slot.offsetMin, slot.offsetMax, { r: 0.18, g: 0.2, b: 0.24, a: 1 }, 'Kit', {
+    command: 'kit.claim',
+    name: 'Kit Row',
+    fontSize: 14,
+  })
+  const caption = childrenOf(row.id).find((k) => k.type === 'text')
+  if (caption) caption.itemBindings = { text: 'Title' }
+  const icon = createByType('panel', row.id)
+  icon.name = 'Kit Icon'
+  icon.anchorMin = { x: 0, y: 0.5 }
+  icon.anchorMax = { x: 0, y: 0.5 }
+  icon.offsetMin = { x: 4, y: -18 }
+  icon.offsetMax = { x: 40, y: 18 }
+  if (icon.type === 'panel') icon.props = { ...icon.props, color: { r: 1, g: 1, b: 1, a: 1 }, image: { kind: 'itemicon', itemId: -97956382, skinId: 0 } }
+  icon.itemBindings = { 'image.itemId': 'ItemId' }
+  elements.value.push(icon)
+
+  selectedIds.value = [window.id]
+}
+
 // --- data sources --------------------------------------------------------------------
 
 /** Next generic data-source name: "Data N" past the highest existing one. */
@@ -1045,6 +1110,7 @@ function newLayout(name?: string, preset: LayoutPreset = 'default') {
   // 'empty' starts blank; every other preset seeds a hand-placed starter composition.
   if (preset === 'default') seedSample()
   else if (preset === 'menu') seedMenu()
+  else if (preset === 'list') seedListMenu()
   persist()
   resetHistory()
 }

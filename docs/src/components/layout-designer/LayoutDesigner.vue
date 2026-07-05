@@ -110,6 +110,7 @@ const NEW_PRESETS: { id: LayoutPreset; name: string; hint: string }[] = [
   { id: 'empty', name: 'Empty', hint: 'A blank layout' },
   { id: 'default', name: 'Default', hint: 'The starter sample (panel + title + corner)' },
   { id: 'menu', name: 'Menu', hint: 'A centered menu: title bar with title + close button, and one action button' },
+  { id: 'list', name: 'List menu', hint: 'The menu window with a scrolling, repeating kit list bound to a sample data source' },
 ]
 function fileNew(preset: LayoutPreset) {
   newLayout(undefined, preset) // auto-named "Layout N"; rename via the pencil
