@@ -2,11 +2,20 @@
 import { useElementSize, useEventListener } from '@vueuse/core'
 import { computed, ref, watch } from 'vue'
 import CanvasElement from './CanvasElement.vue'
+import ElementTypeMenu from './ElementTypeMenu.vue'
 import { canvasDisplay, canvasHeight, canvasWidth } from './geometry'
 import { useDesigner } from './useDesigner'
 import { useScreenShare } from './useScreenShare'
 
-const { canvas, rootElements, select, selectedIds, rectOf, gridSize, guides } = useDesigner()
+const { canvas, rootElements, select, selectedIds, rectOf, gridSize, guides, openContextMenu, addElement, addTextWithBackground } = useDesigner()
+
+// Empty-canvas CTA: a centered, outline-styled "Add an element" that opens the type picker.
+const emptyMenuOpen = ref(false)
+function onEmptyPick(choice: Parameters<typeof addElement>[0] | 'textbg') {
+  if (choice === 'textbg') addTextWithBackground(null)
+  else addElement(choice, null)
+  emptyMenuOpen.value = false
+}
 
 // #7 backdrop compositing: the stream renders behind the design; layoutOpacity fades the whole design.
 const { stream, active, asBackdrop, layoutOpacity, videoOpacity, cropTop, cropRight, cropBottom, cropLeft } = useScreenShare()
@@ -139,8 +148,12 @@ const hGuideStyle = computed(() => {
 </script>
 
 <template>
-  <div ref="viewport" class="ld-viewport" @pointerdown="select(null)">
+  <div ref="viewport" class="ld-viewport" @pointerdown="select(null)" @contextmenu.prevent="openContextMenu(null, $event.clientX, $event.clientY)">
     <div ref="frame" class="ld-frame" :style="frameStyle" @pointerdown.stop="onFramePointerDown">
+      <div v-if="!rootElements.length" class="ld-empty-cta" @pointerdown.stop>
+        <button class="ld-empty-add" @click.stop="emptyMenuOpen = !emptyMenuOpen">+ Add an element</button>
+        <ElementTypeMenu v-if="emptyMenuOpen" placement="below" @pick="onEmptyPick" />
+      </div>
       <!-- screen-share backdrop (#7) -->
       <video v-show="showBackdrop" ref="backdrop" class="ld-backdrop" :style="backdropStyle" autoplay muted playsinline />
       <div class="ld-grid" :style="gridStyle" />
@@ -161,6 +174,30 @@ const hGuideStyle = computed(() => {
 </template>
 
 <style scoped>
+/* empty-canvas call to action: centered, OUTLINE-styled (deliberately not the orange accent) */
+.ld-empty-cta {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+}
+
+.ld-empty-add {
+  padding: 8px 18px;
+  font-size: 13px;
+  border: 1px dashed var(--vp-c-text-3);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--vp-c-text-2);
+  cursor: pointer;
+}
+
+.ld-empty-add:hover {
+  border-color: var(--vp-c-text-1);
+  color: var(--vp-c-text-1);
+}
+
 .ld-viewport {
   position: relative;
   width: 100%;

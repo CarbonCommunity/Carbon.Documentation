@@ -156,7 +156,7 @@ function endDrag() {
 </script>
 
 <template>
-  <div class="ld-tree">
+  <div class="ld-tree" @contextmenu.self.prevent="openContextMenu(null, $event.clientX, $event.clientY)">
     <div
       v-for="row in flat"
       :key="row.el.id"

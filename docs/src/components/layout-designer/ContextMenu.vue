@@ -98,11 +98,9 @@ function closeSubs() {
   alignOpen.value = false
 }
 function onAddChild(choice: ElementType | AddPreset) {
-  const t = target.value
-  if (t) {
-    if (choice === 'textbg') addTextWithBackground(t.id)
-    else addElement(choice, t.id)
-  }
+  const pid = target.value?.id ?? null // no target = the blank-canvas menu, adding at root
+  if (choice === 'textbg') addTextWithBackground(pid)
+  else addElement(choice, pid)
   closeContextMenu()
 }
 
@@ -122,7 +120,8 @@ interface MenuItem {
 
 const items = computed<MenuItem[]>(() => {
   const t = target.value
-  if (!t) return []
+  // Blank spot (canvas background / empty tree area): just the add flyout, at root.
+  if (!t) return [{ label: 'Add element', icon: Plus, submenu: true }]
   const grandparent = t.parentId ? byId.value.get(t.parentId)?.parentId ?? null : null
   const list: MenuItem[] = [
     { label: 'Add child', icon: Plus, submenu: true },
@@ -178,7 +177,7 @@ useEventListener(window, 'scroll', () => closeContextMenu(), true)
 </script>
 
 <template>
-  <div v-if="contextMenu.open && target" class="ld-ctx" :style="style" @contextmenu.prevent>
+  <div v-if="contextMenu.open && items.length" class="ld-ctx" :style="style" @contextmenu.prevent>
     <template v-for="(it, i) in items" :key="i">
       <div v-if="it.sep" class="ld-ctx-sep" />
       <div v-else-if="it.submenu" class="ld-ctx-sub">

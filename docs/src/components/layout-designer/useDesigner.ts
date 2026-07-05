@@ -96,8 +96,8 @@ function clearGuides() {
 // `under` = the z-stack of element ids at the click point (top → bottom), so the menu can offer a
 // "Select under" list to reach a box occluded by a full-bleed sibling.
 const contextMenu = reactive<{ open: boolean; x: number; y: number; targetId: string | null; under: string[] }>({ open: false, x: 0, y: 0, targetId: null, under: [] })
-function openContextMenu(id: string, x: number, y: number, under: string[] = []) {
-  if (!selectedIds.value.includes(id)) selectedIds.value = [id]
+function openContextMenu(id: string | null, x: number, y: number, under: string[] = []) {
+  if (id && !selectedIds.value.includes(id)) selectedIds.value = [id]
   contextMenu.open = true
   contextMenu.x = x
   contextMenu.y = y
