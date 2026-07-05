@@ -50,7 +50,7 @@ public class LayoutDesignerExamples : CarbonPlugin
         }
 
         // content host the selected example renders into (the demo's stand-in for the usual root)
-        cui.v2.CreateEmptyContainer("ExamplesRoot", "ExamplesContent")
+        cui.v2.CreateEmptyContainer("ExamplesRoot", "ExamplesContent", true)
             .SetAnchorAndOffset(new LuiPosition(0f, 0f, 1f, 1f), new LuiOffset(0f, 0f, 0f, -26f));
 
         switch (tab)
@@ -225,7 +225,7 @@ public class LayoutDesignerExamples : CarbonPlugin
             new LuiOffset(14f, 8f, -14f, 26f),
             11, "0.55 0.58 0.64 1", "The wrapper has no graphic — select it in the tree and move all four chips at once.", TextAnchor.MiddleLeft, "Hint");
 
-        cui.v2.CreateEmptyContainer("Card", "ChipGrid")
+        cui.v2.CreateEmptyContainer("Card", "ChipGrid", true)
             .SetAnchorAndOffset(LuiPosition.MiddleCenter, new LuiOffset(-90f, -70f, 90f, 60f));
 
         cui.v2.CreatePanel("ChipGrid",
@@ -859,7 +859,7 @@ public class LayoutDesignerExamples : CarbonPlugin
             new LuiOffset(14f, 8f, -14f, 26f),
             11, "0.55 0.58 0.64 1", "The container arranges its children into slots — reorder in the tree, resize one item to resize all.", TextAnchor.MiddleLeft, "Hint");
 
-        cui.v2.CreateEmptyContainer("Card", "Menu")
+        cui.v2.CreateEmptyContainer("Card", "Menu", true)
             .SetAnchorAndOffset(LuiPosition.MiddleCenter, new LuiOffset(-108f, -76f, 108f, 64f));
 
         cui.v2.CreateButton("Menu",
@@ -934,7 +934,7 @@ public class LayoutDesignerExamples : CarbonPlugin
             new LuiOffset(14f, 8f, -14f, 26f),
             11, "0.55 0.58 0.64 1", "One editable template (row 0) stamped per row of a list — the ghosts are the other rows.", TextAnchor.MiddleLeft, "Hint");
 
-        cui.v2.CreateEmptyContainer("Card", "KitList")
+        cui.v2.CreateEmptyContainer("Card", "KitList", true)
             .SetAnchorAndOffset(LuiPosition.MiddleCenter, new LuiOffset(-190f, -76f, 190f, 88f));
 
         for (int i = 0; i < Kits.Length; i++)

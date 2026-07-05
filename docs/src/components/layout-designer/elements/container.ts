@@ -156,9 +156,12 @@ function carbon(el: ContainerElement, ctx: EmitContext): string[] {
       '',
     ]
   }
-  // CreateEmptyContainer(parent, name) takes no position — place it with a chained SetAnchorAndOffset.
+  // CreateEmptyContainer takes no position (chain SetAnchorAndOffset) and — unlike every other
+  // Create* — does NOT add itself to the build unless `add: true` is passed (LUI.cs: `if (add)
+  // elements.Add(cont)`; the no-add form is a handle for referencing EXISTING panels). Omitting it
+  // silently drops the container and everything parented inside from the payload.
   return [
-    `cui.v2.CreateEmptyContainer("${esc(parentRef(el, ctx))}", "${esc(nameRef(el, ctx))}")`,
+    `cui.v2.CreateEmptyContainer("${esc(parentRef(el, ctx))}", "${esc(nameRef(el, ctx))}", true)`,
     `    .SetAnchorAndOffset(${posExpr(el)}, ${offExpr(el)});`,
     '',
   ]

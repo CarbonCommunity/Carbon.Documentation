@@ -490,7 +490,7 @@ const pluginLines = [
   '        }',
   '',
   '        // content host the selected example renders into (the demo\'s stand-in for the usual root)',
-  '        cui.v2.CreateEmptyContainer("ExamplesRoot", "ExamplesContent")',
+  '        cui.v2.CreateEmptyContainer("ExamplesRoot", "ExamplesContent", true)',
   '            .SetAnchorAndOffset(new LuiPosition(0f, 0f, 1f, 1f), new LuiOffset(0f, 0f, 0f, -26f));',
   '',
   '        switch (tab)',

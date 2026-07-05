@@ -65,8 +65,9 @@ function oxide(el: TabsElement, ctx: EmitContext): string[] {
 }
 
 function carbon(el: TabsElement, ctx: EmitContext): string[] {
+  // add: true is REQUIRED — CreateEmptyContainer without it never enters the build (see container.ts).
   return [
-    `cui.v2.CreateEmptyContainer("${esc(parentRef(el, ctx))}", "${esc(nameRef(el, ctx))}")`,
+    `cui.v2.CreateEmptyContainer("${esc(parentRef(el, ctx))}", "${esc(nameRef(el, ctx))}", true)`,
     `    .SetAnchorAndOffset(${posExpr(el)}, ${offExpr(el)});`,
     '',
   ]
