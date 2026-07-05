@@ -1,14 +1,35 @@
 <script setup lang="ts">
 import { useEventListener } from '@vueuse/core'
-import { Plus, Trash2 } from 'lucide-vue-next'
-import { computed, reactive, ref } from 'vue'
+import { ChevronRight, Plus, Trash2 } from 'lucide-vue-next'
+import { computed, reactive, ref, watch } from 'vue'
 import ElementTypeMenu from './ElementTypeMenu.vue'
 import type { AddPreset } from './addPresets'
 import { cssColor } from './geometry'
 import type { ColorRGBA, DesignerElement, ElementType } from './types'
 import { useDesigner } from './useDesigner'
 
-const { byId, childrenOf, isSelected, isAncestor, select, addElement, addTextWithBackground, moveElement, remove, openContextMenu } = useDesigner()
+const { byId, childrenOf, isSelected, isAncestor, select, addElement, addTextWithBackground, moveElement, remove, openContextMenu, selectedId } = useDesigner()
+
+// --- collapse/expand -------------------------------------------------------------------------
+// Collapsed node ids — a browsing aid, not document state (component-local, resets with the pane).
+const collapsed = ref(new Set<string>())
+function toggleCollapse(id: string) {
+  const next = new Set(collapsed.value)
+  if (!next.delete(id)) next.add(id)
+  collapsed.value = next
+}
+// Selecting something buried in a collapsed branch (canvas click, Alt-click) reveals it.
+watch(selectedId, (id) => {
+  if (!id) return
+  const next = new Set(collapsed.value)
+  let changed = false
+  let p = byId.value.get(id)?.parentId ?? null
+  while (p) {
+    if (next.delete(p)) changed = true
+    p = byId.value.get(p)?.parentId ?? null
+  }
+  if (changed) collapsed.value = next
+})
 
 /** Tree-row swatch background: the element's color, or transparent for colorless types (container). */
 function swatchColor(el: DesignerElement): string {
@@ -18,11 +39,12 @@ function swatchColor(el: DesignerElement): string {
 
 // flatten the tree depth-first so we can render an indented list without a 2nd recursive SFC
 const flat = computed(() => {
-  const out: { el: DesignerElement; depth: number }[] = []
+  const out: { el: DesignerElement; depth: number; hasKids: boolean }[] = []
   const walk = (parentId: string | null, depth: number) => {
     for (const el of childrenOf(parentId)) {
-      out.push({ el, depth })
-      walk(el.id, depth + 1)
+      const kids = childrenOf(el.id)
+      out.push({ el, depth, hasKids: kids.length > 0 })
+      if (kids.length && !collapsed.value.has(el.id)) walk(el.id, depth + 1)
     }
   }
   walk(null, 0)
@@ -149,12 +171,17 @@ function endDrag() {
       :style="{ paddingLeft: `${8 + row.depth * 14}px` }"
       draggable="true"
       @click="select(row.el.id, $event.shiftKey || $event.ctrlKey || $event.metaKey)"
+      @dblclick.stop="row.hasKids && toggleCollapse(row.el.id)"
       @contextmenu.prevent.stop="openContextMenu(row.el.id, $event.clientX, $event.clientY)"
       @dragstart.stop="onDragStart(row.el.id, $event)"
       @dragover="onDragOver($event.currentTarget as HTMLElement, row.el.id, $event)"
       @drop.prevent="onDrop(row.el.id)"
       @dragend="endDrag"
     >
+      <button v-if="row.hasKids" class="ld-tree-chevron" :class="{ open: !collapsed.has(row.el.id) }" draggable="false" :title="collapsed.has(row.el.id) ? 'Expand' : 'Collapse'" @click.stop="toggleCollapse(row.el.id)">
+        <ChevronRight :size="12" />
+      </button>
+      <span v-else class="ld-tree-chevron-gap" />
       <span class="ld-swatch" :style="{ background: swatchColor(row.el) }" />
       <span class="ld-tree-name">{{ row.el.name }}</span>
       <button class="ld-tree-btn ld-tree-add" draggable="false" :class="{ open: addMenu.id === row.el.id }" title="Add child element" @click.stop="toggleAddMenu(row.el.id, $event)"><Plus :size="13" /></button>
@@ -172,6 +199,37 @@ function endDrag() {
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+}
+
+.ld-tree-chevron {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--vp-c-text-3);
+  cursor: pointer;
+}
+
+.ld-tree-chevron svg {
+  transition: transform 0.12s ease;
+}
+
+.ld-tree-chevron.open svg {
+  transform: rotate(90deg);
+}
+
+.ld-tree-chevron:hover {
+  color: var(--vp-c-text-1);
+}
+
+.ld-tree-chevron-gap {
+  flex: 0 0 auto;
+  width: 16px;
 }
 
 .ld-tree-row {

@@ -200,6 +200,16 @@ function addElement(type: ElementType, parentId: string | null = null): Designer
   elements.value.push(el)
   const seeds = def.seedChildren?.(el, (t, pid) => createByType(t, pid)) ?? []
   if (seeds.length) elements.value.push(...seeds)
+  // A tab view's seeded bar sits visually ABOVE the view — list it above in the tree too.
+  if (el.type === 'tabs') {
+    const arr = elements.value
+    const barIdx = arr.findIndex((e2) => e2.parentId === parentId && e2.name === `${el.name} Bar`)
+    const elIdx = arr.findIndex((e2) => e2.id === el.id)
+    if (barIdx > elIdx) {
+      const [bar] = arr.splice(barIdx, 1)
+      arr.splice(elIdx, 0, bar)
+    }
+  }
   selectedIds.value = [el.id]
   applyContainerLayout(parentId)
   return el
