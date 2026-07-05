@@ -359,14 +359,16 @@ function groupMembersOf(id: string): string[] {
   return elements.value.filter((e) => e.groupId === g).map((e) => e.id)
 }
 
-/** The element a click/drag should actually act on: climb out of any child flagged `passthrough` (it
- *  hands interactions to its parent — e.g. a label filling its button). Alt-click bypasses this.
- *  (Slotted layout children are NOT climbed: they select and resize normally — only their MOVE is
- *  blocked, with a hint; see CanvasElement.startMove.) */
+/** The element a click/drag should actually act on: climb out of any child flagged `passthrough` (a
+ *  label filling its button) and out of tab view PAGES (full-bleed by design, so a click on an
+ *  "empty" spot of a tab view would otherwise always hit the page and the view itself could never
+ *  be grabbed or resized). Alt-click and the tree bypass this; page CONTENT is deeper and still
+ *  hits normally. (Slotted layout children are NOT climbed: they select and resize normally — only
+ *  their MOVE is blocked, with a hint; see CanvasElement.startMove.) */
 function surfaceOf(id: string): string {
   let cur = id
   let el = byId.value.get(cur)
-  while (el?.passthrough && el.parentId) {
+  while (el?.parentId && (el.passthrough || byId.value.get(el.parentId)?.type === 'tabs')) {
     cur = el.parentId
     el = byId.value.get(cur)
   }
