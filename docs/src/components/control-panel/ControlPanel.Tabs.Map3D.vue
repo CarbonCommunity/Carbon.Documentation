@@ -5,7 +5,7 @@ import { Sky } from 'three/examples/jsm/objects/Sky.js'
 import { Loader2 } from 'lucide-vue-next'
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { selectedServer } from './ControlPanel.SaveLoad'
-import { loadModel, resolveModelUrl } from '@/utils/GltfCache'
+import { loadModel, resolveModelUrl, cloneModel } from '@/utils/GltfCache'
 
 const container = ref<HTMLDivElement | null>(null)
 const isLoading = ref<boolean>(false)
@@ -23,8 +23,12 @@ const SUN_ELEVATION = 35
 const SUN_AZIMUTH = 180
 const LOW_COLOR = 0x2f6b3a
 const HIGH_COLOR = 0xd8d8d8
-const OBJECT_MIN_SCENE_SIZE = 0.08
+const OBJECT_MIN_SCENE_SIZE = 0.01
 const OBJECT_COLOR = 0xffaa00
+// Fallback cube color for live entities (see syncLiveEntities) whose prefab id couldn't be
+// resolved to a real model — distinct from OBJECT_COLOR so dynamic entities read as different
+// from static placed-prefab fallbacks at a glance.
+const LIVE_ENTITY_FALLBACK_COLOR = 0xff3355
 const MODEL_LOAD_CONCURRENCY = 64
 // Real props are grouped into a grid of spatial chunks (one InstancedMesh per chunk+model, rather
 // than one per whole-map+model) so draw distance can toggle whole chunks — checking a few hundred
@@ -35,7 +39,7 @@ const CHUNK_SIZE = TERRAIN_TARGET_SIZE / CHUNK_GRID_DIVISIONS
 // Max horizontal (XZ) distance from the camera, in scene units, at which a chunk of real props
 // still renders. Tune to taste — this is the main lever for large/dense maps; lower trades visible
 // coverage for more headroom.
-const OBJECT_DRAW_DISTANCE = 7
+const OBJECT_DRAW_DISTANCE = 5
 // How many chunks get their visibility re-checked per animation frame (see
 // stepObjectDrawDistance). Rather than re-evaluating every chunk at once on a timer — which pops
 // every newly in/out-of-range chunk visible/invisible in the same instant — a small slice is swept
@@ -128,6 +132,16 @@ let objectDrawDistanceCursor = 0
 let oceanHeightMap: THREE.DataTexture | null = null
 let waveShaderUniforms: { uTime: { value: number } } | null = null
 let waveElapsedTime = 0
+// Live entities (see syncLiveEntities) get one plain Object3D each — a fallback cube immediately,
+// swapped for a real cloned model once/if one loads — rather than the InstancedMesh-per-chunk
+// batching used for static MapObjects, since the expected count here is far smaller and they need
+// independent per-frame position updates.
+let liveEntityGroup: THREE.Group | null = null
+const liveEntityObjects = new Map<bigint, THREE.Object3D>()
+let liveEntityFallbackGeometry: THREE.BufferGeometry | null = null
+let liveEntityFallbackMaterial: THREE.Material | null = null
+let liveEntityPlacement: { worldSize: number; positionY: number; planarScale: number; heightScale: number } | null = null
+let liveEntityDrawDistanceCursor = 0
 const pressedPanKeys = new Set<string>()
 let onKeyDown: ((event: KeyboardEvent) => void) | null = null
 let onKeyUp: ((event: KeyboardEvent) => void) | null = null
@@ -473,6 +487,26 @@ function removeModelInstances() {
   hoveredPrefabPath.value = null
 }
 
+// Every live entity's Object3D is either a fallback cube sharing liveEntityFallbackGeometry/Material
+// (disposed once, below) or a cloned real model sharing GltfCache-owned buffers (same rule as
+// removeModelInstances above — never dispose those, or every future instance of that model breaks)
+// — so removing the whole group and disposing the shared fallback buffers is all that's needed.
+function removeLiveEntities() {
+  liveEntityObjects.clear()
+  liveEntityDrawDistanceCursor = 0
+
+  if (liveEntityGroup) {
+    scene?.remove(liveEntityGroup)
+    liveEntityGroup = null
+  }
+
+  liveEntityFallbackGeometry?.dispose()
+  liveEntityFallbackGeometry = null
+  liveEntityFallbackMaterial?.dispose()
+  liveEntityFallbackMaterial = null
+  liveEntityPlacement = null
+}
+
 function isTypingTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) {
     return false
@@ -706,6 +740,121 @@ function stepObjectDrawDistance() {
 
   if (visibleDelta !== 0) {
     visibleObjectCount.value += visibleDelta
+  }
+}
+
+function createLiveEntityFallbackCube(): THREE.Mesh {
+  if (!liveEntityFallbackGeometry) {
+    liveEntityFallbackGeometry = new THREE.BoxGeometry(1, 1, 1)
+  }
+  if (!liveEntityFallbackMaterial) {
+    liveEntityFallbackMaterial = new THREE.MeshStandardMaterial({ color: LIVE_ENTITY_FALLBACK_COLOR, roughness: 0.5, metalness: 0.1 })
+  }
+  return new THREE.Mesh(liveEntityFallbackGeometry, liveEntityFallbackMaterial)
+}
+
+// Runs every animation frame — cheap since live entities (players, deployables, dropped items,
+// etc. tracked via Server.LiveEntities) are expected to be far fewer than the tens of thousands of
+// static placed prefabs, so a plain per-entity Object3D updated directly is simpler than the
+// InstancedMesh/chunk machinery those use. A fallback cube shows immediately on spawn; if the
+// entity's prefab id resolved to a known path, it's swapped for a real cloned model once loaded.
+// Entities removed from Server.LiveEntities (Entity Destroyed, see OnFakePlayerRPC in
+// SaveLoad.ts) are pruned below the same way — this only ever sees the current snapshot, so a
+// destroyed-then-never-reported entity has no way to linger here.
+function syncLiveEntities() {
+  if (!scene) {
+    return
+  }
+
+  const data = selectedServer.value?.LiveEntities
+  if (!data || !liveEntityPlacement) {
+    if (liveEntityObjects.size > 0) {
+      removeLiveEntities()
+    }
+    return
+  }
+
+  if (!liveEntityGroup) {
+    liveEntityGroup = new THREE.Group()
+    scene.add(liveEntityGroup)
+  }
+  const group = liveEntityGroup
+
+  for (const [id, object] of liveEntityObjects) {
+    if (!data.has(id)) {
+      group.remove(object)
+      liveEntityObjects.delete(id)
+    }
+  }
+
+  const { worldSize, positionY, planarScale, heightScale } = liveEntityPlacement
+  const drawDistanceSq = OBJECT_DRAW_DISTANCE * OBJECT_DRAW_DISTANCE
+
+  for (const [id, entity] of data) {
+    const position = objectScenePosition(entity.position, worldSize, positionY, planarScale, heightScale)
+    let object = liveEntityObjects.get(id)
+    if (!object) {
+      object = createLiveEntityFallbackCube()
+      object.scale.copy(fallbackCubeScale({ x: 1, y: 1, z: 1 }, planarScale))
+      // Gives it a correct visibility right away instead of defaulting to visible until
+      // stepLiveEntityDrawDistance's rolling sweep happens to reach it, which — with many
+      // entities — could otherwise take a while.
+      if (camera) {
+        const dx = position.x - camera.position.x
+        const dz = position.z - camera.position.z
+        object.visible = dx * dx + dz * dz <= drawDistanceSq
+      }
+      group.add(object)
+      liveEntityObjects.set(id, object)
+
+      if (entity.path) {
+        const pendingObject = object
+        const pendingPlacement = liveEntityPlacement
+        loadModel(resolveModelUrl(entity.path)).then((model) => {
+          // Bail if the entity despawned, the map was rebuilt, or this placeholder was already
+          // replaced by the time the model finished loading.
+          if (!scene || !model || liveEntityPlacement !== pendingPlacement || liveEntityObjects.get(id) !== pendingObject) {
+            return
+          }
+          const realObject = cloneModel(model)
+          realObject.scale.copy(objectSceneScale({ x: 1, y: 1, z: 1 }, planarScale))
+          realObject.position.copy(pendingObject.position)
+          realObject.quaternion.copy(pendingObject.quaternion)
+          realObject.visible = pendingObject.visible
+          group.remove(pendingObject)
+          group.add(realObject)
+          liveEntityObjects.set(id, realObject)
+        })
+      }
+    }
+
+    object.position.copy(position)
+    unityEulerToThreeQuaternion(entity.rotation, object.quaternion)
+  }
+}
+
+// Mirrors stepObjectDrawDistance's approach for static prefab chunks: only re-checks a small slice
+// per frame (cycling through) rather than every live entity at once, so the draw-distance boundary
+// updates the same gradual way as everything else on the map instead of popping all at once.
+function stepLiveEntityDrawDistance() {
+  if (!camera || liveEntityObjects.size === 0) {
+    return
+  }
+
+  const entries = Array.from(liveEntityObjects.values())
+  if (liveEntityDrawDistanceCursor >= entries.length) {
+    liveEntityDrawDistanceCursor = 0
+  }
+
+  const drawDistanceSq = OBJECT_DRAW_DISTANCE * OBJECT_DRAW_DISTANCE
+  const batchSize = Math.min(OBJECT_DRAW_DISTANCE_CHUNKS_PER_FRAME, entries.length)
+
+  for (let i = 0; i < batchSize; i++) {
+    const object = entries[liveEntityDrawDistanceCursor]
+    const dx = object.position.x - camera.position.x
+    const dz = object.position.z - camera.position.z
+    object.visible = dx * dx + dz * dz <= drawDistanceSq
+    liveEntityDrawDistanceCursor = (liveEntityDrawDistanceCursor + 1) % entries.length
   }
 }
 
@@ -963,6 +1112,7 @@ async function buildTerrain(info: any) {
   removeTerrain()
   removeMapObjects()
   removeModelInstances()
+  removeLiveEntities()
 
   // Yield one frame so the loading indicator actually paints before the synchronous heightmap
   // processing below (tens of thousands of vertices) freezes the main thread — same approach as
@@ -1054,6 +1204,8 @@ async function buildTerrain(info: any) {
     buildLowland()
     buildOcean(positionY, heightScale, sizeY)
 
+    liveEntityPlacement = { worldSize, positionY, planarScale: TERRAIN_TARGET_SIZE / worldSize, heightScale }
+
     if (selectedServer.value?.MapInfo?.imageUrl) {
       applyMapTexture(selectedServer.value.MapInfo.imageUrl)
     }
@@ -1135,6 +1287,8 @@ function animate(timestamp?: number) {
   }
 
   stepObjectDrawDistance()
+  syncLiveEntities()
+  stepLiveEntityDrawDistance()
 
   if (renderer && scene && camera) {
     renderer.render(scene, camera)
@@ -1152,7 +1306,7 @@ onMounted(() => {
   scene = new THREE.Scene()
   scene.fog = new THREE.Fog(0xbfd9e8, 60, 320)
 
-  camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 5000)
+  camera = new THREE.PerspectiveCamera(60, width / height, 0.01, 5000)
   camera.position.set(14, 12, 18)
   camera.lookAt(0, 0, 0)
 
@@ -1295,9 +1449,12 @@ onMounted(() => {
     }
   )
 
+  selectedServer.value?.LiveEntities.clear()
   requestTerrain()
   requestMapObjects()
   requestMapInfo()
+  selectedServer.value?.sendCall('LoadStringPool')
+  selectedServer.value?.sendCall('SendFakePlayerSnapshot')
 })
 
 onUnmounted(() => {
@@ -1366,6 +1523,7 @@ onUnmounted(() => {
   removeLowland()
   removeMapObjects()
   removeModelInstances()
+  removeLiveEntities()
 
   if (sky) {
     scene?.remove(sky)

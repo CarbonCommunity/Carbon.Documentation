@@ -30,6 +30,19 @@ interface CommandResponse {
   Stacktrace: string
 }
 
+// A dynamically spawned/moving entity (players, deployables, dropped items, etc.) tracked live via
+// OnFakePlayerRPC — distinct from the static, once-loaded MapObjects prefab placement. `path` is
+// resolved from PrefabPathsById (built from the same MapObjects response) when the id happens to
+// match a known static prefab; otherwise Map3D falls back to a placeholder the same way it does for
+// unresolved static prefabs.
+export interface LiveEntity {
+  entId: bigint
+  prefabId: number
+  path: string | null
+  position: { x: number; y: number; z: number }
+  rotation: { x: number; y: number; z: number }
+}
+
 enum LogType {
   Generic = 0,
   Error = 1,
@@ -187,6 +200,8 @@ function exportToJson(): string {
       case 'MapEntityUpdateInterval':
       case 'TerrainInfo':
       case 'MapObjects':
+      case 'PrefabPathsById':
+      case 'LiveEntities':
       case 'HeaderImage':
       case 'Description':
       case 'CommandCallbacks':
@@ -350,6 +365,13 @@ export class Server {
   MapEntityUpdateInterval: any | null = null
   TerrainInfo: any | null = null
   MapObjects: any[] | null = null
+  // id -> path lookup built from MapObjects, used to resolve a real model for a live entity that
+  // happens to share an id with an already-known static prefab (see OnFakePlayerRPC below).
+  PrefabPathsById: Map<number, string> = new Map()
+  // Dynamically spawned/moving entities tracked live via OnFakePlayerRPC, keyed by entity id.
+  // Map3D renders these separately from MapObjects since they update far more frequently and in
+  // far smaller numbers than the static placed-prefab set.
+  LiveEntities: Map<bigint, LiveEntity> = new Map()
   HeaderImage = ''
   Description = ''
   ProfileFiles: ProfileFile[] = []
@@ -432,6 +454,8 @@ export class Server {
     this.RpcCallbacks = {}
     this.RpcPermissions = {}
     this.ProfileFiles = []
+    this.PrefabPathsById = new Map()
+    this.LiveEntities = new Map()
 
     if (selectedServer.value == this) {
       hideInventory()
@@ -770,13 +794,83 @@ export class Server {
             rotation: { x: read.float(), y: read.float(), z: read.float() },
             scale: { x: read.float(), y: read.float(), z: read.float() }
           }
-          if(prefabs[i].path.includes('monuments/')) { 
+          if(prefabs[i].path.includes('monuments/')) {
             console.log(prefabs[i])
           }
         }
         this.MapObjects = prefabs
+
+        for (let i = 0; i < prefabs.length; i++) {
+          if (prefabs[i].path) {
+            this.PrefabPathsById.set(prefabs[i].id, prefabs[i].path)
+          }
+        }
       } catch (ex) {
         console.error('DeliverInitialMap: failed to parse response (likely a malformed prefab entry desyncing the reader)', ex)
+      }
+    })
+    this.setRpc('LoadStringPool', read => {
+      const count = read.int32()
+      for(let i = 0; i < count; i++) {
+        this.PrefabPathsById.set(read.uint32(), read.string())
+      }
+      console.log(count)
+      console.log(this.PrefabPathsById.size)
+    })
+    this.setRpc('OnFakePlayerRPC', read => {
+      const packetId = read.byte() - 140
+      switch(packetId) {
+        case 9: // RPCMessage — not currently used for map entity tracking
+        {
+          const entityid = read.uint64()
+          const rpcid = read.uint32()
+          break
+        }
+        case 10: // EntityPosition
+        {
+          const entity = this.LiveEntities.get(read.uint64())
+          if (entity) {
+            entity.position.x = read.float()
+            entity.position.y = read.float()
+            entity.position.z = read.float()
+            entity.rotation.x = read.float()
+            entity.rotation.y = read.float()
+            entity.rotation.z = read.float()
+          }
+          break
+        }
+        case 6: // Entity Destroyed — stop tracking it so Map3D removes it from the scene
+        {
+          const entityid = read.uint64()
+          this.LiveEntities.delete(entityid)
+          break
+        }
+        case 5: // Entity Spawned — starts tracking a new live entity
+        {
+          const entityid = read.uint64()
+          const prefabid = read.uint32()
+          const posX = read.float()
+          const posY = read.float()
+          const posZ = read.float()
+          const rotX = read.float()
+          const rotY = read.float()
+          const rotZ = read.float()
+
+          this.LiveEntities.set(entityid, {
+            entId: entityid,
+            prefabId: prefabid,
+            path: this.PrefabPathsById.get(prefabid) ?? null,
+            position: { x: posX, y: posY, z: posZ },
+            rotation: { x: rotX, y: rotY, z: rotZ }
+          })
+          // console.log(`${this.PrefabPathsById.get(prefabid)}: ${prefabid} @ ${this.PrefabPathsById.size} known prefabs`)
+          break
+        }
+        default:
+        {
+          console.log(packetId)
+          break
+        }
       }
     })
   }
