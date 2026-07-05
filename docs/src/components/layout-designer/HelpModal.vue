@@ -17,7 +17,8 @@ const { bindingFor } = useKeybinds()
 
 // Gallery screenshots live at public/layout-designer/examples/<id>.png. Only ids listed here have a
 // file — add the id when you drop the PNG in. Gating on the set avoids firing 404s for missing shots.
-// drag-slot.png is a 3-frame APNG loop (chip left → dragging → dropped right).
+// Sequences are APNG loops: drag-slot (6 frames, the chip dragged left → right), scroll-list
+// (4 frames, the list scrolled top → bottom), countdown (4 frames, ticking 120 → 117).
 const HAS_SHOT = new Set<string>([
   'panel',
   'text',
@@ -34,6 +35,9 @@ const HAS_SHOT = new Set<string>([
   'border',
   'drag-slot',
   'showcase-welcome',
+  'layout-stack',
+  'repeat-list',
+  'scroll-list',
 ])
 const shotSrc = (id: string) => `/layout-designer/examples/${id}.png`
 
