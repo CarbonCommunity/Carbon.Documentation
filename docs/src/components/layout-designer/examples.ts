@@ -104,7 +104,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
             "y": 0
           },
           "offsetMax": {
-            "x": -14,
+            "x": -42,
             "y": 0
           },
           "props": {
@@ -122,6 +122,74 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
         },
         {
           "id": "el-4",
+          "name": "CloseButton",
+          "parentId": "el-2",
+          "type": "button",
+          "anchorMin": {
+            "x": 1,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -32,
+            "y": -14
+          },
+          "offsetMax": {
+            "x": -4,
+            "y": 14
+          },
+          "props": {
+            "color": {
+              "r": 0.82,
+              "g": 0.24,
+              "b": 0.2,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "close": "el-1"
+          }
+        },
+        {
+          "id": "el-5",
+          "name": "CloseButton Label",
+          "parentId": "el-4",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "X",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true
+        },
+        {
+          "id": "el-6",
           "name": "Hint",
           "parentId": "el-1",
           "type": "text",
@@ -155,7 +223,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-5",
+          "id": "el-7",
           "name": "Solid.A",
           "parentId": "el-1",
           "type": "panel",
@@ -185,7 +253,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-6",
+          "id": "el-8",
           "name": "Solid.B",
           "parentId": "el-1",
           "type": "panel",
@@ -215,7 +283,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-7",
+          "id": "el-9",
           "name": "Solid.C",
           "parentId": "el-1",
           "type": "panel",
@@ -245,7 +313,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-8",
+          "id": "el-10",
           "name": "Dimmer",
           "parentId": "el-1",
           "type": "panel",
@@ -369,7 +437,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
             "y": 0
           },
           "offsetMax": {
-            "x": -14,
+            "x": -42,
             "y": 0
           },
           "props": {
@@ -387,6 +455,74 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
         },
         {
           "id": "el-4",
+          "name": "CloseButton",
+          "parentId": "el-2",
+          "type": "button",
+          "anchorMin": {
+            "x": 1,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -32,
+            "y": -14
+          },
+          "offsetMax": {
+            "x": -4,
+            "y": 14
+          },
+          "props": {
+            "color": {
+              "r": 0.82,
+              "g": 0.24,
+              "b": 0.2,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "close": "el-1"
+          }
+        },
+        {
+          "id": "el-5",
+          "name": "CloseButton Label",
+          "parentId": "el-4",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "X",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true
+        },
+        {
+          "id": "el-6",
           "name": "Hint",
           "parentId": "el-1",
           "type": "text",
@@ -420,7 +556,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-5",
+          "id": "el-7",
           "name": "Font.Regular",
           "parentId": "el-1",
           "type": "text",
@@ -454,7 +590,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-6",
+          "id": "el-8",
           "name": "Font.Bold",
           "parentId": "el-1",
           "type": "text",
@@ -488,7 +624,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-7",
+          "id": "el-9",
           "name": "Font.Marker",
           "parentId": "el-1",
           "type": "text",
@@ -522,7 +658,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-8",
+          "id": "el-10",
           "name": "Font.Pixel",
           "parentId": "el-1",
           "type": "text",
@@ -650,7 +786,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
             "y": 0
           },
           "offsetMax": {
-            "x": -14,
+            "x": -42,
             "y": 0
           },
           "props": {
@@ -668,6 +804,74 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
         },
         {
           "id": "el-4",
+          "name": "CloseButton",
+          "parentId": "el-2",
+          "type": "button",
+          "anchorMin": {
+            "x": 1,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -32,
+            "y": -14
+          },
+          "offsetMax": {
+            "x": -4,
+            "y": 14
+          },
+          "props": {
+            "color": {
+              "r": 0.82,
+              "g": 0.24,
+              "b": 0.2,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "close": "el-1"
+          }
+        },
+        {
+          "id": "el-5",
+          "name": "CloseButton Label",
+          "parentId": "el-4",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "X",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true
+        },
+        {
+          "id": "el-6",
           "name": "Hint",
           "parentId": "el-1",
           "type": "text",
@@ -701,7 +905,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-5",
+          "id": "el-7",
           "name": "ChipGrid",
           "parentId": "el-1",
           "type": "container",
@@ -724,9 +928,9 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           "props": {}
         },
         {
-          "id": "el-6",
+          "id": "el-8",
           "name": "Chip.TL",
-          "parentId": "el-5",
+          "parentId": "el-7",
           "type": "panel",
           "props": {
             "color": {
@@ -754,9 +958,9 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-7",
+          "id": "el-9",
           "name": "Chip.TR",
-          "parentId": "el-5",
+          "parentId": "el-7",
           "type": "panel",
           "props": {
             "color": {
@@ -784,9 +988,9 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-8",
+          "id": "el-10",
           "name": "Chip.BL",
-          "parentId": "el-5",
+          "parentId": "el-7",
           "type": "panel",
           "props": {
             "color": {
@@ -814,9 +1018,9 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-9",
+          "id": "el-11",
           "name": "Chip.BR",
-          "parentId": "el-5",
+          "parentId": "el-7",
           "type": "panel",
           "props": {
             "color": {
@@ -938,7 +1142,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
             "y": 0
           },
           "offsetMax": {
-            "x": -14,
+            "x": -42,
             "y": 0
           },
           "props": {
@@ -956,6 +1160,74 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
         },
         {
           "id": "el-4",
+          "name": "CloseButton",
+          "parentId": "el-2",
+          "type": "button",
+          "anchorMin": {
+            "x": 1,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -32,
+            "y": -14
+          },
+          "offsetMax": {
+            "x": -4,
+            "y": 14
+          },
+          "props": {
+            "color": {
+              "r": 0.82,
+              "g": 0.24,
+              "b": 0.2,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "close": "el-1"
+          }
+        },
+        {
+          "id": "el-5",
+          "name": "CloseButton Label",
+          "parentId": "el-4",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "X",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true
+        },
+        {
+          "id": "el-6",
           "name": "Hint",
           "parentId": "el-1",
           "type": "text",
@@ -989,7 +1261,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-5",
+          "id": "el-7",
           "name": "Confirm",
           "parentId": "el-1",
           "type": "button",
@@ -1021,9 +1293,9 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-6",
+          "id": "el-8",
           "name": "Confirm Label",
-          "parentId": "el-5",
+          "parentId": "el-7",
           "type": "text",
           "anchorMin": {
             "x": 0,
@@ -1056,7 +1328,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           "passthrough": true
         },
         {
-          "id": "el-7",
+          "id": "el-9",
           "name": "Cancel",
           "parentId": "el-1",
           "type": "button",
@@ -1088,9 +1360,9 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-8",
+          "id": "el-10",
           "name": "Cancel Label",
-          "parentId": "el-7",
+          "parentId": "el-9",
           "type": "text",
           "anchorMin": {
             "x": 0,
@@ -1218,7 +1490,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
             "y": 0
           },
           "offsetMax": {
-            "x": -14,
+            "x": -42,
             "y": 0
           },
           "props": {
@@ -1236,6 +1508,74 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
         },
         {
           "id": "el-4",
+          "name": "CloseButton",
+          "parentId": "el-2",
+          "type": "button",
+          "anchorMin": {
+            "x": 1,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -32,
+            "y": -14
+          },
+          "offsetMax": {
+            "x": -4,
+            "y": 14
+          },
+          "props": {
+            "color": {
+              "r": 0.82,
+              "g": 0.24,
+              "b": 0.2,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "close": "el-1"
+          }
+        },
+        {
+          "id": "el-5",
+          "name": "CloseButton Label",
+          "parentId": "el-4",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "X",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true
+        },
+        {
+          "id": "el-6",
           "name": "Hint",
           "parentId": "el-1",
           "type": "text",
@@ -1269,7 +1609,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-5",
+          "id": "el-7",
           "name": "Well.Name",
           "parentId": "el-1",
           "type": "panel",
@@ -1299,9 +1639,9 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-6",
+          "id": "el-8",
           "name": "Input.Name",
-          "parentId": "el-5",
+          "parentId": "el-7",
           "type": "input",
           "anchorMin": {
             "x": 0,
@@ -1337,7 +1677,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-7",
+          "id": "el-9",
           "name": "Well.Pass",
           "parentId": "el-1",
           "type": "panel",
@@ -1367,9 +1707,9 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-8",
+          "id": "el-10",
           "name": "Input.Password",
-          "parentId": "el-7",
+          "parentId": "el-9",
           "type": "input",
           "anchorMin": {
             "x": 0,
@@ -1499,7 +1839,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
             "y": 0
           },
           "offsetMax": {
-            "x": -14,
+            "x": -42,
             "y": 0
           },
           "props": {
@@ -1517,6 +1857,74 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
         },
         {
           "id": "el-4",
+          "name": "CloseButton",
+          "parentId": "el-2",
+          "type": "button",
+          "anchorMin": {
+            "x": 1,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -32,
+            "y": -14
+          },
+          "offsetMax": {
+            "x": -4,
+            "y": 14
+          },
+          "props": {
+            "color": {
+              "r": 0.82,
+              "g": 0.24,
+              "b": 0.2,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "close": "el-1"
+          }
+        },
+        {
+          "id": "el-5",
+          "name": "CloseButton Label",
+          "parentId": "el-4",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "X",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true
+        },
+        {
+          "id": "el-6",
           "name": "Hint",
           "parentId": "el-1",
           "type": "text",
@@ -1550,7 +1958,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-5",
+          "id": "el-7",
           "name": "Timer",
           "parentId": "el-1",
           "type": "countdown",
@@ -1684,7 +2092,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
             "y": 0
           },
           "offsetMax": {
-            "x": -14,
+            "x": -42,
             "y": 0
           },
           "props": {
@@ -1702,6 +2110,74 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
         },
         {
           "id": "el-4",
+          "name": "CloseButton",
+          "parentId": "el-2",
+          "type": "button",
+          "anchorMin": {
+            "x": 1,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -32,
+            "y": -14
+          },
+          "offsetMax": {
+            "x": -4,
+            "y": 14
+          },
+          "props": {
+            "color": {
+              "r": 0.82,
+              "g": 0.24,
+              "b": 0.2,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "close": "el-1"
+          }
+        },
+        {
+          "id": "el-5",
+          "name": "CloseButton Label",
+          "parentId": "el-4",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "X",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true
+        },
+        {
+          "id": "el-6",
           "name": "Hint",
           "parentId": "el-1",
           "type": "text",
@@ -1735,7 +2211,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-5",
+          "id": "el-7",
           "name": "Logo",
           "parentId": "el-1",
           "type": "panel",
@@ -1863,7 +2339,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
             "y": 0
           },
           "offsetMax": {
-            "x": -14,
+            "x": -42,
             "y": 0
           },
           "props": {
@@ -1881,6 +2357,74 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
         },
         {
           "id": "el-4",
+          "name": "CloseButton",
+          "parentId": "el-2",
+          "type": "button",
+          "anchorMin": {
+            "x": 1,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -32,
+            "y": -14
+          },
+          "offsetMax": {
+            "x": -4,
+            "y": 14
+          },
+          "props": {
+            "color": {
+              "r": 0.82,
+              "g": 0.24,
+              "b": 0.2,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "close": "el-1"
+          }
+        },
+        {
+          "id": "el-5",
+          "name": "CloseButton Label",
+          "parentId": "el-4",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "X",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true
+        },
+        {
+          "id": "el-6",
           "name": "Hint",
           "parentId": "el-1",
           "type": "text",
@@ -1914,7 +2458,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-5",
+          "id": "el-7",
           "name": "Sprite.Warm",
           "parentId": "el-1",
           "type": "panel",
@@ -1948,7 +2492,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-6",
+          "id": "el-8",
           "name": "Sprite.Cool",
           "parentId": "el-1",
           "type": "panel",
@@ -1982,7 +2526,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-7",
+          "id": "el-9",
           "name": "Sprite.Plain",
           "parentId": "el-1",
           "type": "panel",
@@ -2110,7 +2654,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
             "y": 0
           },
           "offsetMax": {
-            "x": -14,
+            "x": -42,
             "y": 0
           },
           "props": {
@@ -2128,6 +2672,74 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
         },
         {
           "id": "el-4",
+          "name": "CloseButton",
+          "parentId": "el-2",
+          "type": "button",
+          "anchorMin": {
+            "x": 1,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -32,
+            "y": -14
+          },
+          "offsetMax": {
+            "x": -4,
+            "y": 14
+          },
+          "props": {
+            "color": {
+              "r": 0.82,
+              "g": 0.24,
+              "b": 0.2,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "close": "el-1"
+          }
+        },
+        {
+          "id": "el-5",
+          "name": "CloseButton Label",
+          "parentId": "el-4",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "X",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true
+        },
+        {
+          "id": "el-6",
           "name": "Hint",
           "parentId": "el-1",
           "type": "text",
@@ -2161,7 +2773,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-5",
+          "id": "el-7",
           "name": "IconWell",
           "parentId": "el-1",
           "type": "panel",
@@ -2191,9 +2803,9 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-6",
+          "id": "el-8",
           "name": "Icon.TC",
-          "parentId": "el-5",
+          "parentId": "el-7",
           "type": "panel",
           "props": {
             "color": {
@@ -2320,7 +2932,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
             "y": 0
           },
           "offsetMax": {
-            "x": -14,
+            "x": -42,
             "y": 0
           },
           "props": {
@@ -2338,6 +2950,74 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
         },
         {
           "id": "el-4",
+          "name": "CloseButton",
+          "parentId": "el-2",
+          "type": "button",
+          "anchorMin": {
+            "x": 1,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -32,
+            "y": -14
+          },
+          "offsetMax": {
+            "x": -4,
+            "y": 14
+          },
+          "props": {
+            "color": {
+              "r": 0.82,
+              "g": 0.24,
+              "b": 0.2,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "close": "el-1"
+          }
+        },
+        {
+          "id": "el-5",
+          "name": "CloseButton Label",
+          "parentId": "el-4",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "X",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true
+        },
+        {
+          "id": "el-6",
           "name": "Hint",
           "parentId": "el-1",
           "type": "text",
@@ -2371,7 +3051,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-5",
+          "id": "el-7",
           "name": "AvatarFrame",
           "parentId": "el-1",
           "type": "panel",
@@ -2401,9 +3081,9 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-6",
+          "id": "el-8",
           "name": "Avatar",
-          "parentId": "el-5",
+          "parentId": "el-7",
           "type": "panel",
           "props": {
             "color": {
@@ -2529,7 +3209,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
             "y": 0
           },
           "offsetMax": {
-            "x": -14,
+            "x": -42,
             "y": 0
           },
           "props": {
@@ -2547,6 +3227,74 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
         },
         {
           "id": "el-4",
+          "name": "CloseButton",
+          "parentId": "el-2",
+          "type": "button",
+          "anchorMin": {
+            "x": 1,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -32,
+            "y": -14
+          },
+          "offsetMax": {
+            "x": -4,
+            "y": 14
+          },
+          "props": {
+            "color": {
+              "r": 0.82,
+              "g": 0.24,
+              "b": 0.2,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "close": "el-1"
+          }
+        },
+        {
+          "id": "el-5",
+          "name": "CloseButton Label",
+          "parentId": "el-4",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "X",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true
+        },
+        {
+          "id": "el-6",
           "name": "Hint",
           "parentId": "el-1",
           "type": "text",
@@ -2580,7 +3328,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-5",
+          "id": "el-7",
           "name": "DbLogo",
           "parentId": "el-1",
           "type": "panel",
@@ -2709,7 +3457,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
             "y": 0
           },
           "offsetMax": {
-            "x": -14,
+            "x": -42,
             "y": 0
           },
           "props": {
@@ -2727,6 +3475,74 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
         },
         {
           "id": "el-4",
+          "name": "CloseButton",
+          "parentId": "el-2",
+          "type": "button",
+          "anchorMin": {
+            "x": 1,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -32,
+            "y": -14
+          },
+          "offsetMax": {
+            "x": -4,
+            "y": 14
+          },
+          "props": {
+            "color": {
+              "r": 0.82,
+              "g": 0.24,
+              "b": 0.2,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "close": "el-1"
+          }
+        },
+        {
+          "id": "el-5",
+          "name": "CloseButton Label",
+          "parentId": "el-4",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "X",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true
+        },
+        {
+          "id": "el-6",
           "name": "Hint",
           "parentId": "el-1",
           "type": "text",
@@ -2760,7 +3576,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-5",
+          "id": "el-7",
           "name": "Glow",
           "parentId": "el-1",
           "type": "text",
@@ -2808,7 +3624,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-6",
+          "id": "el-8",
           "name": "Shadowed",
           "parentId": "el-1",
           "type": "panel",
@@ -2946,7 +3762,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
             "y": 0
           },
           "offsetMax": {
-            "x": -14,
+            "x": -42,
             "y": 0
           },
           "props": {
@@ -2964,6 +3780,74 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
         },
         {
           "id": "el-4",
+          "name": "CloseButton",
+          "parentId": "el-2",
+          "type": "button",
+          "anchorMin": {
+            "x": 1,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -32,
+            "y": -14
+          },
+          "offsetMax": {
+            "x": -4,
+            "y": 14
+          },
+          "props": {
+            "color": {
+              "r": 0.82,
+              "g": 0.24,
+              "b": 0.2,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "close": "el-1"
+          }
+        },
+        {
+          "id": "el-5",
+          "name": "CloseButton Label",
+          "parentId": "el-4",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "X",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true
+        },
+        {
+          "id": "el-6",
           "name": "Hint",
           "parentId": "el-1",
           "type": "text",
@@ -2997,7 +3881,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-5",
+          "id": "el-7",
           "name": "Framed.Thin",
           "parentId": "el-1",
           "type": "panel",
@@ -3036,7 +3920,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-6",
+          "id": "el-8",
           "name": "Framed.Accent",
           "parentId": "el-1",
           "type": "panel",
@@ -3075,7 +3959,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-7",
+          "id": "el-9",
           "name": "Framed.Chunky",
           "parentId": "el-1",
           "type": "panel",
@@ -3208,7 +4092,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
             "y": 0
           },
           "offsetMax": {
-            "x": -14,
+            "x": -42,
             "y": 0
           },
           "props": {
@@ -3226,6 +4110,74 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
         },
         {
           "id": "el-4",
+          "name": "CloseButton",
+          "parentId": "el-2",
+          "type": "button",
+          "anchorMin": {
+            "x": 1,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -32,
+            "y": -14
+          },
+          "offsetMax": {
+            "x": -4,
+            "y": 14
+          },
+          "props": {
+            "color": {
+              "r": 0.82,
+              "g": 0.24,
+              "b": 0.2,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "close": "el-1"
+          }
+        },
+        {
+          "id": "el-5",
+          "name": "CloseButton Label",
+          "parentId": "el-4",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "X",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true
+        },
+        {
+          "id": "el-6",
           "name": "Hint",
           "parentId": "el-1",
           "type": "text",
@@ -3259,7 +4211,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-5",
+          "id": "el-7",
           "name": "Slot.Left",
           "parentId": "el-1",
           "type": "panel",
@@ -3294,7 +4246,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-6",
+          "id": "el-8",
           "name": "Slot.Right",
           "parentId": "el-1",
           "type": "panel",
@@ -3329,9 +4281,9 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-7",
+          "id": "el-9",
           "name": "Chip",
-          "parentId": "el-5",
+          "parentId": "el-7",
           "type": "panel",
           "props": {
             "color": {
@@ -3459,7 +4411,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
             "y": 0
           },
           "offsetMax": {
-            "x": -14,
+            "x": -42,
             "y": 0
           },
           "props": {
@@ -3477,6 +4429,74 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
         },
         {
           "id": "el-4",
+          "name": "CloseButton",
+          "parentId": "el-2",
+          "type": "button",
+          "anchorMin": {
+            "x": 1,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -32,
+            "y": -14
+          },
+          "offsetMax": {
+            "x": -4,
+            "y": 14
+          },
+          "props": {
+            "color": {
+              "r": 0.82,
+              "g": 0.24,
+              "b": 0.2,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "close": "el-1"
+          }
+        },
+        {
+          "id": "el-5",
+          "name": "CloseButton Label",
+          "parentId": "el-4",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "X",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true
+        },
+        {
+          "id": "el-6",
           "name": "Hint",
           "parentId": "el-1",
           "type": "text",
@@ -3510,7 +4530,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-5",
+          "id": "el-7",
           "name": "Menu",
           "parentId": "el-1",
           "type": "container",
@@ -3543,9 +4563,9 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-6",
+          "id": "el-8",
           "name": "Play",
-          "parentId": "el-5",
+          "parentId": "el-7",
           "type": "button",
           "anchorMin": {
             "x": 0,
@@ -3575,9 +4595,9 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-7",
+          "id": "el-9",
           "name": "Play Label",
-          "parentId": "el-6",
+          "parentId": "el-8",
           "type": "text",
           "anchorMin": {
             "x": 0,
@@ -3610,9 +4630,9 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           "passthrough": true
         },
         {
-          "id": "el-8",
+          "id": "el-10",
           "name": "Options",
-          "parentId": "el-5",
+          "parentId": "el-7",
           "type": "button",
           "anchorMin": {
             "x": 0,
@@ -3642,9 +4662,9 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-9",
+          "id": "el-11",
           "name": "Options Label",
-          "parentId": "el-8",
+          "parentId": "el-10",
           "type": "text",
           "anchorMin": {
             "x": 0,
@@ -3677,9 +4697,9 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           "passthrough": true
         },
         {
-          "id": "el-10",
+          "id": "el-12",
           "name": "Quit",
-          "parentId": "el-5",
+          "parentId": "el-7",
           "type": "button",
           "anchorMin": {
             "x": 0,
@@ -3709,9 +4729,9 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-11",
+          "id": "el-13",
           "name": "Quit Label",
-          "parentId": "el-10",
+          "parentId": "el-12",
           "type": "text",
           "anchorMin": {
             "x": 0,
@@ -3838,7 +4858,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
             "y": 0
           },
           "offsetMax": {
-            "x": -14,
+            "x": -42,
             "y": 0
           },
           "props": {
@@ -3856,6 +4876,74 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
         },
         {
           "id": "el-4",
+          "name": "CloseButton",
+          "parentId": "el-2",
+          "type": "button",
+          "anchorMin": {
+            "x": 1,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -32,
+            "y": -14
+          },
+          "offsetMax": {
+            "x": -4,
+            "y": 14
+          },
+          "props": {
+            "color": {
+              "r": 0.82,
+              "g": 0.24,
+              "b": 0.2,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "close": "el-1"
+          }
+        },
+        {
+          "id": "el-5",
+          "name": "CloseButton Label",
+          "parentId": "el-4",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "X",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true
+        },
+        {
+          "id": "el-6",
           "name": "Hint",
           "parentId": "el-1",
           "type": "text",
@@ -3889,7 +4977,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-5",
+          "id": "el-7",
           "name": "KitList",
           "parentId": "el-1",
           "type": "container",
@@ -3925,9 +5013,9 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-6",
+          "id": "el-8",
           "name": "KitRow",
-          "parentId": "el-5",
+          "parentId": "el-7",
           "type": "button",
           "anchorMin": {
             "x": 0,
@@ -3957,9 +5045,9 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-7",
+          "id": "el-9",
           "name": "KitRow Label",
-          "parentId": "el-6",
+          "parentId": "el-8",
           "type": "text",
           "anchorMin": {
             "x": 0,
@@ -3995,9 +5083,9 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-8",
+          "id": "el-10",
           "name": "KitIcon",
-          "parentId": "el-6",
+          "parentId": "el-8",
           "type": "panel",
           "props": {
             "color": {
@@ -4159,7 +5247,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
             "y": 0
           },
           "offsetMax": {
-            "x": -14,
+            "x": -42,
             "y": 0
           },
           "props": {
@@ -4177,6 +5265,74 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
         },
         {
           "id": "el-4",
+          "name": "CloseButton",
+          "parentId": "el-2",
+          "type": "button",
+          "anchorMin": {
+            "x": 1,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -32,
+            "y": -14
+          },
+          "offsetMax": {
+            "x": -4,
+            "y": 14
+          },
+          "props": {
+            "color": {
+              "r": 0.82,
+              "g": 0.24,
+              "b": 0.2,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "close": "el-1"
+          }
+        },
+        {
+          "id": "el-5",
+          "name": "CloseButton Label",
+          "parentId": "el-4",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "X",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true
+        },
+        {
+          "id": "el-6",
           "name": "Hint",
           "parentId": "el-1",
           "type": "text",
@@ -4210,7 +5366,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-5",
+          "id": "el-7",
           "name": "KitScroll",
           "parentId": "el-1",
           "type": "container",
@@ -4247,9 +5403,9 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-6",
+          "id": "el-8",
           "name": "KitRow",
-          "parentId": "el-5",
+          "parentId": "el-7",
           "type": "button",
           "anchorMin": {
             "x": 0,
@@ -4279,9 +5435,9 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-7",
+          "id": "el-9",
           "name": "KitRow Label",
-          "parentId": "el-6",
+          "parentId": "el-8",
           "type": "text",
           "anchorMin": {
             "x": 0,
@@ -4463,7 +5619,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
             "y": 0
           },
           "offsetMax": {
-            "x": -14,
+            "x": -42,
             "y": 0
           },
           "props": {
@@ -4481,6 +5637,74 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
         },
         {
           "id": "el-4",
+          "name": "CloseButton",
+          "parentId": "el-2",
+          "type": "button",
+          "anchorMin": {
+            "x": 1,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -32,
+            "y": -14
+          },
+          "offsetMax": {
+            "x": -4,
+            "y": 14
+          },
+          "props": {
+            "color": {
+              "r": 0.82,
+              "g": 0.24,
+              "b": 0.2,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "close": "el-1"
+          }
+        },
+        {
+          "id": "el-5",
+          "name": "CloseButton Label",
+          "parentId": "el-4",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "X",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true
+        },
+        {
+          "id": "el-6",
           "name": "Hint",
           "parentId": "el-1",
           "type": "text",
@@ -4514,7 +5738,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-5",
+          "id": "el-7",
           "name": "Header",
           "parentId": "el-1",
           "type": "panel",
@@ -4544,9 +5768,9 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-6",
+          "id": "el-8",
           "name": "HeaderAvatar",
-          "parentId": "el-5",
+          "parentId": "el-7",
           "type": "panel",
           "props": {
             "color": {
@@ -4578,9 +5802,9 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-7",
+          "id": "el-9",
           "name": "AvatarRing",
-          "parentId": "el-6",
+          "parentId": "el-8",
           "type": "panel",
           "props": {
             "color": {
@@ -4617,9 +5841,9 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-8",
+          "id": "el-10",
           "name": "Welcome",
-          "parentId": "el-5",
+          "parentId": "el-7",
           "type": "text",
           "anchorMin": {
             "x": 0,
@@ -4651,9 +5875,9 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-9",
+          "id": "el-11",
           "name": "Sub",
-          "parentId": "el-5",
+          "parentId": "el-7",
           "type": "text",
           "anchorMin": {
             "x": 0,
@@ -4685,7 +5909,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-10",
+          "id": "el-12",
           "name": "KitRow",
           "parentId": "el-1",
           "type": "panel",
@@ -4715,9 +5939,9 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-11",
+          "id": "el-13",
           "name": "KitIcon",
-          "parentId": "el-10",
+          "parentId": "el-12",
           "type": "panel",
           "props": {
             "color": {
@@ -4750,9 +5974,9 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-12",
+          "id": "el-14",
           "name": "KitText",
-          "parentId": "el-10",
+          "parentId": "el-12",
           "type": "text",
           "anchorMin": {
             "x": 0,
@@ -4784,9 +6008,9 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-13",
+          "id": "el-15",
           "name": "Claim",
-          "parentId": "el-10",
+          "parentId": "el-12",
           "type": "button",
           "anchorMin": {
             "x": 1,
@@ -4816,9 +6040,9 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-14",
+          "id": "el-16",
           "name": "Claim Label",
-          "parentId": "el-13",
+          "parentId": "el-15",
           "type": "text",
           "anchorMin": {
             "x": 0,
@@ -4851,7 +6075,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           "passthrough": true
         },
         {
-          "id": "el-15",
+          "id": "el-17",
           "name": "WipeLabel",
           "parentId": "el-1",
           "type": "text",
@@ -4885,7 +6109,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-16",
+          "id": "el-18",
           "name": "WipeTimer",
           "parentId": "el-1",
           "type": "countdown",
@@ -4925,7 +6149,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-17",
+          "id": "el-19",
           "name": "Dismiss",
           "parentId": "el-1",
           "type": "button",
@@ -4957,9 +6181,9 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
           }
         },
         {
-          "id": "el-18",
+          "id": "el-20",
           "name": "Dismiss Label",
-          "parentId": "el-17",
+          "parentId": "el-19",
           "type": "text",
           "anchorMin": {
             "x": 0,

@@ -195,9 +195,10 @@ const GALLERY_GROUPS: { title: string; items: ExampleLayout[] }[] = (
         <section class="ld-help-section">
           <div class="ld-help-gallery-head">
             <h3>Examples</h3>
+            <a class="ld-help-btn" href="/layout-designer/examples/LayoutDesignerExamples.cs" download title="A generated Carbon plugin: /examples opens a tabbed in-game tour where every card below is rendered by the same code the designer generates for it">Download demo plugin (.cs)</a>
             <button class="ld-help-btn" @click="loadAll">Load all into the editor</button>
           </div>
-          <p class="ld-help-note">One layout per feature plus a composed showcase, loaded into an “Examples” folder — open one to see how it's built, or view its in-game render below.</p>
+          <p class="ld-help-note">One layout per feature plus a composed showcase, loaded into an “Examples” folder — open one to see how it's built, or view its in-game render below. The demo plugin bundles them all behind an in-game tab bar (<code>/examples</code>).</p>
           <template v-for="group in GALLERY_GROUPS" :key="group.title">
             <h4 v-if="group.items.length" class="ld-help-gallery-group">{{ group.title }}</h4>
             <div class="ld-help-gallery">
