@@ -22,6 +22,7 @@ import type { EmitContext } from './elements/emit'
 import { inputDefinition } from './elements/input'
 import { adduiModifierComponents, carbonModifierChain, oxideModifierLines } from './elements/modifiers'
 import { definitionOf } from './elements/registry'
+import { CLOSE_ROOT } from './elements/button'
 import { layoutContentSize, layoutSlot, scrollContentRect } from './elements/container'
 import type { ContainerLayout } from './elements/container'
 import { applyItemBindings, CLIENT_PANELS, resolveText, TEXT_ALIGNS, TEXT_FONTS } from './types'
@@ -1075,10 +1076,17 @@ export function parseCuiJson(data: unknown): ParsedCui | null {
     if (btn) {
       // A button node carries the command + color; any bundled label is dropped (we model labels as
       // child Text elements). Checked first so a CuiButton's own image doesn't read as a plain panel.
+      // `close` holds a wire NAME here; it is remapped to an element id (or CLOSE_ROOT) after the
+      // synthetic-root strip below, once we know which element that name resolves to.
       elements.push({
         ...base,
         type: 'button',
-        props: { color: parseColor(btn.color, { r: 1, g: 1, b: 1, a: 1 }), command: typeof btn.command === 'string' ? btn.command : '', isProtected: true },
+        props: {
+          color: parseColor(btn.color, { r: 1, g: 1, b: 1, a: 1 }),
+          command: typeof btn.command === 'string' ? btn.command : '',
+          isProtected: true,
+          ...(typeof btn.close === 'string' && btn.close ? { close: nameToId.get(btn.close) ?? btn.close } : {}),
+        },
       })
     } else if (inputField) {
       // Input field bundles its own text + styling plus command/charLimit. The wire has no
@@ -1176,7 +1184,10 @@ export function parseCuiJson(data: unknown): ParsedCui | null {
     )
     if (wrapper) {
       elements.splice(elements.indexOf(wrapper), 1)
-      for (const el of elements) if (el.parentId === wrapper.id) el.parentId = null
+      for (const el of elements) {
+        if (el.parentId === wrapper.id) el.parentId = null
+        if (el.type === 'button' && el.props.close === wrapper.id) el.props.close = CLOSE_ROOT
+      }
     }
   }
 

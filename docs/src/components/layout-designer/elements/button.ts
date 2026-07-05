@@ -15,6 +15,22 @@ export interface ButtonProps {
   command: string
   /** Carbon command protection (Carbon-only; Oxide has no equivalent and ignores it). */
   isProtected: boolean
+  /**
+   * Element to destroy CLIENT-SIDE on click (CuiButton.Close / .SetButtonClose) — no server
+   * round-trip. Holds the target's element ID, or CLOSE_ROOT for the generated root wrapper (the
+   * whole menu); resolved to the generated name at emit. Empty/absent => nothing closes.
+   */
+  close?: string
+}
+
+/** props.close sentinel: close the transparent root wrapper codegen creates (the whole menu). */
+export const CLOSE_ROOT = '__root__'
+
+/** Resolve a button's close target to its generated wire name ('' = none). */
+function closeRef(el: ButtonElement, ctx: EmitContext): string {
+  if (!el.props.close) return ''
+  if (el.props.close === CLOSE_ROOT) return ctx.rootParent
+  return ctx.names.get(el.props.close) ?? ''
 }
 
 export interface ButtonElement extends BaseElement {
@@ -26,12 +42,14 @@ function oxide(el: ButtonElement, ctx: EmitContext): string[] {
   const parent = esc(parentRef(el, ctx))
   const name = esc(nameRef(el, ctx))
   // CuiButton's Button block carries the command + color; the label is a separate child element.
+  const close = closeRef(el, ctx)
   return [
     'container.Add(new CuiButton',
     '{',
     '    Button =',
     '    {',
     `        Command = "${esc(el.props.command)}",`,
+    ...(close ? [`        Close = "${esc(close)}",`] : []),
     `        Color = "${color(el.props.color)}"`,
     '    },',
     '    RectTransform =',
@@ -47,18 +65,21 @@ function oxide(el: ButtonElement, ctx: EmitContext): string[] {
 }
 
 function carbon(el: ButtonElement, ctx: EmitContext): string[] {
-  // CreateButton(parent, pos, offset, command, color, isProtected, name).
+  // CreateButton(parent, pos, offset, command, color, isProtected, name); close chains SetButtonClose.
+  const close = closeRef(el, ctx)
   return [
     `cui.v2.CreateButton("${esc(parentRef(el, ctx))}",`,
     `    ${posExpr(el)},`,
     `    ${offExpr(el)},`,
-    `    "${esc(el.props.command)}", "${color(el.props.color)}", ${el.props.isProtected}, "${esc(nameRef(el, ctx))}");`,
+    `    "${esc(el.props.command)}", "${color(el.props.color)}", ${el.props.isProtected}, "${esc(nameRef(el, ctx))}")${close ? `` : `;`}`,
+    ...(close ? [`    .SetButtonClose("${esc(close)}");`] : []),
     '',
   ]
 }
 
-function adduiComponents(el: ButtonElement): CuiComponent[] {
-  return [{ type: 'UnityEngine.UI.Button', command: el.props.command, color: color(el.props.color) }]
+function adduiComponents(el: ButtonElement, ctx: EmitContext): CuiComponent[] {
+  const close = closeRef(el, ctx)
+  return [{ type: 'UnityEngine.UI.Button', command: el.props.command, ...(close ? { close } : {}), color: color(el.props.color) }]
 }
 
 /** Seed a centered child Text label filling the button (reuses the Text element wholesale). */

@@ -469,6 +469,8 @@ export interface CuiTextComponent {
 export interface CuiButtonComponent {
   type: 'UnityEngine.UI.Button'
   command: string
+  /** Element name destroyed client-side on click (CuiButton.Close) — no server round-trip. */
+  close?: string
   color: string
 }
 

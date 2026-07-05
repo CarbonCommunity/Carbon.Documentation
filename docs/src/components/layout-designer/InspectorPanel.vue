@@ -5,6 +5,7 @@ import InfoTip from './InfoTip.vue'
 import NumberField from './NumberField.vue'
 import { hexToRgb01, rgb01ToHex, round } from './geometry'
 import { TEXT_ALIGNS, TEXT_FONTS } from './types'
+import { CLOSE_ROOT } from './elements/button'
 import type { ContainerLayout } from './elements/container'
 import type { DesignerElement, ImageFill, ListDataSource, OutlineModifier, TextAlign, TextDataSource, TextFont } from './types'
 import { useDesigner } from './useDesigner'
@@ -162,6 +163,12 @@ function setOutlineDistance(axis: 'x' | 'y', raw: string) {
 const panelProps = computed(() => (selected.value?.type === 'panel' ? selected.value.props : null))
 const textProps = computed(() => (selected.value?.type === 'text' ? selected.value.props : null))
 const buttonProps = computed(() => (selected.value?.type === 'button' ? selected.value.props : null))
+/** Candidate close targets: any element except the button itself (closing yourself is legal CUI but
+ *  almost always a mistake next to '(whole menu)'). */
+const closeTargets = computed(() => elements.value.filter((e) => e.id !== selected.value?.id).map((e) => ({ id: e.id, name: e.name })))
+function setCloseTarget(el: DesignerElement, v: string) {
+  update(el.id, { props: { close: v || undefined } })
+}
 
 // --- container layout (editor-side auto-arrange; see elements/container.ts) ---
 const containerProps = computed(() => (selected.value?.type === 'container' ? selected.value.props : null))
@@ -753,6 +760,14 @@ const computedRect = computed(() => (selected.value ? rectOf(selected.value.id) 
           <input type="checkbox" :checked="buttonProps.isProtected" @change="setProtected(selected, ($event.target as HTMLInputElement).checked)" />
           <span>Protected</span>
           <InfoTip text="Carbon command protection (Carbon-only; Oxide ignores it). Wraps the command so it can't be triggered by spoofed client input. Maps to the isProtected arg of cui.v2.CreateButton." />
+        </label>
+        <label class="ld-field">
+          <span class="ld-field-label">Close on click <InfoTip text="Destroys the chosen element CLIENT-SIDE when clicked - no command or server round-trip (CuiButton.Close / .SetButtonClose). '(whole menu)' closes the transparent root the generated code wraps everything in - the standard close button." /></span>
+          <select :value="buttonProps.close ?? ''" @change="setCloseTarget(selected, ($event.target as HTMLSelectElement).value)">
+            <option value="">(nothing)</option>
+            <option :value="CLOSE_ROOT">(whole menu)</option>
+            <option v-for="opt in closeTargets" :key="opt.id" :value="opt.id">{{ opt.name }}</option>
+          </select>
         </label>
       </template>
 
