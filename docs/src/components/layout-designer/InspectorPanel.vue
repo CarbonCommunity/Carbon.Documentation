@@ -163,6 +163,40 @@ function setOutlineDistance(axis: 'x' | 'y', raw: string) {
 const panelProps = computed(() => (selected.value?.type === 'panel' ? selected.value.props : null))
 const textProps = computed(() => (selected.value?.type === 'text' ? selected.value.props : null))
 const buttonProps = computed(() => (selected.value?.type === 'button' ? selected.value.props : null))
+
+// --- tab views ---
+const tabsProps = computed(() => (selected.value?.type === 'tabs' ? selected.value.props : null))
+/** Pages of the selected tab view (its direct children, in order). */
+const tabPages = computed(() => (selected.value?.type === 'tabs' ? childrenOf(selected.value.id) : []))
+/** Every tab view in the layout — targets for a button's "Switches tab". */
+const tabViews = computed(() => elements.value.filter((e) => e.type === 'tabs'))
+/** Pages of the tab view the selected BUTTON targets. */
+const targetPages = computed(() => {
+  const t = buttonProps.value?.tabSwitch?.target
+  return t ? childrenOf(t) : []
+})
+function setTabSwitchTarget(el: DesignerElement, v: string) {
+  update(el.id, { props: { tabSwitch: v ? { target: v, page: 0 } : null } })
+}
+function setTabSwitchPage(el: DesignerElement, raw: string) {
+  const cur = buttonProps.value?.tabSwitch
+  if (!cur) return
+  update(el.id, { props: { tabSwitch: { ...cur, page: Number.parseInt(raw, 10) || 0 } } })
+}
+function setActiveColorEnabled(el: DesignerElement, on: boolean) {
+  update(el.id, { props: { activeColor: on ? { r: 0.99, g: 0.35, b: 0.23, a: 1 } : null } })
+}
+function setActiveColorHex(el: DesignerElement, hex: string) {
+  const cur = buttonProps.value?.activeColor
+  if (!cur) return
+  update(el.id, { props: { activeColor: { ...hexToRgb01(hex), a: cur.a } } })
+}
+function setActiveColorAlpha(el: DesignerElement, raw: string) {
+  const a = Number.parseFloat(raw)
+  const cur = buttonProps.value?.activeColor
+  if (Number.isNaN(a) || !cur) return
+  update(el.id, { props: { activeColor: { ...cur, a } } })
+}
 /** Candidate close targets: any element except the button itself (closing yourself is legal CUI but
  *  almost always a mistake next to '(whole menu)'). */
 const closeTargets = computed(() => elements.value.filter((e) => e.id !== selected.value?.id).map((e) => ({ id: e.id, name: e.name })))
@@ -407,8 +441,8 @@ const textColumns = computed(() => repeatList.value?.columns.filter((c) => c.kin
 // Heading for the shared color picker: text color, or a panel's fill color / image tint.
 const colorLabel = computed(() => (textProps.value ? 'Text color' : fillMode.value === 'image' ? 'Tint' : 'Color'))
 
-// Whether the selected element exposes a `color` prop (containers don't — they're rect-only).
-const hasColor = computed(() => !!selected.value && selected.value.type !== 'container')
+// Whether the selected element exposes a `color` prop (containers and tab views don't — rect-only).
+const hasColor = computed(() => !!selected.value && selected.value.type !== 'container' && selected.value.type !== 'tabs')
 
 const computedRect = computed(() => (selected.value ? rectOf(selected.value.id) : undefined))
 </script>
@@ -769,6 +803,51 @@ const computedRect = computed(() => (selected.value ? rectOf(selected.value.id) 
             <option v-for="opt in closeTargets" :key="opt.id" :value="opt.id">{{ opt.name }}</option>
           </select>
         </label>
+        <label v-if="tabViews.length" class="ld-field">
+          <span class="ld-field-label">Switches tab <InfoTip text="Clicking shows a page of the chosen Tab view: the generated handler clears the tab container and rewrites it with that page. Overrides Command. Double-click this button on the canvas to preview its page." /></span>
+          <select :value="buttonProps.tabSwitch?.target ?? ''" @change="setTabSwitchTarget(selected, ($event.target as HTMLSelectElement).value)">
+            <option value="">(off)</option>
+            <option v-for="tv in tabViews" :key="tv.id" :value="tv.id">{{ tv.name }}</option>
+          </select>
+        </label>
+        <label v-if="buttonProps.tabSwitch" class="ld-field">
+          <span class="ld-field-label">Page</span>
+          <select :value="String(buttonProps.tabSwitch.page)" @change="setTabSwitchPage(selected, ($event.target as HTMLSelectElement).value)">
+            <option v-for="(pg, i) in targetPages" :key="pg.id" :value="String(i)">{{ i + 1 }} - {{ pg.name }}</option>
+          </select>
+        </label>
+        <template v-if="buttonProps.tabSwitch">
+          <label class="ld-passthrough">
+            <input type="checkbox" :checked="!!buttonProps.activeColor" @change="setActiveColorEnabled(selected, ($event.target as HTMLInputElement).checked)" />
+            <span>Active color <InfoTip text="Color while this button's page is the active one. Set alpha to 0 to make the button invisible when selected." /></span>
+          </label>
+          <div v-if="buttonProps.activeColor" class="ld-vec-row">
+            <input class="ld-color" type="color" :value="rgb01ToHex(buttonProps.activeColor)" title="Active color" @input="setActiveColorHex(selected, ($event.target as HTMLInputElement).value)" />
+            <span class="ld-vec-label">a</span>
+            <input class="ld-num" type="number" min="0" max="1" step="0.05" :value="buttonProps.activeColor.a" title="Active alpha (0 = invisible when selected)" @change="setActiveColorAlpha(selected, ($event.target as HTMLInputElement).value)" />
+          </div>
+        </template>
+      </template>
+
+      <!-- TAB VIEW: pages are the children; switch buttons are ordinary buttons anywhere -->
+      <template v-if="tabsProps">
+        <div class="ld-section-title">
+          <span>Tab view</span>
+          <InfoTip
+            text="A swappable container: each CHILD is a page, and only the active page exists on the client. Any button anywhere can switch pages ('Switches tab' on the button) - style or scatter them freely. Generated code clears and rewrites this container when a tab button is clicked."
+          />
+        </div>
+        <label class="ld-field">
+          <span class="ld-field-label">Switch command <InfoTip text="Console command the tab buttons run with the page index appended; the generated plugin's handler re-renders with that page." /></span>
+          <input type="text" :value="tabsProps.command" @change="update(selected.id, { props: { command: ($event.target as HTMLInputElement).value } })" />
+        </label>
+        <label class="ld-field">
+          <span class="ld-field-label">Active page <InfoTip text="Which page renders on the canvas and in previews. Generated code always opens on page 1." /></span>
+          <select :value="String(tabsProps.activeTab)" @change="update(selected.id, { props: { activeTab: Number.parseInt(($event.target as HTMLSelectElement).value, 10) || 0 } })">
+            <option v-for="(pg, i) in tabPages" :key="pg.id" :value="String(i)">{{ i + 1 }} - {{ pg.name }}</option>
+          </select>
+        </label>
+        <p class="ld-help-intro">Add a page: add a child element (containers work best). Rename the child to rename the page.</p>
       </template>
 
       <!-- PANEL fill (solid color vs image — url / sprite / file / item icon) -->

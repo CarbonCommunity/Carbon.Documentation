@@ -304,6 +304,95 @@ const samples = [
   ),
 ]
 
+// ---- the consolidated "All examples" layout: ONE tab view whose pages are every card ------------
+// Authored with the designer's own tabs concept: the switch buttons are real, editable elements in
+// two rows above the view, and each page holds one example's elements (re-id'd into the combined
+// tree). Loading it demonstrates tabs and gives an in-designer tour in a single layout.
+function buildAllExamples(sources) {
+  let n = 0
+  const alloc = () => `ax-${++n}`
+  const els = []
+  const dataSources = []
+  const tabs = {
+    id: alloc(),
+    name: 'Examples View',
+    parentId: null,
+    type: 'tabs',
+    anchorMin: V(0.5, 0.5),
+    anchorMax: V(0.5, 0.5),
+    offsetMin: V(-290, -230),
+    offsetMax: V(290, 150),
+    props: { command: 'ui.examples', activeTab: 0 },
+  }
+  els.push(tabs)
+
+  // two rows of switch buttons above the view (real elements; restyle/rearrange freely)
+  const bar = { id: alloc(), name: 'Examples Bar', parentId: null, type: 'container', anchorMin: V(0.5, 0.5), anchorMax: V(0.5, 0.5), offsetMin: V(-290, 154), offsetMax: V(290, 210), props: {} }
+  els.push(bar)
+  const perRow = Math.ceil(sources.length / 2)
+  sources.forEach((src, i) => {
+    const row = Math.floor(i / perRow)
+    const col = i % perRow
+    const w = 1 / perRow
+    const btn = {
+      id: alloc(),
+      name: `Tab ${src.name}`,
+      parentId: bar.id,
+      type: 'button',
+      anchorMin: V(col * w, row === 0 ? 0.5 : 0),
+      anchorMax: V((col + 1) * w, row === 0 ? 1 : 0.5),
+      offsetMin: V(1, 1),
+      offsetMax: V(-1, -1),
+      props: { color: { r: 0.12, g: 0.13, b: 0.16, a: 1 }, command: '', isProtected: true, tabSwitch: { target: tabs.id, page: i }, activeColor: { r: 0.99, g: 0.35, b: 0.23, a: 1 } },
+    }
+    els.push(btn)
+    els.push({
+      id: alloc(),
+      name: `Tab ${src.name} Label`,
+      parentId: btn.id,
+      type: 'text',
+      anchorMin: V(0, 0),
+      anchorMax: V(1, 1),
+      offsetMin: V(0, 0),
+      offsetMax: V(0, 0),
+      passthrough: true,
+      props: { color: { r: 0.95, g: 0.95, b: 0.97, a: 1 }, text: src.name, fontSize: 9, align: 'MiddleCenter' },
+    })
+  })
+
+  // each example becomes a PAGE: its elements re-id'd, its card centered in the page
+  for (const src of sources) {
+    const page = { id: alloc(), name: src.name, parentId: tabs.id, type: 'container', anchorMin: V(0, 0), anchorMax: V(1, 1), offsetMin: V(0, 0), offsetMax: V(0, 0), props: {} }
+    els.push(page)
+    const idMap = new Map()
+    for (const el of src.data.elements) idMap.set(el.id, alloc())
+    // per-example data sources join the combined layout with re-keyed ids + unique names
+    const dsMap = new Map()
+    for (const ds of src.data.dataSources ?? []) {
+      const nid = `axds-${dataSources.length + 1}`
+      dsMap.set(ds.id, nid)
+      dataSources.push({ ...ds, id: nid, name: dataSources.some((d) => d.name === ds.name) ? `${ds.name}${dataSources.length + 1}` : ds.name })
+    }
+    for (const el of src.data.elements) {
+      const clone = JSON.parse(JSON.stringify(el))
+      clone.id = idMap.get(el.id)
+      clone.parentId = el.parentId ? idMap.get(el.parentId) : page.id
+      if (clone.repeat?.source) clone.repeat.source = dsMap.get(clone.repeat.source) ?? clone.repeat.source
+      if (clone.props?.close) clone.props.close = idMap.get(clone.props.close) ?? clone.props.close
+      els.push(clone)
+    }
+  }
+  return {
+    id: 'all-examples',
+    name: 'All examples (tabbed)',
+    hint: 'Every example as a page of one Tab view - the buttons above are ordinary, editable elements.',
+    category: 'showcase',
+    data: { elements: els, dataSources, canvas: { aspect: '16:9', rootLayer: 'Overlay' } },
+  }
+}
+
+samples.push(buildAllExamples(samples.slice()))
+
 const header = `// Bundled example layouts for the Layout Designer — one card per element / fill / modifier plus a
 // composed showcase, each a self-labeled mini scene on a solid backdrop (translucency would let the
 // in-game world bleed through). Powers File > Load examples and the Help gallery.
@@ -345,6 +434,7 @@ function buildMethod(sample) {
   return [`    private void Build${pascal(sample.id)}(CUI cui)`, '    {', ...collapsed, '    }']
 }
 
+const demoSamples = samples.filter((x) => x.id !== 'all-examples') // the tabbed layout IS the others
 const TAB_COLOR = '0.12 0.13 0.16 1'
 const TAB_ACTIVE = '0.99 0.35 0.23 1'
 const pluginLines = [
@@ -360,7 +450,7 @@ const pluginLines = [
   '[Description("Tabbed in-game tour of the Layout Designer examples")]',
   'public class LayoutDesignerExamples : CarbonPlugin',
   '{',
-  `    private static readonly string[] Tabs = { ${samples.map((x) => `"${x.name}"`).join(', ')} };`,
+  `    private static readonly string[] Tabs = { ${demoSamples.map((x) => `"${x.name}"`).join(', ')} };`,
   '',
   '    [ChatCommand("examples")]',
   '    private void ShowCommand(BasePlayer player, string command, string[] args) => Render(player, 0);',
@@ -405,13 +495,13 @@ const pluginLines = [
   '',
   '        switch (tab)',
   '        {',
-  ...samples.map((x, i) => `            case ${i}: Build${pascal(x.id)}(cui); break;`),
+  ...demoSamples.map((x, i) => `            case ${i}: Build${pascal(x.id)}(cui); break;`),
   '        }',
   '',
   '        cui.v2.SendUi(player);',
   '    }',
   '',
-  ...samples.flatMap((x, i) => [...(i > 0 ? [''] : []), ...buildMethod(x)]),
+  ...demoSamples.flatMap((x, i) => [...(i > 0 ? [''] : []), ...buildMethod(x)]),
   '}',
 ]
 const pluginPath = path.join(rootDir, 'docs', 'public', 'layout-designer', 'examples', 'LayoutDesignerExamples.cs')

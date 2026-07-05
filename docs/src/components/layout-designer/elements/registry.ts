@@ -12,6 +12,7 @@ import { containerDefinition } from './container'
 import { countdownDefinition } from './countdown'
 import { inputDefinition } from './input'
 import { panelDefinition } from './panel'
+import { tabsDefinition } from './tabs'
 import { textDefinition } from './text'
 
 /**
@@ -31,6 +32,7 @@ export const ELEMENT_DEFINITIONS: ElementDefinition[] = [
   widen(inputDefinition),
   widen(countdownDefinition),
   widen(containerDefinition),
+  widen(tabsDefinition),
 ]
 
 const BY_TYPE = new Map<ElementType, ElementDefinition>(ELEMENT_DEFINITIONS.map((d) => [d.type, d]))

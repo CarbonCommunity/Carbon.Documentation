@@ -10,6 +10,8 @@ import { copyText } from './clipboard'
 import { parseCuiJson } from './codegen'
 import type { ButtonProps } from './elements/button'
 import { layoutSlot } from './elements/container'
+import { tabsPageRect } from './elements/tabs'
+import type { TabsProps } from './elements/tabs'
 import type { ContainerLayout, ContainerProps } from './elements/container'
 import type { CountdownProps } from './elements/countdown'
 import type { InputProps } from './elements/input'
@@ -313,8 +315,18 @@ function layoutOf(id: string | null): ContainerLayout | null {
 
 /** Slam `id`'s children into their layout slots, in tree (sibling) order. No-op without an active
  *  layout. Runs after every structural change — add, remove, reorder, reparent, duplicate, param
- *  edit — so slots are law: a hand-moved child snaps back on the next reflow. */
+ *  edit — so slots are law: a hand-moved child snaps back on the next reflow. A TABS parent is the
+ *  same idea with one slot: every page fills the content rect below the bar. */
 function applyContainerLayout(id: string | null) {
+  if (!id) return
+  const parent = byId.value.get(id)
+  if (parent?.type === 'tabs') {
+    const rect = tabsPageRect(parent.props)
+    for (const kid of childrenOf(id)) Object.assign(kid, { anchorMin: { ...rect.anchorMin }, anchorMax: { ...rect.anchorMax }, offsetMin: { ...rect.offsetMin }, offsetMax: { ...rect.offsetMax } })
+    // deleting/reordering pages can strand the active index past the end
+    if (parent.props.activeTab >= childrenOf(id).length) parent.props.activeTab = Math.max(0, childrenOf(id).length - 1)
+    return
+  }
   const l = layoutOf(id)
   if (!l) return
   childrenOf(id).forEach((kid, i) => {
@@ -470,7 +482,7 @@ function snapSelection(h: HPlace, v: VPlace, pad = 0) {
 // Every prop key across all element types (container has none). The shared keys (color, text, font…)
 // have identical types in every element module, so the intersection is well-formed — and a typo'd or
 // unknown key in an inspector setter is a compile error instead of a silently dropped patch.
-type AnyElementProps = PanelProps & TextProps & ButtonProps & InputProps & CountdownProps & ContainerProps
+type AnyElementProps = PanelProps & TextProps & ButtonProps & InputProps & CountdownProps & ContainerProps & TabsProps
 
 type ElementPatch = Partial<Pick<DesignerElement, 'name' | 'anchorMin' | 'anchorMax' | 'offsetMin' | 'offsetMax' | 'passthrough'>> & {
   // A modifier key set to null/false clears it (merged in, then falsy keys are pruned).
@@ -498,7 +510,7 @@ function update(id: string, patch: ElementPatch) {
   }
   if (patch.props) {
     el.props = { ...(el.props as AnyElementProps), ...patch.props }
-    if ('layout' in patch.props) applyContainerLayout(id) // layout param edits re-slot immediately
+    if ('layout' in patch.props || el.type === 'tabs') applyContainerLayout(id) // layout/tabs param edits re-slot immediately
   }
 }
 

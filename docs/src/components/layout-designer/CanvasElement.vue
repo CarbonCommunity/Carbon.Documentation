@@ -100,7 +100,15 @@ const fillStyle = computed<Record<string, string> | null>(() => {
     }
     return s
   }
-  if (el.type === 'button') return { backgroundColor: cssColor(el.props.color) }
+  if (el.type === 'button') {
+    // a tab-switch button previews its active color while its page is the active one
+    const sw = el.props.tabSwitch
+    if (sw && el.props.activeColor) {
+      const tv = byId.value.get(sw.target)
+      if (tv?.type === 'tabs' && tv.props.activeTab === sw.page) return { backgroundColor: cssColor(el.props.activeColor) }
+    }
+    return { backgroundColor: cssColor(el.props.color) }
+  }
   return null
 })
 
@@ -152,7 +160,17 @@ const textContent = computed(() => {
   return ''
 })
 
-const children = computed(() => childrenOf(props.element.id))
+const children = computed(() => {
+  const el = props.element
+  const kids = childrenOf(el.id)
+  // A tab view renders only its ACTIVE page — switch via the Inspector or by double-clicking a
+  // tab-switch button on the canvas.
+  if (el.type === 'tabs' && kids.length) {
+    const i = Math.min(Math.max(el.props.activeTab, 0), kids.length - 1)
+    return [kids[i]]
+  }
+  return kids
+})
 
 // --- repeat ghosts ---------------------------------------------------------------------------------
 // A repeating layout container renders its template once as REAL (editable) children in slot 0, and
@@ -281,6 +299,14 @@ watch(editing, (on) => {
 function onDblClick(e: MouseEvent) {
   e.stopPropagation()
   const el = props.element
+  // Double-clicking a tab-switch button previews its page — including through its full-bleed
+  // caption, which is what the pointer usually lands on. (Edit that caption via Alt-click.)
+  const switchHost = el.type === 'button' ? el : el.passthrough && el.parentId ? byId.value.get(el.parentId) : null
+  if (switchHost?.type === 'button' && switchHost.props.tabSwitch) {
+    const tv = byId.value.get(switchHost.props.tabSwitch.target)
+    if (tv?.type === 'tabs') update(tv.id, { props: { activeTab: switchHost.props.tabSwitch.page } })
+    return
+  }
   const target = TEXTY.has(el.type) ? el : (childrenOf(el.id).find((k) => k.type === 'text') ?? null)
   if (!target || target.bindings?.text || target.itemBindings?.text) return // bound text: edit the source/list instead
   select(target.id)

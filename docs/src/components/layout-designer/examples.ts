@@ -6221,5 +6221,7802 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
         "rootLayer": "Overlay"
       }
     }
+  },
+  {
+    "id": "all-examples",
+    "name": "All examples (tabbed)",
+    "hint": "Every example as a page of one Tab view - the buttons above are ordinary, editable elements.",
+    "category": "showcase",
+    "data": {
+      "elements": [
+        {
+          "id": "ax-1",
+          "name": "Examples View",
+          "parentId": null,
+          "type": "tabs",
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -290,
+            "y": -230
+          },
+          "offsetMax": {
+            "x": 290,
+            "y": 150
+          },
+          "props": {
+            "command": "ui.examples",
+            "activeTab": 0
+          }
+        },
+        {
+          "id": "ax-2",
+          "name": "Examples Bar",
+          "parentId": null,
+          "type": "container",
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -290,
+            "y": 154
+          },
+          "offsetMax": {
+            "x": 290,
+            "y": 210
+          },
+          "props": {}
+        },
+        {
+          "id": "ax-3",
+          "name": "Tab Panel",
+          "parentId": "ax-2",
+          "type": "button",
+          "anchorMin": {
+            "x": 0,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.1111111111111111,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMax": {
+            "x": -1,
+            "y": -1
+          },
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "tabSwitch": {
+              "target": "ax-1",
+              "page": 0
+            },
+            "activeColor": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            }
+          }
+        },
+        {
+          "id": "ax-4",
+          "name": "Tab Panel Label",
+          "parentId": "ax-3",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "passthrough": true,
+          "props": {
+            "color": {
+              "r": 0.95,
+              "g": 0.95,
+              "b": 0.97,
+              "a": 1
+            },
+            "text": "Panel",
+            "fontSize": 9,
+            "align": "MiddleCenter"
+          }
+        },
+        {
+          "id": "ax-5",
+          "name": "Tab Text",
+          "parentId": "ax-2",
+          "type": "button",
+          "anchorMin": {
+            "x": 0.1111111111111111,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.2222222222222222,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMax": {
+            "x": -1,
+            "y": -1
+          },
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "tabSwitch": {
+              "target": "ax-1",
+              "page": 1
+            },
+            "activeColor": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            }
+          }
+        },
+        {
+          "id": "ax-6",
+          "name": "Tab Text Label",
+          "parentId": "ax-5",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "passthrough": true,
+          "props": {
+            "color": {
+              "r": 0.95,
+              "g": 0.95,
+              "b": 0.97,
+              "a": 1
+            },
+            "text": "Text",
+            "fontSize": 9,
+            "align": "MiddleCenter"
+          }
+        },
+        {
+          "id": "ax-7",
+          "name": "Tab Container",
+          "parentId": "ax-2",
+          "type": "button",
+          "anchorMin": {
+            "x": 0.2222222222222222,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.3333333333333333,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMax": {
+            "x": -1,
+            "y": -1
+          },
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "tabSwitch": {
+              "target": "ax-1",
+              "page": 2
+            },
+            "activeColor": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            }
+          }
+        },
+        {
+          "id": "ax-8",
+          "name": "Tab Container Label",
+          "parentId": "ax-7",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "passthrough": true,
+          "props": {
+            "color": {
+              "r": 0.95,
+              "g": 0.95,
+              "b": 0.97,
+              "a": 1
+            },
+            "text": "Container",
+            "fontSize": 9,
+            "align": "MiddleCenter"
+          }
+        },
+        {
+          "id": "ax-9",
+          "name": "Tab Button",
+          "parentId": "ax-2",
+          "type": "button",
+          "anchorMin": {
+            "x": 0.3333333333333333,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.4444444444444444,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMax": {
+            "x": -1,
+            "y": -1
+          },
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "tabSwitch": {
+              "target": "ax-1",
+              "page": 3
+            },
+            "activeColor": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            }
+          }
+        },
+        {
+          "id": "ax-10",
+          "name": "Tab Button Label",
+          "parentId": "ax-9",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "passthrough": true,
+          "props": {
+            "color": {
+              "r": 0.95,
+              "g": 0.95,
+              "b": 0.97,
+              "a": 1
+            },
+            "text": "Button",
+            "fontSize": 9,
+            "align": "MiddleCenter"
+          }
+        },
+        {
+          "id": "ax-11",
+          "name": "Tab Input field",
+          "parentId": "ax-2",
+          "type": "button",
+          "anchorMin": {
+            "x": 0.4444444444444444,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5555555555555556,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMax": {
+            "x": -1,
+            "y": -1
+          },
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "tabSwitch": {
+              "target": "ax-1",
+              "page": 4
+            },
+            "activeColor": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            }
+          }
+        },
+        {
+          "id": "ax-12",
+          "name": "Tab Input field Label",
+          "parentId": "ax-11",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "passthrough": true,
+          "props": {
+            "color": {
+              "r": 0.95,
+              "g": 0.95,
+              "b": 0.97,
+              "a": 1
+            },
+            "text": "Input field",
+            "fontSize": 9,
+            "align": "MiddleCenter"
+          }
+        },
+        {
+          "id": "ax-13",
+          "name": "Tab Countdown",
+          "parentId": "ax-2",
+          "type": "button",
+          "anchorMin": {
+            "x": 0.5555555555555556,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.6666666666666666,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMax": {
+            "x": -1,
+            "y": -1
+          },
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "tabSwitch": {
+              "target": "ax-1",
+              "page": 5
+            },
+            "activeColor": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            }
+          }
+        },
+        {
+          "id": "ax-14",
+          "name": "Tab Countdown Label",
+          "parentId": "ax-13",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "passthrough": true,
+          "props": {
+            "color": {
+              "r": 0.95,
+              "g": 0.95,
+              "b": 0.97,
+              "a": 1
+            },
+            "text": "Countdown",
+            "fontSize": 9,
+            "align": "MiddleCenter"
+          }
+        },
+        {
+          "id": "ax-15",
+          "name": "Tab Image: URL",
+          "parentId": "ax-2",
+          "type": "button",
+          "anchorMin": {
+            "x": 0.6666666666666666,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.7777777777777777,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMax": {
+            "x": -1,
+            "y": -1
+          },
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "tabSwitch": {
+              "target": "ax-1",
+              "page": 6
+            },
+            "activeColor": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            }
+          }
+        },
+        {
+          "id": "ax-16",
+          "name": "Tab Image: URL Label",
+          "parentId": "ax-15",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "passthrough": true,
+          "props": {
+            "color": {
+              "r": 0.95,
+              "g": 0.95,
+              "b": 0.97,
+              "a": 1
+            },
+            "text": "Image: URL",
+            "fontSize": 9,
+            "align": "MiddleCenter"
+          }
+        },
+        {
+          "id": "ax-17",
+          "name": "Tab Image: Sprite",
+          "parentId": "ax-2",
+          "type": "button",
+          "anchorMin": {
+            "x": 0.7777777777777777,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.8888888888888888,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMax": {
+            "x": -1,
+            "y": -1
+          },
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "tabSwitch": {
+              "target": "ax-1",
+              "page": 7
+            },
+            "activeColor": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            }
+          }
+        },
+        {
+          "id": "ax-18",
+          "name": "Tab Image: Sprite Label",
+          "parentId": "ax-17",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "passthrough": true,
+          "props": {
+            "color": {
+              "r": 0.95,
+              "g": 0.95,
+              "b": 0.97,
+              "a": 1
+            },
+            "text": "Image: Sprite",
+            "fontSize": 9,
+            "align": "MiddleCenter"
+          }
+        },
+        {
+          "id": "ax-19",
+          "name": "Tab Image: Item icon",
+          "parentId": "ax-2",
+          "type": "button",
+          "anchorMin": {
+            "x": 0.8888888888888888,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMax": {
+            "x": -1,
+            "y": -1
+          },
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "tabSwitch": {
+              "target": "ax-1",
+              "page": 8
+            },
+            "activeColor": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            }
+          }
+        },
+        {
+          "id": "ax-20",
+          "name": "Tab Image: Item icon Label",
+          "parentId": "ax-19",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "passthrough": true,
+          "props": {
+            "color": {
+              "r": 0.95,
+              "g": 0.95,
+              "b": 0.97,
+              "a": 1
+            },
+            "text": "Image: Item icon",
+            "fontSize": 9,
+            "align": "MiddleCenter"
+          }
+        },
+        {
+          "id": "ax-21",
+          "name": "Tab Image: Steam avatar",
+          "parentId": "ax-2",
+          "type": "button",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 0.1111111111111111,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMax": {
+            "x": -1,
+            "y": -1
+          },
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "tabSwitch": {
+              "target": "ax-1",
+              "page": 9
+            },
+            "activeColor": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            }
+          }
+        },
+        {
+          "id": "ax-22",
+          "name": "Tab Image: Steam avatar Label",
+          "parentId": "ax-21",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "passthrough": true,
+          "props": {
+            "color": {
+              "r": 0.95,
+              "g": 0.95,
+              "b": 0.97,
+              "a": 1
+            },
+            "text": "Image: Steam avatar",
+            "fontSize": 9,
+            "align": "MiddleCenter"
+          }
+        },
+        {
+          "id": "ax-23",
+          "name": "Tab Image: Image DB",
+          "parentId": "ax-2",
+          "type": "button",
+          "anchorMin": {
+            "x": 0.1111111111111111,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 0.2222222222222222,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMax": {
+            "x": -1,
+            "y": -1
+          },
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "tabSwitch": {
+              "target": "ax-1",
+              "page": 10
+            },
+            "activeColor": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            }
+          }
+        },
+        {
+          "id": "ax-24",
+          "name": "Tab Image: Image DB Label",
+          "parentId": "ax-23",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "passthrough": true,
+          "props": {
+            "color": {
+              "r": 0.95,
+              "g": 0.95,
+              "b": 0.97,
+              "a": 1
+            },
+            "text": "Image: Image DB",
+            "fontSize": 9,
+            "align": "MiddleCenter"
+          }
+        },
+        {
+          "id": "ax-25",
+          "name": "Tab Outline",
+          "parentId": "ax-2",
+          "type": "button",
+          "anchorMin": {
+            "x": 0.2222222222222222,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 0.3333333333333333,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMax": {
+            "x": -1,
+            "y": -1
+          },
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "tabSwitch": {
+              "target": "ax-1",
+              "page": 11
+            },
+            "activeColor": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            }
+          }
+        },
+        {
+          "id": "ax-26",
+          "name": "Tab Outline Label",
+          "parentId": "ax-25",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "passthrough": true,
+          "props": {
+            "color": {
+              "r": 0.95,
+              "g": 0.95,
+              "b": 0.97,
+              "a": 1
+            },
+            "text": "Outline",
+            "fontSize": 9,
+            "align": "MiddleCenter"
+          }
+        },
+        {
+          "id": "ax-27",
+          "name": "Tab Border",
+          "parentId": "ax-2",
+          "type": "button",
+          "anchorMin": {
+            "x": 0.3333333333333333,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 0.4444444444444444,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMax": {
+            "x": -1,
+            "y": -1
+          },
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "tabSwitch": {
+              "target": "ax-1",
+              "page": 12
+            },
+            "activeColor": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            }
+          }
+        },
+        {
+          "id": "ax-28",
+          "name": "Tab Border Label",
+          "parentId": "ax-27",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "passthrough": true,
+          "props": {
+            "color": {
+              "r": 0.95,
+              "g": 0.95,
+              "b": 0.97,
+              "a": 1
+            },
+            "text": "Border",
+            "fontSize": 9,
+            "align": "MiddleCenter"
+          }
+        },
+        {
+          "id": "ax-29",
+          "name": "Tab Draggable & Slot",
+          "parentId": "ax-2",
+          "type": "button",
+          "anchorMin": {
+            "x": 0.4444444444444444,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 0.5555555555555556,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMax": {
+            "x": -1,
+            "y": -1
+          },
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "tabSwitch": {
+              "target": "ax-1",
+              "page": 13
+            },
+            "activeColor": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            }
+          }
+        },
+        {
+          "id": "ax-30",
+          "name": "Tab Draggable & Slot Label",
+          "parentId": "ax-29",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "passthrough": true,
+          "props": {
+            "color": {
+              "r": 0.95,
+              "g": 0.95,
+              "b": 0.97,
+              "a": 1
+            },
+            "text": "Draggable & Slot",
+            "fontSize": 9,
+            "align": "MiddleCenter"
+          }
+        },
+        {
+          "id": "ax-31",
+          "name": "Tab Layout: stack",
+          "parentId": "ax-2",
+          "type": "button",
+          "anchorMin": {
+            "x": 0.5555555555555556,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 0.6666666666666666,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMax": {
+            "x": -1,
+            "y": -1
+          },
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "tabSwitch": {
+              "target": "ax-1",
+              "page": 14
+            },
+            "activeColor": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            }
+          }
+        },
+        {
+          "id": "ax-32",
+          "name": "Tab Layout: stack Label",
+          "parentId": "ax-31",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "passthrough": true,
+          "props": {
+            "color": {
+              "r": 0.95,
+              "g": 0.95,
+              "b": 0.97,
+              "a": 1
+            },
+            "text": "Layout: stack",
+            "fontSize": 9,
+            "align": "MiddleCenter"
+          }
+        },
+        {
+          "id": "ax-33",
+          "name": "Tab Repeating list",
+          "parentId": "ax-2",
+          "type": "button",
+          "anchorMin": {
+            "x": 0.6666666666666666,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 0.7777777777777777,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMax": {
+            "x": -1,
+            "y": -1
+          },
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "tabSwitch": {
+              "target": "ax-1",
+              "page": 15
+            },
+            "activeColor": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            }
+          }
+        },
+        {
+          "id": "ax-34",
+          "name": "Tab Repeating list Label",
+          "parentId": "ax-33",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "passthrough": true,
+          "props": {
+            "color": {
+              "r": 0.95,
+              "g": 0.95,
+              "b": 0.97,
+              "a": 1
+            },
+            "text": "Repeating list",
+            "fontSize": 9,
+            "align": "MiddleCenter"
+          }
+        },
+        {
+          "id": "ax-35",
+          "name": "Tab Scrolling list",
+          "parentId": "ax-2",
+          "type": "button",
+          "anchorMin": {
+            "x": 0.7777777777777777,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 0.8888888888888888,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMax": {
+            "x": -1,
+            "y": -1
+          },
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "tabSwitch": {
+              "target": "ax-1",
+              "page": 16
+            },
+            "activeColor": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            }
+          }
+        },
+        {
+          "id": "ax-36",
+          "name": "Tab Scrolling list Label",
+          "parentId": "ax-35",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "passthrough": true,
+          "props": {
+            "color": {
+              "r": 0.95,
+              "g": 0.95,
+              "b": 0.97,
+              "a": 1
+            },
+            "text": "Scrolling list",
+            "fontSize": 9,
+            "align": "MiddleCenter"
+          }
+        },
+        {
+          "id": "ax-37",
+          "name": "Tab Showcase: Welcome panel",
+          "parentId": "ax-2",
+          "type": "button",
+          "anchorMin": {
+            "x": 0.8888888888888888,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMax": {
+            "x": -1,
+            "y": -1
+          },
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "tabSwitch": {
+              "target": "ax-1",
+              "page": 17
+            },
+            "activeColor": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            }
+          }
+        },
+        {
+          "id": "ax-38",
+          "name": "Tab Showcase: Welcome panel Label",
+          "parentId": "ax-37",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "passthrough": true,
+          "props": {
+            "color": {
+              "r": 0.95,
+              "g": 0.95,
+              "b": 0.97,
+              "a": 1
+            },
+            "text": "Showcase: Welcome panel",
+            "fontSize": 9,
+            "align": "MiddleCenter"
+          }
+        },
+        {
+          "id": "ax-39",
+          "name": "Panel",
+          "parentId": "ax-1",
+          "type": "container",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {}
+        },
+        {
+          "id": "ax-40",
+          "name": "Card",
+          "parentId": "ax-39",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.08,
+              "g": 0.09,
+              "b": 0.11,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -220,
+            "y": -150
+          },
+          "offsetMax": {
+            "x": 220,
+            "y": 150
+          },
+          "modifiers": {
+            "cursor": true
+          }
+        },
+        {
+          "id": "ax-41",
+          "name": "TitleStrip",
+          "parentId": "ax-40",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0,
+            "y": 1
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": -36
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "ax-42",
+          "name": "Title",
+          "parentId": "ax-41",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 14,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": -42,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            },
+            "text": "PANEL",
+            "fontSize": 15,
+            "align": "MiddleLeft",
+            "font": "RobotoCondensedBold"
+          }
+        },
+        {
+          "id": "ax-43",
+          "name": "CloseButton",
+          "parentId": "ax-41",
+          "type": "button",
+          "anchorMin": {
+            "x": 1,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -32,
+            "y": -14
+          },
+          "offsetMax": {
+            "x": -4,
+            "y": 14
+          },
+          "props": {
+            "color": {
+              "r": 0.82,
+              "g": 0.24,
+              "b": 0.2,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "close": "ax-40"
+          }
+        },
+        {
+          "id": "ax-44",
+          "name": "CloseButton Label",
+          "parentId": "ax-43",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "X",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true
+        },
+        {
+          "id": "ax-45",
+          "name": "Hint",
+          "parentId": "ax-40",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0
+          },
+          "offsetMin": {
+            "x": 14,
+            "y": 8
+          },
+          "offsetMax": {
+            "x": -14,
+            "y": 26
+          },
+          "props": {
+            "color": {
+              "r": 0.55,
+              "g": 0.58,
+              "b": 0.64,
+              "a": 1
+            },
+            "text": "Solid boxes are the building block — the last one is translucent over a sibling, not the game.",
+            "fontSize": 11,
+            "align": "MiddleLeft",
+            "font": "RobotoCondensedRegular"
+          }
+        },
+        {
+          "id": "ax-46",
+          "name": "Solid.A",
+          "parentId": "ax-40",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -180,
+            "y": -55
+          },
+          "offsetMax": {
+            "x": -70,
+            "y": 55
+          }
+        },
+        {
+          "id": "ax-47",
+          "name": "Solid.B",
+          "parentId": "ax-40",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.2,
+              "g": 0.55,
+              "b": 0.85,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -55,
+            "y": -55
+          },
+          "offsetMax": {
+            "x": 55,
+            "y": 55
+          }
+        },
+        {
+          "id": "ax-48",
+          "name": "Solid.C",
+          "parentId": "ax-40",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.25,
+              "g": 0.7,
+              "b": 0.45,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": 70,
+            "y": -55
+          },
+          "offsetMax": {
+            "x": 180,
+            "y": 55
+          }
+        },
+        {
+          "id": "ax-49",
+          "name": "Dimmer",
+          "parentId": "ax-40",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.05,
+              "g": 0.06,
+              "b": 0.08,
+              "a": 0.65
+            }
+          },
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": 10,
+            "y": -75
+          },
+          "offsetMax": {
+            "x": 196,
+            "y": 5
+          }
+        },
+        {
+          "id": "ax-50",
+          "name": "Text",
+          "parentId": "ax-1",
+          "type": "container",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {}
+        },
+        {
+          "id": "ax-51",
+          "name": "Card",
+          "parentId": "ax-50",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.08,
+              "g": 0.09,
+              "b": 0.11,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -220,
+            "y": -150
+          },
+          "offsetMax": {
+            "x": 220,
+            "y": 150
+          },
+          "modifiers": {
+            "cursor": true
+          }
+        },
+        {
+          "id": "ax-52",
+          "name": "TitleStrip",
+          "parentId": "ax-51",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0,
+            "y": 1
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": -36
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "ax-53",
+          "name": "Title",
+          "parentId": "ax-52",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 14,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": -42,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            },
+            "text": "TEXT",
+            "fontSize": 15,
+            "align": "MiddleLeft",
+            "font": "RobotoCondensedBold"
+          }
+        },
+        {
+          "id": "ax-54",
+          "name": "CloseButton",
+          "parentId": "ax-52",
+          "type": "button",
+          "anchorMin": {
+            "x": 1,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -32,
+            "y": -14
+          },
+          "offsetMax": {
+            "x": -4,
+            "y": 14
+          },
+          "props": {
+            "color": {
+              "r": 0.82,
+              "g": 0.24,
+              "b": 0.2,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "close": "ax-51"
+          }
+        },
+        {
+          "id": "ax-55",
+          "name": "CloseButton Label",
+          "parentId": "ax-54",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "X",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true
+        },
+        {
+          "id": "ax-56",
+          "name": "Hint",
+          "parentId": "ax-51",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0
+          },
+          "offsetMin": {
+            "x": 14,
+            "y": 8
+          },
+          "offsetMax": {
+            "x": -14,
+            "y": 26
+          },
+          "props": {
+            "color": {
+              "r": 0.55,
+              "g": 0.58,
+              "b": 0.64,
+              "a": 1
+            },
+            "text": "Content, font, size, color and a 3x3 alignment grid.",
+            "fontSize": 11,
+            "align": "MiddleLeft",
+            "font": "RobotoCondensedRegular"
+          }
+        },
+        {
+          "id": "ax-57",
+          "name": "Font.Regular",
+          "parentId": "ax-51",
+          "type": "text",
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -190,
+            "y": 32
+          },
+          "offsetMax": {
+            "x": 190,
+            "y": 62
+          },
+          "props": {
+            "color": {
+              "r": 0.95,
+              "g": 0.95,
+              "b": 0.97,
+              "a": 1
+            },
+            "text": "Roboto Condensed — the Rust default",
+            "fontSize": 16,
+            "align": "MiddleLeft",
+            "font": "RobotoCondensedRegular"
+          }
+        },
+        {
+          "id": "ax-58",
+          "name": "Font.Bold",
+          "parentId": "ax-51",
+          "type": "text",
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -190,
+            "y": 2
+          },
+          "offsetMax": {
+            "x": 190,
+            "y": 32
+          },
+          "props": {
+            "color": {
+              "r": 0.95,
+              "g": 0.95,
+              "b": 0.97,
+              "a": 1
+            },
+            "text": "Roboto Condensed Bold for emphasis",
+            "fontSize": 16,
+            "align": "MiddleLeft",
+            "font": "RobotoCondensedBold"
+          }
+        },
+        {
+          "id": "ax-59",
+          "name": "Font.Marker",
+          "parentId": "ax-51",
+          "type": "text",
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -190,
+            "y": -30
+          },
+          "offsetMax": {
+            "x": 190,
+            "y": 2
+          },
+          "props": {
+            "color": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            },
+            "text": "Permanent Marker for flavor",
+            "fontSize": 15,
+            "align": "MiddleLeft",
+            "font": "PermanentMarker"
+          }
+        },
+        {
+          "id": "ax-60",
+          "name": "Font.Pixel",
+          "parentId": "ax-51",
+          "type": "text",
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -190,
+            "y": -62
+          },
+          "offsetMax": {
+            "x": 190,
+            "y": -30
+          },
+          "props": {
+            "color": {
+              "r": 0.2,
+              "g": 0.55,
+              "b": 0.85,
+              "a": 1
+            },
+            "text": "PRESS START 2P",
+            "fontSize": 11,
+            "align": "MiddleRight",
+            "font": "PressStart"
+          }
+        },
+        {
+          "id": "ax-61",
+          "name": "Container",
+          "parentId": "ax-1",
+          "type": "container",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {}
+        },
+        {
+          "id": "ax-62",
+          "name": "Card",
+          "parentId": "ax-61",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.08,
+              "g": 0.09,
+              "b": 0.11,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -220,
+            "y": -150
+          },
+          "offsetMax": {
+            "x": 220,
+            "y": 150
+          },
+          "modifiers": {
+            "cursor": true
+          }
+        },
+        {
+          "id": "ax-63",
+          "name": "TitleStrip",
+          "parentId": "ax-62",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0,
+            "y": 1
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": -36
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "ax-64",
+          "name": "Title",
+          "parentId": "ax-63",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 14,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": -42,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            },
+            "text": "CONTAINER",
+            "fontSize": 15,
+            "align": "MiddleLeft",
+            "font": "RobotoCondensedBold"
+          }
+        },
+        {
+          "id": "ax-65",
+          "name": "CloseButton",
+          "parentId": "ax-63",
+          "type": "button",
+          "anchorMin": {
+            "x": 1,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -32,
+            "y": -14
+          },
+          "offsetMax": {
+            "x": -4,
+            "y": 14
+          },
+          "props": {
+            "color": {
+              "r": 0.82,
+              "g": 0.24,
+              "b": 0.2,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "close": "ax-62"
+          }
+        },
+        {
+          "id": "ax-66",
+          "name": "CloseButton Label",
+          "parentId": "ax-65",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "X",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true
+        },
+        {
+          "id": "ax-67",
+          "name": "Hint",
+          "parentId": "ax-62",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0
+          },
+          "offsetMin": {
+            "x": 14,
+            "y": 8
+          },
+          "offsetMax": {
+            "x": -14,
+            "y": 26
+          },
+          "props": {
+            "color": {
+              "r": 0.55,
+              "g": 0.58,
+              "b": 0.64,
+              "a": 1
+            },
+            "text": "The wrapper has no graphic — select it in the tree and move all four chips at once.",
+            "fontSize": 11,
+            "align": "MiddleLeft",
+            "font": "RobotoCondensedRegular"
+          }
+        },
+        {
+          "id": "ax-68",
+          "name": "ChipGrid",
+          "parentId": "ax-62",
+          "type": "container",
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -90,
+            "y": -70
+          },
+          "offsetMax": {
+            "x": 90,
+            "y": 60
+          },
+          "props": {}
+        },
+        {
+          "id": "ax-69",
+          "name": "Chip.TL",
+          "parentId": "ax-68",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 4,
+            "y": 4
+          },
+          "offsetMax": {
+            "x": -4,
+            "y": -4
+          }
+        },
+        {
+          "id": "ax-70",
+          "name": "Chip.TR",
+          "parentId": "ax-68",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.2,
+              "g": 0.55,
+              "b": 0.85,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 4,
+            "y": 4
+          },
+          "offsetMax": {
+            "x": -4,
+            "y": -4
+          }
+        },
+        {
+          "id": "ax-71",
+          "name": "Chip.BL",
+          "parentId": "ax-68",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.25,
+              "g": 0.7,
+              "b": 0.45,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": 4,
+            "y": 4
+          },
+          "offsetMax": {
+            "x": -4,
+            "y": -4
+          }
+        },
+        {
+          "id": "ax-72",
+          "name": "Chip.BR",
+          "parentId": "ax-68",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": 4,
+            "y": 4
+          },
+          "offsetMax": {
+            "x": -4,
+            "y": -4
+          }
+        },
+        {
+          "id": "ax-73",
+          "name": "Button",
+          "parentId": "ax-1",
+          "type": "container",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {}
+        },
+        {
+          "id": "ax-74",
+          "name": "Card",
+          "parentId": "ax-73",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.08,
+              "g": 0.09,
+              "b": 0.11,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -220,
+            "y": -150
+          },
+          "offsetMax": {
+            "x": 220,
+            "y": 150
+          },
+          "modifiers": {
+            "cursor": true
+          }
+        },
+        {
+          "id": "ax-75",
+          "name": "TitleStrip",
+          "parentId": "ax-74",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0,
+            "y": 1
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": -36
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "ax-76",
+          "name": "Title",
+          "parentId": "ax-75",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 14,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": -42,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            },
+            "text": "BUTTON",
+            "fontSize": 15,
+            "align": "MiddleLeft",
+            "font": "RobotoCondensedBold"
+          }
+        },
+        {
+          "id": "ax-77",
+          "name": "CloseButton",
+          "parentId": "ax-75",
+          "type": "button",
+          "anchorMin": {
+            "x": 1,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -32,
+            "y": -14
+          },
+          "offsetMax": {
+            "x": -4,
+            "y": 14
+          },
+          "props": {
+            "color": {
+              "r": 0.82,
+              "g": 0.24,
+              "b": 0.2,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "close": "ax-74"
+          }
+        },
+        {
+          "id": "ax-78",
+          "name": "CloseButton Label",
+          "parentId": "ax-77",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "X",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true
+        },
+        {
+          "id": "ax-79",
+          "name": "Hint",
+          "parentId": "ax-74",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0
+          },
+          "offsetMin": {
+            "x": 14,
+            "y": 8
+          },
+          "offsetMax": {
+            "x": -14,
+            "y": 26
+          },
+          "props": {
+            "color": {
+              "r": 0.55,
+              "g": 0.58,
+              "b": 0.64,
+              "a": 1
+            },
+            "text": "Runs a console command on click; the caption is a child Text. Needs cursor frees the mouse.",
+            "fontSize": 11,
+            "align": "MiddleLeft",
+            "font": "RobotoCondensedRegular"
+          }
+        },
+        {
+          "id": "ax-80",
+          "name": "Confirm",
+          "parentId": "ax-74",
+          "type": "button",
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -150,
+            "y": -30
+          },
+          "offsetMax": {
+            "x": -10,
+            "y": 10
+          },
+          "props": {
+            "color": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            },
+            "command": "ui.demo confirm",
+            "isProtected": true
+          }
+        },
+        {
+          "id": "ax-81",
+          "name": "Confirm Label",
+          "parentId": "ax-80",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "CONFIRM",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true
+        },
+        {
+          "id": "ax-82",
+          "name": "Cancel",
+          "parentId": "ax-74",
+          "type": "button",
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": 10,
+            "y": -30
+          },
+          "offsetMax": {
+            "x": 150,
+            "y": 10
+          },
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            },
+            "command": "ui.demo cancel",
+            "isProtected": true
+          }
+        },
+        {
+          "id": "ax-83",
+          "name": "Cancel Label",
+          "parentId": "ax-82",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "Cancel",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true
+        },
+        {
+          "id": "ax-84",
+          "name": "Input field",
+          "parentId": "ax-1",
+          "type": "container",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {}
+        },
+        {
+          "id": "ax-85",
+          "name": "Card",
+          "parentId": "ax-84",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.08,
+              "g": 0.09,
+              "b": 0.11,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -220,
+            "y": -150
+          },
+          "offsetMax": {
+            "x": 220,
+            "y": 150
+          },
+          "modifiers": {
+            "cursor": true,
+            "keyboard": true
+          }
+        },
+        {
+          "id": "ax-86",
+          "name": "TitleStrip",
+          "parentId": "ax-85",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0,
+            "y": 1
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": -36
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "ax-87",
+          "name": "Title",
+          "parentId": "ax-86",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 14,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": -42,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            },
+            "text": "INPUT FIELD",
+            "fontSize": 15,
+            "align": "MiddleLeft",
+            "font": "RobotoCondensedBold"
+          }
+        },
+        {
+          "id": "ax-88",
+          "name": "CloseButton",
+          "parentId": "ax-86",
+          "type": "button",
+          "anchorMin": {
+            "x": 1,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -32,
+            "y": -14
+          },
+          "offsetMax": {
+            "x": -4,
+            "y": 14
+          },
+          "props": {
+            "color": {
+              "r": 0.82,
+              "g": 0.24,
+              "b": 0.2,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "close": "ax-85"
+          }
+        },
+        {
+          "id": "ax-89",
+          "name": "CloseButton Label",
+          "parentId": "ax-88",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "X",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true
+        },
+        {
+          "id": "ax-90",
+          "name": "Hint",
+          "parentId": "ax-85",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0
+          },
+          "offsetMin": {
+            "x": 14,
+            "y": 8
+          },
+          "offsetMax": {
+            "x": -14,
+            "y": 26
+          },
+          "props": {
+            "color": {
+              "r": 0.55,
+              "g": 0.58,
+              "b": 0.64,
+              "a": 1
+            },
+            "text": "Submits typed text to a command. Needs keyboard captures focus; the second field masks input.",
+            "fontSize": 11,
+            "align": "MiddleLeft",
+            "font": "RobotoCondensedRegular"
+          }
+        },
+        {
+          "id": "ax-91",
+          "name": "Well.Name",
+          "parentId": "ax-85",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.05,
+              "g": 0.06,
+              "b": 0.08,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -170,
+            "y": 12
+          },
+          "offsetMax": {
+            "x": 170,
+            "y": 48
+          }
+        },
+        {
+          "id": "ax-92",
+          "name": "Input.Name",
+          "parentId": "ax-91",
+          "type": "input",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 10,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": -10,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 0.95,
+              "g": 0.95,
+              "b": 0.97,
+              "a": 1
+            },
+            "text": "type here...",
+            "fontSize": 14,
+            "font": "RobotoCondensedBold",
+            "align": "MiddleLeft",
+            "command": "ui.demo name",
+            "charLimit": 32,
+            "isProtected": true,
+            "password": false
+          }
+        },
+        {
+          "id": "ax-93",
+          "name": "Well.Pass",
+          "parentId": "ax-85",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.05,
+              "g": 0.06,
+              "b": 0.08,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -170,
+            "y": -40
+          },
+          "offsetMax": {
+            "x": 170,
+            "y": -4
+          }
+        },
+        {
+          "id": "ax-94",
+          "name": "Input.Password",
+          "parentId": "ax-93",
+          "type": "input",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 10,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": -10,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 0.95,
+              "g": 0.95,
+              "b": 0.97,
+              "a": 1
+            },
+            "text": "hunter2",
+            "fontSize": 14,
+            "font": "RobotoCondensedBold",
+            "align": "MiddleLeft",
+            "command": "ui.demo pass",
+            "charLimit": 32,
+            "isProtected": true,
+            "password": true
+          }
+        },
+        {
+          "id": "ax-95",
+          "name": "Countdown",
+          "parentId": "ax-1",
+          "type": "container",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {}
+        },
+        {
+          "id": "ax-96",
+          "name": "Card",
+          "parentId": "ax-95",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.08,
+              "g": 0.09,
+              "b": 0.11,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -220,
+            "y": -150
+          },
+          "offsetMax": {
+            "x": 220,
+            "y": 150
+          },
+          "modifiers": {
+            "cursor": true
+          }
+        },
+        {
+          "id": "ax-97",
+          "name": "TitleStrip",
+          "parentId": "ax-96",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0,
+            "y": 1
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": -36
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "ax-98",
+          "name": "Title",
+          "parentId": "ax-97",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 14,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": -42,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            },
+            "text": "COUNTDOWN",
+            "fontSize": 15,
+            "align": "MiddleLeft",
+            "font": "RobotoCondensedBold"
+          }
+        },
+        {
+          "id": "ax-99",
+          "name": "CloseButton",
+          "parentId": "ax-97",
+          "type": "button",
+          "anchorMin": {
+            "x": 1,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -32,
+            "y": -14
+          },
+          "offsetMax": {
+            "x": -4,
+            "y": 14
+          },
+          "props": {
+            "color": {
+              "r": 0.82,
+              "g": 0.24,
+              "b": 0.2,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "close": "ax-96"
+          }
+        },
+        {
+          "id": "ax-100",
+          "name": "CloseButton Label",
+          "parentId": "ax-99",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "X",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true
+        },
+        {
+          "id": "ax-101",
+          "name": "Hint",
+          "parentId": "ax-96",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0
+          },
+          "offsetMin": {
+            "x": 14,
+            "y": 8
+          },
+          "offsetMax": {
+            "x": -14,
+            "y": 26
+          },
+          "props": {
+            "color": {
+              "r": 0.55,
+              "g": 0.58,
+              "b": 0.64,
+              "a": 1
+            },
+            "text": "A client-side timer — %TIME_LEFT% in the text is replaced as it counts 120 down to 0.",
+            "fontSize": 11,
+            "align": "MiddleLeft",
+            "font": "RobotoCondensedRegular"
+          }
+        },
+        {
+          "id": "ax-102",
+          "name": "Timer",
+          "parentId": "ax-96",
+          "type": "countdown",
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -140,
+            "y": -35
+          },
+          "offsetMax": {
+            "x": 140,
+            "y": 45
+          },
+          "props": {
+            "color": {
+              "r": 0.95,
+              "g": 0.95,
+              "b": 0.97,
+              "a": 1
+            },
+            "text": "%TIME_LEFT%",
+            "fontSize": 42,
+            "font": "RobotoCondensedBold",
+            "align": "MiddleCenter",
+            "startTime": 120,
+            "endTime": 0,
+            "step": 1,
+            "interval": 1,
+            "command": "",
+            "isProtected": true
+          }
+        },
+        {
+          "id": "ax-103",
+          "name": "Image: URL",
+          "parentId": "ax-1",
+          "type": "container",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {}
+        },
+        {
+          "id": "ax-104",
+          "name": "Card",
+          "parentId": "ax-103",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.08,
+              "g": 0.09,
+              "b": 0.11,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -220,
+            "y": -150
+          },
+          "offsetMax": {
+            "x": 220,
+            "y": 150
+          },
+          "modifiers": {
+            "cursor": true
+          }
+        },
+        {
+          "id": "ax-105",
+          "name": "TitleStrip",
+          "parentId": "ax-104",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0,
+            "y": 1
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": -36
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "ax-106",
+          "name": "Title",
+          "parentId": "ax-105",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 14,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": -42,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            },
+            "text": "IMAGE: URL",
+            "fontSize": 15,
+            "align": "MiddleLeft",
+            "font": "RobotoCondensedBold"
+          }
+        },
+        {
+          "id": "ax-107",
+          "name": "CloseButton",
+          "parentId": "ax-105",
+          "type": "button",
+          "anchorMin": {
+            "x": 1,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -32,
+            "y": -14
+          },
+          "offsetMax": {
+            "x": -4,
+            "y": 14
+          },
+          "props": {
+            "color": {
+              "r": 0.82,
+              "g": 0.24,
+              "b": 0.2,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "close": "ax-104"
+          }
+        },
+        {
+          "id": "ax-108",
+          "name": "CloseButton Label",
+          "parentId": "ax-107",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "X",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true
+        },
+        {
+          "id": "ax-109",
+          "name": "Hint",
+          "parentId": "ax-104",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0
+          },
+          "offsetMin": {
+            "x": 14,
+            "y": 8
+          },
+          "offsetMax": {
+            "x": -14,
+            "y": 26
+          },
+          "props": {
+            "color": {
+              "r": 0.55,
+              "g": 0.58,
+              "b": 0.64,
+              "a": 1
+            },
+            "text": "Any https png/jpg, downloaded by the client at runtime. Panel color is the tint.",
+            "fontSize": 11,
+            "align": "MiddleLeft",
+            "font": "RobotoCondensedRegular"
+          }
+        },
+        {
+          "id": "ax-110",
+          "name": "Logo",
+          "parentId": "ax-104",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "image": {
+              "kind": "url",
+              "url": "https://raw.githubusercontent.com/CarbonCommunity/Carbon/main/NuGet-ICON.png"
+            }
+          },
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -55,
+            "y": -65
+          },
+          "offsetMax": {
+            "x": 55,
+            "y": 45
+          }
+        },
+        {
+          "id": "ax-111",
+          "name": "Image: Sprite",
+          "parentId": "ax-1",
+          "type": "container",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {}
+        },
+        {
+          "id": "ax-112",
+          "name": "Card",
+          "parentId": "ax-111",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.08,
+              "g": 0.09,
+              "b": 0.11,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -220,
+            "y": -150
+          },
+          "offsetMax": {
+            "x": 220,
+            "y": 150
+          },
+          "modifiers": {
+            "cursor": true
+          }
+        },
+        {
+          "id": "ax-113",
+          "name": "TitleStrip",
+          "parentId": "ax-112",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0,
+            "y": 1
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": -36
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "ax-114",
+          "name": "Title",
+          "parentId": "ax-113",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 14,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": -42,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            },
+            "text": "IMAGE: SPRITE",
+            "fontSize": 15,
+            "align": "MiddleLeft",
+            "font": "RobotoCondensedBold"
+          }
+        },
+        {
+          "id": "ax-115",
+          "name": "CloseButton",
+          "parentId": "ax-113",
+          "type": "button",
+          "anchorMin": {
+            "x": 1,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -32,
+            "y": -14
+          },
+          "offsetMax": {
+            "x": -4,
+            "y": 14
+          },
+          "props": {
+            "color": {
+              "r": 0.82,
+              "g": 0.24,
+              "b": 0.2,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "close": "ax-112"
+          }
+        },
+        {
+          "id": "ax-116",
+          "name": "CloseButton Label",
+          "parentId": "ax-115",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "X",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true
+        },
+        {
+          "id": "ax-117",
+          "name": "Hint",
+          "parentId": "ax-112",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0
+          },
+          "offsetMin": {
+            "x": 14,
+            "y": 8
+          },
+          "offsetMax": {
+            "x": -14,
+            "y": 26
+          },
+          "props": {
+            "color": {
+              "r": 0.55,
+              "g": 0.58,
+              "b": 0.64,
+              "a": 1
+            },
+            "text": "A built-in client sprite by asset path, tinted three ways. Invalid paths can crash the client.",
+            "fontSize": 11,
+            "align": "MiddleLeft",
+            "font": "RobotoCondensedRegular"
+          }
+        },
+        {
+          "id": "ax-118",
+          "name": "Sprite.Warm",
+          "parentId": "ax-112",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            },
+            "image": {
+              "kind": "sprite",
+              "sprite": "assets/content/ui/ui.background.tile.psd"
+            }
+          },
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -180,
+            "y": -55
+          },
+          "offsetMax": {
+            "x": -70,
+            "y": 55
+          }
+        },
+        {
+          "id": "ax-119",
+          "name": "Sprite.Cool",
+          "parentId": "ax-112",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.2,
+              "g": 0.55,
+              "b": 0.85,
+              "a": 1
+            },
+            "image": {
+              "kind": "sprite",
+              "sprite": "assets/content/ui/ui.background.tile.psd"
+            }
+          },
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -55,
+            "y": -55
+          },
+          "offsetMax": {
+            "x": 55,
+            "y": 55
+          }
+        },
+        {
+          "id": "ax-120",
+          "name": "Sprite.Plain",
+          "parentId": "ax-112",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "image": {
+              "kind": "sprite",
+              "sprite": "assets/content/ui/ui.background.tile.psd"
+            }
+          },
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": 70,
+            "y": -55
+          },
+          "offsetMax": {
+            "x": 180,
+            "y": 55
+          }
+        },
+        {
+          "id": "ax-121",
+          "name": "Image: Item icon",
+          "parentId": "ax-1",
+          "type": "container",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {}
+        },
+        {
+          "id": "ax-122",
+          "name": "Card",
+          "parentId": "ax-121",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.08,
+              "g": 0.09,
+              "b": 0.11,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -220,
+            "y": -150
+          },
+          "offsetMax": {
+            "x": 220,
+            "y": 150
+          },
+          "modifiers": {
+            "cursor": true
+          }
+        },
+        {
+          "id": "ax-123",
+          "name": "TitleStrip",
+          "parentId": "ax-122",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0,
+            "y": 1
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": -36
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "ax-124",
+          "name": "Title",
+          "parentId": "ax-123",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 14,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": -42,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            },
+            "text": "IMAGE: ITEM ICON",
+            "fontSize": 15,
+            "align": "MiddleLeft",
+            "font": "RobotoCondensedBold"
+          }
+        },
+        {
+          "id": "ax-125",
+          "name": "CloseButton",
+          "parentId": "ax-123",
+          "type": "button",
+          "anchorMin": {
+            "x": 1,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -32,
+            "y": -14
+          },
+          "offsetMax": {
+            "x": -4,
+            "y": 14
+          },
+          "props": {
+            "color": {
+              "r": 0.82,
+              "g": 0.24,
+              "b": 0.2,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "close": "ax-122"
+          }
+        },
+        {
+          "id": "ax-126",
+          "name": "CloseButton Label",
+          "parentId": "ax-125",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "X",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true
+        },
+        {
+          "id": "ax-127",
+          "name": "Hint",
+          "parentId": "ax-122",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0
+          },
+          "offsetMin": {
+            "x": 14,
+            "y": 8
+          },
+          "offsetMax": {
+            "x": -14,
+            "y": 26
+          },
+          "props": {
+            "color": {
+              "r": 0.55,
+              "g": 0.58,
+              "b": 0.64,
+              "a": 1
+            },
+            "text": "An item's inventory icon by item id (+ optional skin id) — here, the Tool Cupboard.",
+            "fontSize": 11,
+            "align": "MiddleLeft",
+            "font": "RobotoCondensedRegular"
+          }
+        },
+        {
+          "id": "ax-128",
+          "name": "IconWell",
+          "parentId": "ax-122",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.05,
+              "g": 0.06,
+              "b": 0.08,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -60,
+            "y": -70
+          },
+          "offsetMax": {
+            "x": 60,
+            "y": 50
+          }
+        },
+        {
+          "id": "ax-129",
+          "name": "Icon.TC",
+          "parentId": "ax-128",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "image": {
+              "kind": "itemicon",
+              "itemId": -97956382,
+              "skinId": 0
+            }
+          },
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 10,
+            "y": 10
+          },
+          "offsetMax": {
+            "x": -10,
+            "y": -10
+          }
+        },
+        {
+          "id": "ax-130",
+          "name": "Image: Steam avatar",
+          "parentId": "ax-1",
+          "type": "container",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {}
+        },
+        {
+          "id": "ax-131",
+          "name": "Card",
+          "parentId": "ax-130",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.08,
+              "g": 0.09,
+              "b": 0.11,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -220,
+            "y": -150
+          },
+          "offsetMax": {
+            "x": 220,
+            "y": 150
+          },
+          "modifiers": {
+            "cursor": true
+          }
+        },
+        {
+          "id": "ax-132",
+          "name": "TitleStrip",
+          "parentId": "ax-131",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0,
+            "y": 1
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": -36
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "ax-133",
+          "name": "Title",
+          "parentId": "ax-132",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 14,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": -42,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            },
+            "text": "IMAGE: STEAM AVATAR",
+            "fontSize": 15,
+            "align": "MiddleLeft",
+            "font": "RobotoCondensedBold"
+          }
+        },
+        {
+          "id": "ax-134",
+          "name": "CloseButton",
+          "parentId": "ax-132",
+          "type": "button",
+          "anchorMin": {
+            "x": 1,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -32,
+            "y": -14
+          },
+          "offsetMax": {
+            "x": -4,
+            "y": 14
+          },
+          "props": {
+            "color": {
+              "r": 0.82,
+              "g": 0.24,
+              "b": 0.2,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "close": "ax-131"
+          }
+        },
+        {
+          "id": "ax-135",
+          "name": "CloseButton Label",
+          "parentId": "ax-134",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "X",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true
+        },
+        {
+          "id": "ax-136",
+          "name": "Hint",
+          "parentId": "ax-131",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0
+          },
+          "offsetMin": {
+            "x": 14,
+            "y": 8
+          },
+          "offsetMax": {
+            "x": -14,
+            "y": 26
+          },
+          "props": {
+            "color": {
+              "r": 0.55,
+              "g": 0.58,
+              "b": 0.64,
+              "a": 1
+            },
+            "text": "A player's avatar by SteamID64 — fetched by the client, no server preload needed.",
+            "fontSize": 11,
+            "align": "MiddleLeft",
+            "font": "RobotoCondensedRegular"
+          }
+        },
+        {
+          "id": "ax-137",
+          "name": "AvatarFrame",
+          "parentId": "ax-131",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -58,
+            "y": -68
+          },
+          "offsetMax": {
+            "x": 58,
+            "y": 48
+          }
+        },
+        {
+          "id": "ax-138",
+          "name": "Avatar",
+          "parentId": "ax-137",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "image": {
+              "kind": "steamavatar",
+              "steamId": "76561197960287930"
+            }
+          },
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 4,
+            "y": 4
+          },
+          "offsetMax": {
+            "x": -4,
+            "y": -4
+          }
+        },
+        {
+          "id": "ax-139",
+          "name": "Image: Image DB",
+          "parentId": "ax-1",
+          "type": "container",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {}
+        },
+        {
+          "id": "ax-140",
+          "name": "Card",
+          "parentId": "ax-139",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.08,
+              "g": 0.09,
+              "b": 0.11,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -220,
+            "y": -150
+          },
+          "offsetMax": {
+            "x": 220,
+            "y": 150
+          },
+          "modifiers": {
+            "cursor": true
+          }
+        },
+        {
+          "id": "ax-141",
+          "name": "TitleStrip",
+          "parentId": "ax-140",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0,
+            "y": 1
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": -36
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "ax-142",
+          "name": "Title",
+          "parentId": "ax-141",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 14,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": -42,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            },
+            "text": "IMAGE: IMAGE DB",
+            "fontSize": 15,
+            "align": "MiddleLeft",
+            "font": "RobotoCondensedBold"
+          }
+        },
+        {
+          "id": "ax-143",
+          "name": "CloseButton",
+          "parentId": "ax-141",
+          "type": "button",
+          "anchorMin": {
+            "x": 1,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -32,
+            "y": -14
+          },
+          "offsetMax": {
+            "x": -4,
+            "y": 14
+          },
+          "props": {
+            "color": {
+              "r": 0.82,
+              "g": 0.24,
+              "b": 0.2,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "close": "ax-140"
+          }
+        },
+        {
+          "id": "ax-144",
+          "name": "CloseButton Label",
+          "parentId": "ax-143",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "X",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true
+        },
+        {
+          "id": "ax-145",
+          "name": "Hint",
+          "parentId": "ax-140",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0
+          },
+          "offsetMin": {
+            "x": 14,
+            "y": 8
+          },
+          "offsetMax": {
+            "x": -14,
+            "y": 26
+          },
+          "props": {
+            "color": {
+              "r": 0.55,
+              "g": 0.58,
+              "b": 0.64,
+              "a": 1
+            },
+            "text": "A named image preloaded into the image database on plugin load — see the generated lifecycle.",
+            "fontSize": 11,
+            "align": "MiddleLeft",
+            "font": "RobotoCondensedRegular"
+          }
+        },
+        {
+          "id": "ax-146",
+          "name": "DbLogo",
+          "parentId": "ax-140",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "image": {
+              "kind": "imagedb",
+              "dbName": "carbon_logo",
+              "url": "https://raw.githubusercontent.com/CarbonCommunity/Carbon/main/NuGet-ICON.png"
+            }
+          },
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -55,
+            "y": -65
+          },
+          "offsetMax": {
+            "x": 55,
+            "y": 45
+          }
+        },
+        {
+          "id": "ax-147",
+          "name": "Outline",
+          "parentId": "ax-1",
+          "type": "container",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {}
+        },
+        {
+          "id": "ax-148",
+          "name": "Card",
+          "parentId": "ax-147",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.08,
+              "g": 0.09,
+              "b": 0.11,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -220,
+            "y": -150
+          },
+          "offsetMax": {
+            "x": 220,
+            "y": 150
+          },
+          "modifiers": {
+            "cursor": true
+          }
+        },
+        {
+          "id": "ax-149",
+          "name": "TitleStrip",
+          "parentId": "ax-148",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0,
+            "y": 1
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": -36
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "ax-150",
+          "name": "Title",
+          "parentId": "ax-149",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 14,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": -42,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            },
+            "text": "OUTLINE",
+            "fontSize": 15,
+            "align": "MiddleLeft",
+            "font": "RobotoCondensedBold"
+          }
+        },
+        {
+          "id": "ax-151",
+          "name": "CloseButton",
+          "parentId": "ax-149",
+          "type": "button",
+          "anchorMin": {
+            "x": 1,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -32,
+            "y": -14
+          },
+          "offsetMax": {
+            "x": -4,
+            "y": 14
+          },
+          "props": {
+            "color": {
+              "r": 0.82,
+              "g": 0.24,
+              "b": 0.2,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "close": "ax-148"
+          }
+        },
+        {
+          "id": "ax-152",
+          "name": "CloseButton Label",
+          "parentId": "ax-151",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "X",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true
+        },
+        {
+          "id": "ax-153",
+          "name": "Hint",
+          "parentId": "ax-148",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0
+          },
+          "offsetMin": {
+            "x": 14,
+            "y": 8
+          },
+          "offsetMax": {
+            "x": -14,
+            "y": 26
+          },
+          "props": {
+            "color": {
+              "r": 0.55,
+              "g": 0.58,
+              "b": 0.64,
+              "a": 1
+            },
+            "text": "A colored duplicate offset behind the graphic — glow on text, drop shadow on panels.",
+            "fontSize": 11,
+            "align": "MiddleLeft",
+            "font": "RobotoCondensedRegular"
+          }
+        },
+        {
+          "id": "ax-154",
+          "name": "Glow",
+          "parentId": "ax-148",
+          "type": "text",
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -190,
+            "y": 10
+          },
+          "offsetMax": {
+            "x": 190,
+            "y": 60
+          },
+          "props": {
+            "color": {
+              "r": 0.95,
+              "g": 0.95,
+              "b": 0.97,
+              "a": 1
+            },
+            "text": "OUTLINED HEADLINE",
+            "fontSize": 26,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedBold"
+          },
+          "modifiers": {
+            "outline": {
+              "color": {
+                "r": 0.99,
+                "g": 0.35,
+                "b": 0.23,
+                "a": 1
+              },
+              "distance": {
+                "x": 1.5,
+                "y": -1.5
+              }
+            }
+          }
+        },
+        {
+          "id": "ax-155",
+          "name": "Shadowed",
+          "parentId": "ax-148",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.2,
+              "g": 0.55,
+              "b": 0.85,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -70,
+            "y": -70
+          },
+          "offsetMax": {
+            "x": 70,
+            "y": -10
+          },
+          "modifiers": {
+            "outline": {
+              "color": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 0.9
+              },
+              "distance": {
+                "x": 4,
+                "y": -4
+              }
+            }
+          }
+        },
+        {
+          "id": "ax-156",
+          "name": "Border",
+          "parentId": "ax-1",
+          "type": "container",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {}
+        },
+        {
+          "id": "ax-157",
+          "name": "Card",
+          "parentId": "ax-156",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.08,
+              "g": 0.09,
+              "b": 0.11,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -220,
+            "y": -150
+          },
+          "offsetMax": {
+            "x": 220,
+            "y": 150
+          },
+          "modifiers": {
+            "cursor": true
+          }
+        },
+        {
+          "id": "ax-158",
+          "name": "TitleStrip",
+          "parentId": "ax-157",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0,
+            "y": 1
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": -36
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "ax-159",
+          "name": "Title",
+          "parentId": "ax-158",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 14,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": -42,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            },
+            "text": "BORDER",
+            "fontSize": 15,
+            "align": "MiddleLeft",
+            "font": "RobotoCondensedBold"
+          }
+        },
+        {
+          "id": "ax-160",
+          "name": "CloseButton",
+          "parentId": "ax-158",
+          "type": "button",
+          "anchorMin": {
+            "x": 1,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -32,
+            "y": -14
+          },
+          "offsetMax": {
+            "x": -4,
+            "y": 14
+          },
+          "props": {
+            "color": {
+              "r": 0.82,
+              "g": 0.24,
+              "b": 0.2,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "close": "ax-157"
+          }
+        },
+        {
+          "id": "ax-161",
+          "name": "CloseButton Label",
+          "parentId": "ax-160",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "X",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true
+        },
+        {
+          "id": "ax-162",
+          "name": "Hint",
+          "parentId": "ax-157",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0
+          },
+          "offsetMin": {
+            "x": 14,
+            "y": 8
+          },
+          "offsetMax": {
+            "x": -14,
+            "y": 26
+          },
+          "props": {
+            "color": {
+              "r": 0.55,
+              "g": 0.58,
+              "b": 0.64,
+              "a": 1
+            },
+            "text": "An inset frame drawn as four edge panels — width and color per panel.",
+            "fontSize": 11,
+            "align": "MiddleLeft",
+            "font": "RobotoCondensedRegular"
+          }
+        },
+        {
+          "id": "ax-163",
+          "name": "Framed.Thin",
+          "parentId": "ax-157",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            },
+            "border": {
+              "width": 1,
+              "color": {
+                "r": 0.55,
+                "g": 0.58,
+                "b": 0.64,
+                "a": 1
+              }
+            }
+          },
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -180,
+            "y": -60
+          },
+          "offsetMax": {
+            "x": -70,
+            "y": 55
+          }
+        },
+        {
+          "id": "ax-164",
+          "name": "Framed.Accent",
+          "parentId": "ax-157",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            },
+            "border": {
+              "width": 3,
+              "color": {
+                "r": 0.99,
+                "g": 0.35,
+                "b": 0.23,
+                "a": 1
+              }
+            }
+          },
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -55,
+            "y": -60
+          },
+          "offsetMax": {
+            "x": 55,
+            "y": 55
+          }
+        },
+        {
+          "id": "ax-165",
+          "name": "Framed.Chunky",
+          "parentId": "ax-157",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.05,
+              "g": 0.06,
+              "b": 0.08,
+              "a": 1
+            },
+            "border": {
+              "width": 6,
+              "color": {
+                "r": 0.2,
+                "g": 0.55,
+                "b": 0.85,
+                "a": 1
+              }
+            }
+          },
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": 70,
+            "y": -60
+          },
+          "offsetMax": {
+            "x": 180,
+            "y": 55
+          }
+        },
+        {
+          "id": "ax-166",
+          "name": "Draggable & Slot",
+          "parentId": "ax-1",
+          "type": "container",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {}
+        },
+        {
+          "id": "ax-167",
+          "name": "Card",
+          "parentId": "ax-166",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.08,
+              "g": 0.09,
+              "b": 0.11,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -220,
+            "y": -150
+          },
+          "offsetMax": {
+            "x": 220,
+            "y": 150
+          },
+          "modifiers": {
+            "cursor": true
+          }
+        },
+        {
+          "id": "ax-168",
+          "name": "TitleStrip",
+          "parentId": "ax-167",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0,
+            "y": 1
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": -36
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "ax-169",
+          "name": "Title",
+          "parentId": "ax-168",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 14,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": -42,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            },
+            "text": "DRAGGABLE & SLOT",
+            "fontSize": 15,
+            "align": "MiddleLeft",
+            "font": "RobotoCondensedBold"
+          }
+        },
+        {
+          "id": "ax-170",
+          "name": "CloseButton",
+          "parentId": "ax-168",
+          "type": "button",
+          "anchorMin": {
+            "x": 1,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -32,
+            "y": -14
+          },
+          "offsetMax": {
+            "x": -4,
+            "y": 14
+          },
+          "props": {
+            "color": {
+              "r": 0.82,
+              "g": 0.24,
+              "b": 0.2,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "close": "ax-167"
+          }
+        },
+        {
+          "id": "ax-171",
+          "name": "CloseButton Label",
+          "parentId": "ax-170",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "X",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true
+        },
+        {
+          "id": "ax-172",
+          "name": "Hint",
+          "parentId": "ax-167",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0
+          },
+          "offsetMin": {
+            "x": 14,
+            "y": 8
+          },
+          "offsetMax": {
+            "x": -14,
+            "y": 26
+          },
+          "props": {
+            "color": {
+              "r": 0.55,
+              "g": 0.58,
+              "b": 0.64,
+              "a": 1
+            },
+            "text": "Drag the orange chip between the two wells — slots catch draggables with a matching filter.",
+            "fontSize": 11,
+            "align": "MiddleLeft",
+            "font": "RobotoCondensedRegular"
+          }
+        },
+        {
+          "id": "ax-173",
+          "name": "Slot.Left",
+          "parentId": "ax-167",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.05,
+              "g": 0.06,
+              "b": 0.08,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -170,
+            "y": -55
+          },
+          "offsetMax": {
+            "x": -30,
+            "y": 45
+          },
+          "modifiers": {
+            "slot": {
+              "filter": "demo.chip"
+            }
+          }
+        },
+        {
+          "id": "ax-174",
+          "name": "Slot.Right",
+          "parentId": "ax-167",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.05,
+              "g": 0.06,
+              "b": 0.08,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": 30,
+            "y": -55
+          },
+          "offsetMax": {
+            "x": 170,
+            "y": 45
+          },
+          "modifiers": {
+            "slot": {
+              "filter": "demo.chip"
+            }
+          }
+        },
+        {
+          "id": "ax-175",
+          "name": "Chip",
+          "parentId": "ax-173",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -40,
+            "y": -40
+          },
+          "offsetMax": {
+            "x": 40,
+            "y": 40
+          },
+          "modifiers": {
+            "draggable": {
+              "filter": "demo.chip",
+              "dropAnywhere": false
+            }
+          }
+        },
+        {
+          "id": "ax-176",
+          "name": "Layout: stack",
+          "parentId": "ax-1",
+          "type": "container",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {}
+        },
+        {
+          "id": "ax-177",
+          "name": "Card",
+          "parentId": "ax-176",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.08,
+              "g": 0.09,
+              "b": 0.11,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -220,
+            "y": -150
+          },
+          "offsetMax": {
+            "x": 220,
+            "y": 150
+          },
+          "modifiers": {
+            "cursor": true
+          }
+        },
+        {
+          "id": "ax-178",
+          "name": "TitleStrip",
+          "parentId": "ax-177",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0,
+            "y": 1
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": -36
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "ax-179",
+          "name": "Title",
+          "parentId": "ax-178",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 14,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": -42,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            },
+            "text": "LAYOUT: STACK",
+            "fontSize": 15,
+            "align": "MiddleLeft",
+            "font": "RobotoCondensedBold"
+          }
+        },
+        {
+          "id": "ax-180",
+          "name": "CloseButton",
+          "parentId": "ax-178",
+          "type": "button",
+          "anchorMin": {
+            "x": 1,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -32,
+            "y": -14
+          },
+          "offsetMax": {
+            "x": -4,
+            "y": 14
+          },
+          "props": {
+            "color": {
+              "r": 0.82,
+              "g": 0.24,
+              "b": 0.2,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "close": "ax-177"
+          }
+        },
+        {
+          "id": "ax-181",
+          "name": "CloseButton Label",
+          "parentId": "ax-180",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "X",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true
+        },
+        {
+          "id": "ax-182",
+          "name": "Hint",
+          "parentId": "ax-177",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0
+          },
+          "offsetMin": {
+            "x": 14,
+            "y": 8
+          },
+          "offsetMax": {
+            "x": -14,
+            "y": 26
+          },
+          "props": {
+            "color": {
+              "r": 0.55,
+              "g": 0.58,
+              "b": 0.64,
+              "a": 1
+            },
+            "text": "The container arranges its children into slots — reorder in the tree, resize one item to resize all.",
+            "fontSize": 11,
+            "align": "MiddleLeft",
+            "font": "RobotoCondensedRegular"
+          }
+        },
+        {
+          "id": "ax-183",
+          "name": "Menu",
+          "parentId": "ax-177",
+          "type": "container",
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -108,
+            "y": -76
+          },
+          "offsetMax": {
+            "x": 108,
+            "y": 64
+          },
+          "props": {
+            "layout": {
+              "direction": "vertical",
+              "itemsPerLine": 1,
+              "itemWidth": 200,
+              "itemHeight": 36,
+              "gapX": 8,
+              "gapY": 8,
+              "padding": 8
+            }
+          }
+        },
+        {
+          "id": "ax-184",
+          "name": "Play",
+          "parentId": "ax-183",
+          "type": "button",
+          "anchorMin": {
+            "x": 0,
+            "y": 1
+          },
+          "anchorMax": {
+            "x": 0,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 8,
+            "y": -44
+          },
+          "offsetMax": {
+            "x": 208,
+            "y": -8
+          },
+          "props": {
+            "color": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            },
+            "command": "ui.demo play",
+            "isProtected": true
+          }
+        },
+        {
+          "id": "ax-185",
+          "name": "Play Label",
+          "parentId": "ax-184",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "PLAY",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true
+        },
+        {
+          "id": "ax-186",
+          "name": "Options",
+          "parentId": "ax-183",
+          "type": "button",
+          "anchorMin": {
+            "x": 0,
+            "y": 1
+          },
+          "anchorMax": {
+            "x": 0,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 8,
+            "y": -88
+          },
+          "offsetMax": {
+            "x": 208,
+            "y": -52
+          },
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            },
+            "command": "ui.demo options",
+            "isProtected": true
+          }
+        },
+        {
+          "id": "ax-187",
+          "name": "Options Label",
+          "parentId": "ax-186",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "OPTIONS",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true
+        },
+        {
+          "id": "ax-188",
+          "name": "Quit",
+          "parentId": "ax-183",
+          "type": "button",
+          "anchorMin": {
+            "x": 0,
+            "y": 1
+          },
+          "anchorMax": {
+            "x": 0,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 8,
+            "y": -132
+          },
+          "offsetMax": {
+            "x": 208,
+            "y": -96
+          },
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            },
+            "command": "ui.demo quit",
+            "isProtected": true
+          }
+        },
+        {
+          "id": "ax-189",
+          "name": "Quit Label",
+          "parentId": "ax-188",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "QUIT",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true
+        },
+        {
+          "id": "ax-190",
+          "name": "Repeating list",
+          "parentId": "ax-1",
+          "type": "container",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {}
+        },
+        {
+          "id": "ax-191",
+          "name": "Card",
+          "parentId": "ax-190",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.08,
+              "g": 0.09,
+              "b": 0.11,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -220,
+            "y": -150
+          },
+          "offsetMax": {
+            "x": 220,
+            "y": 150
+          },
+          "modifiers": {
+            "cursor": true
+          }
+        },
+        {
+          "id": "ax-192",
+          "name": "TitleStrip",
+          "parentId": "ax-191",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0,
+            "y": 1
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": -36
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "ax-193",
+          "name": "Title",
+          "parentId": "ax-192",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 14,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": -42,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            },
+            "text": "REPEATING LIST",
+            "fontSize": 15,
+            "align": "MiddleLeft",
+            "font": "RobotoCondensedBold"
+          }
+        },
+        {
+          "id": "ax-194",
+          "name": "CloseButton",
+          "parentId": "ax-192",
+          "type": "button",
+          "anchorMin": {
+            "x": 1,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -32,
+            "y": -14
+          },
+          "offsetMax": {
+            "x": -4,
+            "y": 14
+          },
+          "props": {
+            "color": {
+              "r": 0.82,
+              "g": 0.24,
+              "b": 0.2,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "close": "ax-191"
+          }
+        },
+        {
+          "id": "ax-195",
+          "name": "CloseButton Label",
+          "parentId": "ax-194",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "X",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true
+        },
+        {
+          "id": "ax-196",
+          "name": "Hint",
+          "parentId": "ax-191",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0
+          },
+          "offsetMin": {
+            "x": 14,
+            "y": 8
+          },
+          "offsetMax": {
+            "x": -14,
+            "y": 26
+          },
+          "props": {
+            "color": {
+              "r": 0.55,
+              "g": 0.58,
+              "b": 0.64,
+              "a": 1
+            },
+            "text": "One editable template (row 0) stamped per row of a list — the ghosts are the other rows.",
+            "fontSize": 11,
+            "align": "MiddleLeft",
+            "font": "RobotoCondensedRegular"
+          }
+        },
+        {
+          "id": "ax-197",
+          "name": "KitList",
+          "parentId": "ax-191",
+          "type": "container",
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -190,
+            "y": -76
+          },
+          "offsetMax": {
+            "x": 190,
+            "y": 88
+          },
+          "props": {
+            "layout": {
+              "direction": "vertical",
+              "itemsPerLine": 1,
+              "itemWidth": 364,
+              "itemHeight": 44,
+              "gapX": 8,
+              "gapY": 8,
+              "padding": 8
+            }
+          },
+          "repeat": {
+            "source": "axds-1"
+          }
+        },
+        {
+          "id": "ax-198",
+          "name": "KitRow",
+          "parentId": "ax-197",
+          "type": "button",
+          "anchorMin": {
+            "x": 0,
+            "y": 1
+          },
+          "anchorMax": {
+            "x": 0,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 8,
+            "y": -52
+          },
+          "offsetMax": {
+            "x": 372,
+            "y": -8
+          },
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            },
+            "command": "kit.claim",
+            "isProtected": true
+          }
+        },
+        {
+          "id": "ax-199",
+          "name": "KitRow Label",
+          "parentId": "ax-198",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "Button",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true,
+          "itemBindings": {
+            "text": "Title"
+          }
+        },
+        {
+          "id": "ax-200",
+          "name": "KitIcon",
+          "parentId": "ax-198",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "image": {
+              "kind": "itemicon",
+              "itemId": -97956382,
+              "skinId": 0
+            }
+          },
+          "anchorMin": {
+            "x": 0,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": 4,
+            "y": -18
+          },
+          "offsetMax": {
+            "x": 40,
+            "y": 18
+          },
+          "itemBindings": {
+            "image.itemId": "ItemId"
+          }
+        },
+        {
+          "id": "ax-201",
+          "name": "Scrolling list",
+          "parentId": "ax-1",
+          "type": "container",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {}
+        },
+        {
+          "id": "ax-202",
+          "name": "Card",
+          "parentId": "ax-201",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.08,
+              "g": 0.09,
+              "b": 0.11,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -220,
+            "y": -150
+          },
+          "offsetMax": {
+            "x": 220,
+            "y": 150
+          },
+          "modifiers": {
+            "cursor": true
+          }
+        },
+        {
+          "id": "ax-203",
+          "name": "TitleStrip",
+          "parentId": "ax-202",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0,
+            "y": 1
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": -36
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "ax-204",
+          "name": "Title",
+          "parentId": "ax-203",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 14,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": -42,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            },
+            "text": "SCROLLING LIST",
+            "fontSize": 15,
+            "align": "MiddleLeft",
+            "font": "RobotoCondensedBold"
+          }
+        },
+        {
+          "id": "ax-205",
+          "name": "CloseButton",
+          "parentId": "ax-203",
+          "type": "button",
+          "anchorMin": {
+            "x": 1,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -32,
+            "y": -14
+          },
+          "offsetMax": {
+            "x": -4,
+            "y": 14
+          },
+          "props": {
+            "color": {
+              "r": 0.82,
+              "g": 0.24,
+              "b": 0.2,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "close": "ax-202"
+          }
+        },
+        {
+          "id": "ax-206",
+          "name": "CloseButton Label",
+          "parentId": "ax-205",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "X",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true
+        },
+        {
+          "id": "ax-207",
+          "name": "Hint",
+          "parentId": "ax-202",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0
+          },
+          "offsetMin": {
+            "x": 14,
+            "y": 8
+          },
+          "offsetMax": {
+            "x": -14,
+            "y": 26
+          },
+          "props": {
+            "color": {
+              "r": 0.55,
+              "g": 0.58,
+              "b": 0.64,
+              "a": 1
+            },
+            "text": "More rows than the box fits — the container is a scroll view sized to its content.",
+            "fontSize": 11,
+            "align": "MiddleLeft",
+            "font": "RobotoCondensedRegular"
+          }
+        },
+        {
+          "id": "ax-208",
+          "name": "KitScroll",
+          "parentId": "ax-202",
+          "type": "container",
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -190,
+            "y": -76
+          },
+          "offsetMax": {
+            "x": 190,
+            "y": 88
+          },
+          "props": {
+            "layout": {
+              "direction": "vertical",
+              "itemsPerLine": 1,
+              "itemWidth": 364,
+              "itemHeight": 44,
+              "gapX": 8,
+              "gapY": 8,
+              "padding": 8,
+              "scroll": "vertical"
+            }
+          },
+          "repeat": {
+            "source": "axds-2"
+          }
+        },
+        {
+          "id": "ax-209",
+          "name": "KitRow",
+          "parentId": "ax-208",
+          "type": "button",
+          "anchorMin": {
+            "x": 0,
+            "y": 1
+          },
+          "anchorMax": {
+            "x": 0,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 8,
+            "y": -52
+          },
+          "offsetMax": {
+            "x": 372,
+            "y": -8
+          },
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            },
+            "command": "kit.claim",
+            "isProtected": true
+          }
+        },
+        {
+          "id": "ax-210",
+          "name": "KitRow Label",
+          "parentId": "ax-209",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "Button",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true,
+          "itemBindings": {
+            "text": "Title"
+          }
+        },
+        {
+          "id": "ax-211",
+          "name": "Showcase: Welcome panel",
+          "parentId": "ax-1",
+          "type": "container",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {}
+        },
+        {
+          "id": "ax-212",
+          "name": "Card",
+          "parentId": "ax-211",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.08,
+              "g": 0.09,
+              "b": 0.11,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -264,
+            "y": -174
+          },
+          "offsetMax": {
+            "x": 264,
+            "y": 174
+          },
+          "modifiers": {
+            "cursor": true
+          }
+        },
+        {
+          "id": "ax-213",
+          "name": "TitleStrip",
+          "parentId": "ax-212",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0,
+            "y": 1
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": -36
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "ax-214",
+          "name": "Title",
+          "parentId": "ax-213",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 14,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": -42,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            },
+            "text": "SHOWCASE: WELCOME PANEL",
+            "fontSize": 15,
+            "align": "MiddleLeft",
+            "font": "RobotoCondensedBold"
+          }
+        },
+        {
+          "id": "ax-215",
+          "name": "CloseButton",
+          "parentId": "ax-213",
+          "type": "button",
+          "anchorMin": {
+            "x": 1,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -32,
+            "y": -14
+          },
+          "offsetMax": {
+            "x": -4,
+            "y": 14
+          },
+          "props": {
+            "color": {
+              "r": 0.82,
+              "g": 0.24,
+              "b": 0.2,
+              "a": 1
+            },
+            "command": "",
+            "isProtected": true,
+            "close": "ax-212"
+          }
+        },
+        {
+          "id": "ax-216",
+          "name": "CloseButton Label",
+          "parentId": "ax-215",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "X",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true
+        },
+        {
+          "id": "ax-217",
+          "name": "Hint",
+          "parentId": "ax-212",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0
+          },
+          "offsetMin": {
+            "x": 14,
+            "y": 8
+          },
+          "offsetMax": {
+            "x": -14,
+            "y": 26
+          },
+          "props": {
+            "color": {
+              "r": 0.55,
+              "g": 0.58,
+              "b": 0.64,
+              "a": 1
+            },
+            "text": "Everything composed: fills, fonts, buttons, a countdown footer — a template to pick apart.",
+            "fontSize": 11,
+            "align": "MiddleLeft",
+            "font": "RobotoCondensedRegular"
+          }
+        },
+        {
+          "id": "ax-218",
+          "name": "Header",
+          "parentId": "ax-212",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0,
+            "y": 1
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 12,
+            "y": -102
+          },
+          "offsetMax": {
+            "x": -12,
+            "y": -44
+          }
+        },
+        {
+          "id": "ax-219",
+          "name": "HeaderAvatar",
+          "parentId": "ax-218",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "image": {
+              "kind": "steamavatar",
+              "steamId": "76561197960287930"
+            }
+          },
+          "anchorMin": {
+            "x": 0,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": 8,
+            "y": -21
+          },
+          "offsetMax": {
+            "x": 50,
+            "y": 21
+          }
+        },
+        {
+          "id": "ax-220",
+          "name": "AvatarRing",
+          "parentId": "ax-219",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0,
+              "g": 0,
+              "b": 0,
+              "a": 0
+            },
+            "border": {
+              "width": 2,
+              "color": {
+                "r": 0.99,
+                "g": 0.35,
+                "b": 0.23,
+                "a": 1
+              }
+            }
+          },
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": -2,
+            "y": -2
+          },
+          "offsetMax": {
+            "x": 2,
+            "y": 2
+          }
+        },
+        {
+          "id": "ax-221",
+          "name": "Welcome",
+          "parentId": "ax-218",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 60,
+            "y": -2
+          },
+          "offsetMax": {
+            "x": -10,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 0.95,
+              "g": 0.95,
+              "b": 0.97,
+              "a": 1
+            },
+            "text": "Welcome back, survivor",
+            "fontSize": 16,
+            "align": "MiddleLeft",
+            "font": "RobotoCondensedBold"
+          }
+        },
+        {
+          "id": "ax-222",
+          "name": "Sub",
+          "parentId": "ax-218",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": 60,
+            "y": 2
+          },
+          "offsetMax": {
+            "x": -10,
+            "y": 2
+          },
+          "props": {
+            "color": {
+              "r": 0.55,
+              "g": 0.58,
+              "b": 0.64,
+              "a": 1
+            },
+            "text": "Your daily kit is ready to claim.",
+            "fontSize": 12,
+            "align": "MiddleLeft",
+            "font": "RobotoCondensedRegular"
+          }
+        },
+        {
+          "id": "ax-223",
+          "name": "KitRow",
+          "parentId": "ax-212",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.05,
+              "g": 0.06,
+              "b": 0.08,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -248,
+            "y": -52
+          },
+          "offsetMax": {
+            "x": 248,
+            "y": 26
+          }
+        },
+        {
+          "id": "ax-224",
+          "name": "KitIcon",
+          "parentId": "ax-223",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "image": {
+              "kind": "itemicon",
+              "itemId": -97956382,
+              "skinId": 0
+            }
+          },
+          "anchorMin": {
+            "x": 0,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": 10,
+            "y": -28
+          },
+          "offsetMax": {
+            "x": 66,
+            "y": 28
+          }
+        },
+        {
+          "id": "ax-225",
+          "name": "KitText",
+          "parentId": "ax-223",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 76,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": -160,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 0.95,
+              "g": 0.95,
+              "b": 0.97,
+              "a": 1
+            },
+            "text": "Starter kit — building plan, tools and a Tool Cupboard.",
+            "fontSize": 13,
+            "align": "MiddleLeft",
+            "font": "RobotoCondensedRegular"
+          }
+        },
+        {
+          "id": "ax-226",
+          "name": "Claim",
+          "parentId": "ax-223",
+          "type": "button",
+          "anchorMin": {
+            "x": 1,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -148,
+            "y": -20
+          },
+          "offsetMax": {
+            "x": -10,
+            "y": 20
+          },
+          "props": {
+            "color": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            },
+            "command": "kit.claim daily",
+            "isProtected": true
+          }
+        },
+        {
+          "id": "ax-227",
+          "name": "Claim Label",
+          "parentId": "ax-226",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "CLAIM KIT",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true
+        },
+        {
+          "id": "ax-228",
+          "name": "WipeLabel",
+          "parentId": "ax-212",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0
+          },
+          "offsetMin": {
+            "x": 14,
+            "y": 30
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 48
+          },
+          "props": {
+            "color": {
+              "r": 0.55,
+              "g": 0.58,
+              "b": 0.64,
+              "a": 1
+            },
+            "text": "Next wipe in",
+            "fontSize": 12,
+            "align": "MiddleLeft",
+            "font": "RobotoCondensedRegular"
+          }
+        },
+        {
+          "id": "ax-229",
+          "name": "WipeTimer",
+          "parentId": "ax-212",
+          "type": "countdown",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0
+          },
+          "offsetMin": {
+            "x": 88,
+            "y": 26
+          },
+          "offsetMax": {
+            "x": 240,
+            "y": 52
+          },
+          "props": {
+            "color": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            },
+            "text": "%TIME_LEFT%",
+            "fontSize": 18,
+            "font": "RobotoCondensedBold",
+            "align": "MiddleLeft",
+            "startTime": 3600,
+            "endTime": 0,
+            "step": 1,
+            "interval": 1,
+            "command": "",
+            "isProtected": true
+          }
+        },
+        {
+          "id": "ax-230",
+          "name": "Dismiss",
+          "parentId": "ax-212",
+          "type": "button",
+          "anchorMin": {
+            "x": 1,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0
+          },
+          "offsetMin": {
+            "x": -110,
+            "y": 26
+          },
+          "offsetMax": {
+            "x": -14,
+            "y": 54
+          },
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            },
+            "command": "ui.demo dismiss",
+            "isProtected": true
+          }
+        },
+        {
+          "id": "ax-231",
+          "name": "Dismiss Label",
+          "parentId": "ax-230",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "Dismiss",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true
+        }
+      ],
+      "dataSources": [
+        {
+          "id": "axds-1",
+          "name": "Kits",
+          "kind": "list",
+          "typeName": "Kit",
+          "columns": [
+            {
+              "key": "Title",
+              "kind": "text"
+            },
+            {
+              "key": "ItemId",
+              "kind": "itemid"
+            }
+          ],
+          "items": [
+            {
+              "Title": "Starter",
+              "ItemId": "-97956382"
+            },
+            {
+              "Title": "Builder",
+              "ItemId": "-2099697608"
+            },
+            {
+              "Title": "Lumberjack",
+              "ItemId": "-151838493"
+            }
+          ]
+        },
+        {
+          "id": "axds-2",
+          "name": "Kits2",
+          "kind": "list",
+          "typeName": "Kit",
+          "columns": [
+            {
+              "key": "Title",
+              "kind": "text"
+            },
+            {
+              "key": "ItemId",
+              "kind": "itemid"
+            }
+          ],
+          "items": [
+            {
+              "Title": "Starter",
+              "ItemId": "-97956382"
+            },
+            {
+              "Title": "Builder",
+              "ItemId": "-2099697608"
+            },
+            {
+              "Title": "Lumberjack",
+              "ItemId": "-151838493"
+            },
+            {
+              "Title": "Scrapper",
+              "ItemId": "69511070"
+            },
+            {
+              "Title": "Farmer",
+              "ItemId": "-97956382"
+            },
+            {
+              "Title": "Chef",
+              "ItemId": "-2099697608"
+            },
+            {
+              "Title": "Medic",
+              "ItemId": "-151838493"
+            },
+            {
+              "Title": "Raider",
+              "ItemId": "69511070"
+            }
+          ]
+        }
+      ],
+      "canvas": {
+        "aspect": "16:9",
+        "rootLayer": "Overlay"
+      }
+    }
   }
 ]

@@ -11,6 +11,7 @@
 // imported here purely to assemble the DesignerElement union below. Type-only — no runtime coupling.
 import type { ButtonElement } from './elements/button'
 import type { ContainerElement } from './elements/container'
+import type { TabsElement } from './elements/tabs'
 import type { CountdownElement } from './elements/countdown'
 import type { InputElement } from './elements/input'
 
@@ -27,7 +28,7 @@ export interface ColorRGBA {
   a: number
 }
 
-export type ElementType = 'panel' | 'text' | 'container' | 'button' | 'input' | 'countdown'
+export type ElementType = 'panel' | 'text' | 'container' | 'button' | 'input' | 'countdown' | 'tabs'
 // The addable-type list (label + order) is derived from the element registry — see
 // elements/registry.ts (`ELEMENT_TYPES`). This file owns only the discriminated-union data model.
 //
@@ -302,7 +303,7 @@ export interface TextElement extends BaseElement {
 }
 
 /** Discriminated on `type` — narrow with `el.type === 'text'` to reach type-specific props. */
-export type DesignerElement = PanelElement | TextElement | ContainerElement | ButtonElement | InputElement | CountdownElement
+export type DesignerElement = PanelElement | TextElement | ContainerElement | ButtonElement | InputElement | CountdownElement | TabsElement
 
 /** File ▸ New starters. 'empty' seeds nothing; the rest seed a hand-placed sample composition. */
 export type LayoutPreset = 'empty' | 'default' | 'menu' | 'list'

@@ -17,12 +17,13 @@
 // preloads) and text data-source bindings, plus import recognition in parseCuiJson.
 
 import { countdownDefinition } from './elements/countdown'
-import { anchorPair, esc, lf, luiOff, nameRef, num, offExpr, offsetPair, parentRef } from './elements/emit'
+import { anchorPair, color as cuiColor, esc, lf, luiOff, nameRef, num, offExpr, offsetPair, parentRef } from './elements/emit'
 import type { EmitContext } from './elements/emit'
 import { inputDefinition } from './elements/input'
 import { adduiModifierComponents, carbonModifierChain, oxideModifierLines } from './elements/modifiers'
 import { definitionOf } from './elements/registry'
 import { CLOSE_ROOT } from './elements/button'
+import type { TabsElement } from './elements/tabs'
 import { layoutContentSize, layoutSlot, scrollContentRect } from './elements/container'
 import type { ContainerLayout } from './elements/container'
 import { applyItemBindings, CLIENT_PANELS, resolveText, TEXT_ALIGNS, TEXT_FONTS } from './types'
@@ -291,6 +292,84 @@ function annotateScroll(elements: DesignerElement[], dataSources: DataSource[]):
     return { ...el, props: { ...el.props, layout: { ...el.props.layout, content: layoutContentSize(el.props.layout, count) } } }
   })
   return changed ? out : elements
+}
+
+/**
+ * Tab views for the JSON/live-preview path: the ACTIVE page survives, inactive page subtrees are
+ * dropped, and tab-switch buttons resolve concretely — command becomes `<command> <page>` and the
+ * active page's button takes its active color. Runs FIRST so later passes (scroll annotation,
+ * repeat expansion) only see the surviving page.
+ */
+function expandTabs(elements: DesignerElement[]): DesignerElement[] {
+  const views = elements.filter((e) => e.type === 'tabs')
+  if (!views.length) return elements
+  const kidsOf = (pid: string) => elements.filter((e) => e.parentId === pid)
+  const drop = new Set<string>()
+  const activeByView = new Map<string, number>()
+  for (const tv of views) {
+    if (tv.type !== 'tabs') continue
+    const pages = kidsOf(tv.id)
+    if (!pages.length) continue
+    const cur = Math.min(Math.max(tv.props.activeTab, 0), pages.length - 1)
+    activeByView.set(tv.id, cur)
+    pages.forEach((page, i) => {
+      if (i === cur) return
+      drop.add(page.id)
+      const walk = (el: DesignerElement) => {
+        for (const kid of kidsOf(el.id)) {
+          drop.add(kid.id)
+          walk(kid)
+        }
+      }
+      walk(page)
+    })
+  }
+  const cmdOf = new Map(views.map((v) => [v.id, v.type === 'tabs' ? v.props.command : '']))
+  return elements
+    .filter((e) => !drop.has(e.id))
+    .map((el) => {
+      if (el.type !== 'button' || !el.props.tabSwitch) return el
+      const { target, page } = el.props.tabSwitch
+      if (!cmdOf.has(target)) return el
+      const isActive = activeByView.get(target) === page
+      return {
+        ...el,
+        props: {
+          ...el.props,
+          command: isActive ? '' : `${cmdOf.get(target)} ${page}`,
+          color: isActive && el.props.activeColor ? el.props.activeColor : el.props.color,
+        },
+      }
+    })
+}
+
+/** The first tab view with pages, plus every page-subtree element id — the Class/UX code path emits
+ *  those inside per-page local functions rather than the static pass. (One tab view per layout is
+ *  supported in generated code; extra views render their active page statically.) */
+function collectTabs(elements: DesignerElement[]): { tabs: TabsElement | null; pages: DesignerElement[]; pageSubtreeIds: Set<string> } {
+  const tv = elements.find((e) => e.type === 'tabs')
+  if (!tv || tv.type !== 'tabs') return { tabs: null, pages: [], pageSubtreeIds: new Set() }
+  const kidsOf = (pid: string) => elements.filter((e) => e.parentId === pid)
+  const pages = kidsOf(tv.id)
+  const pageSubtreeIds = new Set<string>()
+  for (const page of pages) {
+    const walk = (el: DesignerElement) => {
+      pageSubtreeIds.add(el.id)
+      for (const kid of kidsOf(el.id)) walk(kid)
+    }
+    walk(page)
+  }
+  return { tabs: tv, pages, pageSubtreeIds }
+}
+
+/** For the CODE path: tab-switch buttons get their literal command (`<cmd> <page>`); the
+ *  active-color conditional is applied afterwards by tabsColorTransform (needs emitted text). */
+function resolveTabCommands(elements: DesignerElement[], tabs: TabsElement | null): DesignerElement[] {
+  if (!tabs) return elements
+  return elements.map((el) => {
+    if (el.type !== 'button' || el.props.tabSwitch?.target !== tabs.id) return el
+    return { ...el, props: { ...el.props, command: `${tabs.props.command} ${el.props.tabSwitch.page}` } }
+  })
 }
 
 /** Any container that emits a scroll view — gates the extra `using UnityEngine.UI;` in the shell. */
@@ -665,7 +744,7 @@ export function generateAddUiJson(
   if (!elements.length) return []
   const layer = CLIENT_PANELS.find((p) => p.id === rootLayer) ?? CLIENT_PANELS[0]
   const rootParent = opts.rootParent ?? layer.oxide
-  const expanded = expandBorders(resolveBindings(expandRepeats(annotateScroll(elements, opts.dataSources ?? []), opts.dataSources ?? []), opts.dataSources ?? []))
+  const expanded = expandBorders(resolveBindings(expandRepeats(annotateScroll(expandTabs(elements), opts.dataSources ?? []), opts.dataSources ?? []), opts.dataSources ?? []))
   const names = buildNames(expanded)
   const ordered = treeOrder(expanded)
   // The same transparent full-bleed root the code outputs create (one DestroyUi removes everything).
@@ -702,19 +781,23 @@ export function generateCode(
   // elements (stable collision suffixes shared by statics and loop bodies); emission is parent-first.
   // Bound props reference fields via the EmitContext. With no repeats this is exactly the legacy
   // single-pass path (statics === elements), byte-identical.
-  const annotated = annotateScroll(elements, dataSources)
+  const annotated0 = annotateScroll(elements, dataSources)
+  const { tabs: tabView, pages, pageSubtreeIds } = collectTabs(annotated0)
+  const annotated = resolveTabCommands(annotated0, tabView)
   const { loops, subtreeIds } = collectRepeatLoops(annotated, dataSources)
   const expandedAll = expandBorders(annotated)
   const names = buildNames(expandedAll)
-  const ordered = treeOrder(loops.size ? expandBorders(annotated.filter((e) => !subtreeIds.has(e.id))) : expandedAll)
+  const excluded = (e: DesignerElement) => subtreeIds.has(e.id) || pageSubtreeIds.has(e.id)
+  const ordered = treeOrder(loops.size || tabView ? expandBorders(annotated.filter((e) => !excluded(e))) : expandedAll)
   const fieldCtx: FieldCtx = { sources: dataSources, fields: fieldNames(dataSources) }
   const style = opts.declStyle ?? 'local'
   const idents = listIdents([...loops.values()], fieldCtx.fields.values())
   // Declarations for the sources this snippet actually uses, emitted once at the very top (for `both`,
   // before the #if — they are plain C# valid under either framework).
+  const tabDecl = style === 'local' && tabView ? [`int tab = 0; // active page; the "${esc(tabView.props.command)}" handler re-renders with the clicked page`] : []
   const textDecls = style === 'local' ? genFieldDecls(fieldCtx, usedSourceIds(treeOrder(expandedAll)), 'local') : []
   const listDecls = style === 'local' ? genListDecls([...loops.values()], idents, 'local') : []
-  const decls = [...textDecls, ...(textDecls.length && listDecls.length ? [''] : []), ...listDecls]
+  const decls = [...tabDecl, ...(tabDecl.length && (textDecls.length || listDecls.length) ? [''] : []), ...textDecls, ...(textDecls.length && listDecls.length ? [''] : []), ...listDecls]
   const head = decls.length ? [...decls, ''] : []
   const countProp = style === 'local' ? 'Length' : 'Count'
   const loopsFor =
@@ -731,10 +814,74 @@ export function generateCode(
       const sub = loop ? scrollCountSubs(loop, idents.get(loop.ds.id)!.list, countProp, provider2) : null
       return sub ? lines.map((ln) => ln.replace(sub.from, sub.to)) : lines
     }
+  // A tab-switch button with an active color emits it as a `tab == N ? active : base` conditional.
+  const tabColorFor = (el: DesignerElement, lines: string[]): string[] => {
+    if (!tabView || el.type !== 'button' || el.props.tabSwitch?.target !== tabView.id || !el.props.activeColor) return lines
+    const from = `"${cuiColor(el.props.color)}"`
+    const to = `tab == ${el.props.tabSwitch.page} ? "${cuiColor(el.props.activeColor)}" : ${from}`
+    let done = false
+    return lines.map((ln) => {
+      if (done || !ln.includes(from)) return ln
+      done = true
+      return ln.replace(from, to)
+    })
+  }
+  const transformFor = (provider2: 'oxide' | 'carbon') => {
+    const scroll = scrollFor(provider2)
+    return (el: DesignerElement, lines: string[]) => tabColorFor(el, scroll(el, lines))
+  }
+  // The tab view emits its pages as LOCAL FUNCTIONS + a switch over `tab`, right after the container
+  // itself. Local functions keep this valid in both the Class body and the UX snippet.
+  const tabsFor =
+    (provider2: 'oxide' | 'carbon') =>
+    (el: DesignerElement, ctx: EmitContext): string[] => {
+      if (!tabView || el.id !== tabView.id || !pages.length) return []
+      const transform = transformFor(provider2)
+      const usedM = new Set<string>()
+      const methodNames = pages.map((pg) => {
+        const base = `Build${sanitizeIdent(pg.name)}`
+        let m = base
+        let k = 2
+        while (usedM.has(m)) m = `${base}${k++}`
+        usedM.add(m)
+        return m
+      })
+      const kidsOf = (pid: string) => annotated.filter((e2) => e2.parentId === pid)
+      const out: string[] = []
+      pages.forEach((pg, i) => {
+        const pageEls: DesignerElement[] = []
+        const collect = (e2: DesignerElement) => {
+          pageEls.push(e2)
+          for (const kid of kidsOf(e2.id)) collect(kid)
+        }
+        collect(pg)
+        const pageOrdered = treeOrder(expandBorders(pageEls.filter((e2) => !subtreeIds.has(e2.id))))
+        const lines: string[] = []
+        for (const pe of pageOrdered) {
+          const raw =
+            provider2 === 'oxide'
+              ? [...definitionOf(pe).oxide(pe, ctx), ...oxideModifierLines(pe, nameRef(pe, ctx))]
+              : withCarbonChain(definitionOf(pe).carbon(pe, ctx), carbonModifierChain(pe))
+          lines.push(...transform(pe, raw))
+          const loop = loops.get(pe.id)
+          if (loop) lines.push(...genLoopLines(loop, names, ctx, provider2, idents.get(loop.ds.id)!.list, countProp))
+        }
+        while (lines.length && lines[lines.length - 1] === '') lines.pop()
+        out.push(`void ${methodNames[i]}()`, '{', ...lines.map((x) => (x ? `    ${x}` : '')), '}', '')
+      })
+      out.push('switch (tab)', '{', ...pages.map((_pg, i) => `    case ${i}: ${methodNames[i]}(); break;`), '}', '')
+      return out
+    }
+  const emitAfterFor = (provider2: 'oxide' | 'carbon') => {
+    const loopsHook = loopsFor(provider2)
+    const tabsHook = tabsFor(provider2)
+    return (el: DesignerElement, ctx: EmitContext) => [...loopsHook(el, ctx), ...tabsHook(el, ctx)]
+  }
+  const hooks = loops.size > 0 || !!tabView
   const root = rootContainerName(names)
   const oxide = () =>
-    genOxide(ordered, { names, rootParent: root, sources: dataSources, fields: fieldCtx.fields }, { name: root, layer: layer.oxide }, loops.size ? loopsFor('oxide') : undefined, loops.size ? scrollFor('oxide') : undefined)
-  const carbon = () => genCarbon(ordered, names, layer, fieldCtx, loops.size ? loopsFor('carbon') : undefined, loops.size ? scrollFor('carbon') : undefined)
+    genOxide(ordered, { names, rootParent: root, sources: dataSources, fields: fieldCtx.fields }, { name: root, layer: layer.oxide }, hooks ? emitAfterFor('oxide') : undefined, hooks ? transformFor('oxide') : undefined)
+  const carbon = () => genCarbon(ordered, names, layer, fieldCtx, hooks ? emitAfterFor('carbon') : undefined, hooks ? transformFor('carbon') : undefined)
   if (provider === 'oxide') return [...head, oxide()].join('\n')
   if (provider === 'carbon') return [...head, carbon()].join('\n')
   // both: Carbon compiles with the CARBON symbol defined; Oxide does not.
@@ -757,6 +904,9 @@ function commandNames(elements: DesignerElement[]): string[] {
   const seen = new Set<string>()
   const names: string[] = []
   for (const el of elements) {
+    // a tab view's command gets the dedicated TabCommand handler; a tab-switch button's own command
+    // is overridden by the switch, so neither should produce a generic stub
+    if (el.type === 'tabs' || (el.type === 'button' && el.props.tabSwitch)) continue
     if (!('command' in el.props) || typeof el.props.command !== 'string') continue
     const name = el.props.command.trim().split(/\s+/)[0]
     if (name && !seen.has(name)) {
@@ -887,21 +1037,49 @@ export function generateFullClass(elements: DesignerElement[], provider: Provide
   const desc = '[Description("Generated by the Carbon Layout Designer")]'
   // The same root name generateCode gives the transparent wrapper (identical names recipe).
   const root = rootContainerName(buildNames(expandBorders(annotateScroll(elements, dataSources))))
-  const method = [
-    '    [ChatCommand("show")]',
-    '    private void ShowCommand(BasePlayer player, string command, string[] args)',
-    '    {',
-    `        CuiHelper.DestroyUi(player, "${esc(root)}"); // replace any previous instance`,
-    '',
-    body,
-    '    }',
-    '',
+  const { tabs: shellTabs } = collectTabs(elements)
+  const hide = [
     '    [ChatCommand("hide")]',
     '    private void HideCommand(BasePlayer player, string command, string[] args)',
     '    {',
     `        CuiHelper.DestroyUi(player, "${esc(root)}"); // the root removes the whole menu`,
     '    }',
   ]
+  // With a tab view, the body moves into Render(player, tab): the switch-button command re-renders
+  // with the clicked page (the tab container is cleared and rewritten along with the rest).
+  const method = shellTabs
+    ? [
+        '    [ChatCommand("show")]',
+        '    private void ShowCommand(BasePlayer player, string command, string[] args) => Render(player, 0);',
+        '',
+        ...hide,
+        '',
+        `    [ConsoleCommand("${esc(shellTabs.props.command)}")]`,
+        '    private void TabCommand(ConsoleSystem.Arg arg)',
+        '    {',
+        '        var player = arg.Player();',
+        '        if (player == null) return;',
+        '        Render(player, arg.GetInt(0));',
+        '    }',
+        '',
+        '    private void Render(BasePlayer player, int tab)',
+        '    {',
+        `        CuiHelper.DestroyUi(player, "${esc(root)}"); // replace any previous instance`,
+        '',
+        body,
+        '    }',
+      ]
+    : [
+        '    [ChatCommand("show")]',
+        '    private void ShowCommand(BasePlayer player, string command, string[] args)',
+        '    {',
+        `        CuiHelper.DestroyUi(player, "${esc(root)}"); // replace any previous instance`,
+        '',
+        body,
+        '    }',
+        '',
+        ...hide,
+      ]
   // Image-DB fills need a preload lifecycle; elements that capture a command (button/input/countdown)
   // get a handler stub. Both go after the builder method, each section separated by a blank line.
   const imgs = imagedbFills(elements)
@@ -973,7 +1151,7 @@ export function generateSelected(elements: DesignerElement[], selectedIds: strin
   const HINT = '// Select an element on the canvas to see its code.'
   if (!selectedIds.length) return HINT
   const layer = CLIENT_PANELS.find((p) => p.id === rootLayer) ?? CLIENT_PANELS[0]
-  const expanded = expandBorders(expandRepeats(annotateScroll(elements, dataSources), dataSources))
+  const expanded = expandBorders(expandRepeats(annotateScroll(expandTabs(elements), dataSources), dataSources))
   const names = buildNames(expanded)
   const root = rootContainerName(names)
   const sel = new Set(selectedIds)

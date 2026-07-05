@@ -21,6 +21,15 @@ export interface ButtonProps {
    * whole menu); resolved to the generated name at emit. Empty/absent => nothing closes.
    */
   close?: string
+  /**
+   * "Switches tab": clicking runs the target tab view's command with this page index appended (the
+   * generated handler re-renders with that page active). Overrides `command`. The button stays a
+   * completely ordinary element — style it, move it, put it anywhere.
+   */
+  tabSwitch?: { target: string; page: number } | null
+  /** Color while this button's page is the active one (only with tabSwitch). Alpha 0 = invisible
+   *  when selected. Absent/null => no active styling. */
+  activeColor?: ColorRGBA | null
 }
 
 /** props.close sentinel: close the transparent root wrapper codegen creates (the whole menu). */
@@ -103,7 +112,12 @@ export const buttonDefinition: ElementDefinition<ButtonElement> = {
     return { id, name: `Button.${n}`, parentId, type: 'button', ...staggeredBox(index, 80, 22), props: { color: fill, command: '', isProtected: true } }
   },
   cloneProps(el) {
-    return { ...el.props, color: { ...el.props.color } }
+    return {
+      ...el.props,
+      color: { ...el.props.color },
+      ...(el.props.tabSwitch ? { tabSwitch: { ...el.props.tabSwitch } } : {}),
+      ...(el.props.activeColor ? { activeColor: { ...el.props.activeColor } } : {}),
+    }
   },
   seedChildren,
   oxide,
