@@ -43,12 +43,39 @@ export const lf = (v: number, decimals: number) => `${num(v, decimals)}f`
 /** CUI "r g b a" color string. Re-exported so element modules have one import surface. */
 export const color = cuiColorString
 
-/** The `new LuiPosition(...)` expression for an element's anchors (Carbon LUI). */
-export const posExpr = (el: DesignerElement) =>
-  `new LuiPosition(${lf(el.anchorMin.x, 4)}, ${lf(el.anchorMin.y, 4)}, ${lf(el.anchorMax.x, 4)}, ${lf(el.anchorMax.y, 4)})`
-/** The `new LuiOffset(...)` expression for an element's offsets (Carbon LUI). */
-export const offExpr = (el: DesignerElement) =>
-  `new LuiOffset(${lf(el.offsetMin.x, 2)}, ${lf(el.offsetMin.y, 2)}, ${lf(el.offsetMax.x, 2)}, ${lf(el.offsetMax.y, 2)})`
+// LUI's named position constants (LuiPosition.cs) — emitted instead of raw numbers when the anchors
+// match one exactly. (0,0,0,0) maps to LowerLeft rather than its alias None: the designer pins
+// anchors, so the corner name is the intent; None is LUI's "offsets only" default.
+const LUI_POSITIONS: [string, number, number, number, number][] = [
+  ['Full', 0, 0, 1, 1],
+  ['UpperLeft', 0, 1, 0, 1],
+  ['UpperCenter', 0.5, 1, 0.5, 1],
+  ['UpperRight', 1, 1, 1, 1],
+  ['MiddleLeft', 0, 0.5, 0, 0.5],
+  ['MiddleCenter', 0.5, 0.5, 0.5, 0.5],
+  ['MiddleRight', 1, 0.5, 1, 0.5],
+  ['LowerLeft', 0, 0, 0, 0],
+  ['LowerCenter', 0.5, 0, 0.5, 0],
+  ['LowerRight', 1, 0, 1, 0],
+]
+
+/** The LuiPosition expression for an anchor rect: a named constant when one matches, else `new`. */
+export function luiPos(min: Vec2, max: Vec2): string {
+  const named = LUI_POSITIONS.find(([, a, b, c, d]) => min.x === a && min.y === b && max.x === c && max.y === d)
+  if (named) return `LuiPosition.${named[0]}`
+  return `new LuiPosition(${lf(min.x, 4)}, ${lf(min.y, 4)}, ${lf(max.x, 4)}, ${lf(max.y, 4)})`
+}
+
+/** The LuiOffset expression for an offset rect: `LuiOffset.None` when all-zero, else `new`. */
+export function luiOff(min: Vec2, max: Vec2): string {
+  if (min.x === 0 && min.y === 0 && max.x === 0 && max.y === 0) return 'LuiOffset.None'
+  return `new LuiOffset(${lf(min.x, 2)}, ${lf(min.y, 2)}, ${lf(max.x, 2)}, ${lf(max.y, 2)})`
+}
+
+/** The LuiPosition expression for an element's anchors (Carbon LUI). */
+export const posExpr = (el: DesignerElement) => luiPos(el.anchorMin, el.anchorMax)
+/** The LuiOffset expression for an element's offsets (Carbon LUI). */
+export const offExpr = (el: DesignerElement) => luiOff(el.offsetMin, el.offsetMax)
 
 // --- per-generation context ----------------------------------------------------------
 

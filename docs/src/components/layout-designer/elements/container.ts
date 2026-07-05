@@ -3,7 +3,7 @@
 // cui.v2.CreateEmptyContainer, positioned via a chained SetAnchorAndOffset (the create method itself
 // takes no position). AddUi: a node with just the RectTransform (no primary component).
 
-import { anchorPair, esc, fullStretch, lf, nameRef, offExpr, offsetPair, parentRef, posExpr, staggeredBox } from './emit'
+import { anchorPair, esc, fullStretch, luiOff, luiPos, nameRef, offExpr, offsetPair, parentRef, posExpr, staggeredBox } from './emit'
 import type { CreateArgs, ElementDefinition, EmitContext } from './emit'
 import type { BaseElement, CuiComponent } from '../types'
 
@@ -142,8 +142,8 @@ function carbon(el: ContainerElement, ctx: EmitContext): string[] {
   const scroll = scrollOf(el)
   if (scroll) {
     const r = scrollContentRect(scroll.axis, scroll.content)
-    const contentPos = `new LuiPosition(${lf(r.anchorMin.x, 4)}, ${lf(r.anchorMin.y, 4)}, ${lf(r.anchorMax.x, 4)}, ${lf(r.anchorMax.y, 4)})`
-    const contentOff = `new LuiOffset(${lf(r.offsetMin.x, 2)}, ${lf(r.offsetMin.y, 2)}, ${lf(r.offsetMax.x, 2)}, ${lf(r.offsetMax.y, 2)})`
+    const contentPos = luiPos(r.anchorMin, r.anchorMax)
+    const contentOff = luiOff(r.offsetMin, r.offsetMax)
     const bar = 'new LuiScrollbar { autoHide = true, size = 12 }'
     const bars = [
       ...(scroll.axis !== 'horizontal' ? [`verticalScrollOptions: ${bar}`] : []),

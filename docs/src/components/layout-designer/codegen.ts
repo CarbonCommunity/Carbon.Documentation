@@ -17,7 +17,7 @@
 // preloads) and text data-source bindings, plus import recognition in parseCuiJson.
 
 import { countdownDefinition } from './elements/countdown'
-import { anchorPair, esc, lf, nameRef, num, offExpr, offsetPair, parentRef } from './elements/emit'
+import { anchorPair, esc, lf, luiOff, nameRef, num, offExpr, offsetPair, parentRef } from './elements/emit'
 import type { EmitContext } from './elements/emit'
 import { inputDefinition } from './elements/input'
 import { adduiModifierComponents, carbonModifierChain, oxideModifierLines } from './elements/modifiers'
@@ -476,7 +476,7 @@ function scrollCountSubs(loop: RepeatLoop, listIdent: string, countProp: 'Count'
     const extent = `${lf(base, 2)} + ${lines} * ${lf(pitch, 2)}`
     const part = (v: number, replace: boolean, negate: boolean) => (replace ? (negate ? `-(${extent})` : extent) : lf(v, 2))
     return {
-      from: `new LuiOffset(${lf(r.offsetMin.x, 2)}, ${lf(r.offsetMin.y, 2)}, ${lf(r.offsetMax.x, 2)}, ${lf(r.offsetMax.y, 2)})`,
+      from: luiOff(r.offsetMin, r.offsetMax), // exactly what the container emitter wrote
       to: `new LuiOffset(${part(r.offsetMin.x, false, false)}, ${part(r.offsetMin.y, vertical, true)}, ${part(r.offsetMax.x, !vertical, false)}, ${part(r.offsetMax.y, false, false)})`,
     }
   }
@@ -605,7 +605,7 @@ function genCarbon(
   const root = rootContainerName(names)
   const ctx: EmitContext = { names, rootParent: root, sources: base.sources, fields: base.fields }
   const out: string[] = [
-    'using CUI cui = new CUI(CuiHandler);',
+    'using var cui = new CUI(CuiHandler);',
     '',
     `cui.v2.CreateParent(CUI.ClientPanels.${layer.carbon}, LuiPosition.Full, "${esc(root)}");`,
     '',
