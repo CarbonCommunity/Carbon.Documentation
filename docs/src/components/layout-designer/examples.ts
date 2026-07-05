@@ -3372,6 +3372,1010 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
     }
   },
   {
+    "id": "layout-stack",
+    "name": "Layout: stack",
+    "hint": "The container arranges its children into slots — reorder in the tree, resize one item to resize all.",
+    "category": "element",
+    "data": {
+      "elements": [
+        {
+          "id": "el-1",
+          "name": "Card",
+          "parentId": null,
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.08,
+              "g": 0.09,
+              "b": 0.11,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -220,
+            "y": -150
+          },
+          "offsetMax": {
+            "x": 220,
+            "y": 150
+          },
+          "modifiers": {
+            "cursor": true
+          }
+        },
+        {
+          "id": "el-2",
+          "name": "TitleStrip",
+          "parentId": "el-1",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0,
+            "y": 1
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": -36
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "el-3",
+          "name": "Title",
+          "parentId": "el-2",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 14,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": -14,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            },
+            "text": "LAYOUT: STACK",
+            "fontSize": 15,
+            "align": "MiddleLeft",
+            "font": "RobotoCondensedBold"
+          }
+        },
+        {
+          "id": "el-4",
+          "name": "Hint",
+          "parentId": "el-1",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0
+          },
+          "offsetMin": {
+            "x": 14,
+            "y": 8
+          },
+          "offsetMax": {
+            "x": -14,
+            "y": 26
+          },
+          "props": {
+            "color": {
+              "r": 0.55,
+              "g": 0.58,
+              "b": 0.64,
+              "a": 1
+            },
+            "text": "The container arranges its children into slots — reorder in the tree, resize one item to resize all.",
+            "fontSize": 11,
+            "align": "MiddleLeft",
+            "font": "RobotoCondensedRegular"
+          }
+        },
+        {
+          "id": "el-5",
+          "name": "Menu",
+          "parentId": "el-1",
+          "type": "container",
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -108,
+            "y": -76
+          },
+          "offsetMax": {
+            "x": 108,
+            "y": 64
+          },
+          "props": {
+            "layout": {
+              "direction": "vertical",
+              "itemsPerLine": 1,
+              "itemWidth": 200,
+              "itemHeight": 36,
+              "gapX": 8,
+              "gapY": 8,
+              "padding": 8
+            }
+          }
+        },
+        {
+          "id": "el-6",
+          "name": "Play",
+          "parentId": "el-5",
+          "type": "button",
+          "anchorMin": {
+            "x": 0,
+            "y": 1
+          },
+          "anchorMax": {
+            "x": 0,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 8,
+            "y": -44
+          },
+          "offsetMax": {
+            "x": 208,
+            "y": -8
+          },
+          "props": {
+            "color": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            },
+            "command": "ui.demo play",
+            "isProtected": true
+          }
+        },
+        {
+          "id": "el-7",
+          "name": "Play Label",
+          "parentId": "el-6",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "PLAY",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true
+        },
+        {
+          "id": "el-8",
+          "name": "Options",
+          "parentId": "el-5",
+          "type": "button",
+          "anchorMin": {
+            "x": 0,
+            "y": 1
+          },
+          "anchorMax": {
+            "x": 0,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 8,
+            "y": -88
+          },
+          "offsetMax": {
+            "x": 208,
+            "y": -52
+          },
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            },
+            "command": "ui.demo options",
+            "isProtected": true
+          }
+        },
+        {
+          "id": "el-9",
+          "name": "Options Label",
+          "parentId": "el-8",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "OPTIONS",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true
+        },
+        {
+          "id": "el-10",
+          "name": "Quit",
+          "parentId": "el-5",
+          "type": "button",
+          "anchorMin": {
+            "x": 0,
+            "y": 1
+          },
+          "anchorMax": {
+            "x": 0,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 8,
+            "y": -132
+          },
+          "offsetMax": {
+            "x": 208,
+            "y": -96
+          },
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            },
+            "command": "ui.demo quit",
+            "isProtected": true
+          }
+        },
+        {
+          "id": "el-11",
+          "name": "Quit Label",
+          "parentId": "el-10",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "QUIT",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true
+        }
+      ],
+      "canvas": {
+        "aspect": "16:9",
+        "rootLayer": "Overlay"
+      }
+    }
+  },
+  {
+    "id": "repeat-list",
+    "name": "Repeating list",
+    "hint": "One editable template (row 0) stamped per row of a list — the ghosts are the other rows.",
+    "category": "element",
+    "data": {
+      "elements": [
+        {
+          "id": "el-1",
+          "name": "Card",
+          "parentId": null,
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.08,
+              "g": 0.09,
+              "b": 0.11,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -220,
+            "y": -150
+          },
+          "offsetMax": {
+            "x": 220,
+            "y": 150
+          },
+          "modifiers": {
+            "cursor": true
+          }
+        },
+        {
+          "id": "el-2",
+          "name": "TitleStrip",
+          "parentId": "el-1",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0,
+            "y": 1
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": -36
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "el-3",
+          "name": "Title",
+          "parentId": "el-2",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 14,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": -14,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            },
+            "text": "REPEATING LIST",
+            "fontSize": 15,
+            "align": "MiddleLeft",
+            "font": "RobotoCondensedBold"
+          }
+        },
+        {
+          "id": "el-4",
+          "name": "Hint",
+          "parentId": "el-1",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0
+          },
+          "offsetMin": {
+            "x": 14,
+            "y": 8
+          },
+          "offsetMax": {
+            "x": -14,
+            "y": 26
+          },
+          "props": {
+            "color": {
+              "r": 0.55,
+              "g": 0.58,
+              "b": 0.64,
+              "a": 1
+            },
+            "text": "One editable template (row 0) stamped per row of a list — the ghosts are the other rows.",
+            "fontSize": 11,
+            "align": "MiddleLeft",
+            "font": "RobotoCondensedRegular"
+          }
+        },
+        {
+          "id": "el-5",
+          "name": "KitList",
+          "parentId": "el-1",
+          "type": "container",
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -190,
+            "y": -76
+          },
+          "offsetMax": {
+            "x": 190,
+            "y": 88
+          },
+          "props": {
+            "layout": {
+              "direction": "vertical",
+              "itemsPerLine": 1,
+              "itemWidth": 364,
+              "itemHeight": 44,
+              "gapX": 8,
+              "gapY": 8,
+              "padding": 8
+            }
+          },
+          "repeat": {
+            "source": "ds-1"
+          }
+        },
+        {
+          "id": "el-6",
+          "name": "KitRow",
+          "parentId": "el-5",
+          "type": "button",
+          "anchorMin": {
+            "x": 0,
+            "y": 1
+          },
+          "anchorMax": {
+            "x": 0,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 8,
+            "y": -52
+          },
+          "offsetMax": {
+            "x": 372,
+            "y": -8
+          },
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            },
+            "command": "kit.claim",
+            "isProtected": true
+          }
+        },
+        {
+          "id": "el-7",
+          "name": "KitRow Label",
+          "parentId": "el-6",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "Button",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true,
+          "itemBindings": {
+            "text": "Title"
+          }
+        },
+        {
+          "id": "el-8",
+          "name": "KitIcon",
+          "parentId": "el-6",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "image": {
+              "kind": "itemicon",
+              "itemId": -97956382,
+              "skinId": 0
+            }
+          },
+          "anchorMin": {
+            "x": 0,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": 4,
+            "y": -18
+          },
+          "offsetMax": {
+            "x": 40,
+            "y": 18
+          },
+          "itemBindings": {
+            "image.itemId": "ItemId"
+          }
+        }
+      ],
+      "dataSources": [
+        {
+          "id": "ds-1",
+          "name": "Kits",
+          "kind": "list",
+          "typeName": "Kit",
+          "columns": [
+            {
+              "key": "Title",
+              "kind": "text"
+            },
+            {
+              "key": "ItemId",
+              "kind": "itemid"
+            }
+          ],
+          "items": [
+            {
+              "Title": "Starter",
+              "ItemId": "-97956382"
+            },
+            {
+              "Title": "Builder",
+              "ItemId": "-2099697608"
+            },
+            {
+              "Title": "Lumberjack",
+              "ItemId": "-151838493"
+            }
+          ]
+        }
+      ],
+      "canvas": {
+        "aspect": "16:9",
+        "rootLayer": "Overlay"
+      }
+    }
+  },
+  {
+    "id": "scroll-list",
+    "name": "Scrolling list",
+    "hint": "More rows than the box fits — the container is a scroll view sized to its content.",
+    "category": "element",
+    "data": {
+      "elements": [
+        {
+          "id": "el-1",
+          "name": "Card",
+          "parentId": null,
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.08,
+              "g": 0.09,
+              "b": 0.11,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -220,
+            "y": -150
+          },
+          "offsetMax": {
+            "x": 220,
+            "y": 150
+          },
+          "modifiers": {
+            "cursor": true
+          }
+        },
+        {
+          "id": "el-2",
+          "name": "TitleStrip",
+          "parentId": "el-1",
+          "type": "panel",
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            }
+          },
+          "anchorMin": {
+            "x": 0,
+            "y": 1
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": -36
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "el-3",
+          "name": "Title",
+          "parentId": "el-2",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 14,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": -14,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 0.99,
+              "g": 0.35,
+              "b": 0.23,
+              "a": 1
+            },
+            "text": "SCROLLING LIST",
+            "fontSize": 15,
+            "align": "MiddleLeft",
+            "font": "RobotoCondensedBold"
+          }
+        },
+        {
+          "id": "el-4",
+          "name": "Hint",
+          "parentId": "el-1",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 0
+          },
+          "offsetMin": {
+            "x": 14,
+            "y": 8
+          },
+          "offsetMax": {
+            "x": -14,
+            "y": 26
+          },
+          "props": {
+            "color": {
+              "r": 0.55,
+              "g": 0.58,
+              "b": 0.64,
+              "a": 1
+            },
+            "text": "More rows than the box fits — the container is a scroll view sized to its content.",
+            "fontSize": 11,
+            "align": "MiddleLeft",
+            "font": "RobotoCondensedRegular"
+          }
+        },
+        {
+          "id": "el-5",
+          "name": "KitScroll",
+          "parentId": "el-1",
+          "type": "container",
+          "anchorMin": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "anchorMax": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "offsetMin": {
+            "x": -190,
+            "y": -76
+          },
+          "offsetMax": {
+            "x": 190,
+            "y": 88
+          },
+          "props": {
+            "layout": {
+              "direction": "vertical",
+              "itemsPerLine": 1,
+              "itemWidth": 364,
+              "itemHeight": 44,
+              "gapX": 8,
+              "gapY": 8,
+              "padding": 8,
+              "scroll": "vertical"
+            }
+          },
+          "repeat": {
+            "source": "ds-1"
+          }
+        },
+        {
+          "id": "el-6",
+          "name": "KitRow",
+          "parentId": "el-5",
+          "type": "button",
+          "anchorMin": {
+            "x": 0,
+            "y": 1
+          },
+          "anchorMax": {
+            "x": 0,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 8,
+            "y": -52
+          },
+          "offsetMax": {
+            "x": 372,
+            "y": -8
+          },
+          "props": {
+            "color": {
+              "r": 0.12,
+              "g": 0.13,
+              "b": 0.16,
+              "a": 1
+            },
+            "command": "kit.claim",
+            "isProtected": true
+          }
+        },
+        {
+          "id": "el-7",
+          "name": "KitRow Label",
+          "parentId": "el-6",
+          "type": "text",
+          "anchorMin": {
+            "x": 0,
+            "y": 0
+          },
+          "anchorMax": {
+            "x": 1,
+            "y": 1
+          },
+          "offsetMin": {
+            "x": 0,
+            "y": 0
+          },
+          "offsetMax": {
+            "x": 0,
+            "y": 0
+          },
+          "props": {
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "text": "Button",
+            "fontSize": 14,
+            "align": "MiddleCenter",
+            "font": "RobotoCondensedRegular"
+          },
+          "passthrough": true,
+          "itemBindings": {
+            "text": "Title"
+          }
+        }
+      ],
+      "dataSources": [
+        {
+          "id": "ds-1",
+          "name": "Kits",
+          "kind": "list",
+          "typeName": "Kit",
+          "columns": [
+            {
+              "key": "Title",
+              "kind": "text"
+            },
+            {
+              "key": "ItemId",
+              "kind": "itemid"
+            }
+          ],
+          "items": [
+            {
+              "Title": "Starter",
+              "ItemId": "-97956382"
+            },
+            {
+              "Title": "Builder",
+              "ItemId": "-2099697608"
+            },
+            {
+              "Title": "Lumberjack",
+              "ItemId": "-151838493"
+            },
+            {
+              "Title": "Scrapper",
+              "ItemId": "69511070"
+            },
+            {
+              "Title": "Farmer",
+              "ItemId": "-97956382"
+            },
+            {
+              "Title": "Chef",
+              "ItemId": "-2099697608"
+            },
+            {
+              "Title": "Medic",
+              "ItemId": "-151838493"
+            },
+            {
+              "Title": "Raider",
+              "ItemId": "69511070"
+            }
+          ]
+        }
+      ],
+      "canvas": {
+        "aspect": "16:9",
+        "rootLayer": "Overlay"
+      }
+    }
+  },
+  {
     "id": "showcase-welcome",
     "name": "Showcase: Welcome panel",
     "hint": "Everything composed: fills, fonts, buttons, a countdown footer — a template to pick apart.",

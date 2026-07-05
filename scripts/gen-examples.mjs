@@ -55,10 +55,13 @@ function layout(id, category, name, hint, build, opts = {}) {
     if (over.props) el.props = { ...el.props, ...over.props }
     if (over.modifiers) el.modifiers = over.modifiers
     if (over.name) el.name = over.name
+    if (over.repeat) el.repeat = over.repeat
+    if (over.itemBindings) el.itemBindings = over.itemBindings
     els.push(el)
     const seeds = getDefinition(type).seedChildren?.(el, (t, pid) => getDefinition(t).create({ id: alloc(), n, parentId: pid, index: els.length, color: WHITE })) || []
     for (const s of seeds) {
       if (over.labelText && s.type === 'text') s.props.text = over.labelText
+      if (over.labelBind && s.type === 'text') s.itemBindings = { text: over.labelBind }
       els.push(s)
     }
     return el
@@ -86,7 +89,46 @@ function layout(id, category, name, hint, build, opts = {}) {
     props: { color: DIM, text: hint, fontSize: 11, font: 'RobotoCondensedRegular', align: 'MiddleLeft' },
   })
   build(mk, card)
-  return { id, name, hint, category, data: { elements: els, canvas: { aspect: '16:9', rootLayer: 'Overlay' } } }
+  return {
+    id,
+    name,
+    hint,
+    category,
+    data: { elements: els, ...(opts.dataSources ? { dataSources: opts.dataSources } : {}), canvas: { aspect: '16:9', rootLayer: 'Overlay' } },
+  }
+}
+
+/** Slot rect for child i of a container layout, as top-left-anchored geometry (mirrors layoutSlot —
+ *  example children of an arranged container must be authored ON their slots, since reflow only runs
+ *  on edits, not on load). */
+function slotGeom(l, i) {
+  const per = Math.max(1, Math.floor(l.itemsPerLine))
+  const line = Math.floor(i / per)
+  const inLine = i % per
+  const col = l.direction === 'vertical' ? inLine : line
+  const row = l.direction === 'vertical' ? line : inLine
+  const x0 = l.padding + col * (l.itemWidth + l.gapX)
+  const yTop = -(l.padding + row * (l.itemHeight + l.gapY))
+  return { anchorMin: V(0, 1), anchorMax: V(0, 1), offsetMin: V(x0, yTop - l.itemHeight), offsetMax: V(x0 + l.itemWidth, yTop) }
+}
+
+/** The sample kit list the repeat/scroll examples stamp their template from. Item ids cycle through
+ *  four KNOWN-VALID ids (TC / stone / wood / metal fragments) — an invalid item id crashes the
+ *  client (see the item-icon fill example), so no invented ids here. */
+function kitsSource(rows) {
+  const TITLES = ['Starter', 'Builder', 'Lumberjack', 'Scrapper', 'Farmer', 'Chef', 'Medic', 'Raider']
+  const IDS = ['-97956382', '-2099697608', '-151838493', '69511070']
+  return {
+    id: 'ds-1',
+    name: 'Kits',
+    kind: 'list',
+    typeName: 'Kit',
+    columns: [
+      { key: 'Title', kind: 'text' },
+      { key: 'ItemId', kind: 'itemid' },
+    ],
+    items: TITLES.slice(0, rows).map((Title, i) => ({ Title, ItemId: IDS[i % IDS.length] })),
+  }
 }
 
 const C = (min, max) => ({ anchorMin: V(0.5, 0.5), anchorMax: V(0.5, 0.5), offsetMin: min, offsetMax: max })
@@ -186,6 +228,45 @@ const samples = [
       mk('panel', left.id, { name: 'Chip', geom: { anchorMin: V(0.5, 0.5), anchorMax: V(0.5, 0.5), offsetMin: V(-40, -40), offsetMax: V(40, 40) }, props: { color: ORANGE }, modifiers: { draggable: { filter: 'demo.chip', dropAnywhere: false } } })
     },
     {},
+  ),
+
+  // --- layout containers ------------------------------------------------------------
+  layout('layout-stack', 'element', 'Layout: stack', 'The container arranges its children into slots — reorder in the tree, resize one item to resize all.', (mk, card) => {
+    const l = { direction: 'vertical', itemsPerLine: 1, itemWidth: 200, itemHeight: 36, gapX: 8, gapY: 8, padding: 8 }
+    const stack = mk('container', card.id, { name: 'Menu', geom: C(V(-108, -76), V(108, 64)), props: { layout: l } })
+    mk('button', stack.id, { name: 'Play', geom: slotGeom(l, 0), props: { color: ORANGE, command: 'ui.demo play' }, labelText: 'PLAY' })
+    mk('button', stack.id, { name: 'Options', geom: slotGeom(l, 1), props: { color: STRIP, command: 'ui.demo options' }, labelText: 'OPTIONS' })
+    mk('button', stack.id, { name: 'Quit', geom: slotGeom(l, 2), props: { color: STRIP, command: 'ui.demo quit' }, labelText: 'QUIT' })
+  }),
+  layout(
+    'repeat-list',
+    'element',
+    'Repeating list',
+    'One editable template (row 0) stamped per row of a list — the ghosts are the other rows.',
+    (mk, card) => {
+      const l = { direction: 'vertical', itemsPerLine: 1, itemWidth: 364, itemHeight: 44, gapX: 8, gapY: 8, padding: 8 }
+      const list = mk('container', card.id, { name: 'KitList', geom: C(V(-190, -76), V(190, 88)), props: { layout: l }, repeat: { source: 'ds-1' } })
+      const row = mk('button', list.id, { name: 'KitRow', geom: slotGeom(l, 0), props: { color: STRIP, command: 'kit.claim' }, labelBind: 'Title' })
+      mk('panel', row.id, {
+        name: 'KitIcon',
+        geom: { anchorMin: V(0, 0.5), anchorMax: V(0, 0.5), offsetMin: V(4, -18), offsetMax: V(40, 18) },
+        props: { color: TINT, image: { kind: 'itemicon', itemId: -97956382, skinId: 0 } },
+        itemBindings: { 'image.itemId': 'ItemId' },
+      })
+    },
+    { dataSources: [kitsSource(3)] },
+  ),
+  layout(
+    'scroll-list',
+    'element',
+    'Scrolling list',
+    'More rows than the box fits — the container is a scroll view sized to its content.',
+    (mk, card) => {
+      const l = { direction: 'vertical', itemsPerLine: 1, itemWidth: 364, itemHeight: 44, gapX: 8, gapY: 8, padding: 8, scroll: 'vertical' }
+      const list = mk('container', card.id, { name: 'KitScroll', geom: C(V(-190, -76), V(190, 88)), props: { layout: l }, repeat: { source: 'ds-1' } })
+      mk('button', list.id, { name: 'KitRow', geom: slotGeom(l, 0), props: { color: STRIP, command: 'kit.claim' }, labelBind: 'Title' })
+    },
+    { dataSources: [kitsSource(8)] },
   ),
 
   // --- showcase ---------------------------------------------------------------------
