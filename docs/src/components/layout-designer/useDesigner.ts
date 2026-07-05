@@ -678,11 +678,70 @@ function fill(id: string, mode: 'both' | 'x' | 'y' = 'both') {
   }
 }
 
+// Shared palette for the seed presets.
+const SEED = {
+  white: { r: 0.95, g: 0.95, b: 0.97, a: 1 },
+  dim: { r: 0.62, g: 0.65, b: 0.7, a: 1 },
+  window: { r: 0.1, g: 0.1, b: 0.12, a: 0.96 },
+  strip: { r: 0.12, g: 0.13, b: 0.16, a: 1 },
+  orange: { r: 0.99, g: 0.35, b: 0.23, a: 1 },
+  red: { r: 0.82, g: 0.24, b: 0.2, a: 1 },
+}
+
+/** Default new-layout seed: a WORKING window — title bar, client-side close X, body text, and an OK
+ *  button that also dismisses it. Every part is a normal element to restyle or replace. */
 function seedSample() {
-  const bg = seedPanel(null, { x: 0, y: 0 }, { x: 1, y: 1 }, { x: 0, y: 0 }, { x: 0, y: 0 }, { r: 0.09, g: 0.09, b: 0.11, a: 0.92 })
-  const title = seedPanel(bg.id, { x: 0, y: 1 }, { x: 1, y: 1 }, { x: 8, y: -56 }, { x: -8, y: -8 }, { r: 0.99, g: 0.35, b: 0.23, a: 0.95 })
-  seedPanel(bg.id, { x: 1, y: 0 }, { x: 1, y: 0 }, { x: -132, y: 12 }, { x: -12, y: 52 }, { r: 0.2, g: 0.55, b: 0.85, a: 0.95 })
-  selectedIds.value = [title.id]
+  const win = seedPanel(null, { x: 0.5, y: 0.5 }, { x: 0.5, y: 0.5 }, { x: -240, y: -150 }, { x: 240, y: 150 }, SEED.window, 'Window')
+  win.modifiers = { cursor: true }
+  const bar = seedPanel(win.id, { x: 0, y: 1 }, { x: 1, y: 1 }, { x: 0, y: -40 }, { x: 0, y: 0 }, SEED.strip, 'Title Bar')
+  seedText(bar.id, { x: 0, y: 0 }, { x: 1, y: 1 }, { x: 14, y: 0 }, { x: -44, y: 0 }, 'Window Title', { fontSize: 16, align: 'MiddleLeft', color: SEED.white, name: 'Title', passthrough: true })
+  const x = seedButton(bar.id, { x: 1, y: 0.5 }, { x: 1, y: 0.5 }, { x: -34, y: -13 }, { x: -8, y: 13 }, SEED.red, 'X', { name: 'Close Button', fontSize: 14 })
+  if (x.type === 'button') x.props.close = win.id
+  seedText(win.id, { x: 0, y: 0 }, { x: 1, y: 1 }, { x: 20, y: 56 }, { x: -20, y: -52 }, 'Body content goes here.', { fontSize: 14, align: 'UpperLeft', color: SEED.dim, name: 'Body' })
+  const ok = seedButton(win.id, { x: 1, y: 0 }, { x: 1, y: 0 }, { x: -116, y: 12 }, { x: -12, y: 48 }, SEED.orange, 'OK', { name: 'OK Button', fontSize: 14 })
+  if (ok.type === 'button') ok.props.close = win.id
+  selectedIds.value = [win.id]
+}
+
+/** Confirm dialog: message + Cancel (client-side close) + Confirm (runs a command). */
+function seedConfirm() {
+  const win = seedPanel(null, { x: 0.5, y: 0.5 }, { x: 0.5, y: 0.5 }, { x: -190, y: -85 }, { x: 190, y: 85 }, SEED.window, 'Confirm Dialog')
+  win.modifiers = { cursor: true }
+  seedText(win.id, { x: 0, y: 0.45 }, { x: 1, y: 1 }, { x: 16, y: 0 }, { x: -16, y: -10 }, 'Are you sure you want to do this?', { fontSize: 15, align: 'MiddleCenter', color: SEED.white, name: 'Message' })
+  const cancel = seedButton(win.id, { x: 0.5, y: 0 }, { x: 0.5, y: 0 }, { x: -172, y: 14 }, { x: -8, y: 50 }, SEED.strip, 'Cancel', { name: 'Cancel Button', fontSize: 13 })
+  if (cancel.type === 'button') cancel.props.close = win.id
+  seedButton(win.id, { x: 0.5, y: 0 }, { x: 0.5, y: 0 }, { x: 8, y: 14 }, { x: 172, y: 50 }, SEED.orange, 'CONFIRM', { name: 'Confirm Button', fontSize: 13, command: 'ui.confirm' })
+  selectedIds.value = [win.id]
+}
+
+/** Passive HUD status strip on the Hud layer: icon + text, no cursor capture. */
+function seedHud() {
+  canvas.rootLayer = 'Hud'
+  const strip = seedPanel(null, { x: 0, y: 1 }, { x: 0, y: 1 }, { x: 16, y: -64 }, { x: 232, y: -16 }, { r: 0.05, g: 0.06, b: 0.08, a: 0.7 }, 'Status Strip')
+  const icon = seedPanel(strip.id, { x: 0, y: 0.5 }, { x: 0, y: 0.5 }, { x: 8, y: -16 }, { x: 40, y: 16 }, { r: 1, g: 1, b: 1, a: 1 }, 'Status Icon')
+  if (icon.type === 'panel') icon.props.image = { kind: 'itemicon', itemId: -97956382, skinId: 0 }
+  seedText(strip.id, { x: 0, y: 0 }, { x: 1, y: 1 }, { x: 48, y: 0 }, { x: -10, y: 0 }, 'Players online: 42', { fontSize: 14, align: 'MiddleLeft', color: SEED.white, name: 'Status Text' })
+  selectedIds.value = [strip.id]
+}
+
+/** Tabbed menu: the window chrome plus a tab view (two pages + switch buttons) filling the body. */
+function seedTabbedMenu() {
+  const win = seedPanel(null, { x: 0.5, y: 0.5 }, { x: 0.5, y: 0.5 }, { x: -280, y: -180 }, { x: 280, y: 180 }, SEED.window, 'Menu')
+  win.modifiers = { cursor: true }
+  const bar = seedPanel(win.id, { x: 0, y: 1 }, { x: 1, y: 1 }, { x: 0, y: -40 }, { x: 0, y: 0 }, SEED.strip, 'Title Bar')
+  seedText(bar.id, { x: 0, y: 0 }, { x: 1, y: 1 }, { x: 14, y: 0 }, { x: -44, y: 0 }, 'Menu', { fontSize: 16, align: 'MiddleLeft', color: SEED.white, name: 'Title', passthrough: true })
+  const x = seedButton(bar.id, { x: 1, y: 0.5 }, { x: 1, y: 0.5 }, { x: -34, y: -13 }, { x: -8, y: 13 }, SEED.red, 'X', { name: 'Close Button', fontSize: 14 })
+  if (x.type === 'button') x.props.close = win.id
+  const tabs = createByType('tabs', win.id)
+  tabs.name = 'Menu View'
+  tabs.anchorMin = { x: 0.5, y: 0.5 }
+  tabs.anchorMax = { x: 0.5, y: 0.5 }
+  tabs.offsetMin = { x: -264, y: -168 }
+  tabs.offsetMax = { x: 264, y: 96 }
+  elements.value.push(tabs)
+  const seeds = getDefinition('tabs').seedChildren?.(tabs, (t, pid) => createByType(t, pid)) ?? []
+  elements.value.push(...seeds)
+  selectedIds.value = [win.id]
 }
 
 // Shared placement helpers for the seed presets below: build an element through the registry factory,
@@ -1197,6 +1256,9 @@ function newLayout(name?: string, preset: LayoutPreset = 'default') {
   if (preset === 'default') seedSample()
   else if (preset === 'menu') seedMenu()
   else if (preset === 'list') seedListMenu()
+  else if (preset === 'tabbed') seedTabbedMenu()
+  else if (preset === 'confirm') seedConfirm()
+  else if (preset === 'hud') seedHud()
   persist()
   resetHistory()
 }

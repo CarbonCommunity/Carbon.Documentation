@@ -108,9 +108,12 @@ function closeFileMenu() {
 // File ▸ New presets. Each id maps to a seeder in useDesigner (newLayout); 'empty' starts blank.
 const NEW_PRESETS: { id: LayoutPreset; name: string; hint: string }[] = [
   { id: 'empty', name: 'Empty', hint: 'A blank layout' },
-  { id: 'default', name: 'Default', hint: 'The starter sample (panel + title + corner)' },
+  { id: 'default', name: 'Window', hint: 'A working window: title bar, close button, body text and an OK button (both dismiss client-side)' },
+  { id: 'confirm', name: 'Confirm dialog', hint: 'Message + Cancel (closes) and Confirm (runs a command) - the yes/no popup' },
   { id: 'menu', name: 'Menu', hint: 'A centered menu: title bar with title + close button, and one action button' },
+  { id: 'tabbed', name: 'Tabbed menu', hint: 'The window with a tab view: two pages and their switch buttons, ready to fill' },
   { id: 'list', name: 'List menu', hint: 'The menu window with a scrolling, repeating kit list bound to a sample data source' },
+  { id: 'hud', name: 'HUD status', hint: 'A passive icon + text strip on the Hud layer (no cursor capture) - server info, event timers' },
 ]
 function fileNew(preset: LayoutPreset) {
   newLayout(undefined, preset) // auto-named "Layout N"; rename via the pencil
