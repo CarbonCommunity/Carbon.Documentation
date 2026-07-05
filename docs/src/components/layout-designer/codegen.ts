@@ -368,7 +368,9 @@ function resolveTabCommands(elements: DesignerElement[], tabs: TabsElement | nul
   if (!tabs) return elements
   return elements.map((el) => {
     if (el.type !== 'button' || el.props.tabSwitch?.target !== tabs.id) return el
-    return { ...el, props: { ...el.props, command: `${tabs.props.command} ${el.props.tabSwitch.page}` } }
+    // isProtected forced true: the generated handler is [ProtectedCommand] under Carbon, which only
+    // hears the protected form (Community.Protect keeps the page-index argument intact).
+    return { ...el, props: { ...el.props, command: `${tabs.props.command} ${el.props.tabSwitch.page}`, isProtected: true } }
   })
 }
 
@@ -929,7 +931,30 @@ function commandMethodName(cmd: string): string {
 
 /** A `[ConsoleCommand]` handler stub per distinct command — valid under both frameworks
  *  (Carbon is Oxide-command compatible), so no `#if` split is needed. Empty when no element binds one. */
-function commandStubs(elements: DesignerElement[], indexedCommands: Set<string> = new Set()): string[] {
+/** Base commands sent by at least one PROTECTED element. Carbon-protected buttons send
+ *  Community.Protect(command) on the wire, so their handlers must be [ProtectedCommand] — a plain
+ *  [ConsoleCommand] never hears them. Oxide has no protection concept. */
+function protectedCommands(elements: DesignerElement[]): Set<string> {
+  const out = new Set<string>()
+  for (const el of elements) {
+    const props = el.props as { command?: string; isProtected?: boolean }
+    if (typeof props.command !== 'string' || !props.command.trim()) continue
+    if (props.isProtected !== false) out.add(props.command.trim().split(/\s+/)[0])
+  }
+  return out
+}
+
+/** The command attribute line(s) for a stub/handler, per provider and protection. */
+function commandAttribute(cmd: string, provider: Provider, isProtected: boolean, indent = '    '): string[] {
+  const prot = `${indent}[ProtectedCommand("${esc(cmd)}")]`
+  const cons = `${indent}[ConsoleCommand("${esc(cmd)}")]`
+  if (!isProtected || provider === 'oxide') return [cons]
+  if (provider === 'carbon') return [prot]
+  return ['#if CARBON', prot, '#else', cons, '#endif']
+}
+
+function commandStubs(elements: DesignerElement[], provider: Provider, indexedCommands: Set<string> = new Set()): string[] {
+  const prot = protectedCommands(elements)
   const names = commandNames(elements)
   // PascalCasing is lossy ("ui.open" and "ui_open" both become UiOpenCommand), so dedupe the METHOD
   // names too — a numeric suffix on later collisions keeps the generated class compiling.
@@ -944,7 +969,7 @@ function commandStubs(elements: DesignerElement[], indexedCommands: Set<string> 
     const indexed = indexedCommands.has(cmd)
     return [
       ...(i > 0 ? [''] : []), // blank line between successive stubs
-      `    [ConsoleCommand("${esc(cmd)}")]`,
+      ...commandAttribute(cmd, provider, prot.has(cmd)),
       `    private void ${method}(ConsoleSystem.Arg arg)`,
       '    {',
       '        var player = arg.Player();',
@@ -1054,7 +1079,7 @@ export function generateFullClass(elements: DesignerElement[], provider: Provide
         '',
         ...hide,
         '',
-        `    [ConsoleCommand("${esc(shellTabs.props.command)}")]`,
+        ...commandAttribute(shellTabs.props.command, provider, true),
         '    private void TabCommand(ConsoleSystem.Arg arg)',
         '    {',
         '        var player = arg.Player();',
@@ -1083,7 +1108,7 @@ export function generateFullClass(elements: DesignerElement[], provider: Provide
   // Image-DB fills need a preload lifecycle; elements that capture a command (button/input/countdown)
   // get a handler stub. Both go after the builder method, each section separated by a blank line.
   const imgs = imagedbFills(elements)
-  const sections = [method, preloadLines(imgs, provider), commandStubs(elements, indexedCommandsOf(loops))].filter((s) => s.length)
+  const sections = [method, preloadLines(imgs, provider), commandStubs(elements, provider, indexedCommandsOf(loops))].filter((s) => s.length)
   const methods = sections.flatMap((s, i) => (i === 0 ? s : ['', ...s]))
   if (provider === 'both') {
     return [

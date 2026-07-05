@@ -21,7 +21,7 @@ public class LayoutDesignerExamples : CarbonPlugin
         CuiHelper.DestroyUi(player, "ExamplesRoot");
     }
 
-    [ConsoleCommand("examples.tab")]
+    [ProtectedCommand("examples.tab")]
     private void TabCommand(ConsoleSystem.Arg arg)
     {
         var player = arg.Player();

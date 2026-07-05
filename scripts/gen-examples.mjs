@@ -461,7 +461,7 @@ const pluginLines = [
   '        CuiHelper.DestroyUi(player, "ExamplesRoot");',
   '    }',
   '',
-  '    [ConsoleCommand("examples.tab")]',
+  '    [ProtectedCommand("examples.tab")]', // protected buttons send Community.Protect(cmd); plain [ConsoleCommand] never hears them
   '    private void TabCommand(ConsoleSystem.Arg arg)',
   '    {',
   '        var player = arg.Player();',
