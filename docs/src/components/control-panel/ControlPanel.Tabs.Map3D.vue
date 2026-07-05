@@ -1306,7 +1306,7 @@ onMounted(() => {
   scene = new THREE.Scene()
   scene.fog = new THREE.Fog(0xbfd9e8, 60, 320)
 
-  camera = new THREE.PerspectiveCamera(60, width / height, 0.01, 5000)
+  camera = new THREE.PerspectiveCamera(60, width / height, 0.001, 5000)
   camera.position.set(14, 12, 18)
   camera.lookAt(0, 0, 0)
 
