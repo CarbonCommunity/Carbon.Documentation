@@ -63,9 +63,11 @@ watchDebounced([elements, dataSources, canvas, selectedIds], refresh, { deep: tr
 watch([tab, provider], refresh)
 refresh() // initial synchronous fill (no blank frame before the first debounce could fire)
 
-// JSON tab is JSON; the rest are C#. Highlighted via the same engine VitePress uses for docs blocks.
+// JSON tab is JSON; the rest are C#. Highlighting runs ONLY on the Selected tab: Shiki re-tokenizing
+// a full Class/UX/JSON dump (an 18-page tabbed layout generates thousands of lines) on every edit or
+// tab switch is what made switching feel slow — the big tabs render as plain text instead.
 const lang = computed(() => (tab.value === 'json' ? 'json' : 'csharp'))
-const { html } = useShiki(() => active.value, lang)
+const { html } = useShiki(() => (tab.value === 'selected' ? active.value : ''), lang)
 
 const copied = ref(false)
 async function copy() {

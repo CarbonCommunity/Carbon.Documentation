@@ -40,9 +40,10 @@ export function useShiki(code: MaybeRefOrGetter<string>, lang: MaybeRefOrGetter<
 
   const html = computed(() => {
     const h = highlighter.value
-    if (!h) return null
+    const src = toValue(code)
+    if (!h || !src) return null // no highlighter yet, or highlighting disabled for this input
     try {
-      return h.codeToHtml(toValue(code), { lang: toValue(lang), theme: THEME })
+      return h.codeToHtml(src, { lang: toValue(lang), theme: THEME })
     } catch {
       return null // fall back to the plain <pre>
     }
