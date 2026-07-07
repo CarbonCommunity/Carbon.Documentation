@@ -44,7 +44,7 @@ function stripEmbeddedLights(root: THREE.Object3D) {
 // transparency, leaving them OPAQUE. Rather than inspecting texture pixels, prefab paths matching
 // one of these known-transparent categories get transparency forced on instead — extend this list
 // as more categories turn up looking wrong (opaque where they should be see-through).
-const TRANSPARENT_PATH_PATTERN = /grass|glass|leaf|foliage|bush|palm|power_sub|jungle|water_well|collapsed_bits|sphere_tank|road|slab|vine|rubble|tunnel|fence|net|curtain|tarp/i;
+const TRANSPARENT_PATH_PATTERN = /grass|glass|leaf|foliage|bush|palm|power_sub|jungle|water_well|marketplace|collapsed_bits|sphere_tank|road|slab|vine|rubble|tunnel|fence|net|curtain|tarp/i;
 
 // Enables blending for every textured material in a model whose resolved URL (and therefore
 // prefab path — see resolveModelUrl) matches TRANSPARENT_PATH_PATTERN. Materials that already

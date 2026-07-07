@@ -29,7 +29,7 @@ const OBJECT_COLOR = 0xffaa00
 // resolved to a real model — distinct from OBJECT_COLOR so dynamic entities read as different
 // from static placed-prefab fallbacks at a glance.
 const LIVE_ENTITY_FALLBACK_COLOR = 0xff3355
-const MODEL_LOAD_CONCURRENCY = 64
+const MODEL_LOAD_CONCURRENCY = 246
 // Real props are grouped into a grid of spatial chunks (one InstancedMesh per chunk+model, rather
 // than one per whole-map+model) so draw distance can toggle whole chunks — checking a few hundred
 // chunk centers per frame — instead of needing per-instance visibility, which InstancedMesh can't
