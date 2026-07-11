@@ -17,6 +17,7 @@ import { applyItemBindings, fontDef, resolveText } from './types'
 import type { ColorRGBA, DesignerElement, Rect, TextAlign, TextFont } from './types'
 import { beginActiveDrag } from './useActiveDrag'
 import { useDesigner } from './useDesigner'
+import { useItemCatalog } from './useItemCatalog'
 
 defineOptions({ name: 'CanvasElement' })
 
@@ -51,6 +52,10 @@ const {
   repeatSourceOf,
   layoutOf,
 } = useDesigner()
+
+// Item-icon fills preview via the CDN inventory icons (same source as the item references pages).
+const { ensureLoaded: ensureItemCatalog, iconUrlById } = useItemCatalog()
+ensureItemCatalog()
 
 // Inside a repeating template the canvas shows ROW 0's values on the real elements (the ghosts show
 // the later rows) — so an item-bound element previews data, not its literal placeholder.
@@ -97,6 +102,16 @@ const fillStyle = computed<Record<string, string> | null>(() => {
       s.backgroundImage = `url("${el.props.image.url.replace(/"/g, '\\"')}")`
       s.backgroundSize = '100% 100%'
       s.backgroundRepeat = 'no-repeat'
+    } else if (el.props.image?.kind === 'itemicon') {
+      // Preview-only: the CDN inventory icon (the game renders the icon contained, not stretched).
+      // Unknown ids (or the catalog still loading / offline) just show the plain color.
+      const u = iconUrlById(el.props.image.itemId)
+      if (u) {
+        s.backgroundImage = `url("${u}")`
+        s.backgroundSize = 'contain'
+        s.backgroundPosition = 'center'
+        s.backgroundRepeat = 'no-repeat'
+      }
     }
     return s
   }
@@ -201,6 +216,8 @@ type GhostBox = {
   h: number
   fill: string | null
   imageUrl: string | null
+  /** 'stretch' for url images, 'icon' (contain, centered) for item icons. */
+  imageFit: 'stretch' | 'icon'
   text: string | null
   textStyle: Record<string, string> | null
 }
@@ -234,7 +251,7 @@ const ghostBoxes = computed<GhostBox[]>(() => {
     for (const f of flat) {
       const g = applyItemBindings(f.el, rows[i])
       const texty = TEXTY.has(g.type)
-      const p = g.props as { color?: ColorRGBA; image?: { kind: string; url?: string }; align?: TextAlign; font?: TextFont; fontSize?: number; text?: string }
+      const p = g.props as { color?: ColorRGBA; image?: { kind: string; url?: string; itemId?: number }; align?: TextAlign; font?: TextFont; fontSize?: number; text?: string }
       let textStyle: Record<string, string> | null = null
       if (texty && p.align && p.color && p.fontSize) {
         const a = alignParts(p.align)
@@ -256,7 +273,13 @@ const ghostBoxes = computed<GhostBox[]>(() => {
         w: f.w,
         h: f.h,
         fill: (g.type === 'panel' || g.type === 'button') && p.color ? cssColor(p.color) : null,
-        imageUrl: g.type === 'panel' && p.image?.kind === 'url' && p.image.url ? p.image.url : null,
+        imageUrl:
+          g.type === 'panel' && p.image?.kind === 'url' && p.image.url
+            ? p.image.url
+            : g.type === 'panel' && p.image?.kind === 'itemicon'
+              ? iconUrlById(p.image.itemId ?? 0)
+              : null,
+        imageFit: p.image?.kind === 'itemicon' ? 'icon' : 'stretch',
         text: texty ? (g.type === 'text' ? resolveText(g, dataSources.value) : (p.text ?? '')) : null,
         textStyle,
       })
@@ -276,7 +299,8 @@ function ghostStyle(g: GhostBox): Record<string, string> {
   if (g.fill) style.backgroundColor = g.fill
   if (g.imageUrl) {
     style.backgroundImage = `url("${g.imageUrl.replace(/"/g, '\\"')}")`
-    style.backgroundSize = '100% 100%'
+    style.backgroundSize = g.imageFit === 'icon' ? 'contain' : '100% 100%'
+    if (g.imageFit === 'icon') style.backgroundPosition = 'center'
     style.backgroundRepeat = 'no-repeat'
   }
   return style

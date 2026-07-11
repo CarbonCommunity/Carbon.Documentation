@@ -1,13 +1,14 @@
 <script setup lang="ts">
 // Data Sources pane: author the named static values elements bind to. TEXT sources are shared
-// strings; LIST sources are little spreadsheets — the columns define the item struct codegen emits
+// strings; LIST sources are little spreadsheets -- the columns define the item struct codegen emits
 // (a list IS its own type), the rows are the design-time sample data a repeating container stamps
 // its template from. Editing either live-updates every bound element (canvas + generated code).
-// Body of the Data Sources pane (the pane chrome — header, Add, pop-out — lives in LayoutDesigner,
+// Body of the Data Sources pane (the pane chrome -- header, Add, pop-out -- lives in LayoutDesigner,
 // mirroring how ElementTree is the body of the Elements pane).
 import { Plus, Trash2 } from 'lucide-vue-next'
 import { computed } from 'vue'
 import InfoTip from './InfoTip.vue'
+import ItemPicker from './ItemPicker.vue'
 import type { ListColumn, ListColumnKind, ListDataSource, TextDataSource } from './types'
 import { useDesigner } from './useDesigner'
 
@@ -16,7 +17,7 @@ const { dataSources, elements, updateDataSource, removeDataSource } = useDesigne
 const textSources = computed(() => dataSources.value.filter((d): d is TextDataSource => d.kind === 'text'))
 const listSources = computed(() => dataSources.value.filter((d): d is ListDataSource => d.kind === 'list'))
 
-/** How many element props are bound to a given source (repeat targets count too) — an "is this used?" hint. */
+/** How many element props are bound to a given source (repeat targets count too) -- an "is this used?" hint. */
 const usage = computed(() => {
   const counts = new Map<string, number>()
   for (const el of elements.value) {
@@ -125,12 +126,12 @@ function removeRow(ds: ListDataSource, rowIdx: number) {
           class="ld-textarea ld-ds-value"
           rows="2"
           :value="ds.value"
-          placeholder="Value…"
+          placeholder="Value..."
           @change="setValue(ds.id, ($event.target as HTMLTextAreaElement).value)"
         />
       </div>
 
-      <!-- list sources: a mini spreadsheet each — columns are the item struct, rows are sample data -->
+      <!-- list sources: a mini spreadsheet each -- columns are the item struct, rows are sample data -->
       <div v-for="ds in listSources" :key="ds.id" class="ld-ds-item">
         <div class="ld-ds-item-head">
           <input class="ld-ds-name" type="text" :value="ds.name" title="List field name in the generated class" @change="setName(ds.id, ($event.target as HTMLInputElement).value)" />
@@ -141,7 +142,7 @@ function removeRow(ds: ListDataSource, rowIdx: number) {
           </button>
         </div>
         <label class="ld-ds-type">
-          <span>Item type <InfoTip text="The C# type generated from the columns below — each column becomes a property, each row an entry in the emitted List<T>. Set a container's layout to 'Repeat from' this list to stamp its template per row." /></span>
+          <span>Item type <InfoTip text="The C# type generated from the columns below -- each column becomes a property, each row an entry in the emitted List<T>. Set a container's layout to 'Repeat from' this list to stamp its template per row." /></span>
           <input type="text" :value="ds.typeName" @change="setTypeName(ds, ($event.target as HTMLInputElement).value)" />
         </label>
         <div class="ld-ds-grid" :style="{ gridTemplateColumns: `repeat(${ds.columns.length}, minmax(72px, 1fr)) 22px` }">
@@ -158,15 +159,22 @@ function removeRow(ds: ListDataSource, rowIdx: number) {
           <button class="ld-ds-addcol" title="Add column" @click="addColumn(ds)"><Plus :size="12" /></button>
           <!-- rows -->
           <template v-for="(row, ri) in ds.items" :key="ri">
-            <input
-              v-for="col in ds.columns"
-              :key="`${ri}.${col.key}`"
-              class="ld-ds-cell"
-              type="text"
-              :value="row[col.key] ?? ''"
-              :placeholder="col.kind === 'itemid' ? 'item id' : col.kind === 'url' ? 'https://…' : ''"
-              @change="setCell(ds, ri, col, ($event.target as HTMLInputElement).value)"
-            />
+            <template v-for="col in ds.columns" :key="`${ri}.${col.key}`">
+              <ItemPicker
+                v-if="col.kind === 'itemid'"
+                class="ld-ds-cell ld-ds-cell-item"
+                :model-value="Number.parseInt(row[col.key] ?? '', 10) || 0"
+                @update:model-value="setCell(ds, ri, col, String($event))"
+              />
+              <input
+                v-else
+                class="ld-ds-cell"
+                type="text"
+                :value="row[col.key] ?? ''"
+                :placeholder="col.kind === 'url' ? 'https://...' : ''"
+                @change="setCell(ds, ri, col, ($event.target as HTMLInputElement).value)"
+              />
+            </template>
             <button class="ld-ds-del" title="Delete row" :disabled="ds.items.length <= 1" @click="removeRow(ds, ri)"><Trash2 :size="11" /></button>
           </template>
         </div>
@@ -288,6 +296,22 @@ function removeRow(ds: ListDataSource, rowIdx: number) {
 
 .ld-ds-colhead input {
   font-weight: 600;
+}
+
+/* item-id cells host the picker (a flex wrapper), not a bare input -- undo the input chrome, the
+   picker draws its own, and let it shrink inside the grid column */
+.ld-ds-cell-item {
+  padding: 0;
+  border: none;
+  background: none;
+}
+.ld-ds-cell-item :deep(.ld-itempick-input) {
+  font-size: 11px;
+  padding: 2px 5px;
+}
+.ld-ds-cell-item :deep(.ld-itempick-cur) {
+  width: 18px;
+  height: 18px;
 }
 
 .ld-ds-colmeta {
