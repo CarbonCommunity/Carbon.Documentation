@@ -4,10 +4,11 @@ import { computed, ref, watch } from 'vue'
 import CanvasElement from './CanvasElement.vue'
 import ElementTypeMenu from './ElementTypeMenu.vue'
 import { canvasDisplay, canvasHeight, canvasWidth } from './geometry'
+import { useCanvasView } from './useCanvasView'
 import { useDesigner } from './useDesigner'
 import { useScreenShare } from './useScreenShare'
 
-const { canvas, rootElements, select, selectedIds, rectOf, gridSize, guides, openContextMenu, addElement, addTextWithBackground } = useDesigner()
+const { canvas, currentLayoutId, rootElements, select, selectedIds, rectOf, gridSize, guides, openContextMenu, addElement, addTextWithBackground } = useDesigner()
 
 // Empty-canvas CTA: a centered, outline-styled "Add an element" that opens the type picker.
 const emptyMenuOpen = ref(false)
@@ -56,9 +57,107 @@ const refW = computed(() => canvasWidth(canvas))
 const refH = computed(() => canvasHeight(canvas))
 const display = computed(() => canvasDisplay(Math.max(0, vw.value - PAD * 2), Math.max(0, vh.value - PAD * 2), canvas))
 
+// --- zoom + pan (view state only — never persisted, never in exports) -----------------
+// The canvas scales arithmetically (children multiply CUI coords by `scale`), so zooming is just a
+// bigger frame + a bigger scale factor — selection handles, guide lines and the marquee stay
+// screen-size-constant because nothing is CSS-transform-scaled.
+const { zoom, pan, zoomAt, resetView } = useCanvasView()
+const effScale = computed(() => display.value.scale * zoom.value)
+
+// Fresh layout, fresh view — a zoom made for one layout rarely fits another.
+watch(currentLayoutId, () => resetView())
+
+function cursorOffset(e: { clientX: number; clientY: number }): { x: number; y: number } {
+  const r = viewport.value!.getBoundingClientRect()
+  return { x: e.clientX - (r.left + r.width / 2), y: e.clientY - (r.top + r.height / 2) }
+}
+
+// Wheel (plain or Ctrl — preventDefault also stops browser page-zoom on Ctrl) zooms about the
+// cursor. exp() gives smooth trackpad steps and ~16%/notch on a clicky wheel.
+function onWheel(e: WheelEvent) {
+  const off = cursorOffset(e)
+  zoomAt(off.x, off.y, Math.exp(-e.deltaY * 0.0015))
+}
+
+// MMB drag (or Space + left-drag) pans. Intercepted capture-phase on the viewport so it wins over
+// marquee/element drags without touching their handlers.
+const spaceHeld = ref(false)
+const panning = ref(false)
+let panLast: { x: number; y: number } | null = null
+
+function clampPan() {
+  // Keep at least 40px of the frame reachable inside the viewport so it can't be dragged away.
+  const r = viewport.value?.getBoundingClientRect()
+  if (!r) return
+  const limX = r.width / 2 + (display.value.displayW * zoom.value) / 2 - 40
+  const limY = r.height / 2 + (display.value.displayH * zoom.value) / 2 - 40
+  pan.x = Math.min(limX, Math.max(-limX, pan.x))
+  pan.y = Math.min(limY, Math.max(-limY, pan.y))
+}
+
+useEventListener(
+  viewport,
+  'pointerdown',
+  (e: PointerEvent) => {
+    if (e.button !== 1 && !(e.button === 0 && spaceHeld.value)) return
+    e.preventDefault() // middle button: no autoscroll
+    e.stopPropagation()
+    panLast = { x: e.clientX, y: e.clientY }
+    panning.value = true
+  },
+  { capture: true },
+)
+useEventListener(window, 'pointermove', (e: PointerEvent) => {
+  if (!panLast) return
+  pan.x += e.clientX - panLast.x
+  pan.y += e.clientY - panLast.y
+  panLast = { x: e.clientX, y: e.clientY }
+  clampPan()
+})
+useEventListener(window, 'pointerup', () => {
+  panLast = null
+  panning.value = false
+})
+
+function isTyping(e: KeyboardEvent) {
+  const t = e.target as HTMLElement | null
+  return !!t && (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA' || t.isContentEditable)
+}
+useEventListener(window, 'keydown', (e: KeyboardEvent) => {
+  if (isTyping(e) || e.ctrlKey || e.metaKey || e.altKey) return
+  if (e.key === ' ') {
+    if ((e.target as HTMLElement)?.tagName !== 'BUTTON') e.preventDefault() // keep buttons space-clickable
+    spaceHeld.value = true
+  } else if (e.key === '+' || e.key === '=') {
+    zoomAt(0, 0, 1.25)
+  } else if (e.key === '-' || e.key === '_') {
+    zoomAt(0, 0, 1 / 1.25)
+  } else if (e.key === '0') {
+    resetView()
+  }
+})
+useEventListener(window, 'keyup', (e: KeyboardEvent) => {
+  if (e.key === ' ') spaceHeld.value = false
+})
+// Alt-tabbing away mid-pan (or with Space held) never delivers the keyup/pointerup — reset.
+useEventListener(window, 'blur', () => {
+  spaceHeld.value = false
+  panLast = null
+  panning.value = false
+})
+
+// A press that starts a pan (MMB, or Space+left) must not clear the selection. Presses on frame
+// children are already intercepted by the capture-phase pan listener above; this guards presses
+// that land on the viewport background itself, where stopPropagation can't skip same-node listeners.
+function onViewportPointerDown(e: PointerEvent) {
+  if (e.button !== 0 || spaceHeld.value) return
+  select(null)
+}
+
 const frameStyle = computed(() => ({
-  width: `${display.value.displayW}px`,
-  height: `${display.value.displayH}px`,
+  width: `${display.value.displayW * zoom.value}px`,
+  height: `${display.value.displayH * zoom.value}px`,
+  transform: `translate(${pan.x}px, ${pan.y}px)`,
   // drives the design-overlay fade in CanvasElement (#7); 1 = fully opaque (normal). Only fades while the
   // backdrop is actually showing — stopping the share or unchecking "show behind canvas" snaps the design
   // back to full opacity (so you can't strand a blank layout), while the slider keeps its value for reuse.
@@ -67,7 +166,7 @@ const frameStyle = computed(() => ({
 
 // Visible grid reflects the snap grid size; hidden when too fine to be useful.
 const gridStyle = computed(() => {
-  const px = gridSize.value * display.value.scale
+  const px = gridSize.value * effScale.value
   if (px < 6) return { display: 'none' }
   return { backgroundSize: `${px}px ${px}px, ${px}px ${px}px` }
 })
@@ -113,7 +212,7 @@ useEventListener(window, 'pointerup', () => {
   if (!b) {
     if (!bandStart.shift) select(null) // bare click on empty canvas clears (Shift-click keeps) selection
   } else {
-    const s = display.value.scale
+    const s = effScale.value
     const mx0 = Math.min(b.x0, b.x1)
     const mx1 = Math.max(b.x0, b.x1)
     const my0 = Math.min(b.y0, b.y1)
@@ -136,19 +235,26 @@ useEventListener(window, 'pointerup', () => {
 const vGuideStyle = computed(() => {
   const g = guides.v
   if (!g) return null
-  const s = display.value.scale
+  const s = effScale.value
   return { left: `${g.x * s}px`, top: `${(refH.value - g.y1) * s}px`, height: `${(g.y1 - g.y0) * s}px` }
 })
 const hGuideStyle = computed(() => {
   const g = guides.h
   if (!g) return null
-  const s = display.value.scale
+  const s = effScale.value
   return { top: `${(refH.value - g.y) * s}px`, left: `${g.x0 * s}px`, width: `${(g.x1 - g.x0) * s}px` }
 })
 </script>
 
 <template>
-  <div ref="viewport" class="ld-viewport" @pointerdown="select(null)" @contextmenu.prevent="openContextMenu(null, $event.clientX, $event.clientY)">
+  <div
+    ref="viewport"
+    class="ld-viewport"
+    :class="{ 'ld-pan-ready': spaceHeld && !panning, 'ld-panning': panning }"
+    @pointerdown="onViewportPointerDown"
+    @wheel.prevent="onWheel"
+    @contextmenu.prevent="openContextMenu(null, $event.clientX, $event.clientY)"
+  >
     <div ref="frame" class="ld-frame" :style="frameStyle" @pointerdown.stop="onFramePointerDown">
       <div v-if="!rootElements.length" class="ld-empty-cta" @pointerdown.stop>
         <button class="ld-empty-add" @click.stop="emptyMenuOpen = !emptyMenuOpen">+ Add an element</button>
@@ -163,12 +269,12 @@ const hGuideStyle = computed(() => {
         :element="el"
         :parent-w="refW"
         :parent-h="refH"
-        :scale="display.scale"
+        :scale="effScale"
       />
       <div v-if="vGuideStyle" class="ld-guide ld-guide-v" :style="vGuideStyle" />
       <div v-if="hGuideStyle" class="ld-guide ld-guide-h" :style="hGuideStyle" />
       <div v-if="bandStyle" class="ld-marquee" :style="bandStyle" />
-      <span class="ld-frame-label">{{ canvas.aspect }} · {{ Math.round(refW) }}×{{ Math.round(refH) }}</span>
+      <span class="ld-frame-label">{{ canvas.aspect }} · {{ Math.round(refW) }}×{{ Math.round(refH) }}<template v-if="zoom !== 1"> · {{ Math.round(zoom * 100) }}%</template></span>
     </div>
   </div>
 </template>
@@ -210,6 +316,16 @@ const hGuideStyle = computed(() => {
   isolation: isolate;
   background:
     repeating-conic-gradient(rgba(255, 255, 255, 0.018) 0% 25%, transparent 0% 50%) 50% / 24px 24px;
+}
+
+/* Space held / dragging with MMB — the whole viewport becomes a pan surface */
+.ld-viewport.ld-pan-ready,
+.ld-viewport.ld-pan-ready * {
+  cursor: grab !important;
+}
+.ld-viewport.ld-panning,
+.ld-viewport.ld-panning * {
+  cursor: grabbing !important;
 }
 
 .ld-frame {

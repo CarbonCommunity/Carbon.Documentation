@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import './fonts/index.css' // self-hosted Rust CUI fonts; here so they load on the tool page only
 import { useEventListener, useStorage } from '@vueuse/core'
-import { Check, ChevronRight, Clipboard, ClipboardPaste, Folder, FolderInput, FolderOpen, Lock, Pencil, Plus, Redo2, RotateCcw, Settings, Shapes, Trash2, Undo2, X } from 'lucide-vue-next'
+import { Check, ChevronRight, Clipboard, ClipboardPaste, Folder, FolderInput, FolderOpen, Lock, Pencil, Plus, Redo2, RotateCcw, Settings, Shapes, Trash2, Undo2, X, ZoomIn, ZoomOut } from 'lucide-vue-next'
 import { computed, onBeforeUnmount, onMounted, provide, ref } from 'vue'
 import ContextMenu from './ContextMenu.vue'
 import DockNode from './DockNode.vue'
@@ -11,6 +11,7 @@ import LayoutSettingsModal from './LayoutSettingsModal.vue'
 import LivePreviewControls from './LivePreviewControls.vue'
 import { PANE_TITLES, leavesOf, locate, type DockSide, type PaneId } from './dockTree'
 import { ASPECT_PRESETS, CLIENT_PANELS, type AspectPreset, type ClientPanel, type LayoutPreset } from './types'
+import { useCanvasView } from './useCanvasView'
 import { useDesigner } from './useDesigner'
 import { comboFromEvent, useKeybinds, type KeyActionId } from './useKeybinds'
 import { useDock } from './useDock'
@@ -237,10 +238,14 @@ const tbToggle = (key: string) => (toolbarStore.value = { ...(toolbarStore.value
 const TOOLBAR_TOGGLES = [
   { key: 'history', label: 'Undo / Redo' },
   { key: 'aspect', label: 'Aspect' },
+  { key: 'zoom', label: 'Zoom' },
   { key: 'layer', label: 'Layer' },
   { key: 'grid', label: 'Grid' },
   { key: 'bounds', label: 'Bounds' },
 ]
+
+// Canvas zoom (the canvas owns wheel/MMB/Space interactions; these are the toolbar controls)
+const { zoom: canvasZoom, zoomAt: canvasZoomAt, resetView: canvasResetView } = useCanvasView()
 
 // Last spot each hidden pane occupied, so re-showing lands it back where it was. Persisted so it
 // survives reloads; falls back to a sensible default home when the remembered neighbour is gone.
@@ -434,6 +439,14 @@ const { dragging: dockDragging, pointer: dockPointer } = useDockDrag()
       </div>
 
 
+      <div v-if="tbShown('zoom')" class="ld-tool-field">
+        <span>Zoom</span>
+        <button class="ld-icon-btn" title="Zoom out (-)" @click="canvasZoomAt(0, 0, 1 / 1.25)"><ZoomOut :size="15" /></button>
+        <button class="ld-zoom-pct" :class="{ zoomed: canvasZoom !== 1 }" title="Reset zoom to fit (0)" @click="canvasResetView()">{{ Math.round(canvasZoom * 100) }}%</button>
+        <button class="ld-icon-btn" title="Zoom in (+)" @click="canvasZoomAt(0, 0, 1.25)"><ZoomIn :size="15" /></button>
+        <InfoTip text="Canvas zoom — view only, never part of the layout or the generated code. Mouse wheel over the canvas zooms at the cursor; middle-mouse (or Space) drag pans; keyboard + / - / 0. Click the percentage to reset to fit." />
+      </div>
+
       <label v-if="tbShown('layer')" class="ld-tool-field">
         <span>Layer</span>
         <select
@@ -581,6 +594,27 @@ const { dragging: dockDragging, pointer: dockPointer } = useDockDrag()
 .ld-icon-btn:disabled {
   opacity: 0.35;
   cursor: default;
+}
+
+/* zoom percentage readout — click resets to fit */
+.ld-zoom-pct {
+  min-width: 44px;
+  height: 30px;
+  padding: 0 4px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 4px;
+  color: var(--vp-c-text-2);
+}
+
+.ld-zoom-pct:hover {
+  border-color: var(--c-carbon-1);
+  color: var(--vp-c-text-1);
+}
+
+.ld-zoom-pct.zoomed {
+  color: var(--c-carbon-1);
 }
 
 /* dropdown menus (layouts) */
