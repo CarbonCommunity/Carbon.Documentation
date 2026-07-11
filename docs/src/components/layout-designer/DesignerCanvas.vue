@@ -90,14 +90,21 @@ const panning = ref(false)
 let panLast: { x: number; y: number } | null = null
 
 function clampPan() {
-  // Keep at least 40px of the frame reachable inside the viewport so it can't be dragged away.
+  // Per axis, |pan| <= |frame - viewport| / 2. Frame bigger than the viewport: the frame must keep
+  // covering it (an edge can reach the viewport edge but never pass it, so no background gap while
+  // zoomed in — and when the viewport GROWS, the freed space reveals more of the clipped frame
+  // instead of moving it). Frame smaller: it stays fully inside the viewport.
   const r = viewport.value?.getBoundingClientRect()
   if (!r) return
-  const limX = r.width / 2 + (display.value.displayW * zoom.value) / 2 - 40
-  const limY = r.height / 2 + (display.value.displayH * zoom.value) / 2 - 40
+  const limX = Math.abs(display.value.displayW * zoom.value - r.width) / 2
+  const limY = Math.abs(display.value.displayH * zoom.value - r.height) / 2
   pan.x = Math.min(limX, Math.max(-limX, pan.x))
   pan.y = Math.min(limY, Math.max(-limY, pan.y))
 }
+
+// Re-clamp whenever the geometry changes under a fixed pan: pane resizes (dock splitters, window)
+// and zoom steps from the toolbar/keyboard (which don't know the viewport).
+watch([vw, vh, zoom], () => clampPan())
 
 useEventListener(
   viewport,
@@ -127,17 +134,13 @@ function isTyping(e: KeyboardEvent) {
   const t = e.target as HTMLElement | null
   return !!t && (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA' || t.isContentEditable)
 }
+// Zoom keys live in the rebindable shortcut system (File > Settings; run from LayoutDesigner's
+// data-driven keydown handler) — only the Space pan chord is handled here.
 useEventListener(window, 'keydown', (e: KeyboardEvent) => {
   if (isTyping(e) || e.ctrlKey || e.metaKey || e.altKey) return
   if (e.key === ' ') {
     if ((e.target as HTMLElement)?.tagName !== 'BUTTON') e.preventDefault() // keep buttons space-clickable
     spaceHeld.value = true
-  } else if (e.key === '+' || e.key === '=') {
-    zoomAt(0, 0, 1.25)
-  } else if (e.key === '-' || e.key === '_') {
-    zoomAt(0, 0, 1 / 1.25)
-  } else if (e.key === '0') {
-    resetView()
   }
 })
 useEventListener(window, 'keyup', (e: KeyboardEvent) => {

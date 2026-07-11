@@ -3,7 +3,7 @@
 // action via `actionForCombo`, and the Settings modal edits bindings via `setBinding`/`resetBinding`.
 import { useStorage } from '@vueuse/core'
 
-export type KeyActionId = 'undo' | 'redo' | 'duplicate' | 'group' | 'ungroup' | 'delete'
+export type KeyActionId = 'undo' | 'redo' | 'duplicate' | 'group' | 'ungroup' | 'delete' | 'zoomIn' | 'zoomOut' | 'zoomReset'
 
 export interface KeyAction {
   id: KeyActionId
@@ -19,6 +19,10 @@ export const KEY_ACTIONS: KeyAction[] = [
   { id: 'group', label: 'Group selection', default: 'mod+g' },
   { id: 'ungroup', label: 'Ungroup selection', default: 'mod+shift+g' },
   { id: 'delete', label: 'Delete selection', default: 'delete' },
+  // '=' is the unshifted key under '+' on common layouts (numpad '+' can be rebound to combo "+").
+  { id: 'zoomIn', label: 'Zoom in', default: '=' },
+  { id: 'zoomOut', label: 'Zoom out', default: '-' },
+  { id: 'zoomReset', label: 'Zoom reset (fit)', default: '0' },
 ]
 
 // id → combo override. Absent ⇒ the action's default. Module singleton so handler + modal share it.
