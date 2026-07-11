@@ -11,9 +11,9 @@ import LayoutSettingsModal from './LayoutSettingsModal.vue'
 import LivePreviewControls from './LivePreviewControls.vue'
 import { PANE_TITLES, leavesOf, locate, type DockSide, type PaneId } from './dockTree'
 import { ASPECT_PRESETS, CLIENT_PANELS, type AspectPreset, type ClientPanel, type LayoutPreset } from './types'
-import { useCanvasView } from './useCanvasView'
+import { ZOOM_STEP, useCanvasView } from './useCanvasView'
 import { useDesigner } from './useDesigner'
-import { comboFromEvent, comboLabel, useKeybinds, type KeyActionId } from './useKeybinds'
+import { comboFromEvent, comboLabel, isTypingTarget, useKeybinds, type KeyActionId } from './useKeybinds'
 import { useDock } from './useDock'
 import { useScreenShare } from './useScreenShare'
 import { useDockDrag } from './useDockDrag'
@@ -164,10 +164,6 @@ function doMoveToFolder(id: string, current?: string) {
 }
 
 // --- keyboard shortcuts ---
-function isTyping(e: KeyboardEvent) {
-  const t = e.target as HTMLElement | null
-  return !!t && (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA' || t.isContentEditable)
-}
 // Shortcuts are data-driven (Settings → Keyboard shortcuts can rebind them); arrow-nudge stays fixed.
 const { actionForCombo, bindingFor } = useKeybinds()
 function runKeyAction(id: KeyActionId) {
@@ -177,12 +173,12 @@ function runKeyAction(id: KeyActionId) {
   else if (id === 'group') groupSelection()
   else if (id === 'ungroup') ungroupSelection()
   else if (id === 'delete') removeSelected()
-  else if (id === 'zoomIn') canvasZoomAt(0, 0, 1.25)
-  else if (id === 'zoomOut') canvasZoomAt(0, 0, 1 / 1.25)
+  else if (id === 'zoomIn') canvasZoomAt(0, 0, ZOOM_STEP)
+  else if (id === 'zoomOut') canvasZoomAt(0, 0, 1 / ZOOM_STEP)
   else if (id === 'zoomReset') canvasResetView()
 }
 useEventListener(window, 'keydown', (e: KeyboardEvent) => {
-  if (isTyping(e)) return
+  if (isTypingTarget(e)) return
   const action = actionForCombo(comboFromEvent(e))
   if (action) {
     if (action === 'delete' && !selectedIds.value.length) return
@@ -444,9 +440,9 @@ const { dragging: dockDragging, pointer: dockPointer } = useDockDrag()
 
       <div v-if="tbShown('zoom')" class="ld-tool-field">
         <span>Zoom</span>
-        <button class="ld-icon-btn" :title="`Zoom out (${comboLabel(bindingFor('zoomOut'))})`" @click="canvasZoomAt(0, 0, 1 / 1.25)"><ZoomOut :size="15" /></button>
-        <button class="ld-zoom-pct" :class="{ zoomed: canvasZoom !== 1 }" :title="`Reset zoom to fit (${comboLabel(bindingFor('zoomReset'))})`" @click="canvasResetView()">{{ Math.round(canvasZoom * 100) }}%</button>
-        <button class="ld-icon-btn" :title="`Zoom in (${comboLabel(bindingFor('zoomIn'))})`" @click="canvasZoomAt(0, 0, 1.25)"><ZoomIn :size="15" /></button>
+        <button class="ld-icon-btn" :title="`Zoom out (${comboLabel(bindingFor('zoomOut'))})`" @click="runKeyAction('zoomOut')"><ZoomOut :size="15" /></button>
+        <button class="ld-zoom-pct" :class="{ zoomed: Math.round(canvasZoom * 100) !== 100 }" :title="`Reset zoom to fit (${comboLabel(bindingFor('zoomReset'))})`" @click="runKeyAction('zoomReset')">{{ Math.round(canvasZoom * 100) }}%</button>
+        <button class="ld-icon-btn" :title="`Zoom in (${comboLabel(bindingFor('zoomIn'))})`" @click="runKeyAction('zoomIn')"><ZoomIn :size="15" /></button>
         <InfoTip text="Canvas zoom — view only, never part of the layout or the generated code. Mouse wheel over the canvas zooms at the cursor; middle-mouse (or Space) drag pans; zoom keys are rebindable in File > Settings. Click the percentage to reset to fit." />
       </div>
 

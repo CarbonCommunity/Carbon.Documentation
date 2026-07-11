@@ -34,12 +34,23 @@ export function comboFromEvent(e: KeyboardEvent): string {
   if (k === 'control' || k === 'meta' || k === 'shift' || k === 'alt') return ''
   if (k === ' ') k = 'space'
   if (k === 'backspace') k = 'delete' // treat Backspace as Delete
+  if (k === '+') k = '=' // '+' is Shift+'=' / numpad plus — fold onto the zoom-in default
+  if (k === '_') k = '-'
   const parts: string[] = []
   if (e.ctrlKey || e.metaKey) parts.push('mod')
-  if (e.shiftKey) parts.push('shift')
+  // For printable non-letter keys, e.key already reflects the shift layer (Shift+'=' is '+',
+  // AZERTY digits NEED Shift) — including 'shift' would double-count it and make such defaults
+  // unmatchable on some layouts. Letters keep it (shift+z vs z is a real distinction).
+  if (e.shiftKey && !(k.length === 1 && !/[a-z]/.test(k))) parts.push('shift')
   if (e.altKey) parts.push('alt')
   parts.push(k)
   return parts.join('+')
+}
+
+/** True when the event targets an editable control — shared guard for global key handlers. */
+export function isTypingTarget(e: KeyboardEvent): boolean {
+  const t = e.target as HTMLElement | null
+  return !!t && (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA' || t.isContentEditable)
 }
 
 /** Human-readable combo, e.g. "Ctrl+Shift+Z" / "Delete". */

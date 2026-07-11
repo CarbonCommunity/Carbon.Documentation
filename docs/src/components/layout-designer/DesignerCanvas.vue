@@ -6,6 +6,7 @@ import ElementTypeMenu from './ElementTypeMenu.vue'
 import { canvasDisplay, canvasHeight, canvasWidth } from './geometry'
 import { useCanvasView } from './useCanvasView'
 import { useDesigner } from './useDesigner'
+import { isTypingTarget } from './useKeybinds'
 import { useScreenShare } from './useScreenShare'
 
 const { canvas, currentLayoutId, rootElements, select, selectedIds, rectOf, gridSize, guides, openContextMenu, addElement, addTextWithBackground } = useDesigner()
@@ -68,8 +69,11 @@ const effScale = computed(() => display.value.scale * zoom.value)
 // pane may zoom to a much higher relative % than a large one.
 watch(() => display.value.scale, (s) => (fitScale.value = s), { immediate: true })
 
-// Fresh layout, fresh view — a zoom made for one layout rarely fits another.
-watch(currentLayoutId, () => resetView())
+// Fresh layout, fresh view — a zoom made for one layout rarely fits another. Immediate so a
+// REMOUNT resets too: the view state is a module singleton but this watcher dies with the
+// component (the canvas is v-if'd away when no layout is open), so without it a layout opened
+// from the empty state would inherit whatever zoom/pan was left behind.
+watch(currentLayoutId, () => resetView(), { immediate: true })
 
 function cursorOffset(e: { clientX: number; clientY: number }): { x: number; y: number } {
   const r = viewport.value!.getBoundingClientRect()
@@ -79,6 +83,10 @@ function cursorOffset(e: { clientX: number; clientY: number }): { x: number; y: 
 // Wheel (plain or Ctrl — preventDefault also stops browser page-zoom on Ctrl) zooms about the
 // cursor. exp() gives smooth trackpad steps and ~16%/notch on a clicky wheel.
 function onWheel(e: WheelEvent) {
+  // No zooming mid-gesture: element drags divide their ACCUMULATED screen delta by the current
+  // scale and the marquee snapshots its rect at pointerdown — a scale change under a held button
+  // teleports the dragged element / breaks the marquee hit-test.
+  if (e.buttons !== 0) return
   const off = cursorOffset(e)
   zoomAt(off.x, off.y, Math.exp(-e.deltaY * 0.0015))
 }
@@ -93,18 +101,18 @@ function clampPan() {
   // Per axis, |pan| <= |frame - viewport| / 2. Frame bigger than the viewport: the frame must keep
   // covering it (an edge can reach the viewport edge but never pass it, so no background gap while
   // zoomed in — and when the viewport GROWS, the freed space reveals more of the clipped frame
-  // instead of moving it). Frame smaller: it stays fully inside the viewport.
-  const r = viewport.value?.getBoundingClientRect()
-  if (!r) return
-  const limX = Math.abs(display.value.displayW * zoom.value - r.width) / 2
-  const limY = Math.abs(display.value.displayH * zoom.value - r.height) / 2
+  // instead of moving it). Frame smaller: it stays fully inside the viewport. vw/vh are the
+  // reactive viewport size — no layout read on the per-pointermove path.
+  const limX = Math.abs(display.value.displayW * zoom.value - vw.value) / 2
+  const limY = Math.abs(display.value.displayH * zoom.value - vh.value) / 2
   pan.x = Math.min(limX, Math.max(-limX, pan.x))
   pan.y = Math.min(limY, Math.max(-limY, pan.y))
 }
 
-// Re-clamp whenever the geometry changes under a fixed pan: pane resizes (dock splitters, window)
-// and zoom steps from the toolbar/keyboard (which don't know the viewport).
-watch([vw, vh, zoom], () => clampPan())
+// Re-clamp whenever the geometry changes under a fixed pan: pane resizes (dock splitters, window),
+// zoom steps from the toolbar/keyboard (which don't know the viewport), and frame-size changes at
+// constant pane size (aspect preset switch — that's why `display` is watched, not just vw/vh).
+watch([vw, vh, zoom, display], () => clampPan())
 
 useEventListener(
   viewport,
@@ -118,28 +126,32 @@ useEventListener(
   },
   { capture: true },
 )
+function endPan() {
+  panLast = null
+  panning.value = false
+}
 useEventListener(window, 'pointermove', (e: PointerEvent) => {
   if (!panLast) return
+  // The ending pointerup can be lost (button released outside the window, pointercancel from a
+  // pen/OS gesture) — a move with no buttons held means the gesture is over, not still panning.
+  if (e.buttons === 0) return endPan()
   pan.x += e.clientX - panLast.x
   pan.y += e.clientY - panLast.y
   panLast = { x: e.clientX, y: e.clientY }
   clampPan()
 })
-useEventListener(window, 'pointerup', () => {
-  panLast = null
-  panning.value = false
-})
+useEventListener(window, 'pointerup', endPan)
+useEventListener(window, 'pointercancel', endPan)
 
-function isTyping(e: KeyboardEvent) {
-  const t = e.target as HTMLElement | null
-  return !!t && (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA' || t.isContentEditable)
-}
 // Zoom keys live in the rebindable shortcut system (File > Settings; run from LayoutDesigner's
 // data-driven keydown handler) — only the Space pan chord is handled here.
 useEventListener(window, 'keydown', (e: KeyboardEvent) => {
-  if (isTyping(e) || e.ctrlKey || e.metaKey || e.altKey) return
+  if (isTypingTarget(e) || e.ctrlKey || e.metaKey || e.altKey) return
   if (e.key === ' ') {
-    if ((e.target as HTMLElement)?.tagName !== 'BUTTON') e.preventDefault() // keep buttons space-clickable
+    // A focused button owns Space (it activates on keyup) — engaging the pan chord too would both
+    // pan AND click the button when released. Leave the button its native behavior.
+    if ((e.target as HTMLElement)?.tagName === 'BUTTON') return
+    e.preventDefault()
     spaceHeld.value = true
   }
 })
@@ -149,15 +161,16 @@ useEventListener(window, 'keyup', (e: KeyboardEvent) => {
 // Alt-tabbing away mid-pan (or with Space held) never delivers the keyup/pointerup — reset.
 useEventListener(window, 'blur', () => {
   spaceHeld.value = false
-  panLast = null
-  panning.value = false
+  endPan()
 })
 
-// A press that starts a pan (MMB, or Space+left) must not clear the selection. Presses on frame
-// children are already intercepted by the capture-phase pan listener above; this guards presses
-// that land on the viewport background itself, where stopPropagation can't skip same-node listeners.
+// A press that starts a pan (MMB, or Space+left) must not clear the selection; every OTHER button
+// keeps the original clear-on-background behavior (right-click deselects before its context menu).
+// Presses on frame children are already intercepted by the capture-phase pan listener above; this
+// guards presses on the viewport background itself, where stopPropagation can't skip same-node
+// listeners.
 function onViewportPointerDown(e: PointerEvent) {
-  if (e.button !== 0 || spaceHeld.value) return
+  if (e.button === 1 || (e.button === 0 && spaceHeld.value)) return
   select(null)
 }
 
@@ -281,7 +294,7 @@ const hGuideStyle = computed(() => {
       <div v-if="vGuideStyle" class="ld-guide ld-guide-v" :style="vGuideStyle" />
       <div v-if="hGuideStyle" class="ld-guide ld-guide-h" :style="hGuideStyle" />
       <div v-if="bandStyle" class="ld-marquee" :style="bandStyle" />
-      <span class="ld-frame-label">{{ canvas.aspect }} · {{ Math.round(refW) }}×{{ Math.round(refH) }}<template v-if="zoom !== 1"> · {{ Math.round(zoom * 100) }}%</template></span>
+      <span class="ld-frame-label">{{ canvas.aspect }} · {{ Math.round(refW) }}×{{ Math.round(refH) }}<template v-if="Math.round(zoom * 100) !== 100"> · {{ Math.round(zoom * 100) }}%</template></span>
     </div>
   </div>
 </template>

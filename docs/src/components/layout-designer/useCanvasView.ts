@@ -6,6 +6,8 @@ import { reactive, ref } from 'vue'
 
 export const ZOOM_MIN = 0.25
 export const ZOOM_MAX = 8
+/** Step for one discrete zoom action (toolbar buttons, keyboard) — single source of truth. */
+export const ZOOM_STEP = 1.25
 /** Absolute magnification ceiling: screen px per CUI reference px. `zoom` is relative to the
  *  fit-to-pane scale, so a small pane fits at a small scale — capping only the relative zoom
  *  would cap a small window at a uselessly low magnification (1px gridlines never even show). */
