@@ -61,8 +61,12 @@ const display = computed(() => canvasDisplay(Math.max(0, vw.value - PAD * 2), Ma
 // The canvas scales arithmetically (children multiply CUI coords by `scale`), so zooming is just a
 // bigger frame + a bigger scale factor — selection handles, guide lines and the marquee stay
 // screen-size-constant because nothing is CSS-transform-scaled.
-const { zoom, pan, zoomAt, resetView } = useCanvasView()
+const { zoom, pan, fitScale, zoomAt, resetView } = useCanvasView()
 const effScale = computed(() => display.value.scale * zoom.value)
+
+// Feed the fit scale to the view state: the zoom ceiling is absolute magnification, so a small
+// pane may zoom to a much higher relative % than a large one.
+watch(() => display.value.scale, (s) => (fitScale.value = s), { immediate: true })
 
 // Fresh layout, fresh view — a zoom made for one layout rarely fits another.
 watch(currentLayoutId, () => resetView())

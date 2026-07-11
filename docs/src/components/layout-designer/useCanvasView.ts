@@ -6,12 +6,21 @@ import { reactive, ref } from 'vue'
 
 export const ZOOM_MIN = 0.25
 export const ZOOM_MAX = 8
+/** Absolute magnification ceiling: screen px per CUI reference px. `zoom` is relative to the
+ *  fit-to-pane scale, so a small pane fits at a small scale — capping only the relative zoom
+ *  would cap a small window at a uselessly low magnification (1px gridlines never even show). */
+const MAX_EFF_SCALE = 10
+
+/** The current fit-to-pane scale (screen px per reference px at zoom 1) — kept up to date by the
+ *  canvas so the zoom ceiling can be expressed in absolute magnification. */
+const fitScale = ref(1)
 
 const zoom = ref(1)
 const pan = reactive({ x: 0, y: 0 })
 
 function clampZoom(z: number): number {
-  return Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, z))
+  const max = Math.max(ZOOM_MAX, MAX_EFF_SCALE / Math.max(0.01, fitScale.value))
+  return Math.min(max, Math.max(ZOOM_MIN, z))
 }
 
 /** Back to fit-to-pane, centered. */
@@ -37,5 +46,5 @@ function zoomAt(offX: number, offY: number, factor: number) {
 }
 
 export function useCanvasView() {
-  return { zoom, pan, zoomAt, resetView }
+  return { zoom, pan, fitScale, zoomAt, resetView }
 }
