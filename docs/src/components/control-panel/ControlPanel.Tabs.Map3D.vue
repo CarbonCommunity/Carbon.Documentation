@@ -2,6 +2,7 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { Sky } from 'three/examples/jsm/objects/Sky.js'
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { Loader2 } from 'lucide-vue-next'
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { selectedServer } from './ControlPanel.SaveLoad'
@@ -40,12 +41,17 @@ const CHUNK_SIZE = TERRAIN_TARGET_SIZE / CHUNK_GRID_DIVISIONS
 // still renders. Tune to taste — this is the main lever for large/dense maps; lower trades visible
 // coverage for more headroom.
 const OBJECT_DRAW_DISTANCE = 4
-// How many chunks get their visibility re-checked per animation frame (see
-// stepObjectDrawDistance). Rather than re-evaluating every chunk at once on a timer — which pops
-// every newly in/out-of-range chunk visible/invisible in the same instant — a small slice is swept
-// each frame, cycling continuously through all chunks, so the draw-distance boundary updates
-// gradually as the camera moves instead of in one abrupt batch.
-const OBJECT_DRAW_DISTANCE_CHUNKS_PER_FRAME = 1
+// A full draw-distance sweep over all chunks (see stepObjectDrawDistance) completes in about this
+// many animation frames (~1.5s at 60fps) regardless of how many chunks the map produced. Rather
+// than re-evaluating every chunk at once on a timer — which pops every newly in/out-of-range chunk
+// visible/invisible in the same instant — a slice is swept each frame, cycling continuously
+// through all chunks, so the draw-distance boundary updates gradually as the camera moves. (A
+// fixed chunks-per-frame count instead of this frame target made dense maps take several seconds
+// to notice the camera had moved away, leaving out-of-range chunks rendering the whole time.)
+const DRAW_DISTANCE_SWEEP_FRAMES = 90
+// Rendering above 2x device pixel ratio (4K/retina laptops often report 2-3x) multiplies fragment
+// work for detail nobody can see at this viewer's scale — the single biggest fill-rate lever.
+const MAX_PIXEL_RATIO = 2
 // WASD pan speed, scaled by current camera-to-target distance per second so it feels proportional
 // whether zoomed in close or panned out over a whole (possibly huge) map.
 const PAN_SPEED = 0.85
@@ -138,6 +144,9 @@ let waveElapsedTime = 0
 // independent per-frame position updates.
 let liveEntityGroup: THREE.Group | null = null
 const liveEntityObjects = new Map<bigint, THREE.Object3D>()
+// Cached snapshot of liveEntityObjects' values for stepLiveEntityDrawDistance — invalidated (set
+// to null) whenever membership changes, instead of Array.from()-ing the map every animation frame.
+let liveEntityList: THREE.Object3D[] | null = null
 let liveEntityFallbackGeometry: THREE.BufferGeometry | null = null
 let liveEntityFallbackMaterial: THREE.Material | null = null
 let liveEntityPlacement: { worldSize: number; positionY: number; planarScale: number; heightScale: number } | null = null
@@ -153,6 +162,9 @@ let onOrbitPivotPointerMove: ((event: PointerEvent) => void) | null = null
 let onOrbitPivotPointerUp: ((event: PointerEvent) => void) | null = null
 const hoverRaycaster = new THREE.Raycaster()
 const pointerNDC = new THREE.Vector2()
+// Set by onPointerMove, consumed by animate() — coalesces however many pointermove events arrive
+// between frames into a single hover raycast per rendered frame.
+let hoverUpdatePending = false
 
 // Runs `worker` over `items` with at most `limit` in flight at once — GLTF/Draco loads are
 // expensive enough (network + decode + GPU upload) that firing hundreds at once can exhaust
@@ -172,6 +184,17 @@ async function runWithConcurrencyLimit<T>(items: T[], limit: number, worker: (it
 
 function heightScaleFor(worldSize: number) {
   return (TERRAIN_TARGET_SIZE / worldSize) * HEIGHT_EXAGGERATION
+}
+
+// Static scenery never moves after placement — freeze the transforms so the renderer's per-frame
+// updateMatrixWorld pass stops recomposing local matrices and re-multiplying world matrices for
+// thousands of objects that are guaranteed not to have changed. Anything that DOES move later
+// (the placeholder cube, live entities, the camera) must keep matrixAutoUpdate on.
+function freezeStaticTransforms(root: THREE.Object3D) {
+  root.updateMatrixWorld(true)
+  root.traverse((object) => {
+    object.matrixAutoUpdate = false
+  })
 }
 
 const ROTATION_AXIS_X = new THREE.Vector3(1, 0, 0)
@@ -316,6 +339,7 @@ function buildLowland() {
   lowland = new THREE.Mesh(geometry, material)
   lowland.position.y = 0
   scene.add(lowland)
+  freezeStaticTransforms(lowland)
 }
 
 // Patches a couple of insertion points in MeshStandardMaterial's own shader (rather than a full
@@ -427,12 +451,17 @@ function buildOcean(positionY: number, heightScale: number, sizeY: number) {
   scene.add(oceanDeep)
   scene.add(oceanShallow)
   scene.add(oceanShoreline)
+  freezeStaticTransforms(oceanDeep)
+  freezeStaticTransforms(oceanShallow)
+  freezeStaticTransforms(oceanShoreline)
 }
 
-function objectScenePosition(p: { x: number; y: number; z: number }, worldSize: number, positionY: number, planarScale: number, heightScale: number) {
+// Pass `out` from per-frame/hot-loop callers to avoid allocating a fresh Vector3 per call — with
+// tens of thousands of prefabs (and live entities re-placed every frame) that garbage adds up.
+function objectScenePosition(p: { x: number; y: number; z: number }, worldSize: number, positionY: number, planarScale: number, heightScale: number, out: THREE.Vector3 = new THREE.Vector3()) {
   const originX = -worldSize / 2
   const originZ = -worldSize / 2
-  return new THREE.Vector3(
+  return out.set(
     // X is mirrored to match the terrain's texel sampling in buildTerrain (see the matching
     // comment there) — the map otherwise renders flipped left-right versus the real game.
     TERRAIN_TARGET_SIZE / 2 - (p.x - originX) * planarScale,
@@ -444,8 +473,8 @@ function objectScenePosition(p: { x: number; y: number; z: number }, worldSize: 
 // Real model geometry already carries its true real-world proportions, so scale it uniformly by
 // planarScale alone — using heightScale here (which includes the terrain's vertical exaggeration)
 // would stretch every prop taller than its actual width/depth.
-function objectSceneScale(s: { x: number; y: number; z: number }, planarScale: number) {
-  return new THREE.Vector3(s.x * planarScale, s.y * planarScale, s.z * planarScale)
+function objectSceneScale(s: { x: number; y: number; z: number }, planarScale: number, out: THREE.Vector3 = new THREE.Vector3()) {
+  return out.set(s.x * planarScale, s.y * planarScale, s.z * planarScale)
 }
 
 // Cubes have no natural size of their own, so unlike real models they get a minimum visible
@@ -474,9 +503,9 @@ function removeModelInstances() {
   if (!modelInstances) {
     return
   }
-  // The InstancedMeshes here reuse geometry/material buffers straight from the cached source
-  // model — only detach from the scene, never dispose, or every future instance of that model
-  // (and the cache entry itself) breaks.
+  // The InstancedMeshes here reuse geometry/material buffers owned by the cached source model
+  // (or by mergedModelPartsCache) — only detach from the scene, never dispose, or every future
+  // instance of that model (and the cache entry itself) breaks.
   scene?.remove(modelInstances)
   modelInstances = null
   objectChunks = []
@@ -493,6 +522,7 @@ function removeModelInstances() {
 // — so removing the whole group and disposing the shared fallback buffers is all that's needed.
 function removeLiveEntities() {
   liveEntityObjects.clear()
+  liveEntityList = null
   liveEntityDrawDistanceCursor = 0
 
   if (liveEntityGroup) {
@@ -558,18 +588,25 @@ function updateKeyboardPan(deltaSeconds: number) {
   controls.target.add(panDelta)
 }
 
-// Run on pointer move rather than every frame — only does work when the mouse actually moves,
-// and Three.js's raycaster already skips any mesh with .visible === false, so chunks hidden by
-// draw distance are automatically excluded for free.
+// Runs at most once per animation frame (see the hoverUpdatePending handoff in onPointerMove /
+// animate) rather than on every pointermove event, which can fire several times per frame.
+// Raycasting an InstancedMesh tests every instance's triangles and the raycaster does NOT skip
+// invisible meshes on its own, so only chunks currently visible (within draw distance and not
+// hidden) are pushed as targets — that pruning is what keeps this affordable on dense maps.
 function updateHoveredPrefab() {
   if (!camera) {
     return
   }
 
-  const targets: THREE.InstancedMesh[] = [...fallbackCubeMeshes]
+  const targets: THREE.InstancedMesh[] = []
+  for (const mesh of fallbackCubeMeshes) {
+    if (mesh.visible) {
+      targets.push(mesh)
+    }
+  }
   if (modelInstances) {
     for (const child of modelInstances.children) {
-      if (child instanceof THREE.InstancedMesh) {
+      if (child.visible && child instanceof THREE.InstancedMesh) {
         targets.push(child)
       }
     }
@@ -705,7 +742,7 @@ function updateObjectDrawDistanceFull() {
   visibleObjectCount.value = visibleCount
 }
 
-// Runs every animation frame, re-checking only OBJECT_DRAW_DISTANCE_CHUNKS_PER_FRAME chunks (a
+// Runs every animation frame, re-checking only a DRAW_DISTANCE_SWEEP_FRAMES-th of the chunks (a
 // small slice of the total) before moving on — cycling continuously through the whole list. Only
 // touches a mesh (and visibleObjectCount) when its visibility actually flips, so a steady camera
 // costs nothing beyond the distance checks themselves.
@@ -719,7 +756,7 @@ function stepObjectDrawDistance() {
   }
 
   const drawDistanceSq = OBJECT_DRAW_DISTANCE * OBJECT_DRAW_DISTANCE
-  const batchSize = Math.min(OBJECT_DRAW_DISTANCE_CHUNKS_PER_FRAME, objectChunks.length)
+  const batchSize = Math.max(1, Math.ceil(objectChunks.length / DRAW_DISTANCE_SWEEP_FRAMES))
   let visibleDelta = 0
 
   for (let i = 0; i < batchSize; i++) {
@@ -742,6 +779,8 @@ function stepObjectDrawDistance() {
     visibleObjectCount.value += visibleDelta
   }
 }
+
+const liveEntityScratchPosition = new THREE.Vector3()
 
 function createLiveEntityFallbackCube(): THREE.Mesh {
   if (!liveEntityFallbackGeometry) {
@@ -784,6 +823,7 @@ function syncLiveEntities() {
     if (!data.has(id)) {
       group.remove(object)
       liveEntityObjects.delete(id)
+      liveEntityList = null
     }
   }
 
@@ -791,7 +831,7 @@ function syncLiveEntities() {
   const drawDistanceSq = OBJECT_DRAW_DISTANCE * OBJECT_DRAW_DISTANCE
 
   for (const [id, entity] of data) {
-    const position = objectScenePosition(entity.position, worldSize, positionY, planarScale, heightScale)
+    const position = objectScenePosition(entity.position, worldSize, positionY, planarScale, heightScale, liveEntityScratchPosition)
     let object = liveEntityObjects.get(id)
     if (!object) {
       object = createLiveEntityFallbackCube()
@@ -806,6 +846,7 @@ function syncLiveEntities() {
       }
       group.add(object)
       liveEntityObjects.set(id, object)
+      liveEntityList = null
 
       if (entity.path) {
         const pendingObject = object
@@ -824,6 +865,7 @@ function syncLiveEntities() {
           group.remove(pendingObject)
           group.add(realObject)
           liveEntityObjects.set(id, realObject)
+          liveEntityList = null
         })
       }
     }
@@ -841,13 +883,16 @@ function stepLiveEntityDrawDistance() {
     return
   }
 
-  const entries = Array.from(liveEntityObjects.values())
+  if (!liveEntityList) {
+    liveEntityList = Array.from(liveEntityObjects.values())
+  }
+  const entries = liveEntityList
   if (liveEntityDrawDistanceCursor >= entries.length) {
     liveEntityDrawDistanceCursor = 0
   }
 
   const drawDistanceSq = OBJECT_DRAW_DISTANCE * OBJECT_DRAW_DISTANCE
-  const batchSize = Math.min(OBJECT_DRAW_DISTANCE_CHUNKS_PER_FRAME, entries.length)
+  const batchSize = Math.max(1, Math.ceil(entries.length / DRAW_DISTANCE_SWEEP_FRAMES))
 
   for (let i = 0; i < batchSize; i++) {
     const object = entries[liveEntityDrawDistanceCursor]
@@ -886,6 +931,105 @@ function extractModelParts(root: THREE.Object3D): ModelPart[] {
     })
   })
   return parts
+}
+
+const IDENTITY_MATRIX = new THREE.Matrix4()
+
+// Merged-parts cache, keyed by model path. Entries reference geometry either shared with the
+// GltfCache model itself (parts that had nothing to merge with) or owned here (merged copies) —
+// in both cases they live for the whole page session, exactly like GltfCache's own entries, and
+// must never be disposed by the per-map rebuild path.
+const mergedModelPartsCache = new Map<string, ModelPart[]>()
+
+function getMergedModelParts(path: string, model: THREE.Object3D): ModelPart[] {
+  let parts = mergedModelPartsCache.get(path)
+  if (!parts) {
+    parts = mergeModelParts(extractModelParts(model))
+    mergedModelPartsCache.set(path, parts)
+  }
+  return parts
+}
+
+// Collapses a model's parts down to one part per MATERIAL by baking each part's local transform
+// into a merged copy of its geometry. Draw calls, scene-graph objects per chunk, and duplicated
+// instance-matrix buffers all scale with part count — a many-mesh prop sharing a couple of
+// materials collapses from dozens of InstancedMeshes per chunk down to a couple. Merged parts get
+// an identity localMatrix, which also lets every part of a model share one placement buffer
+// outright (see buildMapObjects).
+function mergeModelParts(rawParts: ModelPart[]): ModelPart[] {
+  const byMaterial = new Map<THREE.Material, ModelPart[]>()
+  for (const part of rawParts) {
+    let group = byMaterial.get(part.material)
+    if (!group) {
+      group = []
+      byMaterial.set(part.material, group)
+    }
+    group.push(part)
+  }
+
+  const parts: ModelPart[] = []
+  for (const [material, group] of byMaterial) {
+    if (group.length === 1) {
+      // Nothing to merge — keep sharing the cache-owned geometry rather than copying it.
+      parts.push(group[0])
+      continue
+    }
+    const merged = tryMergePartGeometries(group)
+    if (merged) {
+      parts.push({ geometry: merged, material, localMatrix: IDENTITY_MATRIX.clone() })
+    } else {
+      parts.push(...group)
+    }
+  }
+  return parts
+}
+
+// mergeGeometries requires every input to carry the exact same attribute layout — normalize the
+// copies down to the attributes the whole group shares, and bail out (null → the caller keeps the
+// parts separate, which always renders correctly) on anything exotic rather than risk producing
+// corrupted buffers.
+function tryMergePartGeometries(group: ModelPart[]): THREE.BufferGeometry | null {
+  for (const part of group) {
+    for (const attribute of Object.values(part.geometry.attributes)) {
+      if ((attribute as THREE.InterleavedBufferAttribute).isInterleavedBufferAttribute) {
+        return null
+      }
+    }
+  }
+
+  const first = group[0].geometry
+  const commonNames = Object.keys(first.attributes).filter((name) =>
+    group.every((part) => {
+      const attribute = part.geometry.attributes[name]
+      return attribute && attribute.itemSize === first.attributes[name].itemSize && attribute.normalized === first.attributes[name].normalized
+    })
+  )
+  if (!commonNames.includes('position')) {
+    return null
+  }
+
+  let clones = group.map((part) => {
+    const clone = part.geometry.clone()
+    clone.applyMatrix4(part.localMatrix)
+    for (const name of Object.keys(clone.attributes)) {
+      if (!commonNames.includes(name)) {
+        clone.deleteAttribute(name)
+      }
+    }
+    // These placeholders never animate morph targets, and mismatched morph sets break merging.
+    clone.morphAttributes = {}
+    return clone
+  })
+
+  if (clones.some((clone) => clone.index !== null) && !clones.every((clone) => clone.index !== null)) {
+    clones = clones.map((clone) => (clone.index !== null ? clone.toNonIndexed() : clone))
+  }
+
+  try {
+    return mergeGeometries(clones, false)
+  } catch {
+    return null
+  }
 }
 
 // Prefabs whose model failed to load (missing path, 404, decode error) fall back to plain cubes so
@@ -938,6 +1082,7 @@ function buildFallbackCubes(
     // Instance index -> source prefab, so hover raycasting can resolve which prefab was hit.
     instancedMesh.userData.prefabs = cell.prefabs
     scene.add(instancedMesh)
+    freezeStaticTransforms(instancedMesh)
     fallbackCubeMeshes.push(instancedMesh)
 
     let chunk = chunksByCoord.get(chunkKey)
@@ -1032,7 +1177,9 @@ async function buildMapObjects(allPrefabs: any[], terrainInfo: any) {
 
     const group = new THREE.Group()
     const placementMatrix = new THREE.Matrix4()
+    const partMatrix = new THREE.Matrix4()
     const rotation = new THREE.Quaternion()
+    const scale = new THREE.Vector3()
     const chunksByCoord = new Map<string, { meshes: THREE.InstancedMesh[]; centerX: number; centerZ: number }>()
 
     for (const cell of cellsByKey.values()) {
@@ -1052,17 +1199,33 @@ async function buildMapObjects(allPrefabs: any[], terrainInfo: any) {
         chunksByCoord.set(chunkCoordKey, chunk)
       }
 
-      for (const part of extractModelParts(model)) {
-        const instancedMesh = new THREE.InstancedMesh(part.geometry, part.material, cell.entries.length)
-        for (let i = 0; i < cell.entries.length; i++) {
-          const { prefab, position } = cell.entries[i]
-          const scale = objectSceneScale(prefab.scale, planarScale)
-          placementMatrix.compose(position, unityEulerToThreeQuaternion(prefab.rotation, rotation), scale)
-          instancedMesh.setMatrixAt(i, placementMatrix.clone().multiply(part.localMatrix))
+      // The placement transform (position/rotation/scale) is identical for every part of a model,
+      // so it's composed once per instance here — and merged parts (identity localMatrix, the
+      // common case) share this one buffer outright instead of each composing and storing its own
+      // copy of the same matrices.
+      const instanceCount = cell.entries.length
+      const placementArray = new Float32Array(instanceCount * 16)
+      for (let i = 0; i < instanceCount; i++) {
+        const { prefab, position } = cell.entries[i]
+        placementMatrix.compose(position, unityEulerToThreeQuaternion(prefab.rotation, rotation), objectSceneScale(prefab.scale, planarScale, scale))
+        placementMatrix.toArray(placementArray, i * 16)
+      }
+      const sharedPlacementAttribute = new THREE.InstancedBufferAttribute(placementArray, 16)
+      // Instance index -> source prefab, so hover raycasting can resolve which prefab was hit.
+      const cellPrefabs = cell.entries.map((entry) => entry.prefab)
+
+      for (const part of getMergedModelParts(cell.path, model)) {
+        const instancedMesh = new THREE.InstancedMesh(part.geometry, part.material, instanceCount)
+        if (part.localMatrix.equals(IDENTITY_MATRIX)) {
+          instancedMesh.instanceMatrix = sharedPlacementAttribute
+        } else {
+          for (let i = 0; i < instanceCount; i++) {
+            partMatrix.fromArray(placementArray, i * 16).multiply(part.localMatrix)
+            instancedMesh.setMatrixAt(i, partMatrix)
+          }
+          instancedMesh.instanceMatrix.needsUpdate = true
         }
-        instancedMesh.instanceMatrix.needsUpdate = true
-        // Instance index -> source prefab, so hover raycasting can resolve which prefab was hit.
-        instancedMesh.userData.prefabs = cell.entries.map((entry) => entry.prefab)
+        instancedMesh.userData.prefabs = cellPrefabs
         group.add(instancedMesh)
         chunk.meshes.push(instancedMesh)
       }
@@ -1070,6 +1233,7 @@ async function buildMapObjects(allPrefabs: any[], terrainInfo: any) {
 
     modelInstances = group
     scene.add(group)
+    freezeStaticTransforms(group)
 
     if (fallback.length > 0) {
       buildFallbackCubes(fallback, worldSize, positionY, planarScale, heightScale, chunksByCoord)
@@ -1187,6 +1351,7 @@ async function buildTerrain(info: any) {
     const material = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, metalness: 0.05 })
     terrain = new THREE.Mesh(geometry, material)
     scene.add(terrain)
+    freezeStaticTransforms(terrain)
 
     oceanHeightMap?.dispose()
     oceanHeightMap = new THREE.DataTexture(shoreHeightData, gridSize, gridSize, THREE.RedFormat, THREE.UnsignedByteType)
@@ -1290,6 +1455,11 @@ function animate(timestamp?: number) {
   syncLiveEntities()
   stepLiveEntityDrawDistance()
 
+  if (hoverUpdatePending) {
+    hoverUpdatePending = false
+    updateHoveredPrefab()
+  }
+
   if (renderer && scene && camera) {
     renderer.render(scene, camera)
   }
@@ -1304,14 +1474,22 @@ onMounted(() => {
   const height = container.value.clientHeight
 
   scene = new THREE.Scene()
+  // The scene root never moves, but with matrixAutoUpdate on it flags matrixWorldNeedsUpdate every
+  // frame, which FORCE-cascades world-matrix recomputation down to every descendant — silently
+  // undoing freezeStaticTransforms for the thousands of static chunk meshes below it.
+  scene.matrixAutoUpdate = false
   scene.fog = new THREE.Fog(0xbfd9e8, 60, 320)
 
-  camera = new THREE.PerspectiveCamera(60, width / height, 0.001, 5000)
+  // near=0.02 (instead of an extreme 0.001) keeps a plain 24-bit depth buffer precise enough out
+  // to the fog limit, so logarithmicDepthBuffer isn't needed — that mode writes gl_FragDepth per
+  // fragment, which disables the GPU's early-depth rejection and makes every layer of overdraw
+  // (dense forests, the full-screen ocean planes) pay full shading cost.
+  camera = new THREE.PerspectiveCamera(60, width / height, 0.02, 5000)
   camera.position.set(14, 12, 18)
   camera.lookAt(0, 0, 0)
 
-  renderer = new THREE.WebGLRenderer({ antialias: true, logarithmicDepthBuffer: true })
-  renderer.setPixelRatio(window.devicePixelRatio)
+  renderer = new THREE.WebGLRenderer({ antialias: true })
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, MAX_PIXEL_RATIO))
   renderer.setSize(width, height)
   container.value.appendChild(renderer.domElement)
 
@@ -1345,6 +1523,7 @@ onMounted(() => {
   sky.material.uniforms.mieDirectionalG.value = 0.8
   sky.material.uniforms.sunPosition.value.copy(sunDirection)
   scene.add(sky)
+  freezeStaticTransforms(sky)
 
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.6)
   scene.add(ambientLight)
@@ -1381,7 +1560,10 @@ onMounted(() => {
     const rect = container.value.getBoundingClientRect()
     pointerNDC.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
     pointerNDC.y = -((event.clientY - rect.top) / rect.height) * 2 + 1
-    updateHoveredPrefab()
+    // Deferred to the next animation frame instead of raycasting inline, and skipped outright
+    // while a button is held — during orbit drags this would otherwise raycast dense instanced
+    // geometry continuously for a tooltip nobody is reading mid-drag.
+    hoverUpdatePending = event.buttons === 0
   }
   onPointerLeave = () => {
     hoveredPrefabPath.value = null
@@ -1492,6 +1674,7 @@ onUnmounted(() => {
   lastFrameTimestamp = null
   objectDrawDistanceCursor = 0
   waveElapsedTime = 0
+  hoverUpdatePending = false
   objectLoadStatus.value = null
   hoveredPrefabPath.value = null
   visibleObjectCount.value = 0
