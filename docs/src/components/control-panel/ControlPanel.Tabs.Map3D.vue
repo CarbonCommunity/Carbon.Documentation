@@ -14,6 +14,20 @@ const contextLost = ref<boolean>(false)
 const objectLoadStatus = ref<{ phase: 'models' | 'building'; loaded: number; total: number } | null>(null)
 const hoveredPrefabPath = ref<string | null>(null)
 const visibleObjectCount = ref<number>(0)
+// Live status shown bottom-left alongside the terrain info: smoothed FPS, current live-entity
+// count, and how many live-entity models are being hotloaded (in-flight loadModel calls) right now.
+const fps = ref<number>(0)
+// JS heap usage in MB, or null where the browser doesn't expose it. Only Chromium ships the
+// non-standard performance.memory; there's no cross-browser API for it, and none at all for GPU
+// memory (where the bulk of this viewer's cost — textures, geometry buffers — actually lives).
+const memoryMb = ref<number | null>(null)
+// GPU-side load per rendered frame, read from renderer.info (see animate). Draw calls and
+// triangles track the actual rendering cost far more directly than JS heap does — this is the
+// closest proxy the browser gives to the GPU memory/work the viewer is really spending.
+const drawCalls = ref<number>(0)
+const triangleCount = ref<number>(0)
+const liveEntityCount = ref<number>(0)
+const liveEntityLoadingCount = ref<number>(0)
 
 const TERRAIN_GRID_SIZE = 200
 const TERRAIN_TARGET_SIZE = 20
@@ -30,7 +44,7 @@ const OBJECT_COLOR = 0xffaa00
 // resolved to a real model — distinct from OBJECT_COLOR so dynamic entities read as different
 // from static placed-prefab fallbacks at a glance.
 const LIVE_ENTITY_FALLBACK_COLOR = 0xff3355
-const MODEL_LOAD_CONCURRENCY = 246
+const MODEL_LOAD_CONCURRENCY = 256
 // Real props are grouped into a grid of spatial chunks (one InstancedMesh per chunk+model, rather
 // than one per whole-map+model) so draw distance can toggle whole chunks — checking a few hundred
 // chunk centers per frame — instead of needing per-instance visibility, which InstancedMesh can't
@@ -51,7 +65,7 @@ const OBJECT_DRAW_DISTANCE = 4
 const DRAW_DISTANCE_SWEEP_FRAMES = 90
 // Rendering above 2x device pixel ratio (4K/retina laptops often report 2-3x) multiplies fragment
 // work for detail nobody can see at this viewer's scale — the single biggest fill-rate lever.
-const MAX_PIXEL_RATIO = 2
+const MAX_PIXEL_RATIO = 1
 // WASD pan speed, scaled by current camera-to-target distance per second so it feels proportional
 // whether zoomed in close or panned out over a whole (possibly huge) map.
 const PAN_SPEED = 0.85
@@ -134,6 +148,13 @@ let mapBuildGeneration = 0
 let onContextLost: ((event: Event) => void) | null = null
 let onContextRestored: (() => void) | null = null
 let lastFrameTimestamp: number | null = null
+// Accumulators for the smoothed FPS readout — averaged over a short window (see animate) rather
+// than derived from a single frame's delta, which would jitter far too much to read.
+let fpsFrameCount = 0
+let fpsElapsedSeconds = 0
+// Chromium-only, non-standard. usedJSHeapSize is a live getter on this object, so the reference
+// is captured once and read each time the FPS window ticks (see animate). undefined elsewhere.
+const performanceMemory = (typeof performance !== 'undefined' ? (performance as unknown as { memory?: { usedJSHeapSize: number } }).memory : undefined)
 let objectDrawDistanceCursor = 0
 let oceanHeightMap: THREE.DataTexture | null = null
 let waveShaderUniforms: { uTime: { value: number } } | null = null
@@ -524,6 +545,7 @@ function removeLiveEntities() {
   liveEntityObjects.clear()
   liveEntityList = null
   liveEntityDrawDistanceCursor = 0
+  liveEntityCount.value = 0
 
   if (liveEntityGroup) {
     scene?.remove(liveEntityGroup)
@@ -851,6 +873,10 @@ function syncLiveEntities() {
       if (entity.path) {
         const pendingObject = object
         const pendingPlacement = liveEntityPlacement
+        // Counts this model as in-flight for the bottom-left "Downloading…" readout; the finally
+        // below settles it back down whether the load succeeds, fails, or is bailed on. Cached
+        // models resolve on the next microtask, so those only blip the counter momentarily.
+        liveEntityLoadingCount.value++
         loadModel(resolveModelUrl(entity.path)).then((model) => {
           // Bail if the entity despawned, the map was rebuilt, or this placeholder was already
           // replaced by the time the model finished loading.
@@ -866,6 +892,8 @@ function syncLiveEntities() {
           group.add(realObject)
           liveEntityObjects.set(id, realObject)
           liveEntityList = null
+        }).finally(() => {
+          liveEntityLoadingCount.value--
         })
       }
     }
@@ -873,6 +901,8 @@ function syncLiveEntities() {
     object.position.copy(position)
     unityEulerToThreeQuaternion(entity.rotation, object.quaternion)
   }
+
+  liveEntityCount.value = liveEntityObjects.size
 }
 
 // Mirrors stepObjectDrawDistance's approach for static prefab chunks: only re-checks a small slice
@@ -1436,6 +1466,25 @@ function animate(timestamp?: number) {
       deltaSeconds = Math.min((timestamp - lastFrameTimestamp) / 1000, 0.1)
     }
     lastFrameTimestamp = timestamp
+
+    // Average FPS over ~0.5s rather than reading a single frame's delta (which jitters wildly) or
+    // pushing a new value to the reactive readout every frame (which would re-render the DOM 60x/s).
+    if (deltaSeconds > 0) {
+      fpsFrameCount++
+      fpsElapsedSeconds += deltaSeconds
+      if (fpsElapsedSeconds >= 0.5) {
+        fps.value = Math.round(fpsFrameCount / fpsElapsedSeconds)
+        if (performanceMemory) {
+          memoryMb.value = Math.round(performanceMemory.usedJSHeapSize / (1024 * 1024))
+        }
+        if (renderer) {
+          drawCalls.value = renderer.info.render.calls
+          triangleCount.value = renderer.info.render.triangles
+        }
+        fpsFrameCount = 0
+        fpsElapsedSeconds = 0
+      }
+    }
   }
 
   if (cube) {
@@ -1672,6 +1721,14 @@ onUnmounted(() => {
   onOrbitPivotPointerDown = null
   pressedPanKeys.clear()
   lastFrameTimestamp = null
+  fpsFrameCount = 0
+  fpsElapsedSeconds = 0
+  fps.value = 0
+  memoryMb.value = null
+  drawCalls.value = 0
+  triangleCount.value = 0
+  liveEntityLoadingCount.value = 0
+  liveEntityCount.value = 0
   objectDrawDistanceCursor = 0
   waveElapsedTime = 0
   hoverUpdatePending = false
@@ -1759,11 +1816,30 @@ onUnmounted(() => {
         </template>
       </span>
     </div>
-    <div v-if="selectedServer?.TerrainInfo" class="absolute left-3 bottom-3 text-xs text-white/50 select-none">
-      Resolution {{ selectedServer.TerrainInfo.res }} · World size {{ selectedServer.TerrainInfo.worldSize }} · Height range {{ Math.round(selectedServer.TerrainInfo.sizeY) }}
-      <template v-if="selectedServer?.MapObjects">
-        · Objects {{ selectedServer.MapObjects.length.toLocaleString() }} · Visible {{ visibleObjectCount.toLocaleString() }}
-      </template>
+    <div class="absolute left-3 bottom-3 flex flex-col gap-1 text-xs select-none">
+      <div class="flex items-center gap-1.5 text-white/60">
+        <span>{{ fps }} FPS</span>
+        <template v-if="memoryMb !== null">
+          <span>· {{ memoryMb.toLocaleString() }} MB</span>
+        </template>
+        <span>· {{ drawCalls.toLocaleString() }} draws</span>
+        <span>· {{ triangleCount.toLocaleString() }} tris</span>
+        <template v-if="liveEntityCount > 0">
+          <span>· {{ liveEntityCount.toLocaleString() }} live {{ liveEntityCount === 1 ? 'entity' : 'entities' }}</span>
+        </template>
+        <template v-if="liveEntityLoadingCount > 0">
+          <span class="flex items-center gap-1 text-amber-300/80">
+            · <Loader2 class="animate-spin" :size="12" />
+            Downloading {{ liveEntityLoadingCount.toLocaleString() }} {{ liveEntityLoadingCount === 1 ? 'model' : 'models' }}…
+          </span>
+        </template>
+      </div>
+      <div v-if="selectedServer?.TerrainInfo" class="text-white/50">
+        Resolution {{ selectedServer.TerrainInfo.res }} · World size {{ selectedServer.TerrainInfo.worldSize }} · Height range {{ Math.round(selectedServer.TerrainInfo.sizeY) }}
+        <template v-if="selectedServer?.MapObjects">
+          · Objects {{ selectedServer.MapObjects.length.toLocaleString() }} · Visible {{ visibleObjectCount.toLocaleString() }}
+        </template>
+      </div>
     </div>
     <div class="absolute right-3 top-3 flex flex-col gap-1.5 rounded-xl border border-white/10 bg-black/60 px-3 py-2 text-xs text-white/80 backdrop-blur select-none">
       <label class="flex cursor-pointer items-center gap-2">
