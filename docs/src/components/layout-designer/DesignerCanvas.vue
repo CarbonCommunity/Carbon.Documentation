@@ -330,6 +330,10 @@ const hGuideStyle = computed(() => {
 
 .ld-frame {
   position: relative;
+  /* the frame is a flex item — without this, a zoomed width wider than the viewport gets
+     flex-shrunk while the arithmetic content keeps its full size, clipping it off the right
+     and breaking the frame's aspect */
+  flex-shrink: 0;
   background: #0c0c0e;
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.14), 0 16px 48px rgba(0, 0, 0, 0.5);
   overflow: hidden;
