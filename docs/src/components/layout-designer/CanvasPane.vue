@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Copy, FolderOpen, LayoutDashboard, Pencil, Plus, X } from 'lucide-vue-next'
+import { Copy, FolderOpen, LayoutDashboard, Pencil, Plus, RotateCcw, X } from 'lucide-vue-next'
 import { computed, reactive, ref } from 'vue'
 import ContextMenuPopover from './ContextMenuPopover.vue'
 import DesignerCanvas from './DesignerCanvas.vue'
@@ -16,6 +16,7 @@ const {
   newLayout,
   reorderTab,
   duplicateLayout,
+  restoreBackup,
   closeOtherTabs,
   closeTabsToLeft,
   closeTabsToRight,
@@ -23,6 +24,14 @@ const {
   renameLayout,
   layoutNameTaken,
 } = useDesigner()
+
+// One-slot safety net: roll the layout back to how it looked when its tab was last activated.
+// The rollback itself lands as an undoable step, so even a mistaken restore is reversible.
+function doRestore(id: string) {
+  const name = openTabLayouts.value.find((l) => l.id === id)?.name ?? 'this layout'
+  if (!window.confirm(`Restore "${name}" to its state when it was last opened? (The restore can be undone.)`)) return
+  if (!restoreBackup(id)) window.alert('No earlier state is stored for this layout yet.')
+}
 
 // Focus + select an inline-rename input the moment it mounts (no template-ref juggling inside v-for).
 const vFocus = { mounted: (el: HTMLInputElement) => (el.focus(), el.select()) }
@@ -77,6 +86,7 @@ const tabMenuItems = computed(() => {
   return [
     { label: 'Duplicate', icon: Copy, act: () => duplicateLayout(id) },
     { label: 'Rename…', icon: Pencil, act: () => startRenameById(id) },
+    { label: 'Restore last opened state...', icon: RotateCcw, act: () => doRestore(id) },
     { sep: true as const },
     { label: 'Close', icon: X, act: () => closeTab(id) },
     { label: 'Close others', disabled: n < 2, act: () => closeOtherTabs(id) },

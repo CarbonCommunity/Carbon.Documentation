@@ -72,14 +72,14 @@ function resetDefaults() {
       <div class="ld-modal-body">
         <section class="ld-set-section">
           <h3>Options</h3>
-          <label class="ld-set-row ld-set-check">
+          <label class="ld-set-row ld-set-check" title="Undo history is kept per layout either way; this controls whether a layout's history survives switching away and back (and page reloads, per tab)">
             <input type="checkbox" v-model="preserveHistory" />
-            <span>Preserve undo history across layout switches</span>
+            <span>Keep each layout's undo history across layout switches and reloads</span>
           </label>
           <div class="ld-set-row ld-set-sub">
             <span>Trim history above</span>
             <input class="ld-set-num" type="number" min="16" max="8192" step="16" v-model.number="historyLimitKb" />
-            <span class="ld-set-unit">KB</span>
+            <span class="ld-set-unit">KB per layout</span>
           </div>
           <label class="ld-set-row ld-set-check">
             <input type="checkbox" v-model="constrain" />

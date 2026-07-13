@@ -70,7 +70,9 @@ const provider = ref<Provider>('carbon')
 const gridSize = ref(8)
 /** Keep elements inside their parent (and root panels inside the canvas) while editing. */
 const constrain = ref(true)
-/** When on (default), undo/redo history carries across layout switches instead of resetting (Settings). */
+/** When on (default), each layout's undo/redo stack survives switching away and back (Settings).
+ *  Off = switching layouts forgets all history. Stacks are always per layout -- undo never crosses
+ *  into another layout's states. */
 const preserveHistory = useStorage('carbon-layout-designer:settings:preserveHistory', true)
 /** Cap on the undo stack's size in KB — the oldest steps are trimmed once it's exceeded (Settings). */
 const historyLimitKb = useStorage('carbon-layout-designer:settings:historyLimitKb', 256)
@@ -994,12 +996,71 @@ function setBinding(elId: string, propPath: string, dsId: string | null) {
 }
 
 // --- history (undo / redo) -----------------------------------------------------------
+// One stack per layout, keyed by layout id. Undo inside a layout only ever walks that layout's own
+// edits -- a single global stack once let undo pop the PREVIOUS layout's state into the current one,
+// where autosave then persisted it over the current layout (permanent data loss on refresh).
+// Stacks persist in sessionStorage (bounded by the historyLimitKb setting) so a refresh keeps
+// undo/redo. sessionStorage is per tab on purpose: each tab keeps its own timeline, so tabs never
+// fight over history even though they share the layout store; another tab's edit to the same
+// layout surfaces after a refresh as one undoable step (resetHistory commits the loaded state).
+// A deleted layout's stack is dropped in deleteLayout.
 
-let past: string[] = []
-let future: string[] = []
-let current: string | null = null
+interface LayoutHistory {
+  past: string[]
+  future: string[]
+  current: string | null
+}
+const histories = new Map<string, LayoutHistory>()
 const canUndo = ref(false)
 const canRedo = ref(false)
+
+const HISTORY_STORE_KEY = 'carbon-layout-designer:history:v1'
+if (typeof window !== 'undefined') {
+  try {
+    const raw = window.sessionStorage.getItem(HISTORY_STORE_KEY)
+    if (raw) {
+      for (const [id, h] of Object.entries(JSON.parse(raw) as Record<string, LayoutHistory>)) {
+        if (Array.isArray(h?.past) && Array.isArray(h?.future)) {
+          histories.set(id, { past: h.past, future: h.future, current: typeof h.current === 'string' ? h.current : null })
+        }
+      }
+    }
+  } catch {
+    // corrupt or older-version blob -- start this tab with empty stacks
+  }
+  window.addEventListener('pagehide', () => persistHistoriesNow())
+}
+
+let persistTimer: ReturnType<typeof setTimeout> | null = null
+function persistHistoriesNow() {
+  if (persistTimer) {
+    clearTimeout(persistTimer)
+    persistTimer = null
+  }
+  try {
+    window.sessionStorage.setItem(HISTORY_STORE_KEY, JSON.stringify(Object.fromEntries(histories)))
+  } catch {
+    // quota exceeded -- history stays usable in memory, just not refresh-proof
+  }
+}
+/** Commits fire per edit; write once after the burst settles (pagehide flushes the tail). */
+function schedulePersistHistories() {
+  if (typeof window === 'undefined') return
+  if (persistTimer) clearTimeout(persistTimer)
+  persistTimer = setTimeout(persistHistoriesNow, 400)
+}
+
+/** The active layout's history, created on demand; null in the no-layout (empty) state. */
+function activeHistory(): LayoutHistory | null {
+  const id = currentLayoutId.value
+  if (!id) return null
+  let h = histories.get(id)
+  if (!h) {
+    h = { past: [], future: [], current: null }
+    histories.set(id, h)
+  }
+  return h
+}
 
 function snapshot(): string {
   return JSON.stringify({ elements: elements.value, dataSources: dataSources.value, canvas })
@@ -1021,7 +1082,8 @@ function reindexIdCounter() {
   dsCounter = dsMax
 }
 function applySnapshot(s: string) {
-  // Snapshots only ever come from snapshot() above (in-session, never storage), so the shape is exact.
+  // Snapshots only ever come from snapshot() above -- directly or via this tab's persisted stacks
+  // (same serializer, versioned key) -- so the shape is exact.
   const o = JSON.parse(s)
   elements.value = o.elements
   dataSources.value = o.dataSources
@@ -1030,65 +1092,76 @@ function applySnapshot(s: string) {
   selectedIds.value = selectedIds.value.filter((id) => elements.value.some((e) => e.id === id))
 }
 function updateHistoryFlags() {
-  canUndo.value = past.length > 0
-  canRedo.value = future.length > 0
-  historySteps.value = past.length
-  let bytes = current ? current.length : 0
-  for (const s of past) bytes += s.length
-  for (const s of future) bytes += s.length
+  const h = currentLayoutId.value ? (histories.get(currentLayoutId.value) ?? null) : null
+  canUndo.value = !!h && h.past.length > 0
+  canRedo.value = !!h && h.future.length > 0
+  historySteps.value = h?.past.length ?? 0
+  // The KB readout covers ALL kept stacks (with per-layout history, several can be alive at once).
+  let bytes = 0
+  for (const hist of histories.values()) {
+    bytes += hist.current?.length ?? 0
+    for (const s of hist.past) bytes += s.length
+    for (const s of hist.future) bytes += s.length
+  }
   historyBytes.value = bytes
+  // every stack mutation funnels through here -- keep the persisted copy in step
+  schedulePersistHistories()
 }
-/** Drop the oldest undo steps until the whole history fits the user's KB budget (Settings). */
-function trimHistory() {
+/** Drop a stack's oldest undo steps until it fits the user's KB budget (Settings; per layout). */
+function trimHistory(h: LayoutHistory) {
   const cap = Math.max(1, historyLimitKb.value) * 1024
-  let bytes = (current?.length ?? 0) + future.reduce((a, s) => a + s.length, 0) + past.reduce((a, s) => a + s.length, 0)
-  while (past.length > 1 && bytes > cap) bytes -= past.shift()!.length
+  let bytes = (h.current?.length ?? 0) + h.future.reduce((a, s) => a + s.length, 0) + h.past.reduce((a, s) => a + s.length, 0)
+  while (h.past.length > 1 && bytes > cap) bytes -= h.past.shift()!.length
 }
 function commitHistory() {
+  const h = activeHistory()
+  if (!h) return
   const snap = snapshot()
-  if (current === null) {
-    current = snap
+  if (h.current === null) {
+    h.current = snap
     updateHistoryFlags()
     return
   }
-  if (snap === current) return // no change (also covers post-undo/redo state)
-  past.push(current)
-  current = snap
-  future = []
-  trimHistory()
+  if (snap === h.current) return // no change (also covers post-undo/redo state)
+  h.past.push(h.current)
+  h.current = snap
+  h.future = []
+  trimHistory(h)
   updateHistoryFlags()
 }
 function resetHistory() {
-  // With "preserve history" on, a layout load doesn't wipe the stacks — it just records the loaded
-  // state as another step, so undo/redo can walk back across layout switches.
-  if (preserveHistory.value) {
-    commitHistory()
-    return
-  }
-  past = []
-  future = []
-  current = snapshot()
+  // Runs after a layout becomes active (switch/new/close/delete). With "keep per-layout history" on,
+  // every layout's own stack survives switching -- coming back resumes exactly where that layout's
+  // undo left off. Off = switching away forgets all history (the pre-per-layout behavior, minus the
+  // cross-layout walking).
+  if (!preserveHistory.value) histories.clear()
+  // Record the just-loaded state on the ACTIVE layout's stack. Normally it equals the stack's last
+  // committed state (a no-op); if the layout changed while inactive (restore, import) it lands as a
+  // regular undoable step.
+  commitHistory()
   updateHistoryFlags()
 }
-/** Drop the undo/redo stacks but keep the current state (Settings → Clear history). */
+/** Drop all undo/redo stacks but keep the current state (Settings -> Clear history). */
 function clearHistory() {
-  past = []
-  future = []
-  current = snapshot()
+  histories.clear()
+  const h = activeHistory()
+  if (h) h.current = snapshot()
   updateHistoryFlags()
 }
 function undo() {
-  if (!past.length) return
-  future.push(current!)
-  current = past.pop()!
-  applySnapshot(current)
+  const h = activeHistory()
+  if (!h || !h.past.length) return
+  h.future.push(h.current!)
+  h.current = h.past.pop()!
+  applySnapshot(h.current)
   updateHistoryFlags()
 }
 function redo() {
-  if (!future.length) return
-  past.push(current!)
-  current = future.pop()!
-  applySnapshot(current)
+  const h = activeHistory()
+  if (!h || !h.future.length) return
+  h.past.push(h.current!)
+  h.current = h.future.pop()!
+  applySnapshot(h.current)
   updateHistoryFlags()
 }
 
@@ -1107,6 +1180,9 @@ export interface Layout {
   updatedAt: number
   /** Optional grouping folder for the Load selector (#10). Absent = ungrouped (flat, one level). */
   folder?: string
+  /** The layout's data as of its last activation -- a one-slot safety net so an unwanted overwrite
+   *  (bad edit session, faulty restore, a future autosave bug) is recoverable, not fatal. */
+  backup?: LayoutData
 }
 
 const STORAGE_KEY = 'carbon-layout-designer:v1'
@@ -1232,6 +1308,21 @@ function persist() {
   }
   saveJson(STORAGE_KEY, { version: 1, layouts: layouts.value, currentLayoutId: currentLayoutId.value, openTabs: openTabs.value, recentIds: recentIds.value })
 }
+/** Snapshot a layout's persisted data into its backup slot -- call when the layout becomes active. */
+function stampBackup(l: Layout | null) {
+  if (l) l.backup = JSON.parse(JSON.stringify(l.data))
+}
+/** Roll a layout back to its backup (its state when last activated). Returns false if none exists.
+ *  For the active layout the rollback lands as a normal undoable step (the autosave watcher commits
+ *  it), so a mistaken restore is itself reversible. */
+function restoreBackup(id: string): boolean {
+  const l = layouts.value.find((x) => x.id === id)
+  if (!l?.backup) return false
+  l.data = JSON.parse(JSON.stringify(l.backup))
+  if (currentLayoutId.value === id) applyData(l.data)
+  persist()
+  return true
+}
 function loadFromStorage(): boolean {
   try {
     const store = migrate(loadJson<unknown>(STORAGE_KEY, null))
@@ -1241,6 +1332,7 @@ function loadFromStorage(): boolean {
     recentIds.value = store.recentIds
     currentLayoutId.value = store.currentLayoutId
     applyData(currentLayout.value ? currentLayout.value.data : { elements: [], canvas: defaultCanvas() })
+    stampBackup(currentLayout.value)
     return true
   } catch {
     return false
@@ -1262,6 +1354,7 @@ function newLayout(name?: string, preset: LayoutPreset = 'default') {
   else if (preset === 'confirm') seedConfirm()
   else if (preset === 'hud') seedHud()
   persist()
+  stampBackup(currentLayout.value)
   resetHistory()
 }
 function switchLayout(id: string) {
@@ -1272,6 +1365,7 @@ function switchLayout(id: string) {
   persist()
   currentLayoutId.value = id
   applyData(l.data)
+  stampBackup(l)
   resetHistory()
 }
 /** Close a document tab (the layout itself is kept). Activates a neighbour, or the empty state. */
@@ -1285,6 +1379,7 @@ function closeTab(id: string) {
     const next = openTabs.value[idx] ?? openTabs.value[idx - 1] ?? null
     currentLayoutId.value = next
     applyData(next ? currentLayout.value!.data : { elements: [], canvas: defaultCanvas() })
+    stampBackup(currentLayout.value)
     resetHistory()
   }
   persist()
@@ -1336,6 +1431,7 @@ function closeTabs(ids: string[]) {
   if (next !== currentLayoutId.value) {
     currentLayoutId.value = next
     applyData(next ? layouts.value.find((l) => l.id === next)!.data : { elements: [], canvas: defaultCanvas() })
+    stampBackup(currentLayout.value)
     resetHistory()
   }
   persist()
@@ -1422,6 +1518,8 @@ function deleteLayout(id: string) {
   const i = layouts.value.findIndex((x) => x.id === id)
   if (i < 0) return
   layouts.value.splice(i, 1)
+  histories.delete(id)
+  schedulePersistHistories()
   const tabIdx = openTabs.value.indexOf(id)
   if (tabIdx >= 0) openTabs.value.splice(tabIdx, 1)
   if (currentLayoutId.value === id) {
@@ -1429,6 +1527,7 @@ function deleteLayout(id: string) {
     const next = openTabs.value[tabIdx] ?? openTabs.value[tabIdx - 1] ?? null
     currentLayoutId.value = next
     applyData(next ? currentLayout.value!.data : { elements: [], canvas: defaultCanvas() })
+    stampBackup(currentLayout.value)
     resetHistory()
   }
   persist()
@@ -1597,6 +1696,7 @@ export function useDesigner() {
     moveLayout,
     setLayoutFolder,
     deleteLayout,
+    restoreBackup,
     exportClipboard,
     importClipboard,
     loadExampleLayouts,
