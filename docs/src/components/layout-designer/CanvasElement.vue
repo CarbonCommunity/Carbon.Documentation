@@ -2,6 +2,7 @@
 import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
 import {
   applyResize,
+  clamp01,
   clampPatchToParent,
   cssColor,
   resizeEdgeMask,
@@ -92,28 +93,15 @@ const boxStyle = computed(() => {
   }
 })
 
-// Fill paint for the box: panels/buttons paint a background color (panels can also show a URL-image
-// fill). Text boxes and empty containers stay transparent (invisible in-game) → null, no fill layer.
+// Fill paint for the box: panels/buttons paint a background color. A panel with an image fill
+// renders through fillImage instead -- in game the color tints the image itself, there is no
+// backdrop behind it. Text boxes and empty containers stay transparent (invisible in-game) ->
+// null, no fill layer.
 const fillStyle = computed<Record<string, string> | null>(() => {
   const el = rowZeroElement.value
   if (el.type === 'panel') {
-    const s: Record<string, string> = { backgroundColor: cssColor(el.props.color) }
-    if (el.props.image?.url) {
-      s.backgroundImage = `url("${el.props.image.url.replace(/"/g, '\\"')}")`
-      s.backgroundSize = '100% 100%'
-      s.backgroundRepeat = 'no-repeat'
-    } else if (el.props.image?.kind === 'itemicon') {
-      // Preview-only: the CDN inventory icon (the game renders the icon contained, not stretched).
-      // Unknown ids (or the catalog still loading / offline) just show the plain color.
-      const u = iconUrlById(el.props.image.itemId)
-      if (u) {
-        s.backgroundImage = `url("${u}")`
-        s.backgroundSize = 'contain'
-        s.backgroundPosition = 'center'
-        s.backgroundRepeat = 'no-repeat'
-      }
-    }
-    return s
+    if (fillImage.value) return null
+    return { backgroundColor: cssColor(el.props.color) }
   }
   if (el.type === 'button') {
     // a tab-switch button previews its active color while its page is the active one
@@ -126,6 +114,41 @@ const fillStyle = computed<Record<string, string> | null>(() => {
   }
   return null
 })
+
+// Image fill (URL image or item icon). The game's color multiplies the texture per channel
+// (black = silhouette, white = untinted) and its alpha scales the texture's alpha. An SVG
+// feColorMatrix filter reproduces that exactly: it runs on non-premultiplied pixels, so
+// semi-transparent texels (soft shadows) keep their hue. color-interpolation-filters="sRGB" is
+// required -- the SVG default (linearRGB) renders lighter than the game. Item icons render
+// contained (the game doesn't stretch them); unknown ids fall back to the plain color fill.
+type ImageFill = { url: string; fit: 'stretch' | 'icon'; tint: { r: number; g: number; b: number } | null; alpha: number }
+const fillImage = computed<ImageFill | null>(() => {
+  const el = rowZeroElement.value
+  if (el.type !== 'panel') return null
+  let url: string | null = null
+  let fit: 'stretch' | 'icon' = 'stretch'
+  if (el.props.image?.url) {
+    url = el.props.image.url
+  } else if (el.props.image?.kind === 'itemicon') {
+    url = iconUrlById(el.props.image.itemId) ?? null
+    fit = 'icon'
+  }
+  if (!url) return null
+  return { url, fit, tint: tintRgb(el.props.color), alpha: clamp01(el.props.color.a) }
+})
+
+// null for pure white (identity multiply) so the untinted common case skips tinting entirely
+function tintRgb(c: ColorRGBA): { r: number; g: number; b: number } | null {
+  const r = clamp01(c.r)
+  const g = clamp01(c.g)
+  const b = clamp01(c.b)
+  return r === 1 && g === 1 && b === 1 ? null : { r, g, b }
+}
+
+/** feColorMatrix rows for the multiply: out.rgb = tex.rgb * tint.rgb, alpha untouched. */
+function tintMatrix(t: { r: number; g: number; b: number }): string {
+  return `${t.r} 0 0 0 0  0 ${t.g} 0 0 0  0 0 ${t.b} 0 0  0 0 0 1 0`
+}
 
 // Border preview. Rendered as a separate overlay AFTER the children (see template) so it paints on
 // top of them — matching the game, where the border = four edge subpanels appended as the panel's
@@ -218,6 +241,9 @@ type GhostBox = {
   imageUrl: string | null
   /** 'stretch' for url images, 'icon' (contain, centered) for item icons. */
   imageFit: 'stretch' | 'icon'
+  /** multiply tint over the image (see fillImage); null = untinted */
+  imageTint: { r: number; g: number; b: number } | null
+  imageAlpha: number
   text: string | null
   textStyle: Record<string, string> | null
 }
@@ -266,20 +292,24 @@ const ghostBoxes = computed<GhostBox[]>(() => {
           fontWeight: String(fd.weight ?? 400),
         }
       }
+      const imageUrl =
+        g.type === 'panel' && p.image?.kind === 'url' && p.image.url
+          ? p.image.url
+          : g.type === 'panel' && p.image?.kind === 'itemicon'
+            ? iconUrlById(p.image.itemId ?? 0)
+            : null
       out.push({
         key: `${g.id}.${i}`,
         x: f.x + dx,
         y: f.y + dy,
         w: f.w,
         h: f.h,
-        fill: (g.type === 'panel' || g.type === 'button') && p.color ? cssColor(p.color) : null,
-        imageUrl:
-          g.type === 'panel' && p.image?.kind === 'url' && p.image.url
-            ? p.image.url
-            : g.type === 'panel' && p.image?.kind === 'itemicon'
-              ? iconUrlById(p.image.itemId ?? 0)
-              : null,
+        // with an image fill the color tints the image (fillImage) instead of painting a backdrop
+        fill: (g.type === 'panel' || g.type === 'button') && p.color && !imageUrl ? cssColor(p.color) : null,
+        imageUrl,
         imageFit: p.image?.kind === 'itemicon' ? 'icon' : 'stretch',
+        imageTint: imageUrl && p.color ? tintRgb(p.color) : null,
+        imageAlpha: imageUrl && p.color ? clamp01(p.color.a) : 1,
         text: texty ? (g.type === 'text' ? resolveText(g, dataSources.value) : (p.text ?? '')) : null,
         textStyle,
       })
@@ -297,12 +327,6 @@ function ghostStyle(g: GhostBox): Record<string, string> {
     height: `${g.h * s}px`,
   }
   if (g.fill) style.backgroundColor = g.fill
-  if (g.imageUrl) {
-    style.backgroundImage = `url("${g.imageUrl.replace(/"/g, '\\"')}")`
-    style.backgroundSize = g.imageFit === 'icon' ? 'contain' : '100% 100%'
-    if (g.imageFit === 'icon') style.backgroundPosition = 'center'
-    style.backgroundRepeat = 'no-repeat'
-  }
   return style
 }
 
@@ -632,6 +656,20 @@ const HANDLES: { edge: ResizeEdge; cls: string; cursor: string }[] = [
   >
     <!-- fill layer (behind everything): faded by the Layout-opacity control, so handles stay crisp -->
     <div v-if="fillStyle" class="ld-el-fill" :style="fillStyle" />
+    <div v-else-if="fillImage" class="ld-el-fill ld-fill-img" :style="{ opacity: `calc(${fillImage.alpha} * var(--ld-layout-opacity, 1))` }">
+      <svg v-if="fillImage.tint" class="ld-tint-defs" aria-hidden="true">
+        <filter :id="`ld-tint-${element.id}`" color-interpolation-filters="sRGB">
+          <feColorMatrix type="matrix" :values="tintMatrix(fillImage.tint)" />
+        </filter>
+      </svg>
+      <img
+        class="ld-fill-tex"
+        :src="fillImage.url"
+        :style="{ objectFit: fillImage.fit === 'icon' ? 'contain' : 'fill', filter: fillImage.tint ? `url(#ld-tint-${element.id})` : '' }"
+        alt=""
+        draggable="false"
+      />
+    </div>
 
     <!-- text content (text / input / countdown); pointer-events off so the box stays draggable.
          While inline-editing (double-click) it swaps for a same-styled textarea; Enter commits. -->
@@ -685,6 +723,20 @@ const HANDLES: { edge: ResizeEdge; cls: string; cursor: string }[] = [
       <!-- repeat ghosts: rows 1..N stamped from the template into the next slots (see ghostBoxes) -->
       <div v-if="ghostBoxes.length" class="ld-ghosts">
         <div v-for="g in ghostBoxes" :key="g.key" class="ld-ghost" :style="ghostStyle(g)">
+          <div v-if="g.imageUrl" class="ld-fill-img" :style="{ opacity: g.imageAlpha }">
+            <svg v-if="g.imageTint" class="ld-tint-defs" aria-hidden="true">
+              <filter :id="`ld-tint-${g.key}`" color-interpolation-filters="sRGB">
+                <feColorMatrix type="matrix" :values="tintMatrix(g.imageTint)" />
+              </filter>
+            </svg>
+            <img
+              class="ld-fill-tex"
+              :src="g.imageUrl"
+              :style="{ objectFit: g.imageFit === 'icon' ? 'contain' : 'fill', filter: g.imageTint ? `url(#ld-tint-${g.key})` : '' }"
+              alt=""
+              draggable="false"
+            />
+          </div>
           <div v-if="g.text !== null" class="ld-text" :style="g.textStyle ?? undefined">{{ g.text }}</div>
         </div>
       </div>
@@ -717,6 +769,27 @@ const HANDLES: { edge: ResizeEdge; cls: string; cursor: string }[] = [
   inset: 0;
   pointer-events: none;
   opacity: var(--ld-layout-opacity, 1);
+}
+
+/* image fill (fillImage): <img> texture, tinted via the sibling <svg> feColorMatrix filter */
+.ld-fill-img {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.ld-fill-tex {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* filter definition carrier -- must be rendered (not display:none) for url(#...) to resolve */
+.ld-tint-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
 }
 
 .ld-element {
