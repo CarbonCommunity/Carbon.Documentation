@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
 import AnchorWidget from './AnchorWidget.vue'
+import ColorTextFields from './ColorTextFields.vue'
 import InfoTip from './InfoTip.vue'
 import NumberField from './NumberField.vue'
 import { hexToRgb01, rgb01ToHex, round } from './geometry'
 import { TEXT_ALIGNS, TEXT_FONTS } from './types'
 import { CLOSE_ROOT } from './elements/button'
 import type { ContainerLayout } from './elements/container'
-import type { DesignerElement, ImageFill, ListDataSource, OutlineModifier, TextAlign, TextDataSource, TextFont } from './types'
+import type { ColorRGBA, DesignerElement, ImageFill, ListDataSource, OutlineModifier, TextAlign, TextDataSource, TextFont } from './types'
 import { useDesigner } from './useDesigner'
 
 const {
@@ -109,6 +110,17 @@ function setAlpha(el: DesignerElement, raw: string) {
   const a = Number.parseFloat(raw)
   if (Number.isNaN(a)) return
   update(el.id, { props: { color: { ...el.props.color, a } } })
+}
+
+// Full-color setters for the RGBA/HEX text fields (they carry alpha, unlike the hex picker).
+function setColor(el: DesignerElement, c: ColorRGBA) {
+  update(el.id, { props: { color: c } })
+}
+function setBorderColor(el: DesignerElement, c: ColorRGBA) {
+  update(el.id, { props: { border: { width: curBorder(el).width, color: c } } })
+}
+function setActiveColor(el: DesignerElement, c: ColorRGBA) {
+  if (buttonProps.value?.activeColor) update(el.id, { props: { activeColor: c } })
 }
 
 // --- outline modifier ---
@@ -508,6 +520,7 @@ const computedRect = computed(() => (selected.value ? rectOf(selected.value.id) 
             <span>α</span>
           </label>
         </div>
+        <ColorTextFields v-if="outline" :model-value="outline.color" @update:model-value="patchOutline({ color: $event })" />
         <label class="ld-passthrough">
           <input type="checkbox" :checked="!!draggable" @change="toggleDraggable(($event.target as HTMLInputElement).checked)" />
           <span>Draggable <InfoTip text="Lets the player pick this element up and drag it around the screen with the mouse. Pair it with a Slot (below, on another element) to build drag-and-drop UIs like inventories. Needs cursor to be on so the mouse is free." /></span>
@@ -826,6 +839,7 @@ const computedRect = computed(() => (selected.value ? rectOf(selected.value.id) 
             <span class="ld-vec-label">a</span>
             <input class="ld-num" type="number" min="0" max="1" step="0.05" :value="buttonProps.activeColor.a" title="Active alpha (0 = invisible when selected)" @change="setActiveColorAlpha(selected, ($event.target as HTMLInputElement).value)" />
           </div>
+          <ColorTextFields v-if="buttonProps.activeColor" :model-value="buttonProps.activeColor" @update:model-value="setActiveColor(selected, $event)" />
         </template>
       </template>
 
@@ -932,6 +946,7 @@ const computedRect = computed(() => (selected.value ? rectOf(selected.value.id) 
           <input class="ld-range" type="range" min="0" max="1" step="0.01" :value="selected.props.color.a" title="Opacity (alpha)" @input="setAlpha(selected, ($event.target as HTMLInputElement).value)" />
           <input class="ld-num" type="number" min="0" max="1" step="0.05" :value="round(selected.props.color.a)" @change="setAlpha(selected, ($event.target as HTMLInputElement).value)" />
         </div>
+        <ColorTextFields :model-value="selected.props.color" @update:model-value="setColor(selected, $event)" />
       </template>
 
       <!-- PANEL border (optional inset frame → four edge subpanels) -->
@@ -950,6 +965,7 @@ const computedRect = computed(() => (selected.value ? rectOf(selected.value.id) 
           <span class="ld-vec-label ld-alpha-label" title="Opacity (alpha), 0–1">α</span>
           <input class="ld-num" type="number" min="0" max="1" step="0.05" :value="round(borderProps.color.a)" title="Border opacity" @change="setBorderAlpha(selected, ($event.target as HTMLInputElement).value)" />
         </div>
+        <ColorTextFields v-if="borderProps" :model-value="borderProps.color" @update:model-value="setBorderColor(selected, $event)" />
       </template>
 
       <div v-if="computedRect" class="ld-resolved">
