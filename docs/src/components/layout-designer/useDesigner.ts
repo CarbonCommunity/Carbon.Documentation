@@ -62,7 +62,7 @@ const elements = ref<DesignerElement[]>([])
 /** Static data sources (shared strings / template lists) — see types.ts. Bound elements resolve through these. */
 const dataSources = ref<DataSource[]>([])
 const selectedIds = ref<string[]>([])
-const canvas = reactive<CanvasConfig>({ aspect: '16:9', rootLayer: 'Overlay' })
+const canvas = reactive<CanvasConfig>({ aspect: '16:9', rootLayer: 'Overlay', rootName: '' })
 /** Target framework for the generated code (see codegen.ts). */
 const provider = ref<Provider>('carbon')
 
@@ -1158,7 +1158,9 @@ function nextLayoutName(): string {
   return `Layout ${max + 1}`
 }
 function defaultCanvas(): CanvasConfig {
-  return { aspect: '16:9', rootLayer: 'Overlay' }
+  // rootName must be present (not just optional-absent): applyData Object.assigns over the live
+  // canvas, so a missing key would leave the previous layout's root name behind.
+  return { aspect: '16:9', rootLayer: 'Overlay', rootName: '' }
 }
 function cloneData(): LayoutData {
   return JSON.parse(JSON.stringify({ elements: elements.value, dataSources: dataSources.value, canvas }))
@@ -1453,7 +1455,7 @@ function ingestLayoutJson(text: string | null) {
     const cui = parseCuiJson(o)
     if (cui) {
       const id = newLayoutId()
-      const data: LayoutData = { elements: cui.elements, canvas: { ...defaultCanvas(), rootLayer: cui.rootLayer } }
+      const data: LayoutData = { elements: cui.elements, canvas: { ...defaultCanvas(), rootLayer: cui.rootLayer, rootName: cui.rootName } }
       layouts.value.push({ id, name: 'Imported CUI (imported)', data, updatedAt: Date.now() })
       persist()
       switchLayout(id)

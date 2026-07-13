@@ -598,6 +598,9 @@ export interface CanvasConfig {
   aspect: AspectPreset
   /** Rust client UI layer the root attaches to (drives the generated parent). */
   rootLayer: ClientPanel
+  /** Name of the generated root container; blank/absent means the "Container" default. It is what
+   *  the plugin targets for DestroyUi, so a per-plugin name (e.g. "MyPlugin.Root") avoids clashes. */
+  rootName?: string
 }
 
 export const ASPECT_RATIOS: Record<AspectPreset, [number, number]> = {

@@ -74,7 +74,7 @@ function rootElement(): CuiElement {
 
 /** Root + layout body (the full tree). Create/update flags are decided by the diff at push time. */
 function buildPayload(): CuiElement[] {
-  const body = generateAddUiJson(elements.value, canvas.rootLayer, { rootParent: PREVIEW_ROOT, dataSources: dataSources.value })
+  const body = generateAddUiJson(elements.value, canvas.rootLayer, { rootParent: PREVIEW_ROOT, dataSources: dataSources.value, rootName: canvas.rootName })
   return [rootElement(), ...body]
 }
 

@@ -239,12 +239,22 @@ const TOOLBAR_TOGGLES = [
   { key: 'aspect', label: 'Aspect' },
   { key: 'zoom', label: 'Zoom' },
   { key: 'layer', label: 'Layer' },
+  { key: 'root', label: 'Root name' },
   { key: 'grid', label: 'Grid' },
   { key: 'bounds', label: 'Bounds' },
 ]
 
 // Canvas zoom (the canvas owns wheel/MMB/Space interactions; these are the toolbar controls)
 const { zoom: canvasZoom, zoomAt: canvasZoomAt, resetView: canvasResetView } = useCanvasView()
+
+// The trimmed value is written back to the input too: when trimming yields the already-stored
+// name, the :value binding sees no reactive change and would leave the untrimmed text on screen.
+function setRootName(e: Event) {
+  const input = e.target as HTMLInputElement
+  const rootName = input.value.trim()
+  setCanvas({ rootName })
+  input.value = rootName
+}
 
 // Last spot each hidden pane occupied, so re-showing lands it back where it was. Persisted so it
 // survives reloads; falls back to a sensible default home when the remembered neighbour is gone.
@@ -458,6 +468,21 @@ const { dragging: dockDragging, pointer: dockPointer } = useDockDrag()
         <InfoTip text="The Rust client UI layer the root of your layout attaches to. Oxide parents root elements to this layer string; Carbon emits cui.v2.CreateParent(CUI.ClientPanels.X). Overlay is the standard full-screen menu layer." />
       </label>
 
+      <label v-if="tbShown('root')" class="ld-tool-field">
+        <span>Root</span>
+        <input
+          class="ld-root-name"
+          type="text"
+          :value="canvas.rootName ?? ''"
+          placeholder="Container"
+          spellcheck="false"
+          title="Name of the generated root container"
+          @change="setRootName($event)"
+          @keydown.enter="($event.target as HTMLInputElement).blur()"
+        />
+        <InfoTip text="The generated root container's name — what the plugin targets for DestroyUi (the Hide command) and what Carbon's CreateParent creates. Blank uses the 'Container' default; a per-plugin name like 'MyPlugin.Root' avoids clashing with other plugins' UIs. If an element already uses the name, the root gets a numeric suffix." />
+      </label>
+
       <label v-if="tbShown('grid')" class="ld-tool-field">
         <span>Grid</span>
         <select
@@ -614,6 +639,22 @@ const { dragging: dockDragging, pointer: dockPointer } = useDockDrag()
 
 .ld-zoom-pct.zoomed {
   color: var(--c-carbon-1);
+}
+
+/* root container name — free text, kept narrow like the selects around it */
+.ld-root-name {
+  width: 108px;
+  padding: 4px 7px;
+  font-size: 12.5px;
+  color: var(--vp-c-text-1);
+  background: var(--vp-c-bg);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 4px;
+  outline: none;
+}
+
+.ld-root-name:focus {
+  border-color: var(--c-carbon-1);
 }
 
 /* dropdown menus (layouts) */
