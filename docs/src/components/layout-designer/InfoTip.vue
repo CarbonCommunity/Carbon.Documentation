@@ -7,17 +7,34 @@ defineProps<{ text: string; size?: number }>()
 // Position the bubble on hover/focus so it never spills off a viewport edge. These icons sit in
 // toolbars/panels that can be near a screen edge — and the toolbar wraps on narrow screens, which
 // pushes some icons close to the left edge where the default right-anchored bubble would clip.
+// Measured against the icon's own window: a panel docked into the pop-out must clamp to the
+// pop-out's viewport, not the main window's.
 const MAX_W = 250
+const bubble = ref<HTMLElement | null>(null)
 const bubbleStyle = ref<Record<string, string>>({})
 function place(e: Event) {
-  const r = (e.currentTarget as HTMLElement).getBoundingClientRect()
+  const icon = e.currentTarget as HTMLElement
+  const win = icon.ownerDocument.defaultView ?? window
+  const r = icon.getBoundingClientRect()
   const pad = 8
-  const w = Math.min(MAX_W, window.innerWidth - 2 * pad)
+  const w = Math.min(MAX_W, win.innerWidth - 2 * pad)
   // prefer right edge aligned with the icon (bubble grows leftward), then clamp into the viewport
-  const left = Math.max(pad, Math.min(r.right - w, window.innerWidth - w - pad))
+  const left = Math.max(pad, Math.min(r.right - w, win.innerWidth - w - pad))
+  // the bubble is laid out even while hidden (opacity: 0), so measure its height at the final
+  // width to pick a side: below the icon when it fits, otherwise flipped above, clamped on-screen
+  let h = 0
+  const el = bubble.value
+  if (el) {
+    const prev = el.style.cssText
+    el.style.cssText = `position: fixed; width: ${Math.round(w)}px; max-width: none;`
+    h = el.offsetHeight
+    el.style.cssText = prev
+  }
+  const fitsBelow = r.bottom + 6 + h <= win.innerHeight - pad
+  const top = fitsBelow ? r.bottom + 6 : Math.max(pad, r.top - 6 - h)
   bubbleStyle.value = {
     position: 'fixed',
-    top: `${Math.round(r.bottom + 6)}px`,
+    top: `${Math.round(top)}px`,
     left: `${Math.round(left)}px`,
     right: 'auto',
     width: `${Math.round(w)}px`,
@@ -29,7 +46,7 @@ function place(e: Event) {
 <template>
   <span class="ld-infotip" tabindex="0" @pointerenter="place" @focus="place">
     <CircleHelp :size="size ?? 13" class="ld-infotip-icon" />
-    <span class="ld-infotip-bubble" :style="bubbleStyle">{{ text }}</span>
+    <span ref="bubble" class="ld-infotip-bubble" :style="bubbleStyle">{{ text }}</span>
   </span>
 </template>
 
