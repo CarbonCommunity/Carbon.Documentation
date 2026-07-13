@@ -616,12 +616,20 @@ function genLoopLines(
   ]
 }
 
-/** A container name not already taken by an element (for Carbon's CreateParent root). */
-function rootContainerName(names: Map<string, string>): string {
-  const taken = new Set(names.values())
-  let name = 'Container'
+/**
+ * The generated root container's name (Carbon's CreateParent root / the Oxide+JSON wrapper).
+ * `preferred` is the layout's configured name — blank/whitespace falls back to "Container" — and
+ * the result is uniquified against the element names, the reserved client layer names (a root
+ * literally named "Overlay" would shadow the real layer and its DestroyUi would target the layer —
+ * see RESERVED_NAMES), and any caller-supplied extra names (the live preview's reserved root, the
+ * tab/repeat-expanded name set on the wire-format paths).
+ */
+function rootContainerName(names: Map<string, string>, preferred?: string, alsoTaken?: Iterable<string>): string {
+  const taken = new Set<string>([...RESERVED_NAMES, ...names.values(), ...(alsoTaken ?? [])])
+  const base = (preferred ?? '').trim() || 'Container'
+  let name = base
   let i = 2
-  while (taken.has(name)) name = `Container (${i++})`
+  while (taken.has(name)) name = `${base} (${i++})`
   return name
 }
 
@@ -678,13 +686,13 @@ function withCarbonChain(lines: string[], chain: string): string[] {
 function genCarbon(
   elements: DesignerElement[],
   names: Map<string, string>,
+  root: string,
   layer: ClientPanelDef,
   base: FieldCtx,
   emitAfter?: (el: DesignerElement, ctx: EmitContext) => string[],
   transformEl?: (el: DesignerElement, lines: string[]) => string[],
 ): string {
   // Carbon attaches to a client panel via CreateParent; root elements then nest under it.
-  const root = rootContainerName(names)
   const ctx: EmitContext = { names, rootParent: root, sources: base.sources, fields: base.fields }
   const out: string[] = [
     'using var cui = new CUI(CuiHandler);',
@@ -741,7 +749,7 @@ function adduiElement(el: DesignerElement, ctx: EmitContext): CuiElement {
 export function generateAddUiJson(
   elements: DesignerElement[],
   rootLayer: ClientPanel = 'Overlay',
-  opts: { rootParent?: string; dataSources?: DataSource[] } = {},
+  opts: { rootParent?: string; dataSources?: DataSource[]; rootName?: string } = {},
 ): CuiElement[] {
   if (!elements.length) return []
   const layer = CLIENT_PANELS.find((p) => p.id === rootLayer) ?? CLIENT_PANELS[0]
@@ -750,7 +758,12 @@ export function generateAddUiJson(
   const names = buildNames(expanded)
   const ordered = treeOrder(expanded)
   // The same transparent full-bleed root the code outputs create (one DestroyUi removes everything).
-  const root = rootContainerName(names)
+  // The root name must MATCH the C# outputs' (they uniquify over the unexpanded, all-pages tree —
+  // expandTabs drops inactive pages here, so a rootName colliding with an element on another page
+  // would otherwise suffix differently per tab), stay clear of this payload's expanded clone names,
+  // and never equal the parent it attaches under (the live preview's reserved root).
+  const canonical = buildNames(expandBorders(annotateScroll(elements, opts.dataSources ?? [])))
+  const root = rootContainerName(canonical, opts.rootName, [...names.values(), rootParent])
   const rootEl: CuiElement = {
     name: root,
     parent: rootParent,
@@ -774,7 +787,7 @@ export function generateCode(
   provider: Provider,
   rootLayer: ClientPanel = 'Overlay',
   dataSources: DataSource[] = [],
-  opts: { declStyle?: 'local' | 'none' } = {},
+  opts: { declStyle?: 'local' | 'none'; rootName?: string } = {},
 ): string {
   if (!elements.length) return '// Add an element to generate code.'
   const layer = CLIENT_PANELS.find((p) => p.id === rootLayer) ?? CLIENT_PANELS[0]
@@ -880,10 +893,10 @@ export function generateCode(
     return (el: DesignerElement, ctx: EmitContext) => [...loopsHook(el, ctx), ...tabsHook(el, ctx)]
   }
   const hooks = loops.size > 0 || !!tabView
-  const root = rootContainerName(names)
+  const root = rootContainerName(names, opts.rootName)
   const oxide = () =>
     genOxide(ordered, { names, rootParent: root, sources: dataSources, fields: fieldCtx.fields }, { name: root, layer: layer.oxide }, hooks ? emitAfterFor('oxide') : undefined, hooks ? transformFor('oxide') : undefined)
-  const carbon = () => genCarbon(ordered, names, layer, fieldCtx, hooks ? emitAfterFor('carbon') : undefined, hooks ? transformFor('carbon') : undefined)
+  const carbon = () => genCarbon(ordered, names, root, layer, fieldCtx, hooks ? emitAfterFor('carbon') : undefined, hooks ? transformFor('carbon') : undefined)
   if (provider === 'oxide') return [...head, oxide()].join('\n')
   if (provider === 'carbon') return [...head, carbon()].join('\n')
   // both: Carbon compiles with the CARBON symbol defined; Oxide does not.
@@ -1046,7 +1059,7 @@ function preloadLines(imgs: { dbName: string; url: string }[], provider: Provide
  * their own usings/namespace/base class; `both` keeps the whole shell `#if CARBON`-guarded (the UX
  * body is already #if-split). Mirrors the confirmed skeleton.
  */
-export function generateFullClass(elements: DesignerElement[], provider: Provider, rootLayer: ClientPanel = 'Overlay', dataSources: DataSource[] = []): string {
+export function generateFullClass(elements: DesignerElement[], provider: Provider, rootLayer: ClientPanel = 'Overlay', dataSources: DataSource[] = [], rootName?: string): string {
   if (!elements.length) return '// Add an element to generate code.'
   // Data sources become `private` class fields (outside the method); the body references them, so the
   // snippet is generated with declStyle:'none' (no in-method locals). Plain C#, valid under either
@@ -1057,11 +1070,11 @@ export function generateFullClass(elements: DesignerElement[], provider: Provide
   const textLines = genFieldDecls(fieldCtx, usedSourceIds(expandBorders(elements)), 'field')
   const fieldLines = [...textLines, ...(textLines.length && listLines.length ? [''] : []), ...listLines]
   const members = fieldLines.length ? [...fieldLines.map((l) => (l ? `    ${l}` : l)), ''] : []
-  const body = indent(generateCode(elements, provider, rootLayer, dataSources, { declStyle: 'none' }), 8)
+  const body = indent(generateCode(elements, provider, rootLayer, dataSources, { declStyle: 'none', rootName }), 8)
   const info = '[Info("Test Plugin", "hizen", "0.0.1")]'
   const desc = '[Description("Generated by the Carbon Layout Designer")]'
   // The same root name generateCode gives the transparent wrapper (identical names recipe).
-  const root = rootContainerName(buildNames(expandBorders(annotateScroll(elements, dataSources))))
+  const root = rootContainerName(buildNames(expandBorders(annotateScroll(elements, dataSources))), rootName)
   const { tabs: shellTabs } = collectTabs(elements)
   const hide = [
     '    [ChatCommand("hide")]',
@@ -1161,8 +1174,8 @@ export function generateFullClass(elements: DesignerElement[], provider: Provide
 }
 
 /** The CUI `CuiElement[]` (the `CuiHelper.ToJson()` / AddUi wire format) as pretty JSON. */
-export function generateJson(elements: DesignerElement[], rootLayer: ClientPanel = 'Overlay', dataSources: DataSource[] = []): string {
-  const arr = generateAddUiJson(elements, rootLayer, { dataSources })
+export function generateJson(elements: DesignerElement[], rootLayer: ClientPanel = 'Overlay', dataSources: DataSource[] = [], rootName?: string): string {
+  const arr = generateAddUiJson(elements, rootLayer, { dataSources, rootName })
   if (!arr.length) return '// Add an element to generate JSON.'
   return JSON.stringify(arr, null, 2)
 }
@@ -1172,13 +1185,15 @@ export function generateJson(elements: DesignerElement[], rootLayer: ClientPanel
  * the whole tree so parent references stay correct. Handy "what builds this box" view for the
  * selected element. `both` #if-splits like the full snippet.
  */
-export function generateSelected(elements: DesignerElement[], selectedIds: string[], provider: Provider, rootLayer: ClientPanel = 'Overlay', dataSources: DataSource[] = []): string {
+export function generateSelected(elements: DesignerElement[], selectedIds: string[], provider: Provider, rootLayer: ClientPanel = 'Overlay', dataSources: DataSource[] = [], rootName?: string): string {
   const HINT = '// Select an element on the canvas to see its code.'
   if (!selectedIds.length) return HINT
   const layer = CLIENT_PANELS.find((p) => p.id === rootLayer) ?? CLIENT_PANELS[0]
   const expanded = expandBorders(expandRepeats(annotateScroll(expandTabs(elements), dataSources), dataSources))
   const names = buildNames(expanded)
-  const root = rootContainerName(names)
+  // Root uniquified over the unexpanded all-pages tree so the Selected snippet's parent references
+  // agree with the Class/Code outputs (see the matching note in generateAddUiJson).
+  const root = rootContainerName(buildNames(expandBorders(annotateScroll(elements, dataSources))), rootName, names.values())
   const sel = new Set(selectedIds)
   // include a selected panel's border subpanels (ids `${selectedId}.border-*`).
   const chosen = treeOrder(expanded).filter((el) => sel.has(el.id) || [...sel].some((s) => el.id.startsWith(`${s}.border-`)))
@@ -1222,6 +1237,8 @@ function fontFromOxide(file: unknown): TextFont | undefined {
 interface ParsedCui {
   elements: DesignerElement[]
   rootLayer: ClientPanel
+  /** The stripped wrapper's name when it isn't the "Container" default — preserves round-trips. */
+  rootName: string
 }
 
 /**
@@ -1370,6 +1387,7 @@ export function parseCuiJson(data: unknown): ParsedCui | null {
   // everything else inside it. The designer re-applies it at generation time, so keeping it would
   // nest the imported tree one level deep and re-exporting would wrap it twice. Its layer vote stays,
   // which is what resolves rootLayer below.
+  let rootName = ''
   if (layerParented.length === 1) {
     const wrapper = elements.find(
       (el) =>
@@ -1386,6 +1404,13 @@ export function parseCuiJson(data: unknown): ParsedCui | null {
         elements.every((o) => o.id === el.id || o.parentId !== null),
     )
     if (wrapper) {
+      // A custom wrapper name is layout config, not an element — carry it into canvas.rootName so
+      // exporting again emits the same root. Only the exact "Container" default stays implicit —
+      // "Container (N)" is captured as-is: whether it came from the collision suffix or was typed
+      // deliberately, re-exporting it re-derives the identical name, so the round-trip is stable
+      // either way. Trimmed because rootContainerName trims (untrimmed capture could never re-emit).
+      const captured = wrapper.name.trim()
+      if (captured && captured !== 'Container') rootName = captured
       elements.splice(elements.indexOf(wrapper), 1)
       for (const el of elements) {
         if (el.parentId === wrapper.id) el.parentId = null
@@ -1404,5 +1429,5 @@ export function parseCuiJson(data: unknown): ParsedCui | null {
       rootLayer = match.id
     }
   }
-  return { elements, rootLayer }
+  return { elements, rootLayer, rootName }
 }

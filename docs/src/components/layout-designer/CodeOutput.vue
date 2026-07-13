@@ -36,13 +36,13 @@ const closePaneFn = inject<(pane: 'code') => void>('ld-pane-close')
 function generateActive(): string {
   switch (tab.value) {
     case 'class':
-      return generateFullClass(elements.value, provider.value, canvas.rootLayer, dataSources.value)
+      return generateFullClass(elements.value, provider.value, canvas.rootLayer, dataSources.value, canvas.rootName)
     case 'json':
-      return generateJson(elements.value, canvas.rootLayer, dataSources.value)
+      return generateJson(elements.value, canvas.rootLayer, dataSources.value, canvas.rootName)
     case 'selected':
-      return generateSelected(elements.value, selectedIds.value, provider.value, canvas.rootLayer, dataSources.value)
+      return generateSelected(elements.value, selectedIds.value, provider.value, canvas.rootLayer, dataSources.value, canvas.rootName)
     default:
-      return generateCode(elements.value, provider.value, canvas.rootLayer, dataSources.value)
+      return generateCode(elements.value, provider.value, canvas.rootLayer, dataSources.value, { rootName: canvas.rootName })
   }
 }
 
