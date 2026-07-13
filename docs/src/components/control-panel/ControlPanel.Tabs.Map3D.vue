@@ -7,6 +7,7 @@ import { Loader2 } from 'lucide-vue-next'
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { selectedServer } from './ControlPanel.SaveLoad'
 import { loadModel, resolveModelUrl, cloneModel } from '@/utils/GltfCache'
+import { WriteFloat } from '@/utils/BinaryWriter'
 
 const container = ref<HTMLDivElement | null>(null)
 const isLoading = ref<boolean>(false)
@@ -488,6 +489,19 @@ function objectScenePosition(p: { x: number; y: number; z: number }, worldSize: 
     TERRAIN_TARGET_SIZE / 2 - (p.x - originX) * planarScale,
     (p.y - positionY) * heightScale,
     (p.z - originZ) * planarScale - TERRAIN_TARGET_SIZE / 2
+  )
+}
+
+// Exact inverse of objectScenePosition — maps a point in the viewer's scene space back to the
+// game's world coordinates (e.g. to report the camera position to the server). Uses the same
+// mirrored-X convention, so it round-trips objectScenePosition precisely.
+function sceneToWorldPosition(p: { x: number; y: number; z: number }, worldSize: number, positionY: number, planarScale: number, heightScale: number, out: THREE.Vector3 = new THREE.Vector3()) {
+  const originX = -worldSize / 2
+  const originZ = -worldSize / 2
+  return out.set(
+    originX + (TERRAIN_TARGET_SIZE / 2 - p.x) / planarScale,
+    positionY + p.y / heightScale,
+    originZ + (p.z + TERRAIN_TARGET_SIZE / 2) / planarScale
   )
 }
 
@@ -1686,6 +1700,15 @@ onMounted(() => {
   requestMapInfo()
   selectedServer.value?.sendCall('LoadStringPool')
   selectedServer.value?.sendCall('SendFakePlayerSnapshot')
+  selectedServer.value?.sendCall('RequestCamera')
+
+  setInterval(() => {
+    if (selectedServer.value?.IsConnected && camera && liveEntityPlacement) {
+      const { worldSize, positionY, planarScale, heightScale } = liveEntityPlacement
+      const world = sceneToWorldPosition(camera.position, worldSize, positionY, planarScale, heightScale)
+      selectedServer.value.sendCall('UpdateCamera', new WriteFloat(world.x), new WriteFloat(world.y), new WriteFloat(world.z))
+    }
+  }, 250)
 })
 
 onUnmounted(() => {
@@ -1793,7 +1816,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="relative w-full h-[1200px]">
+  <div class="relative w-full h-[calc(100dvh-var(--vp-nav-height,64px))]">
     <div ref="container" class="w-full h-full"></div>
     <div v-if="hoveredPrefabPath" class="absolute left-3 top-3 max-w-[70%] truncate rounded-lg border border-white/10 bg-black/60 px-3 py-1.5 text-xs text-white/80 backdrop-blur select-none pointer-events-none">
       {{ hoveredPrefabPath }}

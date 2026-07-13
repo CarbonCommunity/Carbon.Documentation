@@ -1,3 +1,10 @@
+// Wraps a number so sendCall serializes it as a 32-bit float instead of the int32 default that
+// plain JS numbers get (typeof can't tell an integer from a float). Use for arguments the
+// receiving RPC reads with reader.float() — e.g. world/camera coordinates.
+export class WriteFloat {
+  constructor(public readonly value: number) {}
+}
+
 export class BinaryWriter {
   private view: DataView;
   private buf: ArrayBuffer;

@@ -1,5 +1,5 @@
 import { BinaryReader } from '@/utils/BinaryReader'
-import { BinaryWriter } from '@/utils/BinaryWriter'
+import { BinaryWriter, WriteFloat } from '@/utils/BinaryWriter'
 import MD5 from 'crypto-js/md5'
 import { ref, shallowRef } from 'vue'
 import { message, tryFocusChat } from './ControlPanel.Chat'
@@ -859,8 +859,10 @@ export class Server {
         }
         case 6: // Entity Destroyed — stop tracking it so Map3D removes it from the scene
         {
-          const entityid = read.uint64()
-          this.LiveEntities.delete(entityid)
+          const count = read.int32()
+          for (let i = 0; i < count; i++) {
+            this.LiveEntities.delete(read.uint64())
+          }
           break
         }
         case 5: // Entity Spawned — starts tracking a new live entity
@@ -1176,6 +1178,10 @@ export class Server {
       write.uint32(this.getId(id))
       for (let i = 0; i < args.length; i++) {
         const value = args[i]
+        if (value instanceof WriteFloat) {
+          write.float(value.value)
+          continue
+        }
         const type = typeof value
         switch (type) {
           case 'bigint':
@@ -1197,7 +1203,7 @@ export class Server {
     } else {
       for (let i = 0; i < args.length; i++) {
         const arg = args[i]
-        args[i] = `"${arg}"`
+        args[i] = `"${arg instanceof WriteFloat ? arg.value : arg}"`
       }
       this.sendCommand(`c.webpanel.cmd ${this.getId(id)} ${args.join(' ')}`, 100)
     }
