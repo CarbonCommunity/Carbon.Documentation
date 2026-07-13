@@ -3,6 +3,7 @@ import { computed, nextTick, ref, watch } from 'vue'
 import AnchorWidget from './AnchorWidget.vue'
 import ColorTextFields from './ColorTextFields.vue'
 import InfoTip from './InfoTip.vue'
+import ItemPicker from './ItemPicker.vue'
 import NumberField from './NumberField.vue'
 import { hexToRgb01, rgb01ToHex, round } from './geometry'
 import { TEXT_ALIGNS, TEXT_FONTS } from './types'
@@ -905,9 +906,11 @@ const computedRect = computed(() => (selected.value ? rectOf(selected.value.id) 
           <template v-else-if="imageKind === 'itemicon'">
             <div class="ld-vec-row">
               <span class="ld-vec-label" title="Item id">Item</span>
-              <input class="ld-num" type="number" step="1" :value="panelProps.image?.kind === 'itemicon' ? panelProps.image.itemId : 0" title="Item id (the item's numeric id)" @change="setItemId(selected, ($event.target as HTMLInputElement).value)" />
+              <ItemPicker :model-value="panelProps.image?.kind === 'itemicon' ? panelProps.image.itemId : 0" @update:model-value="setItemId(selected, String($event))" />
+            </div>
+            <div class="ld-vec-row">
               <span class="ld-vec-label" title="Skin id">Skin</span>
-              <input class="ld-num" type="number" step="1" :value="panelProps.image?.kind === 'itemicon' ? panelProps.image.skinId : 0" title="Skin id (0 = default skin)" @change="setSkinId(selected, ($event.target as HTMLInputElement).value)" />
+              <input class="ld-num" type="number" step="1" :value="panelProps.image?.kind === 'itemicon' ? panelProps.image.skinId : 0" title="Skin id (0 = default skin). The canvas preview always shows the default icon." @change="setSkinId(selected, ($event.target as HTMLInputElement).value)" />
             </div>
             <label v-if="itemIdColumns.length" class="ld-field">
               <span class="ld-field-label">Source <InfoTip text="Bind the Item id to a column of the repeated list — each stamped item shows its own row's icon. Pick (literal) to type an id directly." /></span>
