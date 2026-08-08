@@ -489,7 +489,217 @@ public class CodeGen : CarbonPlugin
 			return "string[]";
 		}
 
-		return type.Replace("+", ".");
+		if (type == typeof(long).FullName)
+		{
+			return "long";
+		}
+
+		if (type == typeof(short).FullName)
+		{
+			return "short";
+		}
+
+		if (type == typeof(ushort).FullName)
+		{
+			return "ushort";
+		}
+
+		if (type == typeof(byte).FullName)
+		{
+			return "byte";
+		}
+
+		if (type == typeof(sbyte).FullName)
+		{
+			return "sbyte";
+		}
+
+		if (type == typeof(char).FullName)
+		{
+			return "char";
+		}
+
+		if (type == typeof(decimal).FullName)
+		{
+			return "decimal";
+		}
+
+		if (type.EndsWith("[]"))
+		{
+			return $"{GetFriendlyType(type.Remove(type.Length - 2), empty)}[]";
+		}
+
+		return ExpandGenerics(type).Replace("+", ".");
+	}
+
+	public static string GetFriendlyType(Type type, string empty = "null")
+	{
+		if (type == null)
+		{
+			return empty;
+		}
+
+		if (type.IsGenericParameter)
+		{
+			return type.Name;
+		}
+
+		if (!type.IsGenericType)
+		{
+			return GetFriendlyType(type.FullName, empty);
+		}
+
+		var definition = type.GetGenericTypeDefinition().FullName ?? type.Name;
+		var arity = definition.IndexOf('`');
+		if (arity >= 0)
+		{
+			definition = definition.Remove(arity);
+		}
+
+		var arguments = type.GetGenericArguments().Select(x => GetFriendlyType(x, empty));
+		return $"{definition.Replace("+", ".")}<{string.Join(", ", arguments)}>";
+	}
+
+	private static string ExpandGenerics(string type)
+	{
+		var arity = type.IndexOf('`');
+		if (arity < 0)
+		{
+			return type;
+		}
+
+		var open = type.IndexOf('[', arity);
+		if (open < 0)
+		{
+			return type.Remove(arity);
+		}
+
+		var close = FindClosingBracket(type, open);
+		if (close < 0)
+		{
+			return type;
+		}
+
+		var arguments = SplitTopLevel(type.Substring(open + 1, close - open - 1))
+			.Select(x => GetFriendlyType(TrimAssemblyQualification(x)));
+
+		return $"{type.Remove(arity)}<{string.Join(", ", arguments)}>{ExpandGenerics(type.Substring(close + 1))}";
+	}
+
+	private static string TrimAssemblyQualification(string argument)
+	{
+		argument = argument.Trim();
+		if (argument.Length > 1 && argument[0] == '[' && argument[argument.Length - 1] == ']')
+		{
+			argument = argument.Substring(1, argument.Length - 2);
+		}
+
+		var parts = SplitTopLevel(argument);
+		return parts.Count == 0 ? argument : parts[0].Trim();
+	}
+
+	private static int FindClosingBracket(string value, int open)
+	{
+		var depth = 0;
+		for (var i = open; i < value.Length; i++)
+		{
+			if (value[i] == '[')
+			{
+				depth++;
+			}
+			else if (value[i] == ']' && --depth == 0)
+			{
+				return i;
+			}
+		}
+
+		return -1;
+	}
+
+	private static List<string> SplitTopLevel(string value)
+	{
+		var parts = new List<string>();
+		var depth = 0;
+		var start = 0;
+		for (var i = 0; i < value.Length; i++)
+		{
+			var character = value[i];
+			if (character == '[')
+			{
+				depth++;
+			}
+			else if (character == ']')
+			{
+				depth--;
+			}
+			else if (character == ',' && depth == 0)
+			{
+				parts.Add(value.Substring(start, i - start));
+				start = i + 1;
+			}
+		}
+
+		parts.Add(value.Substring(start));
+		return parts;
+	}
+
+	private static string ToIdentifier(string value)
+	{
+		var builder = new StringBuilder();
+		foreach (var character in value)
+		{
+			if (char.IsLetterOrDigit(character) || character == '_')
+			{
+				builder.Append(character);
+			}
+		}
+
+		var identifier = builder.ToString();
+		if (identifier.Length == 0)
+		{
+			return "value";
+		}
+
+		if (char.IsDigit(identifier[0]))
+		{
+			return $"_{identifier}";
+		}
+
+		return ReservedKeywords.Contains(identifier) ? $"@{identifier}" : identifier;
+	}
+
+	private static readonly HashSet<string> ReservedKeywords = new HashSet<string>
+	{
+		"abstract", "as", "base", "bool", "break", "byte", "case", "catch", "char", "checked", "class", "const",
+		"continue", "decimal", "default", "delegate", "do", "double", "else", "enum", "event", "explicit", "extern",
+		"false", "finally", "fixed", "float", "for", "foreach", "goto", "if", "implicit", "in", "int", "interface",
+		"internal", "is", "lock", "long", "namespace", "new", "null", "object", "operator", "out", "override",
+		"params", "private", "protected", "public", "readonly", "ref", "return", "sbyte", "sealed", "short",
+		"sizeof", "stackalloc", "static", "string", "struct", "switch", "this", "throw", "true", "try", "typeof",
+		"uint", "ulong", "unchecked", "unsafe", "ushort", "using", "virtual", "void", "volatile", "while"
+	};
+
+	private static string GetIdentifierFromType(string type)
+	{
+		var segments = type.Split('.', '+');
+		for (var i = segments.Length - 1; i >= 0; i--)
+		{
+			var segment = segments[i];
+			if (segment.Length == 0 || segment[0] == '<')
+			{
+				continue;
+			}
+
+			var arity = segment.IndexOf('`');
+			if (arity > 0)
+			{
+				segment = segment.Remove(arity);
+			}
+
+			return ToIdentifier($"{char.ToLower(segment[0])}{segment.Substring(1)}");
+		}
+
+		return "value";
 	}
 
 	public static string GetParameterName(Type type)
@@ -887,7 +1097,8 @@ public class CodeGen : CarbonPlugin
 		public Parameter[] Parameters;
 
 		public string ParametersText => string.Join(", ",
-			Parameters.Select(x => $"{GetFriendlyType(x.typeName)} {x.name}{(x.optional ? " = default" : string.Empty)}"));
+			Parameters.Select(x =>
+				$"{(x.byRef ? "ref " : string.Empty)}{GetFriendlyType(x.typeName)} {x.name}{(x.optional && !x.byRef ? " = default" : string.Empty)}"));
 
 		public HookFlags Flags;
 		public string[] Descriptions;
@@ -897,13 +1108,34 @@ public class CodeGen : CarbonPlugin
 		public string TargetName => target;
 		public string MethodName => method;
 		public string AssemblyName => assembly?.GetName().Name;
-		public string ReturnTypeName => GetFriendlyType(returnType?.FullName, "void");
+		public string ReturnTypeName => GetFriendlyType(returnType, "void");
+
+		public string ReturnBehavior
+		{
+			get
+			{
+				if (!returnDeclared)
+				{
+					return "Unspecified";
+				}
+
+				if (returnType == null || returnType == typeof(void))
+				{
+					return "Cancel";
+				}
+
+				return returnContinues ? "Modify" : "Override";
+			}
+		}
+
 		public string MethodSource;
 
 		[JsonIgnore] private string target;
 		[JsonIgnore] private string method;
 		[JsonIgnore] private Assembly assembly;
 		[JsonIgnore] private Type returnType;
+		[JsonIgnore] private bool returnContinues;
+		[JsonIgnore] private bool returnDeclared;
 		[JsonIgnore] public int iteration;
 		[JsonIgnore] public readonly bool isValid => !string.IsNullOrEmpty(Name);
 
@@ -912,6 +1144,7 @@ public class CodeGen : CarbonPlugin
 			public string name;
 			public string typeName;
 			public bool optional;
+			public bool byRef;
 		}
 
 		public static CarbonHook Parse(Attribute[] attributes, bool isOxideHooks)
@@ -949,7 +1182,9 @@ public class CodeGen : CarbonPlugin
 
 			hook.target = patchType.GetProperty("Target").GetValue(patch) as string;
 			hook.assembly = hook.target != null ? AccessToolsEx.TypeByName(hook.target)?.Assembly : null;
+			hook.returnDeclared = returnType != null;
 			hook.returnType = returnType?.GetType().GetProperty("Type").GetValue(returnType) as Type;
+			hook.returnContinues = returnType?.GetType().GetProperty("Continues")?.GetValue(returnType) as bool? ?? false;
 			hook.CarbonCompatible = true;
 			hook.OxideCompatible = isOxideHooks || isOxideCompatible;
 			if (optionsType != null)
@@ -961,14 +1196,14 @@ public class CodeGen : CarbonPlugin
 			{
 				var name = parametersType.GetProperty("Name").GetValue(x) as string;
 				var type = parametersType.GetProperty("Type").GetValue(x) as string;
-				if (name.Equals("self", StringComparison.CurrentCultureIgnoreCase))
-				{
-					name = char.ToLower(type[0]) + type.Substring(1, type.Length - 1);
-				}
+				name = name.Equals("self", StringComparison.CurrentCultureIgnoreCase)
+					? GetIdentifierFromType(type)
+					: ToIdentifier(name);
 
 				return new Parameter
 				{
 					name = name, typeName = type, optional = (bool)parametersType.GetProperty("Optional").GetValue(x),
+					byRef = parametersType.GetProperty("ByRef")?.GetValue(x) as bool? ?? false,
 				};
 			}).ToArray();
 			var researchedHook = HooksAIResearch.hooks.FirstOrDefault(x => x.hook.Equals(hook.Name));
