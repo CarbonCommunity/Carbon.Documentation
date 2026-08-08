@@ -1119,6 +1119,11 @@ public class CodeGen : CarbonPlugin
 					return "Unspecified";
 				}
 
+				if (returnDiscarded)
+				{
+					return "Discarded";
+				}
+
 				if (returnType == null || returnType == typeof(void))
 				{
 					return "Cancel";
@@ -1135,6 +1140,7 @@ public class CodeGen : CarbonPlugin
 		[JsonIgnore] private Assembly assembly;
 		[JsonIgnore] private Type returnType;
 		[JsonIgnore] private bool returnContinues;
+		[JsonIgnore] private bool returnDiscarded;
 		[JsonIgnore] private bool returnDeclared;
 		[JsonIgnore] public int iteration;
 		[JsonIgnore] public readonly bool isValid => !string.IsNullOrEmpty(Name);
@@ -1185,6 +1191,7 @@ public class CodeGen : CarbonPlugin
 			hook.returnDeclared = returnType != null;
 			hook.returnType = returnType?.GetType().GetProperty("Type").GetValue(returnType) as Type;
 			hook.returnContinues = returnType?.GetType().GetProperty("Continues")?.GetValue(returnType) as bool? ?? false;
+			hook.returnDiscarded = returnType?.GetType().GetProperty("Discarded")?.GetValue(returnType) as bool? ?? false;
 			hook.CarbonCompatible = true;
 			hook.OxideCompatible = isOxideHooks || isOxideCompatible;
 			if (optionsType != null)
