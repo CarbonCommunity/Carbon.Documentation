@@ -20,7 +20,7 @@ export interface Hook {
   ReturnBehavior?: ReturnBehavior
 }
 
-export type ReturnBehavior = 'Unspecified' | 'Cancel' | 'Override' | 'Modify'
+export type ReturnBehavior = 'Unspecified' | 'Discarded' | 'Cancel' | 'Override' | 'Modify'
 
 export interface Parameter {
   Name: string

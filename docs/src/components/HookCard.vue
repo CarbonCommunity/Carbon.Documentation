@@ -38,6 +38,8 @@ function getReturnTypeWithArticle(hook: Hook): string {
 
 function getReturnBehaviorText(hook: Hook): string {
   switch (getReturnBehavior(hook)) {
+    case 'Discarded':
+      return 'Returning a value has no effect.'
     case 'Cancel':
       return 'Return any non-null value to skip the default behavior.'
     case 'Override':
@@ -64,7 +66,7 @@ function getReturnComment(hook: Hook): string {
 }
 
 function getExampleCode(hook: Hook): string {
-  const usesReturn = (['Cancel', 'Override', 'Modify'] as ReturnBehavior[]).includes(getReturnBehavior(hook))
+  const usesReturn = getReturnBehavior(hook) !== 'Discarded'
   const comment = getReturnComment(hook)
   const lines = [
     `private ${usesReturn ? 'object' : 'void'} ${hook.Name}(${hook.ParametersText})`,
