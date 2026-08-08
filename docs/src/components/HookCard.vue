@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Hook } from '@/api/metadata/carbon/hooks'
+import type { Hook, ReturnBehavior } from '@/api/metadata/carbon/hooks'
 import ButtonIconCopy from '@/components/common/ButtonIconCopy.vue'
 import CodeBlock from '@/components/common/CodeBlock.vue'
 import { getHookFlagsText } from '@/shared/constants'
@@ -28,14 +28,49 @@ function getCorrespondingTitleForHookFlag(flag: string): string {
   }
 }
 
+function getReturnBehavior(hook: Hook): ReturnBehavior {
+  return hook.ReturnBehavior ?? 'Unspecified'
+}
+
+function getReturnTypeWithArticle(hook: Hook): string {
+  return `${/^[aeiou]/i.test(hook.ReturnTypeName) ? 'an' : 'a'} ${hook.ReturnTypeName}`
+}
+
+function getReturnBehaviorText(hook: Hook): string {
+  switch (getReturnBehavior(hook)) {
+    case 'Cancel':
+      return 'Return any non-null value to skip the default behavior.'
+    case 'Override':
+      return `Return ${getReturnTypeWithArticle(hook)} to override the result and skip the default behavior. Returning null runs the default.`
+    case 'Modify':
+      return `Return ${getReturnTypeWithArticle(hook)} to replace the value used internally. Execution continues.`
+    case 'Unspecified':
+    default:
+      return ''
+  }
+}
+
+function getReturnComment(hook: Hook): string {
+  switch (getReturnBehavior(hook)) {
+    case 'Cancel':
+      return 'any non-null value skips the default behavior'
+    case 'Override':
+      return `return ${getReturnTypeWithArticle(hook)} to override the result`
+    case 'Modify':
+      return `return ${getReturnTypeWithArticle(hook)} to replace the value used internally`
+    default:
+      return ''
+  }
+}
+
 function getExampleCode(hook: Hook): string {
-  const isVoid = hook.ReturnTypeName == 'void'
+  const usesReturn = (['Cancel', 'Override', 'Modify'] as ReturnBehavior[]).includes(getReturnBehavior(hook))
+  const comment = getReturnComment(hook)
   const lines = [
-    !isVoid ? `// Change return type to void if you don't plan to override default behavior` : null,
-    `private ${isVoid ? 'void' : 'object'} ${hook.Name}(${hook.ParametersText})`,
+    `private ${usesReturn ? 'object' : 'void'} ${hook.Name}(${hook.ParametersText})`,
     '{',
     `    Puts("${hook.Name} has been called!");`,
-    !isVoid ? `    return null; // type: ${hook.ReturnTypeName} ; return non-null to override default behavior` : null,
+    usesReturn ? `    return null;${comment ? ` // ${comment}` : ''}` : null,
     '}',
   ]
   const code = lines.filter((line) => line != null).join('\n')
@@ -89,8 +124,8 @@ function getExampleCode(hook: Hook): string {
         <span v-if="hook.AssemblyName" class="text-xs">
           {{ [hook.AssemblyName, hook.TargetName].filter(Boolean).join('; ') }}
         </span>
-        <span>
-          {{ hook.ReturnTypeName != 'void' ? 'Returning a non-null value cancels default behavior.' : 'No return behavior.' }}
+        <span v-if="getReturnBehaviorText(hook)">
+          {{ getReturnBehaviorText(hook) }}
         </span>
       </div>
     </div>
