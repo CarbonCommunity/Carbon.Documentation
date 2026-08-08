@@ -33,7 +33,7 @@ function getReturnBehavior(hook: Hook): ReturnBehavior {
 }
 
 function getReturnTypeWithArticle(hook: Hook): string {
-  return `${/^[aeiou]/i.test(hook.ReturnTypeName) ? 'an' : 'a'} ${hook.ReturnTypeName}`
+  return `${/^[aeio]/i.test(hook.ReturnTypeName) ? 'an' : 'a'} ${hook.ReturnTypeName}`
 }
 
 function getReturnBehaviorText(hook: Hook): string {
