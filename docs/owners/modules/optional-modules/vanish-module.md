@@ -1,23 +1,27 @@
 # Vanish Module
 
-The Vanish Module is an **optional Carbon module** that enables administrators or moderators to toggle invisibility for players. It prevents detection by other players, AI, and server-side mechanics like helicopters or turrets. This module includes UI feedback, sound effects, and permission-controlled behavior.
+The Vanish Module is an **optional Carbon module** that enables administrators or moderators to toggle invisibility for
+players. It prevents detection by other players, AI, and server-side mechanics like helicopters or turrets. This module
+includes UI feedback, sound effects, and permission-controlled behavior.
 
-> **Note:** Vanish is highly customizable and designed to respect permission layers. It does not affect player persistence unless configured to.
-
+> **Note:** Vanish is highly customizable and designed to respect permission layers. It does not affect player
+> persistence unless configured to.
 
 ## Overview
-![Vanish Module](/misc/vanish_a.webp)
+
+![Vanish Module](/misc/vanish_a.webp){width=1640px height=502px}
 
 - **Class Name:** `VanishModule`
 - **Enabled by default:** No
 - **Supports Configuration:** Yes
-- **Source:** [Carbon.Modules/VanishModule](https://github.com/CarbonCommunity/Carbon.Modules/tree/develop/src/VanishModule)
+- **Source:** [`Carbon.Modules/VanishModule`](https://github.com/CarbonCommunity/Carbon/tree/main/src/Carbon.Components/Carbon.Modules/src/VanishModule)
 - **Forces Modded Tag:** No
 
-When a player is vanished, they become invisible, unattackable, and undetectable by most game systems and AI. Reappearance restores normal status.
-
+When a player is vanished, they become invisible, unattackable, and undetectable by most game systems and AI.
+Reappearance restores normal status.
 
 ## Configuration
+
 The config is defined in `VanishConfig`:
 
 ```json
@@ -53,21 +57,22 @@ The config is defined in `VanishConfig`:
 }
 ```
 
-
 ## Permissions
+
 - `vanish.allow` – Allows player to toggle vanish.
 - `vanish.unlock` – Allows unlocking doors/containers while vanished.
 - `vanish.permanent` – Automatically vanish on connect/sleep end.
 
-
 ## Command
+
 ```bash
 /vanish
 ```
+
 Toggles vanish state for the player (requires `vanish.allow`).
 
-
 ## Features
+
 - Fully invisible and undetectable while vanished
 - Removes from AI memory (e.g. Bradley, Helicopters)
 - Optionally toggles noclip on/off
@@ -77,10 +82,18 @@ Toggles vanish state for the player (requires `vanish.allow`).
 - Effect visuals and broadcast options
 - Hook support: `OnCarbonVanished`, `OnCarbonUnvanished`
 
-
 ## UI
+
 Displays custom text and/or icon using CUI. Position, color, and anchors are fully configurable.
 
 ---
 
-The Vanish Module is ideal for admins needing to monitor players stealthily, moderate without interference, or perform cinematic recordings.
+The Vanish Module is ideal for admins needing to monitor players stealthily, moderate without interference, or perform
+cinematic recordings.
+
+
+## API
+The vanish module comes with a few API hook calls:
+
+- `void OnCarbonVanished(BasePlayer player)` when players vanish
+- `void OnCarbonUnvanished(BasePlayer player)` when players unvanish

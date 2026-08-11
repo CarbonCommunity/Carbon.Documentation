@@ -6,8 +6,7 @@ aside: false
 ---
 
 <script setup>
-import { useData } from 'vitepress'
-const { page } = useData()
+    import PrefabPage from '@/components/PrefabPage.vue'
 </script>
 
-<PrefabPage /> 
+<PrefabPage />

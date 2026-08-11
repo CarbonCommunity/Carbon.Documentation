@@ -1,28 +1,32 @@
 # Modal Module
 
-The Modal Module is a **core module** included in the Carbon modding framework for Rust. It provides a flexible, interactive modal form system that allows plugins to prompt users for structured input using a wide variety of field types.
+The Modal Module is a **core module** included in the Carbon modding framework for Rust. It provides a flexible,
+interactive modal form system that allows plugins to prompt users for structured input using a wide variety of field
+types.
 
-> **Note:** This module is **built into Carbon** and does not require installation like traditional plugins. It is always enabled and cannot be disabled.
-
+> **Note:** This module is **built into Carbon** and does not require installation like traditional plugins. It is
+> always enabled and cannot be disabled.
 
 ## Overview
-![Modal](/misc/modal_a.webp)
+
+![Modal](/misc/modal_a.webp){width=1640px height=502px}
 
 - **Class Name:** `ModalModule`
 - **Enabled by default:** Yes
 - **Force enabled:** Yes (cannot be disabled)
 - **Supports Configuration:** No
-- **Source:** [Carbon.Common/ModalModule](https://github.com/CarbonCommunity/Carbon.Common/blob/develop/src/Carbon/Modules/ModalModule/ModalModule.cs)
+- **Source:** [`Carbon.Common/ModalModule`](https://github.com/CarbonCommunity/Carbon/tree/main/src/Carbon.Components/Carbon.Common/src/Carbon/Modules/ModalModule/ModalModule.cs)
 - **Forces Modded Tag:** No
 
-This module allows **plugins to create modals** with input fields such as strings, booleans, numbers, colors, enums, and even buttons. Field validation and callbacks are supported.
+This module allows **plugins to create modals** with input fields such as strings, booleans, numbers, colors, enums, and
+even buttons. Field validation and callbacks are supported.
 
 ## Accessing the Module in Plugins
 
 Plugins can access the `ModalModule` using:
 
 ```csharp
-var modalModule = Carbon.GetModule<ModalModule>();
+var modalModule = Carbon.Base.BaseModule.GetModule<ModalModule>();
 ```
 
 ## How It Works

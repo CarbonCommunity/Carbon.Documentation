@@ -1,5 +1,22 @@
-docs/.vitepress/cache
-docs/.vitepress/dist
-node_modules
+obj
+bin
+.idea
+.env
+
+# Tools
 Steam
 Server
+Library
+Shots
+Temp
+UserSettings
+Logs
+*/PrefabScreenshots/*.csproj
+*/PrefabScreenshots/*.sln
+
+# Docs
+docs/.vitepress/cache
+docs/.vitepress/dist
+docs/.vitepress/.temp
+docs/public/rss.xml
+node_modules

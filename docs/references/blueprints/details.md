@@ -6,8 +6,7 @@ aside: false
 ---
 
 <script setup>
-import { useData } from 'vitepress'
-const { page } = useData()
+    import BlueprintPage from '@/components/BlueprintPage.vue'
 </script>
 
-<BlueprintPage /> 
+<BlueprintPage />

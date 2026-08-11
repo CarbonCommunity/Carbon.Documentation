@@ -6,8 +6,7 @@ aside: false
 ---
 
 <script setup>
-import { useData } from 'vitepress'
-const { page } = useData()
+    import RustItemPage from '@/components/RustItemPage.vue'
 </script>
 
-<ItemPage />
+<RustItemPage />

@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
-    "module": "ESNext",
-    "moduleResolution": "node",
+    "target": "esnext",
+    "module": "esnext",
+    "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "jsx": "preserve",
@@ -13,13 +13,21 @@
     "types": ["node", "vite/client"],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["docs/.vitepress/*"]
+      "@/*": ["docs/src/*"]
     }
   },
   "include": [
     "docs/.vitepress/**/*.ts",
     "docs/.vitepress/**/*.d.ts",
     "docs/.vitepress/**/*.tsx",
-    "docs/.vitepress/**/*.vue"
-  ]
-} 
+    "docs/.vitepress/**/*.vue",
+    "docs/**/*.ts",
+    "docs/**/*.d.ts",
+    "docs/**/*.tsx",
+    "docs/**/*.vue",
+    "docs/**/*.md"
+  ],
+  "vueCompilerOptions": {
+    "vitePressExtensions": [".md"]
+  }
+}

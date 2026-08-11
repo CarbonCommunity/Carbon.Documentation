@@ -2,34 +2,281 @@
 layout: home
 
 hero:
-  name: "Carbon Documentation"
-  text: "Innovating Rust Modding"
-  tagline: Carbon, making up most of the known universe since at least 1992
+  name: "Carbon"
+  text: "Modding Framework"
+  tagline: A drop-in replacement for Oxide modding framework for Rust game servers. Featuring self-updating, SQL permissions and an in-game interface to install, update and configure plugins.
   actions:
     - theme: brand
-      text: Join our Discord
-      link: https://discord.gg/carbonmod
+      text: Get Carbon
+      icon: github
+      link: /owners/getting-started#releases
     - theme: alt
       text: Owner Docs
-      link: /owners/introduction
+      link: /owners/getting-started
     - theme: alt
       text: Developer Docs
       link: /devs/local-server-hosting
     - theme: alt
       text: Hooks
       link: /references/hooks
+    - theme: alt
+      text: Join Discord
+      link: https://discord.gg/carbonmod
 
 features:
   - title: High Performance
     details: Carbon offers a carefully written framework with performance as the number one factor to provide an even better experience for your players.
+    icon: 📈
   - title: Oxide Support
-    details: We have made it very easy to make the switch from Oxide to Carbon by keeping the folder/plugin structure the same.
+    details: We have made it very easy to make the switch from Oxide to Carbon by keeping the folder/plugin structure the same. <a class="textLink" href="/owners/oxide-porting">Learn more</a>
+    icon: 🎯
   - title: Scalability
-    details: We have made Carbon super lightweight by only providing the very essential hooks needed.
+    details: Carbon is super lightweight by only providing the very essential hooks needed, keeping things vanilla when there are no changes made by plugins.
+    icon: ⚖️
   - title: Permissions
-    details: We have created a more optimized modular permission system that allows for users to create thier own serializers.
+    details: We have created a more optimized modular permission system that allows users to create their own serializers. <a class="textLink" href="/devs/features/permissions">Learn more</a>
+    icon: ⚙️
   - title: Dynamic Hooks
-    details: Hooks are loaded dynamically to ensure only the hooks used by plugins are loaded. This eliminates a ton of redundant calls and will improve the performance of your server.
+    details: Hooks are loaded dynamically to ensure only the hooks used by plugins are loaded. This eliminates a ton of redundant calls and will improve performance. <a class="textLink" href="/references/hooks">Learn more</a>
+    icon: 🪝
   - title: Hot Reload
     details: Carbon allows for your Harmony mods to be reloaded on the fly when changes are made.
+    icon: 🔥
 ---
+
+<script setup>
+import { VPTeamMembers } from 'vitepress/theme'
+import { onMounted } from 'vue'
+
+onMounted(() => {
+  const rnd = Math.random()
+  if (rnd > 0.1169 / 100) {
+    return
+  }
+  const walker = document.createTreeWalker(
+    document.body,
+    NodeFilter.SHOW_TEXT,
+    null,
+    false
+  )
+
+  const replacements = {
+    'c#': '👀#',
+    'carbon': 'Yarbon',
+    'oxide': 'Rexide',
+    'rust': 'Rust🦀',
+    'best': 'beast',
+    'modding': 'Modden',
+    'framework': 'Fremwerk',
+    'codefling': 'coolfling'
+  }
+
+  const pattern = new RegExp(Object.keys(replacements).join('|'), 'gi')
+  
+  let node
+  while (node = walker.nextNode()) {
+    node.textContent = node.textContent.replace(pattern, match => {
+      const key = match.toLowerCase()
+      return replacements[key]
+    })
+  }
+})
+const mainMembers = [
+  {
+    avatar: '/team/Raul.webp',
+    name: 'Raul',
+    title: 'Creator',
+    links: [
+      { icon: 'github', link: 'https://github.com/raulssorban' },
+      { icon: 'twitter', link: 'https://twitter.com/raulssorban' },
+      { icon: 'cf', link: 'https://codefling.com/raul' }
+    ]
+  },
+  {
+    avatar: '/team/Death.webp',
+    name: 'Death',
+    title: 'Producer',
+    links: [
+      { icon: 'github', link: 'https://github.com/Deathicated' },
+      { icon: 'cf', link: 'https://codefling.com/death' }
+    ]
+  },
+  {
+    avatar: '/team/evs-ptr.webp',
+    name: 'Evora',
+    title: 'Developer',
+    links: [
+      { icon: 'github', link: 'https://github.com/evs-ptr' }
+    ]
+  },
+  {
+    avatar: '/team/MalS.webp',
+    name: 'MalS',
+    title: 'Moderator',
+    links: [
+      { icon: 'cf', link: 'https://codefling.com/mals' }
+    ]
+  }
+]
+
+const docsMembers = [
+  {
+    avatar: '/team/Bubbafett.webp',
+    name: 'Bubbafett',
+    title: 'Documentation',
+    links: [
+      { icon: 'github', link: 'https://github.com/bubbafett5611' },
+      { icon: 'cf', link: 'https://codefling.com/bubbafett' }
+    ]
+  },
+  {
+    avatar: '/team/Goo.webp',
+    name: 'Goo',
+    title: 'Documentation',
+    links: [
+      { icon: 'github', link: 'https://github.com/purnellbp' },
+      { icon: 'cf', link: 'https://codefling.com/goo_' }
+    ]
+  }
+]
+
+const contributorMembers = [
+  {
+    avatar: '/team/Patrette.webp',
+    name: 'Patrette',
+    title: 'Contributor',
+    links: [
+      { icon: 'cf', link: 'https://codefling.com/patrette' }
+    ]
+  },
+  {
+    avatar: '/team/ThePitereq.webp',
+    name: 'ThePitereq',
+    title: 'Contributor',
+    links: [
+      { icon: 'github', link: 'https://github.com/ThePitereq' },
+      { icon: 'cf', link: 'https://codefling.com/thepitereq' }
+    ]
+  },
+  {
+    avatar: '/team/DezLife.webp',
+    name: 'DezLife',
+    title: 'Contributor',
+    links: [
+      { icon: 'github', link: 'https://github.com/DezLife' },
+      { icon: 'cf', link: 'https://codefling.com/dezlife' }
+    ]
+  },
+  {
+    avatar: '/team/Kulltero.webp',
+    name: 'Kulltero',
+    title: 'Contributor',
+    links: [
+      { icon: 'github', link: 'https://github.com/Kulltero' },
+      { icon: 'cf', link: 'https://codefling.com/Kulltero' }
+    ]
+  },
+  {
+    avatar: '/team/JakeRich.webp',
+    name: 'JakeRich',
+    title: 'Contributor',
+    links: [
+      { icon: 'github', link: 'https://github.com/Jake-Rich' }
+    ]
+  },
+  {
+    avatar: '/team/Grimston.webp',
+    name: 'Grimston',
+    title: 'Contributor',
+    links: [
+      { icon: 'github', link: 'https://github.com/Grimston' },
+      { icon: 'cf', link: 'https://codefling.com/grimston' }
+    ]
+  },
+  {
+    avatar: '/team/BillyJoe.webp',
+    name: 'BillyJoe',
+    title: 'Contributor',
+    links: [
+      { icon: 'github', link: 'https://github.com/TravisDevLife' },
+      { icon: 'cf', link: 'https://codefling.com/Billy-Joe' }
+    ]
+  },
+  {
+    avatar: '/team/Farkas.webp',
+    name: 'Farkas',
+    title: 'Contributor',
+    links: [
+      { icon: 'github', link: 'https://github.com/farkas1121' },
+      { icon: 'cf', link: 'https://codefling.com/farkas' }
+    ]
+  },
+  {
+    avatar: '/team/Kopter.webp',
+    name: 'Kopter',
+    title: 'Contributor',
+    links: [
+      { icon: 'github', link: 'https://github.com/kop7er' },
+      { icon: 'cf', link: 'https://codefling.com/kopter' }
+    ]
+  },
+  {
+    avatar: '/team/Hizen.webp',
+    name: 'Hizen',
+    title: 'Contributor',
+    links: [
+      { icon: 'github', link: 'https://github.com/hizenxyz' },
+      { icon: 'cf', link: 'https://codefling.com/hizenxyz' }
+    ]
+  },
+  {
+    avatar: '/team/Whispers88.webp',
+    name: 'Whispers88',
+    title: 'Contributor',
+    links: [
+      { icon: 'github', link: 'https://github.com/Whispers88' },
+      { icon: 'cf', link: 'https://codefling.com/Whispers88' }
+    ]
+  }
+]
+
+const qaMembers = [
+  {
+    avatar: '/team/UKN.webp',
+    name: 'UKN',
+    title: 'Communication',
+  },
+  {
+    avatar: '/team/RustySpoon.webp',
+    name: 'RustySpoon',
+    title: 'Communication',
+  },
+  {
+    avatar: '/team/RAA.webp',
+    name: 'Rust Admin Academy',
+    title: 'Communication',
+    links: [
+      { icon: 'youtube', link: 'https://www.youtube.com/@srtbull' }
+    ]
+  },
+  {
+    avatar: '/team/FP.webp',
+    name: 'Facepunch Studios',
+    title: 'Communication',
+  }
+]
+
+</script>
+
+<h1 style="padding-top: 40px;">Our Team</h1>
+
+<VPTeamMembers size="small" :members=mainMembers />
+
+<h2>Docs</h2>
+<VPTeamMembers size="small" :members=docsMembers />
+
+<h2>Contributors</h2>
+<VPTeamMembers size="small" :members=contributorMembers />
+
+<h2>QA & Special Thanks</h2>
+<VPTeamMembers size="small" :members=qaMembers />

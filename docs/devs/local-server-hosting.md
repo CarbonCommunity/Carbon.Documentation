@@ -1,29 +1,38 @@
-# <CarbonIcons icon="server" /> Local Server Hosting
+<script setup lang="ts">
+import { BugOffIcon, DownloadIcon, ListIcon, PlayIcon, ServerIcon } from 'lucide-vue-next'
+</script>
 
-  This is a guide on how to get started with the Carbon.QuickStart repository on
-  running a local server (for development purposes).
+# <ServerIcon class="carbon-icon" /> Local Server Hosting
 
-## <CarbonIcons icon="download" /> Download
+This is a guide on how to get started with the
+[`Carbon.QuickStart`](https://github.com/CarbonCommunity/Carbon.QuickStart/tree/main/win) repository on
+running a local server (for development purposes).
 
-Go to the [**Carbon.QuickStart**](https://github.com/CarbonCommunity/Carbon.QuickStart/tree/main/win) repository, and download the Windows (`win`) files and place them in a brand new folder in your computer.
+## <DownloadIcon class="carbon-icon" /> Download
 
+1. Visit the [**Carbon.QuickStart**](https://github.com/CarbonCommunity/Carbon.QuickStart/tree/main/win)
+   repository
+2. Download the Windows (`win`) files
+3. Extract contents to a new folder
 
+## <ListIcon class="carbon-icon" /> Batch Steps
 
-## <CarbonIcons icon="list" /> Batch Steps
+Run any `update_*.bat` file corresponding to your preferred Rust/Carbon branch. These files automate:
 
-Run any of the `update_*.bat` files representing different Rust &/or Carbon branches, which will start doing the following:
+1. **SteamCMD Setup**  
+   Downloads & updates SteamCMD in `<root>/steam`
+2. **Carbon Installation**  
+   Fetches selected Carbon branch build to `<root>/server/carbon`
+3. **Rust Server**  
+   Installs Rust dedicated server in `<root>/server`
 
-1. Downloads & updates `steamcmd` (under the `<root>/steam` folder).
-2. Downloads the select Carbon branch build (under the `<root>/server/carbon` folder).
-3. Downloads the Rust dedicated server (under the `<root>/server` folder).
-
-:::tip
-It's all handled by the batch file and no additional work is required!
+:::tip Automation
+The batch files handle everything - no manual intervention required!
 :::
 
-## <CarbonIcons icon="bugoff" /> Debugger (Optional)
+## <BugOffIcon class="carbon-icon" /> Debugger Setup (Optional)
 
-To enable the debugger, which is explained in the **Debugging Plugins** section, open the `<root>/doorstop_config.ini` and change the following values:
+Enable debugging for plugin development by editing `<root>/doorstop_config.ini`:
 
 ```ini
 [UnityMono]
@@ -32,11 +41,19 @@ debug_suspend=true
 debug_address=127.0.0.1:5337
 ```
 
-:::warning IMPORTANT!
-
-Whenever you run the `update_*.bat` file, it's going to override the `<root>/doorstop_config.ini` due to the default settings, so keep in mind.
+:::warning Configuration Note
+Running any `update_*.bat` will overwrite `doorstop_config.ini` with default values.  
+Backup your changes before updating.
 :::
 
-## <CarbonIcons icon="play" /> Run
+:::danger Configuration Note #2
+Be aware that `debug_suspend=true` will prevent the server from starting until you attach a debugger.
+:::
 
-Open it up in a text editor to read up or modify the default values (such as ports, folders, settings, etc.) on your liking. **To start up your server, all you need to do is to run the `run.bat` file.**
+## <PlayIcon class="carbon-icon" /> Run Your Server
+
+1. Edit `run.bat` to configure:
+   - Ports
+   - Folder paths
+   - Server settings
+2. Save changes and double-click `run.bat` to launch

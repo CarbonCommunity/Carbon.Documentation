@@ -1,17 +1,22 @@
 # Carbon.Documentation
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/CarbonCommunity/Carbon.Documentation)
 
-### Simple Instructions
-1. Copy branch using github desktop or similar.
-2. Navigate to folder and open terminal in folder.
-3. Run ``npm add -D vitepress`` and wait for it finish.
-4. Run ``npm install vue --save-dev`` and wait for it to finish.
-5. Edit docs.
-6. Run ``npx vitepress dev docs`` to preview changes.
-7. Edit some more, and watch it live update (OOH FANCY).
-7. Create PR and commit.
+[carbonmod.gg](https://carbonmod.gg/)
 
+This is official repository for documentation of Carbon framework and other useful stuff.
 
-### FrontMatter
-I recommend installing the FrontMatter extension for visual studio. It allows for easy management of the headers and such for each file. It also allows you to run the dev server with just a button push.
+The website is built using [VitePress](https://vitepress.dev/), powered by [Vite](https://vitejs.dev/) and [Vue.js](https://vuejs.org/). It uses [Tailwind CSS v3](https://v3.tailwindcss.com/) for styling.
 
-I'll write instructions for this later, but for now just reach out to be if you wanna use it.
+## Dev Setup
+
+### Recommended IDEs
+
+1. **[VSCode](https://code.visualstudio.com/)** (or any fork of it) – currently has the best support for the packages used in this project: **Vue.js**, **Tailwind**.
+2. **[WebStorm](https://www.jetbrains.com/webstorm/)** – can be used as an alternative to **VSCode**, but lacks some minor features.
+
+### Setting up the server
+
+1. Run `setup.bat` to install all dependencies.
+2. Run `npm run docs:dev` to start the dev server, which will automatically apply any changes you make.
+3. Run `npm run docs:build` to build the site (to ensure everything builds correctly and can be deployed to GitHub Pages without problems).
+4. Run `npm run docs:preview` to preview the documentation built by the previous command.
