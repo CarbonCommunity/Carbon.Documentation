@@ -11,7 +11,8 @@ This is an in-depth walkthrough of migrating an Oxide server over to Carbon.
 After following **Prerequisites** and **Carbon Files Installation** sections below, follow either the **Automatic Migration** or **Manual Migration** section as desired.
 
 :::danger Prerequisites
-Both migration options require first reverting Oxide-patched Facepunch DLLs to vanilla versions. **Oxide and Carbon can NOT coexist** in the same server install, because they do the same thing (albeit via different approaches). Please carefully read the **Migration Prerequisites** section below. :::
+Both migration options require first reverting Oxide-patched Facepunch DLLs to vanilla versions. **Oxide and Carbon can NOT coexist** in the same server install, because they do the same thing (albeit via different approaches). Please carefully read the **Migration Prerequisites** section below.
+:::
 
 ## Migration Prerequisites
 
@@ -28,6 +29,7 @@ You **must** ensure that any tooling that automatically installs/updates Oxide i
 Detailed instructions cannot be provided here; there are many different implementations of this, and they are out of scope for this documentation.
 
 :::tip Carbon has Self Updating as a built-in feature. See **Feature Comparison** below.
+:::
 
 ### Revert Oxide-patched Facepunch DLLs
 
@@ -38,12 +40,14 @@ An example is provided below. **This is just an example.** Your server may diffe
 steamcmd +force_install_dir C:\games\rust +login anonymous +app_update 258550 -beta public validate +quit
 ```
 
-:::tip If steamcmd fails to validate, delete the `steamapps` directory from the root of the server install and try again. :::
+:::tip If steamcmd fails to validate, delete the `steamapps` directory from the root of the server install and try again.
 
-For a deeper clean, you can completely remove the `Managed` folder under `RustDedicated_Data` before running the validate - but note that **this will also wipe out any extension DLLs**, so be sure to copy those somewhere else first. See the **Extensions** section below. :::
+For a deeper clean, you can completely remove the `Managed` folder under `RustDedicated_Data` before running the validate - but note that **this will also wipe out any extension DLLs**, so be sure to copy those somewhere else first. See the **Extensions** section below.
+:::
 
 :::info Carbon and Facepunch DLLs
-With Carbon, your `RustDedicated_Data/Managed` folder will always be untouched from Facepunch's shipped configuration. :::
+With Carbon, your `RustDedicated_Data/Managed` folder will always be untouched from Facepunch's shipped configuration.
+:::
 
 ## Carbon Files Installation
 
@@ -58,7 +62,8 @@ Carbon will detect the remnants of your previous Oxide installation and do the f
 - Moves all extension DLLs found in `RustDedicated_Data/Managed` into Carbon's dedicated `extensions` subdirectory.
 
 :::info One-Time Only
-In order to protect your post-migration setup, this process will only run the **first time** you start your server with Carbon installed. If something goes wrong, read the **Manual** migration per the instructions below. :::
+In order to protect your post-migration setup, this process will only run the **first time** you start your server with Carbon installed. If something goes wrong, read the **Manual** migration per the instructions below.
+:::
 
 ## Manual Migration
 
@@ -71,7 +76,8 @@ Copy or move everything - **except for your `config` folder** _(see below)_ - fr
 ### Config Folder
 
 :::danger Folder Names
-Carbon uses a **different name** for the subfolder that holds your plugin configuration files. :::
+Carbon uses a **different name** for the subfolder that holds your plugin configuration files.
+:::
 
 Copy or move the contents of your Oxide `config` folder to Carbon's `configs` folder.
 
@@ -82,6 +88,7 @@ Alternatively, just remove Carbon's empty `configs` folder, copy or move your Ox
 Move all Oxide extension DLLs from `RustDedicated_Data/Managed` into the `extensions` subfolder of your Carbon install.
 
 :::tip Oxide extension DLLs can be identified by their `Oxide.Ext.*.dll` naming format.
+:::
 
 ### Start
 
@@ -99,7 +106,8 @@ After migration is complete, the `oxide` folder under your server install is no 
 
 Oxide `o.` commands don't work in Carbon. All Carbon commands are prefixed with `c.`.
 
-:::tip If you really want to stick with `o.` for some commands, you can define aliases; look for `alias` in the [Commands](../references/commands/) documentation. :::
+:::tip If you really want to stick with `o.` for some commands, you can define aliases; look for `alias` in the [Commands](../references/commands/) documentation.
+:::
 
 ### Feature Comparison
 <script setup>
