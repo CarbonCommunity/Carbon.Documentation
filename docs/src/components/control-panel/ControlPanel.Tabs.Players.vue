@@ -56,9 +56,6 @@ function refreshPlayers() {
             <a :href="'https://steamcommunity.com/profiles/' + player.SteamID" target="_blank" class="text-xs max-w-fit text-slate-500 hover:text-blue-400 flex items-center gap-1 mt-[1px]">
               <ExternalLink :size="12" /> {{ player.SteamID }}
             </a>
-            <a :href="'https://www.battlemetrics.com/rcon/players?filter%5Bsearch%5D=' + player.SteamID + '&filter%5Bservers%5D=false&filter%5BplayerFlags%5D=&sort=score&showServers=false&method=full'" target="_blank" class="text-xs max-w-fit text-slate-500 hover:text-blue-400 flex items-center gap-1 mt-[1px]">
-            <Link2 :size="12" /> Battlemetrics
-            </a>
           </span>
         </td>
         <td class="text-center text-slate-400/50">
