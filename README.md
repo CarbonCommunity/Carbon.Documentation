@@ -1,5 +1,4 @@
 # Carbon.Documentation
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/CarbonCommunity/Carbon.Documentation)
 
 [carbonmod.gg](https://carbonmod.gg/)
 
