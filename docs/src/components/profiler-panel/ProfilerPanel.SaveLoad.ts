@@ -1,6 +1,6 @@
 import { BinaryReader } from '@/utils/BinaryReader';
 import { ref } from 'vue';
-import pako from 'pako'
+import * as pako from 'pako'
 
 export const selectedAssembly = ref<AssemblyName | null>(null)
 export const currentProfile = ref<Profile | null>(null)

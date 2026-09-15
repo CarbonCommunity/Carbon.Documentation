@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { Info, Minus, Plus, X } from 'lucide-vue-next'
-import pako from 'pako'
+import * as pako from 'pako'
 import { loadProfile, currentProfile, ProfileTypes, Assembly, Call, Memory, load, selectedAssembly } from './ProfilerPanel.SaveLoad'
 import { base64ToU8 } from '../control-panel/ControlPanel.Profiler'
 import { BinaryReader } from '@/utils/BinaryReader'
