@@ -161,6 +161,7 @@ export default defineConfig({
                 { text: 'Client Entities', link: '/devs/features/client-entities' },
                 { text: 'Commands', link: '/devs/features/commands' },
                 { text: 'Conditionals', link: '/devs/features/conditionals' },
+                { text: 'Data Files', link: '/devs/features/data-files' },
                 { text: 'Extensions', link: '/devs/features/extensions' },
                 { text: 'LUI (Lightweight UI)', link: '/devs/features/lightweight-ui' },
                 { text: 'Custom Vitals Manager', link: '/devs/features/custom-vitals-manager' },
