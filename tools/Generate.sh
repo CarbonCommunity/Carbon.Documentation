@@ -85,9 +85,9 @@ echo "::group::Server Run"
     +server.level "CraggyIsland" -insecure \
     -logfile 2>&1
 
-echo "::endgroup::"
-
 EXIT_CODE=$?
+
+echo "::endgroup::"
 
 set -e
 
