@@ -85,9 +85,9 @@ echo "::group::Server Run"
     -aimanager.nav_disable 1 \
     -disable-server-occlusion -disable-server-occlusion-rocks -disableconsolelog -skipload -noconsole \
     +server.level "CraggyIsland" -insecure \
-    -logfile 2>&1
+    -logfile 2>&1 | tee "$SERVER/server.log"
 
-EXIT_CODE=$?
+EXIT_CODE=${PIPESTATUS[0]}
 
 echo "::endgroup::"
 
@@ -98,6 +98,18 @@ if [ $EXIT_CODE -eq 0 ] || [ $EXIT_CODE -eq 137 ]; then
 else
     echo "Server failed with unexpected exit code: $EXIT_CODE"
     exit $EXIT_CODE
+fi
+
+SKIPPED=$(grep -c "Skipped type" "$SERVER/server.log" || true)
+
+if [ "$SKIPPED" -gt 0 ]; then
+    echo "::error::CodeGen skipped $SKIPPED hook types"
+    exit 1
+fi
+
+if ! grep -q "GENERATOR DONE" "$SERVER/server.log"; then
+    echo "::error::CodeGen did not finish"
+    exit 1
 fi
 
 exit 0
