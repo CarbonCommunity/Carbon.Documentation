@@ -62,6 +62,8 @@ echo 'regex:^(?!.*/StreamingAssets/)(?!.*items/.*\.json$).*$' > filelist.txt
 
 echo "::endgroup::"
 
+rm -f "$SERVER"/RustDedicated_Data/Managed/{Microsoft.CodeAnalysis,Microsoft.CodeAnalysis.CSharp,System.Collections.Immutable,System.Reflection.Metadata}.dll
+
 cd "$SERVER" || exit
 echo "Starting server..."
 
