@@ -1,4 +1,4 @@
-﻿#!/bin/bash
+#!/bin/bash
 
 set -e
 
@@ -62,6 +62,8 @@ echo 'regex:^(?!.*/StreamingAssets/)(?!.*items/.*\.json$).*$' > filelist.txt
 
 echo "::endgroup::"
 
+rm -f "$SERVER"/RustDedicated_Data/Managed/{Microsoft.CodeAnalysis,Microsoft.CodeAnalysis.CSharp,System.Collections.Immutable,System.Reflection.Metadata}.dll
+
 cd "$SERVER" || exit
 echo "Starting server..."
 
@@ -83,11 +85,11 @@ echo "::group::Server Run"
     -aimanager.nav_disable 1 \
     -disable-server-occlusion -disable-server-occlusion-rocks -disableconsolelog -skipload -noconsole \
     +server.level "CraggyIsland" -insecure \
-    -logfile 2>&1
+    -logfile 2>&1 | tee "$SERVER/server.log"
+
+EXIT_CODE=${PIPESTATUS[0]}
 
 echo "::endgroup::"
-
-EXIT_CODE=$?
 
 set -e
 
@@ -96,6 +98,18 @@ if [ $EXIT_CODE -eq 0 ] || [ $EXIT_CODE -eq 137 ]; then
 else
     echo "Server failed with unexpected exit code: $EXIT_CODE"
     exit $EXIT_CODE
+fi
+
+SKIPPED=$(grep -c "Skipped type" "$SERVER/server.log" || true)
+
+if [ "$SKIPPED" -gt 0 ]; then
+    echo "::error::CodeGen skipped $SKIPPED hook types"
+    exit 1
+fi
+
+if ! grep -q "GENERATOR DONE" "$SERVER/server.log"; then
+    echo "::error::CodeGen did not finish"
+    exit 1
 fi
 
 exit 0
