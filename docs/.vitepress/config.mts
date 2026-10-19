@@ -162,6 +162,7 @@ export default defineConfig({
                 { text: 'Commands', link: '/devs/features/commands' },
                 { text: 'Conditionals', link: '/devs/features/conditionals' },
                 { text: 'Extensions', link: '/devs/features/extensions' },
+                { text: 'Lang (Localization)', link: '/devs/features/lang' },
                 { text: 'LUI (Lightweight UI)', link: '/devs/features/lightweight-ui' },
                 { text: 'Custom Vitals Manager', link: '/devs/features/custom-vitals-manager' },
                 { text: 'Modifiers', link: '/devs/features/modifiers' },
