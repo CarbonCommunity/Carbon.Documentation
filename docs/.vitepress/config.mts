@@ -169,6 +169,7 @@ export default defineConfig({
                 { text: 'Profiler (Mono)', link: '/devs/features/mono-profiler' },
                 { text: 'Timers', link: '/devs/features/timers' },
                 { text: 'Vault', link: '/devs/features/vault' },
+                { text: 'Web Requests', link: '/devs/features/web-requests' },
                 { text: 'ZIP Scripts', link: '/devs/features/zip-script-packages' },
               ],
             },

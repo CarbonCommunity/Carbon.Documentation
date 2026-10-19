@@ -36,7 +36,7 @@ public override async ValueTask OnAsyncServerShutdown()
     // Simulate a 3-second cleanup task.
     await AsyncEx.WaitForSeconds(3f);
 
-    // Wait for a full web request call
+    // Wait for a full web request call — see [Web Requests](/devs/features/web-requests)
     await webrequest.EnqueueAsync(
         "https://google.com", 
         null, 
