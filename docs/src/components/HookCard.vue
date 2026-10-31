@@ -89,18 +89,16 @@ function getExampleCode(hook: Hook): string {
             <a
               :href="isCtrlPressed ? `?s=${hook.FullName}` : undefined"
               :class="[
-                'relative transform transition-all duration-200 ease-in-out',
-                'bg-gradient-to-r from-violet-500 via-fuchsia-500 to-purple-500 bg-clip-text',
+                'relative bg-clip-text',
                 'after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full',
                 'after:rounded-full after:bg-gradient-to-r after:from-violet-500 after:via-fuchsia-500 after:to-purple-500',
-                'after:origin-left after:transition-transform after:duration-200 after:ease-in-out',
+                'after:origin-left after:transition-transform after:duration-200 after:ease-out',
                 isCtrlPressed
                   ? [
-                      'font-semibold text-transparent hover:text-transparent',
-                      'hover:text-gray-600 dark:hover:text-gray-300',
-                      'after:scale-x-100 hover:scale-[1.02]',
+                      'bg-gradient-to-r from-violet-500 via-fuchsia-500 to-purple-500 text-transparent',
+                      'transition-colors duration-200 ease-out after:scale-x-100 hover:brightness-125',
                     ]
-                  : ['after:scale-x-0'],
+                  : ['[transition:color_200ms_cubic-bezier(0,0,0.2,1),background-image_0s_200ms_allow-discrete] after:scale-x-0'],
               ]"
               title="Hold CTRL for quick open"
               >{{ hook.FullName }}</a

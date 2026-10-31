@@ -37,7 +37,7 @@ const pageSize = 50
 const highlighter = shallowRef<Highlighter | null>(null)
 provide('highlighter', readonly(highlighter))
 
-const isCtrlPressed = useKeyModifier<boolean>('Control', { initial: false })
+const isCtrlPressed = useKeyModifier<boolean>('Control', { initial: false, events: ['mousedown', 'mouseup', 'mousemove', 'keydown', 'keyup'] })
 
 const filteredList = computed(() => {
   if (!list.value?.length) {
