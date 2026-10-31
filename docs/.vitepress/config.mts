@@ -110,6 +110,7 @@ export default defineConfig({
                 { text: 'CarbonAuto', link: '/owners/features/carbonauto' },
                 { text: 'WebControlPanel', link: '/owners/features/webcontrolpanel' },
                 { text: 'Profiler (Mono)', link: '/devs/features/mono-profiler' },
+                { text: 'Carbon RSM', link: '/owners/features/carbon-rsm' },
               ],
             },
             {
