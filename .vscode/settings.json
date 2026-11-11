@@ -1,32 +1,18 @@
 {
-  "files.exclude": {
-    "**/.git": true,
-    "**/.svn": true,
-    "**/.hg": true,
-    "**/.DS_Store": true,
-    "**/Thumbs.db": true
-  },
   "[markdown]": {
-    "editor.fontSize": 14,
-    "editor.lineHeight": 26,
-    "editor.wordWrap": "wordWrapColumn",
-    "editor.wordWrapColumn": 128,
-    "editor.lineNumbers": "off",
-    "editor.quickSuggestions": {
-      "comments": "off",
-      "strings": "off",
-      "other": "off"
-    },
-    "editor.minimap.enabled": false,
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
-  "frontMatter.panel.openOnSupportedFile": false,
-  "vue.server.includeLanguages": ["vue", "markdown"],
-  "[json,jsonc,css,html]": {
+  "[json][jsonc][css][html]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
-  "[vue,js,ts,mts]": {
+  "[vue][javascript][typescript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.tabSize": 2
-  }
+  },
+  "vue.server.includeLanguages": ["vue", "markdown"],
+  "javascript.preferences.quoteStyle": "single",
+  "javascript.format.semicolons": "remove",
+  "typescript.preferences.quoteStyle": "single",
+  "typescript.format.semicolons": "remove",
+  "files.insertFinalNewline": true
 }

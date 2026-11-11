@@ -4,8 +4,8 @@ description: Welcome to using Carbon! Getting started should be fairly simple, e
 slug: getting-started
 ---
 
-![alt](/logos/carbon-banner-dark-small.webp){.dark-only}
-![alt](/logos/carbon-banner-light-small.webp){.light-only}
+![alt](/logos/carbon-banner-dark-small.webp){.dark-only width=720px height=128px}
+![alt](/logos/carbon-banner-light-small.webp){.light-only width=720px height=128px}
 
 :::info
 **Carbon** is a modding framework that is dedicated to take care of all background processing and execution of
@@ -34,6 +34,10 @@ This is the download list for all official files redistributed with Carbon:
 3. Restart the server and enjoy.
 
 More detailed instructions can be found in the [Installing Carbon](./installing-carbon.md) section.
+:::
+
+:::danger Minimal Build
+[Here](/owners/features/minimal) you can find more about **Minimal** build
 :::
 
 ## Downloads

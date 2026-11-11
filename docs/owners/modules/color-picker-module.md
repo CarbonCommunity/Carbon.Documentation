@@ -9,13 +9,13 @@ interactive and animated UI component that allows players to visually select col
 
 ## Overview
 
-![Color Picker](/misc/colorpicker_a.webp)
+![Color Picker](/misc/colorpicker_a.webp){width=1640px height=502px}
 
 - **Class Name:** `ColorPickerModule`
 - **Enabled by default:** Yes
 - **Force enabled:** Yes (cannot be disabled)
 - **Supports Configuration:** No
-- **Source:** [`Carbon.Common/ColorPickerModule`](https://github.com/CarbonCommunity/Carbon.Common/blob/develop/src/Carbon/Modules/ColorPickerModule/ColorPickerModule.cs)
+- **Source:** [`Carbon.Common/ColorPickerModule`](https://github.com/CarbonCommunity/Carbon/tree/main/src/Carbon.Components/Carbon.Common/src/Carbon/Modules/ColorPickerModule/ColorPickerModule.cs)
 - **Forces Modded Tag:** No
 
 This module is intended for use by **other plugins** to enable color selection through a UI interface. It includes

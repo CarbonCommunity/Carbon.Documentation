@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -14,6 +15,7 @@ using API.Commands;
 using Carbon.Components;
 using Carbon.Extensions;
 using Carbon.Pooling;
+using Facepunch;
 using HarmonyLib;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
@@ -59,23 +61,34 @@ public class CodeGen : CarbonPlugin
 
 	private static async ValueTask Generate()
 	{
-		Generate_Items();
-		Generate_Entities();
-		Generate_Prefabs();
-		Generate_Blueprints();
-		Generate_LootTables();
-		await DownloadOxideToTemp();
-		Generate_Hooks();
-		Generate_Commands();
-		Generate_ConVars();
-		Generate_Rust_ConVars();
-		Generate_Rust_Commands();
-		Generate_Switches();
+		try
+		{
+			Directory.CreateDirectory(Path.Combine("carbon", "results"));
+
+			Generate_Items();
+			Generate_Entities();
+			Generate_Prefabs();
+			Generate_Blueprints();
+			Generate_LootTables();
+			await DownloadOxideToTemp();
+			Generate_Hooks();
+			Generate_Commands();
+			Generate_ConVars();
+			Generate_Rust_ConVars();
+			Generate_Rust_Commands();
+			Generate_Switches();
+
+			Logger.Log("GENERATOR DONE");
+		}
+		catch (Exception e)
+		{
+			Logger.Error($"Shit hit the bed", e);
+		}
 	}
 
 	private static void Generate_Items()
 	{
-		var items = ItemManager.itemList.Select(Item.Parse<Item>).ToList();
+		var items = ItemManager.itemList.Select(x => Item.Parse<Item>(x, [])).ToList();
 
 		OsEx.File.Create(Path.Combine("carbon", "results", "items.json"), JsonConvert.SerializeObject(items, Formatting.Indented));
 	}
@@ -156,28 +169,33 @@ public class CodeGen : CarbonPlugin
 	private static void Generate_Entities()
 	{
 		var entities = new List<Entity>();
+		var bundleBackend = FileSystem.Backend as AssetBundleBackend;
 
-		foreach (var prefab in FileSystem.Backend.cache)
+		foreach (var scene in bundleBackend.assetScenePrefabs)
 		{
-			if (prefab.Value is GameObject go)
+			foreach (var prefab in scene.Value)
 			{
-				var entity = go.GetComponent<BaseNetworkable>();
-
-				if (entity == null)
+				var asset = bundleBackend.Load<GameObject>(prefab.Key);
+				if (asset is GameObject go)
 				{
-					continue;
+					var entity = go.GetComponent<BaseEntity>();
+
+					if (entity == null)
+					{
+						continue;
+					}
+
+					entities.Add(new Entity
+					{
+						Path = prefab.Key,
+						Name = prefab.Value.name,
+						ID = StringPool.Get(prefab.Key),
+						Components = go.GetComponents<MonoBehaviour>().Where(x => x != null).Select(x => x.GetType().FullName).ToArray(),
+					});
 				}
-
-				entities.Add(new Entity
-				{
-					Type = entity.GetType().FullName,
-					Path = prefab.Key,
-					Name = prefab.Value.name,
-					ID = entity.prefabID,
-					Components = entity.GetComponents<MonoBehaviour>().Where(x => x != null).Select(x => x.GetType().FullName).ToArray(),
-				});
 			}
 		}
+
 
 		OsEx.File.Create(Path.Combine("carbon", "results", "entities.json"), JsonConvert.SerializeObject(entities, Formatting.Indented));
 	}
@@ -185,25 +203,30 @@ public class CodeGen : CarbonPlugin
 	private static void Generate_Prefabs()
 	{
 		var prefabs = new List<Entity>();
+		var bundleBackend = FileSystem.Backend as AssetBundleBackend;
 
-		foreach (var prefab in FileSystem.Backend.cache)
+		foreach (var scene in bundleBackend.assetScenePrefabs)
 		{
-			if (prefab.Value is GameObject go)
+			foreach (var prefab in scene.Value)
 			{
-				var entity = go.GetComponent<BaseEntity>();
-
-				if (entity != null)
+				var asset = bundleBackend.Load<GameObject>(prefab.Key);
+				if (asset is GameObject go)
 				{
-					continue;
+					var entity = go.GetComponent<BaseEntity>();
+
+					if (entity != null)
+					{
+						continue;
+					}
+
+					prefabs.Add(new Entity
+					{
+						Path = prefab.Key,
+						Name = prefab.Value.name,
+						ID = StringPool.Get(prefab.Key),
+						Components = go.GetComponents<MonoBehaviour>().Where(x => x != null).Select(x => x.GetType().FullName).ToArray(),
+					});
 				}
-
-				prefabs.Add(new Entity
-				{
-					Path = prefab.Key,
-					Name = prefab.Value.name,
-					ID = StringPool.Get(prefab.Key),
-					Components = go.GetComponents<MonoBehaviour>().Where(x => x != null).Select(x => x.GetType().FullName).ToArray(),
-				});
 			}
 		}
 
@@ -219,8 +242,8 @@ public class CodeGen : CarbonPlugin
 			blueprints.Add(new Blueprint
 			{
 				Ingredients = blueprint.ingredients
-					.Select(x => new Blueprint.Ingredient { Item = Item.Parse<Item>(x.itemDef), Amount = x.amount }).ToArray(),
-				Item = Item.Parse<Item>(blueprint.targetItem),
+					.Select(x => new Blueprint.Ingredient { Item = Item.Parse<Item>(x.itemDef, []), Amount = x.amount }).ToArray(),
+				Item = Item.Parse<Item>(blueprint.targetItem, []),
 				UserCraftable = blueprint.userCraftable,
 				Rarity = blueprint.rarity,
 				CraftAmount = blueprint.amountToCreate,
@@ -230,7 +253,7 @@ public class CodeGen : CarbonPlugin
 				NeedsSteamItem = blueprint.NeedsSteamItem,
 				NeedsSteamDLC = blueprint.NeedsSteamDLC,
 				Time = blueprint.time,
-				RequireUnlockedItem = blueprint.RequireUnlockedItem != null ? Item.Parse<Item>(blueprint.RequireUnlockedItem) : null,
+				RequireUnlockedItem = blueprint.RequireUnlockedItem != null ? Item.Parse<Item>(blueprint.RequireUnlockedItem, []) : null,
 			});
 		}
 
@@ -261,7 +284,7 @@ public class CodeGen : CarbonPlugin
 				{
 					table.Items = container.lootDefinition.items.Select(x =>
 					{
-						var item = Item.Parse<LootTable.RangeItem>(x.itemDef);
+						var item = Item.Parse<LootTable.RangeItem>(x.itemDef, []);
 						item.Amount = x.amount;
 						item.MaxAmount = x.maxAmount;
 
@@ -275,7 +298,7 @@ public class CodeGen : CarbonPlugin
 					{
 						Items = x.definition.items.Select(y =>
 						{
-							var item = Item.Parse<LootTable.RangeItem>(y.itemDef);
+							var item = Item.Parse<LootTable.RangeItem>(y.itemDef, []);
 							item.Amount = y.amount;
 							item.MaxAmount = y.maxAmount;
 
@@ -307,26 +330,35 @@ public class CodeGen : CarbonPlugin
 				var name = assembly.GetName().Name;
 				foreach (var type in assembly.GetTypes())
 				{
-					var hookAttributes = type.GetCustomAttributes();
-					var attributes = hookAttributes as Attribute[] ?? hookAttributes.ToArray();
-					if (!attributes.Any())
+					try
 					{
-						continue;
-					}
+						var hookAttributes = type.GetCustomAttributes();
+						var attributes = hookAttributes as Attribute[] ?? hookAttributes.ToArray();
+						if (!attributes.Any())
+						{
+							continue;
+						}
 
-					var hook = CarbonHook.Parse(attributes, name.Equals("Carbon.Hooks.Oxide"));
-					if (!hook.isValid)
+						var hook = CarbonHook.Parse(attributes, name.Equals("Carbon.Hooks.Oxide"));
+						if (!hook.isValid)
+						{
+							continue;
+						}
+
+						hooks.Add(hook);
+					}
+					catch (Exception e)
 					{
-						continue;
+						Logger.Warn($"Skipped type '{type.FullName}'");
+						Logger.Warn(e);
 					}
-
-					hooks.Add(hook);
 				}
 			}
-			catch
+			catch (Exception e)
 			{
 				var name = assembly.GetName();
-				Logger.Warn($"Skipped '{name.Name} {name.Version}'");
+				Logger.Warn($"Skipped assembly '{name.Name} {name.Version}'");
+				Logger.Warn(e);
 			}
 		}
 
@@ -336,6 +368,34 @@ public class CodeGen : CarbonPlugin
 				                  !x.Name.StartsWith("i", StringComparison.CurrentCultureIgnoreCase)) || x.Name.Equals("Init") ||
 				                 x.Name.Equals("InitLogging")).GroupBy(x => x.Category)
 					.ToDictionary(key => key.Key, value => value.ToArray()), Formatting.Indented));
+
+		Generate_HooksResearch(hooks);
+
+		Logger.Log("Hooks done");
+	}
+
+	private static void Generate_HooksResearch(List<CarbonHook> hooks)
+	{
+		var names = new Dictionary<string, ResearchHook>();
+		foreach (var hook in hooks)
+		{
+			if (hook.Name.Contains("patch", CompareOptions.IgnoreCase))
+			{
+				continue;
+			}
+
+			ResearchHook researchHook = default;
+			researchHook.Source = hook.MethodSource;
+			names[hook.Name] = researchHook;
+		}
+
+		OsEx.File.Create(Path.Combine("carbon", "results", "hooks_research.json"), JsonConvert.SerializeObject(names, Formatting.Indented));
+		Logger.Log("Hook research done");
+	}
+
+	private struct ResearchHook
+	{
+		public string Source;
 	}
 
 	private static void Generate_Switches()
@@ -361,11 +421,15 @@ public class CodeGen : CarbonPlugin
 		var latest = JObject.Parse(
 			(await core.webrequest.EnqueueAsync("https://api.github.com/repos/OxideMod/Oxide.Rust/releases/latest", null, null, core))
 			.ResponseObject as string);
-		var oxideLatest = latest["assets"][1]["browser_download_url"].ToObject<string>();
-		var zip = (await core.webrequest.EnqueueDataAsync(oxideLatest, null, null, core)).ResponseObject as byte[];
-		var oxideZipPath = Path.Combine(Defines.GetTempFolder(), "oxide.zip");
-		await File.WriteAllBytesAsync(oxideZipPath, zip);
-		ZipFile.ExtractToDirectory(oxideZipPath, Defines.GetTempFolder(), true);
+		Logger.Log($"Downloading Oxide to temp {(latest != null ? "passed" : "failed")}..");
+		if (latest != null)
+		{
+			var oxideLatest = latest["assets"][1]["browser_download_url"].ToObject<string>();
+			var zip = (await core.webrequest.EnqueueDataAsync(oxideLatest, null, null, core)).ResponseObject as byte[];
+			var oxideZipPath = Path.Combine(Defines.GetTempFolder(), "oxide.zip");
+			await File.WriteAllBytesAsync(oxideZipPath, zip);
+			ZipFile.ExtractToDirectory(oxideZipPath, Defines.GetTempFolder(), true);
+		}
 	}
 
 	public static string GetFriendlyType(string type, string empty = "null")
@@ -425,7 +489,217 @@ public class CodeGen : CarbonPlugin
 			return "string[]";
 		}
 
-		return type.Replace("+", ".");
+		if (type == typeof(long).FullName)
+		{
+			return "long";
+		}
+
+		if (type == typeof(short).FullName)
+		{
+			return "short";
+		}
+
+		if (type == typeof(ushort).FullName)
+		{
+			return "ushort";
+		}
+
+		if (type == typeof(byte).FullName)
+		{
+			return "byte";
+		}
+
+		if (type == typeof(sbyte).FullName)
+		{
+			return "sbyte";
+		}
+
+		if (type == typeof(char).FullName)
+		{
+			return "char";
+		}
+
+		if (type == typeof(decimal).FullName)
+		{
+			return "decimal";
+		}
+
+		if (type.EndsWith("[]"))
+		{
+			return $"{GetFriendlyType(type.Remove(type.Length - 2), empty)}[]";
+		}
+
+		return ExpandGenerics(type).Replace("+", ".");
+	}
+
+	public static string GetFriendlyType(Type type, string empty = "null")
+	{
+		if (type == null)
+		{
+			return empty;
+		}
+
+		if (type.IsGenericParameter)
+		{
+			return type.Name;
+		}
+
+		if (!type.IsGenericType)
+		{
+			return GetFriendlyType(type.FullName, empty);
+		}
+
+		var definition = type.GetGenericTypeDefinition().FullName ?? type.Name;
+		var arity = definition.IndexOf('`');
+		if (arity >= 0)
+		{
+			definition = definition.Remove(arity);
+		}
+
+		var arguments = type.GetGenericArguments().Select(x => GetFriendlyType(x, empty));
+		return $"{definition.Replace("+", ".")}<{string.Join(", ", arguments)}>";
+	}
+
+	private static string ExpandGenerics(string type)
+	{
+		var arity = type.IndexOf('`');
+		if (arity < 0)
+		{
+			return type;
+		}
+
+		var open = type.IndexOf('[', arity);
+		if (open < 0)
+		{
+			return type.Remove(arity);
+		}
+
+		var close = FindClosingBracket(type, open);
+		if (close < 0)
+		{
+			return type;
+		}
+
+		var arguments = SplitTopLevel(type.Substring(open + 1, close - open - 1))
+			.Select(x => GetFriendlyType(TrimAssemblyQualification(x)));
+
+		return $"{type.Remove(arity)}<{string.Join(", ", arguments)}>{ExpandGenerics(type.Substring(close + 1))}";
+	}
+
+	private static string TrimAssemblyQualification(string argument)
+	{
+		argument = argument.Trim();
+		if (argument.Length > 1 && argument[0] == '[' && argument[argument.Length - 1] == ']')
+		{
+			argument = argument.Substring(1, argument.Length - 2);
+		}
+
+		var parts = SplitTopLevel(argument);
+		return parts.Count == 0 ? argument : parts[0].Trim();
+	}
+
+	private static int FindClosingBracket(string value, int open)
+	{
+		var depth = 0;
+		for (var i = open; i < value.Length; i++)
+		{
+			if (value[i] == '[')
+			{
+				depth++;
+			}
+			else if (value[i] == ']' && --depth == 0)
+			{
+				return i;
+			}
+		}
+
+		return -1;
+	}
+
+	private static List<string> SplitTopLevel(string value)
+	{
+		var parts = new List<string>();
+		var depth = 0;
+		var start = 0;
+		for (var i = 0; i < value.Length; i++)
+		{
+			var character = value[i];
+			if (character == '[')
+			{
+				depth++;
+			}
+			else if (character == ']')
+			{
+				depth--;
+			}
+			else if (character == ',' && depth == 0)
+			{
+				parts.Add(value.Substring(start, i - start));
+				start = i + 1;
+			}
+		}
+
+		parts.Add(value.Substring(start));
+		return parts;
+	}
+
+	private static string ToIdentifier(string value)
+	{
+		var builder = new StringBuilder();
+		foreach (var character in value)
+		{
+			if (char.IsLetterOrDigit(character) || character == '_')
+			{
+				builder.Append(character);
+			}
+		}
+
+		var identifier = builder.ToString();
+		if (identifier.Length == 0)
+		{
+			return "value";
+		}
+
+		if (char.IsDigit(identifier[0]))
+		{
+			return $"_{identifier}";
+		}
+
+		return ReservedKeywords.Contains(identifier) ? $"@{identifier}" : identifier;
+	}
+
+	private static readonly HashSet<string> ReservedKeywords = new HashSet<string>
+	{
+		"abstract", "as", "base", "bool", "break", "byte", "case", "catch", "char", "checked", "class", "const",
+		"continue", "decimal", "default", "delegate", "do", "double", "else", "enum", "event", "explicit", "extern",
+		"false", "finally", "fixed", "float", "for", "foreach", "goto", "if", "implicit", "in", "int", "interface",
+		"internal", "is", "lock", "long", "namespace", "new", "null", "object", "operator", "out", "override",
+		"params", "private", "protected", "public", "readonly", "ref", "return", "sbyte", "sealed", "short",
+		"sizeof", "stackalloc", "static", "string", "struct", "switch", "this", "throw", "true", "try", "typeof",
+		"uint", "ulong", "unchecked", "unsafe", "ushort", "using", "virtual", "void", "volatile", "while"
+	};
+
+	private static string GetIdentifierFromType(string type)
+	{
+		var segments = type.Split('.', '+');
+		for (var i = segments.Length - 1; i >= 0; i--)
+		{
+			var segment = segments[i];
+			if (segment.Length == 0 || segment[0] == '<')
+			{
+				continue;
+			}
+
+			var arity = segment.IndexOf('`');
+			if (arity > 0)
+			{
+				segment = segment.Remove(arity);
+			}
+
+			return ToIdentifier($"{char.ToLower(segment[0])}{segment.Substring(1)}");
+		}
+
+		return "value";
 	}
 
 	public static string GetParameterName(Type type)
@@ -474,7 +748,9 @@ public class CodeGen : CarbonPlugin
 		public ItemDefinition.Flag Flags;
 		public ItemCategory Category;
 		public Rarity Rarity;
+		public Item RedirectOf;
 		public SteamDlcItem SteamDlcItem;
+		public SteamStoreItem SteamStoreItem;
 		public string[] ItemMods;
 		public Ser_ItemModDeployable ItemMod_Deployable;
 		public Ser_ItemModEntity ItemMod_Entity;
@@ -484,7 +760,7 @@ public class CodeGen : CarbonPlugin
 		public Ser_ItemModCompostable ItemMod_Compostable;
 		public Ser_ItemModFoodSpoiling ItemMod_FoodSpoiling;
 
-		public static T Parse<T>(ItemDefinition definition) where T : Item
+		public static T Parse<T>(ItemDefinition definition, HashSet<ItemDefinition> visitedDefinitions) where T : Item
 		{
 			var instance = Activator.CreateInstance<T>();
 
@@ -497,12 +773,30 @@ public class CodeGen : CarbonPlugin
 			instance.Flags = definition.flags;
 			instance.Category = definition.category;
 			instance.Rarity = definition.rarity;
+			if (definition.isRedirectOf != null && definition.isRedirectOf != definition)
+			{
+				if (visitedDefinitions.Add(definition.isRedirectOf))
+				{
+					instance.RedirectOf = Parse<T>(definition.isRedirectOf, visitedDefinitions);
+				}
+			}
+
 			if (definition.steamDlc != null)
 			{
 				instance.SteamDlcItem = new SteamDlcItem
 				{
 					Name = definition.steamDlc.dlcName.english,
 					AppId = definition.steamDlc.dlcAppID,
+				};
+			}
+
+			if (definition.steamItem != null)
+			{
+				instance.SteamStoreItem = new SteamStoreItem
+				{
+					Id = definition.steamItem.id,
+					Name = definition.steamItem.displayName.english,
+					WorkshopId = definition.steamItem.workshopID
 				};
 			}
 
@@ -684,6 +978,13 @@ public class CodeGen : CarbonPlugin
 		public int AppId;
 	}
 
+	public class SteamStoreItem
+	{
+		public int Id;
+		public string Name;
+		public ulong WorkshopId;
+	}
+
 	public class Entity : Prefab
 	{
 		public static T Parse<T>(BaseEntity entity) where T : Entity
@@ -720,7 +1021,7 @@ public class CodeGen : CarbonPlugin
 		public int ScrapRequired;
 		public int ScrapFromRecycle;
 		public int WorkbenchLevelRequired;
-		public Item RequireUnlockedItem;
+		public Item? RequireUnlockedItem;
 		public bool NeedsSteamItem;
 		public bool NeedsSteamDLC;
 
@@ -733,8 +1034,8 @@ public class CodeGen : CarbonPlugin
 
 	public class LootTable : Entity
 	{
-		public RangeItem[] Items = [];
-		public SpawnSlotItem[] SpawnSlotItems = [];
+		public RangeItem[] Items;
+		public SpawnSlotItem[] SpawnSlotItems;
 		public int ScrapAmount;
 		public LootContainer.spawnType SpawnType;
 
@@ -746,7 +1047,7 @@ public class CodeGen : CarbonPlugin
 
 		public class SpawnSlotItem
 		{
-			public RangeItem[] Items = [];
+			public RangeItem[] Items;
 			public int NumberToSpawn;
 			public float Probability;
 		}
@@ -795,33 +1096,61 @@ public class CodeGen : CarbonPlugin
 		public string Category;
 		public Parameter[] Parameters;
 
-		public string ParametersText => string.Join(", ", Parameters.Select(x => $"{GetFriendlyType(x.typeName)} {x.name}{(x.optional ? " = default" : string.Empty)}"));
+		public string ParametersText => string.Join(", ",
+			Parameters.Select(x =>
+				$"{(x.byRef ? "ref " : string.Empty)}{GetFriendlyType(x.typeName)} {x.name}{(x.optional && !x.byRef ? " = default" : string.Empty)}"));
 
 		public HookFlags Flags;
 		public string[] Descriptions;
 		public bool CarbonCompatible;
 		public bool OxideCompatible;
 
-		public string TargetName => target?.FullName;
-		public string MethodName => method?.Name;
+		public string TargetName => target;
+		public string MethodName => method;
 		public string AssemblyName => assembly?.GetName().Name;
-		public string ReturnTypeName => GetFriendlyType(returnType?.FullName, "void");
+		public string ReturnTypeName => GetFriendlyType(returnType, "void");
+
+		public string ReturnBehavior
+		{
+			get
+			{
+				if (!returnDeclared)
+				{
+					return "Unspecified";
+				}
+
+				if (returnDiscarded)
+				{
+					return "Discarded";
+				}
+
+				if (returnType == null || returnType == typeof(void))
+				{
+					return "Cancel";
+				}
+
+				return returnContinues ? "Modify" : "Override";
+			}
+		}
+
 		public string MethodSource;
 
-		[JsonIgnore] private Type target;
-		[JsonIgnore] private MethodInfo method;
+		[JsonIgnore] private string target;
+		[JsonIgnore] private string method;
 		[JsonIgnore] private Assembly assembly;
 		[JsonIgnore] private Type returnType;
+		[JsonIgnore] private bool returnContinues;
+		[JsonIgnore] private bool returnDiscarded;
+		[JsonIgnore] private bool returnDeclared;
 		[JsonIgnore] public int iteration;
 		[JsonIgnore] public readonly bool isValid => !string.IsNullOrEmpty(Name);
 
 		public struct Parameter
 		{
 			public string name;
-			public string typeName => type.FullName.Replace("+", ".");
-			public string typeFriendly => GetFriendlyType(type.FullName);
-			[JsonIgnore] public Type type;
+			public string typeName;
 			public bool optional;
+			public bool byRef;
 		}
 
 		public static CarbonHook Parse(Attribute[] attributes, bool isOxideHooks)
@@ -843,7 +1172,7 @@ public class CodeGen : CarbonPlugin
 			var parametersType = enumerable.FirstOrDefault()?.GetType();
 			CarbonHook hook = default;
 			var methodName = patchType.GetProperty("Method").GetValue(patch) as string;
-			var methodArgs = patchType.GetProperty("MethodArgs").GetValue(patch) as Type[];
+			var methodArgs = patchType.GetProperty("MethodArgs").GetValue(patch) as string[];
 			hook.Name = patchType.GetProperty("Name").GetValue(patch) as string;
 			hook.Id = HookStringPool.GetOrAdd(hook.Name);
 			hook.FullName = patchType.GetProperty("FullName").GetValue(patch) as string;
@@ -857,9 +1186,12 @@ public class CodeGen : CarbonPlugin
 				iterations[hook.FullName] = 1;
 			}
 
-			hook.target = patchType.GetProperty("Target").GetValue(patch) as Type;
-			hook.assembly = hook.target?.Assembly;
+			hook.target = patchType.GetProperty("Target").GetValue(patch) as string;
+			hook.assembly = hook.target != null ? AccessToolsEx.TypeByName(hook.target)?.Assembly : null;
+			hook.returnDeclared = returnType != null;
 			hook.returnType = returnType?.GetType().GetProperty("Type").GetValue(returnType) as Type;
+			hook.returnContinues = returnType?.GetType().GetProperty("Continues")?.GetValue(returnType) as bool? ?? false;
+			hook.returnDiscarded = returnType?.GetType().GetProperty("Discarded")?.GetValue(returnType) as bool? ?? false;
 			hook.CarbonCompatible = true;
 			hook.OxideCompatible = isOxideHooks || isOxideCompatible;
 			if (optionsType != null)
@@ -870,15 +1202,15 @@ public class CodeGen : CarbonPlugin
 			hook.Parameters = enumerable.Select(x =>
 			{
 				var name = parametersType.GetProperty("Name").GetValue(x) as string;
-				var type = parametersType.GetProperty("Type").GetValue(x) as Type;
-				if (name.Equals("self", StringComparison.CurrentCultureIgnoreCase))
-				{
-					name = char.ToLower(type.Name[0]) + type.Name.Substring(1, type.Name.Length - 1);
-				}
+				var type = parametersType.GetProperty("Type").GetValue(x) as string;
+				name = name.Equals("self", StringComparison.CurrentCultureIgnoreCase)
+					? GetIdentifierFromType(type)
+					: ToIdentifier(name);
 
 				return new Parameter
 				{
-					name = name, type = type, optional = (bool)parametersType.GetProperty("Optional").GetValue(x),
+					name = name, typeName = type, optional = (bool)parametersType.GetProperty("Optional").GetValue(x),
+					byRef = parametersType.GetProperty("ByRef")?.GetValue(x) as bool? ?? false,
 				};
 			}).ToArray();
 			var researchedHook = HooksAIResearch.hooks.FirstOrDefault(x => x.hook.Equals(hook.Name));
@@ -889,16 +1221,7 @@ public class CodeGen : CarbonPlugin
 
 			if (!string.IsNullOrEmpty(methodName))
 			{
-				if (methodArgs == null)
-				{
-					hook.method = hook.target?.GetMethod(methodName, 0) ??
-					              hook.target?.GetMethods().FirstOrDefault(x => x.Name.Equals(methodName));
-				}
-				else
-				{
-					hook.method = hook.target?.GetMethod(methodName, methodArgs) ??
-					              hook.target?.GetMethods().FirstOrDefault(x => x.Name.Equals(methodName));
-				}
+				hook.method = methodName;
 			}
 
 			hook.Category = category?.GetType().GetProperty("Name").GetValue(category) as string ?? "Global";
@@ -908,7 +1231,7 @@ public class CodeGen : CarbonPlugin
 				{
 					var oxidePath = Path.Combine(Defines.GetTempFolder(), "RustDedicated_Data", "Managed", $"{hook.AssemblyName}.dll");
 					hook.MethodSource = SourceCodeBank.Parse(File.Exists(oxidePath) ? oxidePath : hook.assembly.Location)
-						.ParseMethod(hook.target.FullName, hook.method.Name);
+						.ParseMethod(hook.target, hook.method);
 				}
 			}
 

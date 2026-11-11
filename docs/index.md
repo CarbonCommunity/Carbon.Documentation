@@ -4,12 +4,12 @@ layout: home
 hero:
   name: "Carbon"
   text: "Modding Framework"
-  tagline: A self-updating & lightweight mod loader for Rust running latest C# and Harmony for the best performance, fully compatible with Oxide.
+  tagline: A drop-in replacement for Oxide modding framework for Rust game servers. Featuring self-updating, SQL permissions and an in-game interface to install, update and configure plugins.
   actions:
     - theme: brand
       text: Get Carbon
       icon: github
-      link: https://github.com/CarbonCommunity/Carbon/releases/latest
+      link: /owners/getting-started#releases
     - theme: alt
       text: Owner Docs
       link: /owners/getting-started
@@ -19,6 +19,9 @@ hero:
     - theme: alt
       text: Hooks
       link: /references/hooks
+    - theme: alt
+      text: Join Discord
+      link: https://discord.gg/carbonmod
 
 features:
   - title: High Performance
@@ -28,10 +31,10 @@ features:
     details: We have made it very easy to make the switch from Oxide to Carbon by keeping the folder/plugin structure the same. <a class="textLink" href="/owners/oxide-porting">Learn more</a>
     icon: 🎯
   - title: Scalability
-    details: Carbon super lightweight by only providing the very essential hooks needed, keeping things vanilla when there are no changes made by plugins.
+    details: Carbon is super lightweight by only providing the very essential hooks needed, keeping things vanilla when there are no changes made by plugins.
     icon: ⚖️
   - title: Permissions
-    details: We have created a more optimized modular permission system that allows for users to create their own serializers. <a class="textLink" href="/devs/features/permissions">Learn more</a>
+    details: We have created a more optimized modular permission system that allows users to create their own serializers. <a class="textLink" href="/devs/features/permissions">Learn more</a>
     icon: ⚙️
   - title: Dynamic Hooks
     details: Hooks are loaded dynamically to ensure only the hooks used by plugins are loaded. This eliminates a ton of redundant calls and will improve performance. <a class="textLink" href="/references/hooks">Learn more</a>
@@ -43,7 +46,41 @@ features:
 
 <script setup>
 import { VPTeamMembers } from 'vitepress/theme'
+import { onMounted } from 'vue'
 
+onMounted(() => {
+  const rnd = Math.random()
+  if (rnd > 0.1169 / 100) {
+    return
+  }
+  const walker = document.createTreeWalker(
+    document.body,
+    NodeFilter.SHOW_TEXT,
+    null,
+    false
+  )
+
+  const replacements = {
+    'c#': '👀#',
+    'carbon': 'Yarbon',
+    'oxide': 'Rexide',
+    'rust': 'Rust🦀',
+    'best': 'beast',
+    'modding': 'Modden',
+    'framework': 'Fremwerk',
+    'codefling': 'coolfling'
+  }
+
+  const pattern = new RegExp(Object.keys(replacements).join('|'), 'gi')
+  
+  let node
+  while (node = walker.nextNode()) {
+    node.textContent = node.textContent.replace(pattern, match => {
+      const key = match.toLowerCase()
+      return replacements[key]
+    })
+  }
+})
 const mainMembers = [
   {
     avatar: '/team/Raul.webp',
@@ -58,10 +95,18 @@ const mainMembers = [
   {
     avatar: '/team/Death.webp',
     name: 'Death',
-    title: 'Co-Producer',
+    title: 'Producer',
     links: [
       { icon: 'github', link: 'https://github.com/Deathicated' },
       { icon: 'cf', link: 'https://codefling.com/death' }
+    ]
+  },
+  {
+    avatar: '/team/evs-ptr.webp',
+    name: 'Evora',
+    title: 'Developer',
+    links: [
+      { icon: 'github', link: 'https://github.com/evs-ptr' }
     ]
   },
   {
@@ -70,15 +115,6 @@ const mainMembers = [
     title: 'Moderator',
     links: [
       { icon: 'cf', link: 'https://codefling.com/mals' }
-    ]
-  },
-  {
-    avatar: '/team/Steenamaroo.webp',
-    name: 'Steenamaroo',
-    title: 'Emotional Support',
-    links: [
-      { icon: 'github', link: 'https://github.com/steenamaroo' },
-      { icon: 'cf', link: 'https://codefling.com/steenamaroo' }
     ]
   }
 ]
@@ -100,14 +136,6 @@ const docsMembers = [
     links: [
       { icon: 'github', link: 'https://github.com/purnellbp' },
       { icon: 'cf', link: 'https://codefling.com/goo_' }
-    ]
-  },
-  {
-    avatar: '/team/evs-ptr.webp',
-    name: 'evs-ptr',
-    title: 'Documentation',
-    links: [
-      { icon: 'github', link: 'https://github.com/evs-ptr' }
     ]
   }
 ]
@@ -209,14 +237,32 @@ const contributorMembers = [
       { icon: 'github', link: 'https://github.com/Whispers88' },
       { icon: 'cf', link: 'https://codefling.com/Whispers88' }
     ]
+  }
+]
+
+const qaMembers = [
+  {
+    avatar: '/team/UKN.webp',
+    name: 'UKN',
+    title: 'Communication',
   },
   {
-    avatar: '/team/Raichu.webp',
-    name: 'Raichu',
-    title: 'Bug Finder',
+    avatar: '/team/RustySpoon.webp',
+    name: 'RustySpoon',
+    title: 'Communication',
+  },
+  {
+    avatar: '/team/RAA.webp',
+    name: 'Rust Admin Academy',
+    title: 'Communication',
     links: [
-      { icon: 'cf', link: 'https://codefling.com/Raichu' }
+      { icon: 'youtube', link: 'https://www.youtube.com/@srtbull' }
     ]
+  },
+  {
+    avatar: '/team/FP.webp',
+    name: 'Facepunch Studios',
+    title: 'Communication',
   }
 ]
 
@@ -229,5 +275,8 @@ const contributorMembers = [
 <h2>Docs</h2>
 <VPTeamMembers size="small" :members=docsMembers />
 
-<h2>Contributor</h2>
+<h2>Contributors</h2>
 <VPTeamMembers size="small" :members=contributorMembers />
+
+<h2>QA & Special Thanks</h2>
+<VPTeamMembers size="small" :members=qaMembers />

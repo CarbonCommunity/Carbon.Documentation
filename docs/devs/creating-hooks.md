@@ -5,6 +5,25 @@ slug: creating-hooks
 type: page
 ---
 
+<script lang="ts" setup>
+import { ref, onMounted } from 'vue'
+
+const hookInput = ref('MyHook')
+const hookInputResult = ref('...')
+
+onMounted(async () => {
+    await getHookId(hookInput.value)
+})
+
+async function getHookId(input: string) {
+    hookInputResult.value = '...'
+    const response = await fetch('https://api.carbonmod.gg/mdhash/?hook=' + input)
+    let data = await response.text()
+    hookInputResult.value = data
+} 
+
+</script>
+
 # Hooks
 
 Here's a brief overview on how to create and add new hooks in Carbon, as well as adding hooks that are only processed by
@@ -95,12 +114,8 @@ identifiers as they're way faster to process.
 
 > The hook IDs are generated the same way Rust uses with `StringPool` to get numeric identifiers out of string values.
 
-You can generate your own hook identifier, [using our API](https://api.carbonmod.gg/mdhash/?hook=MyHookName).
-It should look something like this: `499798872`, which then used in the HookCaller, you use it like this:
-
-```csharp
-HookCaller.CallStaticHook(499798872, /*params*/);
-```
+To generate your own hook identifier, put the hook name here: <code><input v-model="hookInput" class="w-28" placeholder="MyHook" @keyup.enter="getHookId(hookInput)"></input></code><br>
+<span class="text-xs text-slate-400">Your hook call will look like this:</span> <code>HookCaller.CallStaticHook({{hookInputResult}}, /\*params\*/);</code>
 
 :::
 
@@ -199,7 +214,7 @@ public class Collaborate : CarbonPlugin
 
 :::info
 Learn more about
-[`AutoPatch`](https://github.com/CarbonCommunity/Carbon.Common/blob/develop/src/Oxide/Attributes/OxideAttributes.cs#L7).
+[`AutoPatch`](https://github.com/CarbonCommunity/Carbon/tree/main/src/Carbon.Components/Carbon.Common/src/Oxide/Attributes/OxideAttributes.cs#L7).
 :::
 
 ### Manual Patching

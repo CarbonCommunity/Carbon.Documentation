@@ -78,7 +78,6 @@
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: #4a4a4a #2a2a2a;
 }
 
 html.dark .light-only {
@@ -309,6 +308,12 @@ html:not(.dark) .dark-only {
   position: relative;
 }
 
+@media (min-width: 960px) {
+  .VPHero .tagline {
+    font-size: 20px;
+  }
+}
+
 /* Force image section to be visible */
 .VPHero .image {
   display: block !important;
@@ -350,7 +355,7 @@ html:not(.dark) .dark-only {
 }
 
 .VPHero .image-container::after {
-  background-image: url('/logos/carbon-hero-bg.webp');
+  /* background-image: url('/logos/carbon-hero-bg.webp'); */
   background-size: 100%;
   opacity: 0.8;
   z-index: 1;
@@ -409,7 +414,7 @@ body::after {
 }
 
 .image-bg {
-  background-image: url("/logos/carbon-hero-bg.webp");
+  /* background-image: url("/logos/carbon-hero-bg.webp"); */
 }
 
 .vpi-social-cf {
@@ -430,4 +435,10 @@ body::after {
   .VPTeamMembers.small .container {
     grid-template-columns: repeat(auto-fit, minmax(134px, 1fr)) !important;
   }
+}
+
+.carbon-icon {
+  display: inline-flex;
+  position: relative;
+  top: -2px;
 }

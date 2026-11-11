@@ -6,7 +6,7 @@ aside: false
 ---
 
 <script setup>
-    import ItemPage from '@/components/ItemPage.vue'
+    import RustItemPage from '@/components/RustItemPage.vue'
 </script>
 
-<ItemPage />
+<RustItemPage />
