@@ -1,4 +1,9 @@
-# <CarbonIcons icon="database" /> Creating Your Project
+<script setup lang="ts">
+import CarbonButton from '@/components/CarbonButton.vue'
+import { BedIcon, CloudDownloadIcon, DatabaseIcon, DownloadIcon, FilePenIcon, FilePlusIcon, FolderPlusIcon, PlayIcon, PowerIcon, ScrollTextIcon, SnailIcon } from 'lucide-vue-next'
+</script>
+
+# <DatabaseIcon class="carbon-icon" /> Creating Your Project
 
 This section will guide you through creating your project and linking it to a local development server.
 
@@ -16,7 +21,7 @@ development environment for Carbon plugins.
 - Preconfigured `.csproj` file pointing to `Carbon.targets`
 - Self-contained local server within the project folder
 
-<CarbonButton href="https://cdn.carbonmod.gg/TemplateProject.zip" text="TemplateProject.zip" icon="clouddownload" external/> 
+<CarbonButton href="https://cdn.carbonmod.gg/TemplateProject.zip" text="TemplateProject.zip" :icon="CloudDownloadIcon" external/> 
 == Instructions
 1. Download `TemplateProject.zip` and move it to:
    `%USERPROFILE%\Documents\Visual Studio 2022\Templates\ProjectTemplates\`
@@ -27,7 +32,7 @@ development environment for Carbon plugins.
 6. Restart Visual Studio after the server boots
 :::
 
-## <CarbonIcons icon="clouddownload" /> Choosing an IDE
+## <CloudDownloadIcon class="carbon-icon" /> Choosing an IDE
 
 For optimal development, install either:
 
@@ -38,7 +43,7 @@ For optimal development, install either:
 This tutorial assumes you're using **VS2022**
 :::
 
-## <CarbonIcons icon="folderplus" /> Step 1: Create Your Directory Structure
+## <FolderPlusIcon class="carbon-icon" /> Step 1: Create Your Directory Structure
 
 Create a base directory (e.g., `F:\RustModding`) with two subfolders:
 
@@ -50,7 +55,7 @@ Create a base directory (e.g., `F:\RustModding`) with two subfolders:
 Keep folders close to your root directory to avoid issues.
 :::
 
-## <CarbonIcons icon="download" /> Step 2: Download the Carbon QuickStart Files
+## <DownloadIcon class="carbon-icon" /> Step 2: Download the Carbon QuickStart Files
 
 Download from the [Carbon QuickStart Repository](https://github.com/CarbonCommunity/Carbon.QuickStart/tree/main/win) and
 place contents in `Carbon Server`.
@@ -59,7 +64,7 @@ place contents in `Carbon Server`.
 See [Installation Instructions](/devs/local-server-hosting) for server setup details.
 :::
 
-## <CarbonIcons icon="scrolltext" /> Step 3: Update Carbon
+## <ScrollTextIcon class="carbon-icon" /> Step 3: Update Carbon
 
 Run the `update_edge.bat` file inside the Carbon Server folder. This will download the latest files required for Carbon
 to function.
@@ -74,7 +79,7 @@ For specific branches, run corresponding update files:
 
 :::
 
-## <CarbonIcons icon="filepenline" /> Step 4: Configure the Server
+## <FilePenIcon class="carbon-icon" /> Step 4: Configure the Server
 
 Edit `run.bat` to modify server settings like name and ports.
 
@@ -84,11 +89,11 @@ Make sure you change your password to something unique.
 If your password is the default password, your **RCon** will not work.
 :::
 
-## <CarbonIcons icon="play" /> Step 5: Start the Server
+## <PlayIcon class="carbon-icon" /> Step 5: Start the Server
 
 Run `run.bat` and wait for the server to fully boot.
 
-## <CarbonIcons icon="filepenline" /> Step 6: Enable Developer Mode
+## <FilePenIcon class="carbon-icon" /> Step 6: Enable Developer Mode
 
 1. Navigate to `<root>/carbon/config.json`
 2. Set `DeveloperMode` to `true`
@@ -98,11 +103,11 @@ Developer Mode saves patched DLLs to `carbon/developer/patched_assemblies/` for 
 by `Carbon.targets`.
 :::
 
-## <CarbonIcons icon="fileplus" /> Step 7: Create Plugin Project
+## <FilePlusIcon class="carbon-icon" /> Step 7: Create Plugin Project
 
 When prompted to choose a framework, select `.NET Framework 4.8` and proceed with the project creation.
 
-## <CarbonIcons icon="filepenline" /> Step 8: Modify the Project File
+## <FilePenIcon class="carbon-icon" /> Step 8: Modify the Project File
 
 Inside your newly created project, locate the `.csproj` file. Open it in a text editor and add the following line on the
 second line of the file:
@@ -113,7 +118,7 @@ second line of the file:
 
 This ensures that your project has access to the necessary Carbon assemblies. Save the file once done.
 
-## <CarbonIcons icon="power" /> Step 9: Restart Your IDE
+## <PowerIcon class="carbon-icon" /> Step 9: Restart Your IDE
 
 To apply the changes, close and reopen your IDE.
 
@@ -125,9 +130,9 @@ to start creating plugins for Carbon.
 🎉 Happy Coding! 🚀
 
 <p>
-  <CarbonIcons icon="snail" /> Snail for good luck!
+  <SnailIcon class="carbon-icon" /> Snail for good luck!
 </p>
 
 <p>
-  <CarbonIcons icon="bed" /> bed
+  <BedIcon class="carbon-icon" /> bed
 </p>

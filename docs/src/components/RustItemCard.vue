@@ -67,6 +67,9 @@ function getFlags(flags: number) {
         </template>
         <VPBadge v-if="item.Category != 0" :text="getItemCategoryText(item.Category)" />
         <VPBadge v-if="item.Rarity != 0" :text="getItemRarityText(item.Rarity)" />
+        <VPBadge type="warning" v-if="item.SteamDlcItem" text="DLC Item" />
+        <VPBadge type="warning" v-if="item.SteamStoreItem" text="Store Item" />
+        <VPBadge type="warning" v-if="item.RedirectOf" text="Store Skin Item" />
       </div>
       <p v-if="item.Description" class="text-sm text-gray-600 dark:text-gray-400">
         {{ item.Description }}

@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { useDebounceFn, useUrlSearchParams } from '@vueuse/core'
 import { ChevronDown, Search } from 'lucide-vue-next'
-import { onMounted, ref, watch } from 'vue'
+import { nextTick, onMounted, ref, watch } from 'vue'
 
 const debounceTimeout = 350
 
-const { placeholder, isExpandable, initialExpanded } = defineProps<{
+const { placeholder, isSticky, isExpandable, initialExpanded } = defineProps<{
   placeholder?: string
+  isSticky?: boolean
   isExpandable?: boolean
   initialExpanded?: boolean
 }>()
@@ -43,38 +44,43 @@ const debounceSearchValue = useDebounceFn(updateDebouncedSearch, debounceTimeout
 
 function handleUrlSearch(val: string) {
   const decoded = decodeSearchTerm(val)
+
   if (decoded && decoded != debouncedSearchValue.value) {
     updateDebouncedSearch(decoded)
   }
 }
 
-function updateParams(val: string | undefined) {
+async function updateParams(val: string | undefined) {
+
   if (val != undefined) {
+    await nextTick()
     params.s = encodeSearchTerm(val)
   }
 }
 
-watch(debouncedSearchValue, (newVal) => {
-  updateParams(newVal)
+watch(debouncedSearchValue, async (newVal) => {
+  await updateParams(newVal)
 })
 
 onMounted(() => {
   if (params.s) {
     handleUrlSearch(params.s.toString())
   }
-  updateParams(debouncedSearchValue.value)
 })
 </script>
 
 <template>
-  <div class="relative rounded-xl bg-zinc-100/40 px-4 py-4 backdrop-blur-sm dark:bg-gray-800/40" :class="{ 'pb-4': isExpandable }">
+  <div
+    class="relative rounded-xl bg-zinc-100/40 px-4 py-4 backdrop-blur-sm dark:bg-gray-800/40"
+    :class="{ 'pb-4': isExpandable, 'min-[960px]:sticky min-[960px]:top-[4.5rem] min-[960px]:z-10': isSticky }"
+  >
     <div class="flex min-h-8 flex-col items-start gap-4 sm:flex-row sm:items-center">
-      <div class="flex flex-1 items-center gap-4">
+      <div class="flex w-full flex-1 items-center gap-4">
         <slot name="icon">
           <Search class="text-gray-400" :size="20" />
         </slot>
         <input
-          class="w-full"
+          class="w-full text-sm sm:text-base"
           :placeholder="placeholder ?? 'Search for...'"
           type="text"
           :value="debouncedSearchValue"

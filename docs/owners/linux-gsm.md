@@ -5,7 +5,7 @@ slug: linux-gsm
 ---
 
 # 🐧 Linux Game Server Managers
-![LinuxGSM](/misc/linuxgsm.webp)
+![LinuxGSM](/misc/linuxgsm.webp){width=1640px height=502px}
 
 ## Setup
 

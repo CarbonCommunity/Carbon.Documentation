@@ -20,7 +20,7 @@ Carbon.
 - **Purpose:** Simplified, high-performance UI construction and manipulation
 - **Dependencies:** `CUI`, `ImageDatabaseModule`
 - **Source**:
-  [`Carbon.Common/LUI.cs`](https://github.com/CarbonCommunity/Carbon.Common/blob/develop/src/Carbon/Components/LUI.cs)
+  [`Carbon.Common/LUI.cs`](https://github.com/CarbonCommunity/Carbon/tree/main/src/Carbon.Components/Carbon.Common/src/Carbon/Components/LUI.cs)
 
 ## Getting Started
 
@@ -383,5 +383,5 @@ Debug.Log(cui.v2.ToJson());
 ---
 
 For a full list of component types, fonts, alignments, and helper methods, see the
-[`LUI.cs`](https://github.com/CarbonCommunity/Carbon.Common/blob/develop/src/Carbon/Components/LUI.cs)
+[`LUI.cs`](https://github.com/CarbonCommunity/Carbon/tree/main/src/Carbon.Components/Carbon.Common/src/Carbon/Components/LUI.cs)
 source and support classes.

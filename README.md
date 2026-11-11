@@ -1,5 +1,6 @@
 # Carbon.Documentation
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/CarbonCommunity/Carbon.Documentation)
+
+[carbonmod.gg](https://carbonmod.gg/)
 
 This is official repository for documentation of Carbon framework and other useful stuff.
 

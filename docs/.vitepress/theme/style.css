@@ -308,6 +308,12 @@ html:not(.dark) .dark-only {
   position: relative;
 }
 
+@media (min-width: 960px) {
+  .VPHero .tagline {
+    font-size: 20px;
+  }
+}
+
 /* Force image section to be visible */
 .VPHero .image {
   display: block !important;
@@ -429,4 +435,10 @@ body::after {
   .VPTeamMembers.small .container {
     grid-template-columns: repeat(auto-fit, minmax(134px, 1fr)) !important;
   }
+}
+
+.carbon-icon {
+  display: inline-flex;
+  position: relative;
+  top: -2px;
 }

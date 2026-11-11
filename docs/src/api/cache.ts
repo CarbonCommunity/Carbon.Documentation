@@ -58,7 +58,7 @@ class VersionManager {
         // Use AbortController where available to implement a 3-second timeout
         if (typeof AbortController !== 'undefined') {
           abortController = new AbortController()
-          timeoutId = setTimeout(() => abortController?.abort(), 3_000)
+          timeoutId = setTimeout(() => abortController?.abort(), 7_000)
         }
 
         const response = await fetch(url, {

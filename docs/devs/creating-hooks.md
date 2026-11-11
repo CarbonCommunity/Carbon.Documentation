@@ -214,7 +214,7 @@ public class Collaborate : CarbonPlugin
 
 :::info
 Learn more about
-[`AutoPatch`](https://github.com/CarbonCommunity/Carbon.Common/blob/develop/src/Oxide/Attributes/OxideAttributes.cs#L7).
+[`AutoPatch`](https://github.com/CarbonCommunity/Carbon/tree/main/src/Carbon.Components/Carbon.Common/src/Oxide/Attributes/OxideAttributes.cs#L7).
 :::
 
 ### Manual Patching

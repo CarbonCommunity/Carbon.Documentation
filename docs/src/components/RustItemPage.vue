@@ -151,6 +151,9 @@ watch(
               <template v-for="flag in getItemFlagText(item.Flags)" :key="flag">
                 <VPBadge type="danger" :text="flag" />
               </template>
+              <VPBadge type="warning" v-if="item.SteamDlcItem" text="DLC Item" />
+              <VPBadge type="warning" v-if="item.SteamStoreItem" text="Store Item" />
+              <VPBadge type="warning" v-if="item.RedirectOf" text="Store Skin Item" />
             </div>
           </div>
 

@@ -9,12 +9,12 @@ messages.
 
 ## Overview
 
-![Whitelist Module](/misc/whitelist_a.webp)
+![Whitelist Module](/misc/whitelist_a.webp){width=1640px height=502px}
 
 - **Class Name:** `WhitelistModule`
 - **Enabled by default:** No
 - **Supports Configuration:** Yes
-- **Source:** [`Carbon.Modules/WhitelistModule`](https://github.com/CarbonCommunity/Carbon.Modules/tree/develop/src/WhitelistModule)
+- **Source:** [`Carbon.Modules/WhitelistModule`](https://github.com/CarbonCommunity/Carbon/tree/main/src/Carbon.Components/Carbon.Modules/src/WhitelistModule)
 - **Forces Modded Tag:** No
 
 This module enforces a simple, permission-based access list when players attempt to connect.

@@ -264,8 +264,8 @@ onMounted(async () => {
     <template #top>
       <SearchBar
         v-model="debouncedSearchValue"
-        placeholder="Search servers..."
-        class="sticky top-16 z-10 min-[960px]:top-20"
+        placeholder="Search servers... (hostname, IP, map, raw tags)"
+        :isSticky="true"
         :isExpandable="true"
         :initialExpanded="true"
       >
@@ -310,7 +310,7 @@ onMounted(async () => {
           :is-fetched-rest-data="isFetchedRest"
         />
         <!-- TODO: switch to virtual list -->
-        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
+        <div class="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-3">
           <template v-for="server in renderedList" :key="server.id">
             <ServerBrowserCard :server="server" />
           </template>

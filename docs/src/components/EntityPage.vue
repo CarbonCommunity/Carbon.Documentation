@@ -13,7 +13,7 @@ const copiedId = ref<string | number | null>(null)
 const imageError = ref(false)
 
 const timerDelay = 4000
-let timerSwitch: NodeJS.Timeout = null!
+let timerSwitch: ReturnType<typeof setTimeout> = null!
 
 const copyToClipboard = async (text: string, id: string | number | null = null) => {
   try {

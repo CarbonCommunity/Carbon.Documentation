@@ -64,8 +64,13 @@ const interpolateColor = computed(() => {
 })
 
 interface TagGroup {
-  tags: string[]
+  tags: Tag[]
   type: 'region' | 'wipe' | 'difficulty' | 'feature' | 'mod'
+}
+
+interface Tag {
+  tag: string
+  rawTag: string
 }
 
 const tagToRegion = new Map([
@@ -106,6 +111,7 @@ const compressedTagToFeature = new Map([
 const compressedTagToMod = new Map([
   ['z', 'Modded'],
   ['o', 'Oxide'],
+  ['o^z', 'Oxide (m)'],
   ['y', 'Carbon'],
 ])
 
@@ -121,31 +127,33 @@ const processedTags = computed(() => {
   const tags = new Set(server.tags?.split(',').map((tag) => tag.trim()) || [])
   const result = {
     groups: [] as TagGroup[],
-    displayTags: [] as string[],
+    displayTags: [] as Tag[],
   }
 
   const wipeGroup: TagGroup = { tags: [], type: 'wipe' }
   const difficultyGroup: TagGroup = { tags: [], type: 'difficulty' }
   const featureGroup: TagGroup = { tags: [], type: 'feature' }
   const modGroup: TagGroup = { tags: [], type: 'mod' }
-  let region = ''
+  let region: Tag = { tag: '', rawTag: '' }
 
   for (const tag of tags) {
     if (tagToRegion.has(tag)) {
-      region = tagToRegion.get(tag) || ''
+      region = { tag: tagToRegion.get(tag) || '', rawTag: tag }
       continue
     }
 
     if (tag.startsWith('^')) {
       const compressedTag = tag.slice(1)
       if (compressedTagToWipe.has(compressedTag)) {
-        wipeGroup.tags.push(compressedTagToWipe.get(compressedTag) || '')
+        wipeGroup.tags.push({ tag: compressedTagToWipe.get(compressedTag) || '', rawTag: tag })
       } else if (compressedTagToDifficulty.has(compressedTag)) {
-        difficultyGroup.tags.push(compressedTagToDifficulty.get(compressedTag) || '')
+        difficultyGroup.tags.push({ tag: compressedTagToDifficulty.get(compressedTag) || '', rawTag: tag })
       } else if (compressedTagToFeature.has(compressedTag)) {
-        featureGroup.tags.push(compressedTagToFeature.get(compressedTag) || '')
+        featureGroup.tags.push({ tag: compressedTagToFeature.get(compressedTag) || '', rawTag: tag })
       } else if (compressedTagToMod.has(compressedTag)) {
-        modGroup.tags.push(compressedTagToMod.get(compressedTag) || '')
+        modGroup.tags.push({ tag: compressedTagToMod.get(compressedTag) || '', rawTag: tag })
+      } else {
+        result.displayTags.push({ tag, rawTag: tag })
       }
       continue
     }
@@ -153,7 +161,15 @@ const processedTags = computed(() => {
     if (tag.startsWith('born')) {
       const epoch = parseInt(tag.slice(4))
       if (!isNaN(epoch) && epoch > 0) {
-        result.displayTags.push(`WIPED: ${epochToDate(epoch)}`)
+        result.displayTags.push({ tag: `WIPED: ${epochToDate(epoch)}`, rawTag: tag })
+        continue
+      }
+    }
+
+    if (tag.startsWith('ts')) {
+      const teamSize = parseInt(tag.slice(2))
+      if (!isNaN(teamSize)) {
+        result.displayTags.push({ tag: `MAX TEAM: ${teamSize}`, rawTag: tag })
         continue
       }
     }
@@ -170,7 +186,7 @@ const processedTags = computed(() => {
       !tag.startsWith('h') &&
       !tag.startsWith('stok')
     ) {
-      result.displayTags.push(tag)
+      result.displayTags.push({ tag, rawTag: tag })
     }
   }
 
@@ -208,18 +224,18 @@ const processedTags = computed(() => {
       </div>
 
       <div class="flex flex-wrap gap-x-1.5 gap-y-1">
-        <span v-if="processedTags.region" class="tag tag-region">
-          {{ processedTags.region }}
+        <span v-if="processedTags.region && processedTags.region.tag" class="tag tag-region" :title="processedTags.region.rawTag">
+          {{ processedTags.region.tag }}
         </span>
 
         <template v-for="group in processedTags.groups" :key="group.type">
-          <span v-for="tag in group.tags" :key="tag" :class="['tag', `tag-${group.type}`]">
-            {{ tag }}
+          <span v-for="tag in group.tags" :key="tag.rawTag" :class="['tag', `tag-${group.type}`]" :title="tag.rawTag">
+            {{ tag.tag }}
           </span>
         </template>
 
-        <span v-for="tag in processedTags.displayTags" :key="tag" class="tag">
-          {{ tag }}
+        <span v-for="tag in processedTags.displayTags" :key="tag.rawTag" class="tag" :title="tag.rawTag">
+          {{ tag.tag }}
         </span>
       </div>
 
@@ -236,41 +252,40 @@ const processedTags = computed(() => {
 
 <style scoped>
 .server-card {
-  transition: all 0.2s ease;
-  border: 1px solid #222222;
+  @apply border border-zinc-300 transition-all duration-200 dark:border-zinc-800;
 }
 
 .server-card:hover {
-  border-color: #333333;
+  @apply border border-zinc-400 dark:border-zinc-700;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .tag {
-  @apply rounded-md border border-black/[0.07] bg-black/5 px-1.5 py-0.5 text-[0.65rem] dark:border-white/[0.07] dark:bg-white/5;
+  @apply rounded-md border border-zinc-600/30 bg-zinc-500/10 px-1.5 py-0.5 text-[0.65rem] text-zinc-600 transition-colors dark:border-zinc-500/20 dark:bg-zinc-600/10 dark:text-zinc-400;
 }
 
 .tag:hover {
-  @apply bg-black/10 dark:bg-white/10;
+  @apply bg-black/[0.08] dark:bg-white/[0.08];
 }
 
 .tag-region {
-  @apply border-blue-500/20 bg-blue-500/10 text-blue-400;
+  @apply border-blue-600/30 bg-blue-500/10 text-blue-600 dark:border-blue-500/20 dark:bg-blue-600/10 dark:text-blue-400;
 }
 
 .tag-wipe {
-  @apply border-green-500/20 bg-green-500/10 text-green-400;
+  @apply border-green-600/30 bg-green-500/10 text-green-600 dark:border-green-500/20 dark:bg-green-600/10 dark:text-green-400;
 }
 
 .tag-difficulty {
-  @apply border-yellow-500/20 bg-yellow-500/10 text-yellow-400;
+  @apply border-yellow-600/30 bg-yellow-500/10 text-yellow-600 dark:border-yellow-500/20 dark:bg-yellow-600/10 dark:text-yellow-400;
 }
 
 .tag-feature {
-  @apply border-purple-500/20 bg-purple-500/10 text-purple-400;
+  @apply border-purple-600/30 bg-purple-500/10 text-purple-600 dark:border-purple-500/20 dark:bg-purple-600/10 dark:text-purple-400;
 }
 
 .tag-mod {
-  @apply border-red-500/20 bg-red-500/10 text-red-400;
+  @apply border-red-600/30 bg-red-500/10 text-red-600 dark:border-red-500/20 dark:bg-red-600/10 dark:text-red-400;
 }
 </style>

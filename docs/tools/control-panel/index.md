@@ -1,7 +1,7 @@
 ---
 layout: page
 title: Control Panel
-description: A WebRCon-based connection with a vastly detailed control panel for remote admin control.
+description: A Carbon-aware remote admin dashboard — console, chat, players, permissions, entities, plugins and the profiler, straight from your browser.
 sidebar: false
 ---
 

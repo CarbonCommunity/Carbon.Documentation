@@ -1,9 +1,0 @@
----
-description: 
-globs: 
-alwaysApply: true
----
-This is vitepress (v1.6.3) project. It uses Vue (v3.5.14), vite , Composition API, typescript (always).
-And has some essential packages: VueUse (v13.2.0), vue-draggable-plus (v0.6.0), tailwind (v3.4.17).
-Project is about providing documentation for plugin framework of game Rust.
-It's focused on perfomance, efficiency, usability and be modern.

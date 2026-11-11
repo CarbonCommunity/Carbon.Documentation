@@ -29,8 +29,10 @@ const references = [
 
 const tools = [
   { text: 'Control Panel (RCon)', link: '/tools/control-panel/' },
+  { text: 'Profiler Panel', link: '/tools/profiler-panel/' },
   { text: 'Server Browser', link: '/tools/server-browser/' },
   { text: 'Changelog Generator', link: '/tools/changelog-generator/' },
+  { text: 'Layout Designer', link: '/tools/layout-designer/' },
 ]
 
 const siteDescription = 'A fully up-to-date documentation of all things: Carbon, Rust references and somewhat Oxide.'
@@ -41,6 +43,7 @@ export default defineConfig({
   base: '/',
   head: [
     ['link', { rel: 'icon', href: '/favicon.ico' }],
+    ['link', { rel: 'alternate', type: 'application/rss+xml', title: 'Carbon News', href: '/rss.xml' }],
     ['meta', { name: 'viewport', content: 'width=device-width, initial-scale=1.0' }],
     ['meta', { property: 'og:site_name', content: 'Carbon Documentation' }],
     ['meta', { property: 'og:type', content: 'website' }],
@@ -65,16 +68,25 @@ export default defineConfig({
       md.use(tabsMarkdownPlugin)
     },
   },
+  appearance: 'force-dark',
   themeConfig: {
     logo: '/logos/carbon-logo-small.webp',
     outlineTitle: 'On this page',
     nav: [
       { text: 'Home', link: '/' },
-      { text: 'Owners', link: '/owners/getting-started' },
-      { text: 'Developers', link: '/devs/local-server-hosting' },
+      { text: 'News', link: '/news' },
+      { text: 'Tutorials', link: '/tutorials' },
+      {
+        text: 'Documentation',
+        items: [
+          { text: 'Owners', link: '/owners/getting-started' },
+          { text: 'Developers', link: '/devs/local-server-hosting' },
+        ],
+      },
       { text: 'References', items: references },
-      { text: 'Release Notes', link: '/references/release-notes/' },
       { text: 'Tools', items: tools },
+      { text: 'Commits', link: '/references/commits/' },
+      { text: 'Release Notes', link: '/references/release-notes/' },
     ],
 
     sidebar: {
@@ -87,6 +99,8 @@ export default defineConfig({
           text: 'Owners Documentation',
           collapsed: false,
           items: [
+            { text: 'Auto Updates', link: '/owners/auto-updates' },
+            { text: 'Oxide Porting', link: '/owners/oxide-porting' },
             {
               text: 'Features',
               collapsed: true,
@@ -94,7 +108,9 @@ export default defineConfig({
                 { text: 'Vault', link: '/devs/features/vault' },
                 { text: 'Minimal', link: '/owners/features/minimal' },
                 { text: 'CarbonAuto', link: '/owners/features/carbonauto' },
+                { text: 'WebControlPanel', link: '/owners/features/webcontrolpanel' },
                 { text: 'Profiler (Mono)', link: '/devs/features/mono-profiler' },
+                { text: 'Carbon RSM', link: '/owners/features/carbon-rsm' },
               ],
             },
             {
@@ -113,15 +129,7 @@ export default defineConfig({
                   collapsed: true,
                   items: [
                     { text: 'AutoWipe Module', link: '/owners/modules/optional-modules/autowipe-module' },
-                    {
-                      text: 'Circular Networking Module',
-                      link: '/owners/modules/optional-modules/circularnetworking-module',
-                    },
                     { text: 'Gather Manager Module', link: '/owners/modules/optional-modules/gather-manager-module' },
-                    {
-                      text: 'Moderation Tools Module',
-                      link: '/owners/modules/optional-modules/moderation-tools-module',
-                    },
                     { text: 'Selective EAC Module', link: '/owners/modules/optional-modules/selective-eac-module' },
                     { text: 'Stack Manager Module', link: '/owners/modules/optional-modules/stack-manager-module' },
                     { text: 'Vanish Module', link: '/owners/modules/optional-modules/vanish-module' },
@@ -135,7 +143,6 @@ export default defineConfig({
               collapsed: true,
               items: [{ text: 'Linux GSM', link: '/owners/linux-gsm' }],
             },
-            { text: 'Oxide Porting', link: '/owners/oxide-porting' },
           ],
         },
         {
@@ -157,12 +164,14 @@ export default defineConfig({
                 { text: 'Conditionals', link: '/devs/features/conditionals' },
                 { text: 'Extensions', link: '/devs/features/extensions' },
                 { text: 'LUI (Lightweight UI)', link: '/devs/features/lightweight-ui' },
+                { text: 'Custom Vitals Manager', link: '/devs/features/custom-vitals-manager' },
                 { text: 'Modifiers', link: '/devs/features/modifiers' },
                 { text: 'Permissions', link: '/devs/features/permissions' },
                 { text: 'Profiler (Mono)', link: '/devs/features/mono-profiler' },
                 { text: 'Timers', link: '/devs/features/timers' },
                 { text: 'Vault', link: '/devs/features/vault' },
-                { text: 'ZIP Scripts & Packages', link: '/devs/features/zip-script-packages' },
+                { text: 'Web Requests', link: '/devs/features/web-requests' },
+                { text: 'ZIP Scripts', link: '/devs/features/zip-script-packages' },
               ],
             },
             {
@@ -200,7 +209,7 @@ export default defineConfig({
     footer: {
       message:
         "Released under the MIT License. Feel free to <a href='https://github.com/CarbonCommunity/Carbon.Documentation' target='_blank'>help us improve</a>!",
-      copyright: 'All trademarks referenced are the properties of their respective owners. © 2025 carbonmod.gg and codefling.com All rights reserved.',
+      copyright: 'All trademarks referenced are the properties of their respective owners. © 2026 carbonmod.gg and codefling.com All rights reserved.',
     },
 
     search: {

@@ -12,7 +12,7 @@ downloading, storing, mapping, and reusing images via Rust's `FileStorage` syste
 - **Enabled by default:** Yes
 - **Force enabled:** Yes (cannot be disabled)
 - **Supports Configuration:** No
-- **Source:** [`Carbon.Common/ImageDatabaseModule`](https://github.com/CarbonCommunity/Carbon.Common/blob/develop/src/Carbon/Modules/ImageDatabaseModule/ImageDatabaseModule.cs)
+- **Source:** [`Carbon.Common/ImageDatabaseModule`](https://github.com/CarbonCommunity/Carbon/tree/main/src/Carbon.Components/Carbon.Common/src/Carbon/Modules/ImageDatabaseModule/ImageDatabaseModule.cs)
 - **Forces Modded Tag:** No
 
 This module allows **plugins to download images from URLs**, assign internal keys to them, and reuse them efficiently

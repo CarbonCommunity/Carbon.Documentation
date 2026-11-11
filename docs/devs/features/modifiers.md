@@ -14,8 +14,8 @@ All Carbon modifier files go inside the `carbon/modifiers` folder by default, it
 
 :::danger RELEVANT SOURCE
 Here is all of the relevant source code of things referenced on this page:
-- [Modifier](https://github.com/CarbonCommunity/Carbon/blob/develop/Carbon.Core/Carbon.Tools/Carbon.Publicizer.Shared/Modifier.cs) is responsible for the IL generation and assembly post-processing events before the server boots.
-- [StoredModifiers](https://github.com/CarbonCommunity/Carbon.Common/blob/develop/src/Carbon/Components/StoredModifiers.cs) is responsible for the logic of handling Rust entity `Save` and `Load` events, as well as `ProtoBuf.Net` subtype initialization.
+- [Modifier](https://github.com/CarbonCommunity/Carbon/tree/main/src/Carbon.Tools/Carbon.Publicizer.Shared/Modifier.cs) is responsible for the IL generation and assembly post-processing events before the server boots.
+- [StoredModifiers](https://github.com/CarbonCommunity/Carbon/tree/main/src/Carbon.Components/Carbon.Common/src/Carbon/Components/StoredModifiers.cs) is responsible for the logic of handling Rust entity `Save` and `Load` events, as well as `ProtoBuf.Net` subtype initialization.
 :::
 
 ## Example

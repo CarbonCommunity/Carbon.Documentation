@@ -37,7 +37,7 @@ const pageSize = 50
 const highlighter = shallowRef<Highlighter | null>(null)
 provide('highlighter', readonly(highlighter))
 
-const isCtrlPressed = useKeyModifier<boolean>('Control', { initial: false })
+const isCtrlPressed = useKeyModifier<boolean>('Control', { initial: false, events: ['mousedown', 'mouseup', 'mousemove', 'keydown', 'keyup'] })
 
 const filteredList = computed(() => {
   if (!list.value?.length) {
@@ -119,9 +119,15 @@ function tryLoadMiniSearch() {
         .replace(/([A-Z])([A-Z][a-z])/g, '$1 $2')
         .toLowerCase()
         .split(SPACE_OR_PUNCTUATION)
-        .filter((token) => token.length > 1)
+        .filter((token) => token.length)
 
       if (fieldName != 'Descriptions') {
+        let cumulativeToken = ''
+        for (let i = processed.length - 1; i >= 0; i--) {
+          cumulativeToken = processed[i] + cumulativeToken
+          processed.push(cumulativeToken)
+        }
+
         processed.push(text.toLowerCase())
       }
 
@@ -134,7 +140,7 @@ function tryLoadMiniSearch() {
         })
       }
 
-      return Array.from(new Set(processed))
+      return Array.from(new Set(processed.filter((token) => token.length > 1)))
     },
   })
 
@@ -194,7 +200,7 @@ onMounted(async () => {
     :mini-search="miniSearch"
   >
     <template #top>
-      <SearchBar v-model="debouncedSearchValue" placeholder="Search hooks..." class="sticky top-16 z-10 min-[960px]:top-20">
+      <SearchBar v-model="debouncedSearchValue" placeholder="Search hooks..." :isSticky="true">
         <template #icon>
           <SwitchSearchIcon v-model:useBasicSearch="useBasicSearch" />
         </template>

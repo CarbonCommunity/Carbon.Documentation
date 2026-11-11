@@ -17,7 +17,10 @@ export interface Hook {
   MethodName: string | null
   AssemblyName: string | null
   ReturnTypeName: string
+  ReturnBehavior?: ReturnBehavior
 }
+
+export type ReturnBehavior = 'Unspecified' | 'Discarded' | 'Cancel' | 'Override' | 'Modify'
 
 export interface Parameter {
   Name: string

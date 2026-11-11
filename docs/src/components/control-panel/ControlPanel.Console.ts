@@ -7,8 +7,14 @@ export const commandIndex = ref(0)
 
 export async function tryFocusLogs(autoScroll: boolean = false) {
   await nextTick()
-  if (consoleContainer.value?.scrollHeight && (autoScroll || consoleContainer.value.scrollHeight - consoleContainer.value?.scrollTop < 2000)) {
-    consoleContainer.value.scrollTop = consoleContainer.value.scrollHeight
+  const el = consoleContainer.value
+  if (!el) return
+
+  const { scrollTop, scrollHeight, clientHeight } = el
+  const distanceFromBottom = scrollHeight - (scrollTop + clientHeight)
+  if (autoScroll || distanceFromBottom <= 400) {
+    el.scrollTop = scrollHeight
   }
+
   save()
 }

@@ -163,7 +163,7 @@ onMounted(async () => {
     :mini-search="miniSearch"
   >
     <template #top>
-      <SearchBar v-model="debouncedSearchValue" placeholder="Search blueprints..." class="sticky top-16 z-10 min-[960px]:top-20">
+      <SearchBar v-model="debouncedSearchValue" placeholder="Search blueprints..." :isSticky="true">
         <template #icon>
           <SwitchSearchIcon v-model:useBasicSearch="useBasicSearch" />
         </template>

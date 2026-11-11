@@ -100,7 +100,7 @@ You may load up the package plugins out of a debug-build-only folder found in th
 folder. All you need to do is to create a folder with the same name as your ZIP file, in which you place the `.cs` files
 in. Carbon will hot-load any changes made to any of those files.
 
-![CSZIP Sample](/misc/cszip-sample.webp)
+![CSZIP Sample](/misc/cszip-sample.webp){width=654px height=247px}
 
 :::tip DEBUG-BUILD ONLY
 This feature is entirely for **development** purposes and not for **live server production**.
