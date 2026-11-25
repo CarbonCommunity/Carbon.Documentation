@@ -8,16 +8,22 @@ export class Commit {
   AuthorAvatar: string = ''
   AuthorUrl: string = ''
   Message: string = ''
+  Body: string = ''
   Branch: string = ''
   CommitUrl: string = ''
   Changeset: number = 0
   Date: Date | null = null
+  Live: boolean = false
+
+  get ShortSHA() {
+    return this.SHA.substring(0, 7)
+  }
 
   wasToday() {
     if(this.Date == null) {
       return false
     }
-    return this.Date.getDate() == new Date(Date.now()).getDate()
+    return this.Date.toDateString() == new Date().toDateString()
   }
 
   parse(reader: BinaryReader) : Commit {
@@ -27,9 +33,34 @@ export class Commit {
     this.AuthorName = reader.bstring()
     this.Message = reader.bstring()
     this.Changeset = reader.int32()
+    this.setUrls()
+    this.resolveAuthor()
+    return this
+  }
+
+  // Builds a commit from an item of GitHub's `GET /repos/{owner}/{repo}/commits` response.
+  fromGitHub(repository: string, item: GitHubCommit, changeset: number, branch: string) : Commit {
+    this.Repository = repository
+    this.SHA = item.sha
+    this.Date = new Date(item.commit.author?.date ?? item.commit.committer?.date ?? 0)
+    this.AuthorName = item.commit.author?.name ?? item.author?.login ?? ''
+    const [title, ...rest] = item.commit.message.trim().split('\n')
+    this.Message = title.trim()
+    this.Body = rest.join('\n').trim()
+    this.Changeset = changeset
+    this.Branch = branch
+    this.Live = true
+    this.setUrls()
+    this.resolveAuthor(item.author?.login)
+    return this
+  }
+
+  private setUrls() {
     this.RepositoryUrl = `https://github.com/CarbonCommunity/${this.Repository}`
     this.CommitUrl = `${this.RepositoryUrl}/commit/${this.SHA}`
+  }
 
+  private resolveAuthor(login?: string) {
     switch(this.AuthorName) {
       case 'evs.ptr':
         this.AuthorName = 'evs-ptr'
@@ -40,7 +71,7 @@ export class Commit {
         break;
     }
 
-    let githubName = ''
+    let githubName = login ?? ''
     switch(this.AuthorName) {
       case 'raul':
       case 'Raul-Sorin Sorban':
@@ -65,12 +96,22 @@ export class Commit {
         githubName = this.AuthorName
         break;
     }
-    this.AuthorUrl = `https://github.com/${githubName}`
-    if (githubName == '') {
-      this.AuthorAvatar = 'https://cdn.carbonmod.gg/content/default_profile.jpg'
-    } else {
-      this.AuthorAvatar = `${this.AuthorUrl}.png`
-    }
-    return this
+    this.setLogin(githubName)
   }
+
+  // Without a GitHub login there's no avatar; the page shows initials instead.
+  setLogin(login: string) {
+    this.AuthorUrl = login ? `https://github.com/${login}` : ''
+    this.AuthorAvatar = login ? `${this.AuthorUrl}.png?size=80` : ''
+  }
+}
+
+export interface GitHubCommit {
+  sha: string
+  commit: {
+    message: string
+    author: { name: string; date: string } | null
+    committer: { name: string; date: string } | null
+  }
+  author: { login: string } | null
 }

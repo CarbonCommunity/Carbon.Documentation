@@ -31,101 +31,78 @@ jobs:
           path: |
             tools/Server/carbon
 
-      - name: FTP Upload (rust/blueprints.json)
-        uses: tomasbkk/action-ftp-upload@v1.0
-        with:
-          user: api@carbonmod.gg
-          password: ${{ secrets.FTP_PWD }}
-          host: ${{ secrets.FTP_IP }}
-          src: 'tools/Server/carbon/results/blueprints.json'
-          dest: 'meta/rust/blueprints.json'
+      - name: ⬆️ SFTP - Upload Metadata
+        shell: bash
+        env:
+          SFTP_HOST: redist.carbonmod.gg
+          SFTP_PORT: 22
+          SFTP_USER: carbonmod
+          # Remote folder served as https://api.carbonmod.gg, relative to the SSH user's login folder (or absolute)
+          SFTP_ROOT: /home/carbonmod/public_html/api.carbonmod.gg
+          # Private key of the SSH user (OpenSSH format, no passphrase)
+          SFTP_KEY: ${{ secrets.SFTP_KEY }}
+          # Optional 'ssh-keyscan' output for the host; when empty the host key is trusted on first use
+          SFTP_KNOWN_HOSTS: ${{ vars.SFTP_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
 
-      - name: FTP Upload (rust/entities.json)
-        uses: tomasbkk/action-ftp-upload@v1.0
-        with:
-          user: api@carbonmod.gg
-          password: ${{ secrets.FTP_PWD }}
-          host: ${{ secrets.FTP_IP }}
-          src: 'tools/Server/carbon/results/entities.json'
-          dest: 'meta/rust/entities.json'
+          if [ -z "$SFTP_KEY" ]; then
+            echo '::error::The SFTP_KEY secret is not set.'
+            exit 1
+          fi
 
-      - name: FTP Upload (rust/items.json)
-        uses: tomasbkk/action-ftp-upload@v1.0
-        with:
-          user: api@carbonmod.gg
-          password: ${{ secrets.FTP_PWD }}
-          host: ${{ secrets.FTP_IP }}
-          src: 'tools/Server/carbon/results/items.json'
-          dest: 'meta/rust/items.json'
+          key="$RUNNER_TEMP/sftp_key"
+          known_hosts="$RUNNER_TEMP/sftp_known_hosts"
+          batch="$RUNNER_TEMP/sftp_batch.txt"
+          trap 'rm -f "$key" "$known_hosts" "$batch"' EXIT
 
-      - name: FTP Upload (rust/loot-tables.json)
-        uses: tomasbkk/action-ftp-upload@v1.0
-        with:
-          user: api@carbonmod.gg
-          password: ${{ secrets.FTP_PWD }}
-          host: ${{ secrets.FTP_IP }}
-          src: 'tools/Server/carbon/results/loot-tables.json'
-          dest: 'meta/rust/loot-tables.json'
+          # OpenSSH refuses private keys other accounts can read
+          umask 077
+          printf '%s\n' "$SFTP_KEY" | tr -d '\r' > "$key"
 
-      - name: FTP Upload (rust/prefabs.json)
-        uses: tomasbkk/action-ftp-upload@v1.0
-        with:
-          user: api@carbonmod.gg
-          password: ${{ secrets.FTP_PWD }}
-          host: ${{ secrets.FTP_IP }}
-          src: 'tools/Server/carbon/results/prefabs.json'
-          dest: 'meta/rust/prefabs.json'
+          options=(-b "$batch" -i "$key" -P "$SFTP_PORT" -o IdentitiesOnly=yes)
 
-      - name: FTP Upload (rust/convars.json)
-        uses: tomasbkk/action-ftp-upload@v1.0
-        with:
-          user: api@carbonmod.gg
-          password: ${{ secrets.FTP_PWD }}
-          host: ${{ secrets.FTP_IP }}
-          src: 'tools/Server/carbon/results/rust_convars.json'
-          dest: 'meta/rust/convars.json'
+          if [ -n "$SFTP_KNOWN_HOSTS" ]; then
+            printf '%s\n' "$SFTP_KNOWN_HOSTS" | tr -d '\r' > "$known_hosts"
+            options+=(-o StrictHostKeyChecking=yes -o "UserKnownHostsFile=$known_hosts")
+          else
+            echo '::warning::SFTP_KNOWN_HOSTS is not set, the SFTP host key is not being verified.'
+            options+=(-o StrictHostKeyChecking=accept-new)
+          fi
 
-      - name: FTP Upload (rust/commands.json)
-        uses: tomasbkk/action-ftp-upload@v1.0
-        with:
-          user: api@carbonmod.gg
-          password: ${{ secrets.FTP_PWD }}
-          host: ${{ secrets.FTP_IP }}
-          src: 'tools/Server/carbon/results/rust_commands.json'
-          dest: 'meta/rust/commands.json'
+          results=tools/Server/carbon/results
 
-      - name: FTP Upload (carbon/hooks.json)
-        uses: tomasbkk/action-ftp-upload@v1.0
-        with:
-          user: api@carbonmod.gg
-          password: ${{ secrets.FTP_PWD }}
-          host: ${{ secrets.FTP_IP }}
-          src: 'tools/Server/carbon/results/hooks.json'
-          dest: 'meta/carbon/hooks.json'
+          # <generator output>:<remote path under SFTP_ROOT>
+          files=(
+            "blueprints.json:meta/rust/blueprints.json"
+            "entities.json:meta/rust/entities.json"
+            "items.json:meta/rust/items.json"
+            "loot-tables.json:meta/rust/loot-tables.json"
+            "prefabs.json:meta/rust/prefabs.json"
+            "rust_convars.json:meta/rust/convars.json"
+            "rust_commands.json:meta/rust/commands.json"
+            "hooks.json:meta/carbon/hooks.json"
+            "commands.json:meta/carbon/commands.json"
+            "convars.json:meta/carbon/convars.json"
+            "switches.json:meta/carbon/switches.json"
+          )
 
-      - name: FTP Upload (carbon/commands.json)
-        uses: tomasbkk/action-ftp-upload@v1.0
-        with:
-          user: api@carbonmod.gg
-          password: ${{ secrets.FTP_PWD }}
-          host: ${{ secrets.FTP_IP }}
-          src: 'tools/Server/carbon/results/commands.json'
-          dest: 'meta/carbon/commands.json'
+          {
+            # mkdir isn't recursive, the '-' prefix ignores folders that already exist
+            for folder in meta meta/rust meta/carbon; do
+              echo "-mkdir \"$SFTP_ROOT/$folder\""
+            done
 
-      - name: FTP Upload (carbon/convars.json)
-        uses: tomasbkk/action-ftp-upload@v1.0
-        with:
-          user: api@carbonmod.gg
-          password: ${{ secrets.FTP_PWD }}
-          host: ${{ secrets.FTP_IP }}
-          src: 'tools/Server/carbon/results/convars.json'
-          dest: 'meta/carbon/convars.json'
+            for entry in "${files[@]}"; do
+              src="$results/${entry%%:*}"
+              if [ ! -f "$src" ]; then
+                echo "::error::Missing generator output: $src" >&2
+                exit 1
+              fi
+              echo "put \"$src\" \"$SFTP_ROOT/${entry#*:}\""
+            done
 
-      - name: FTP Upload (carbon/switches.json)
-        uses: tomasbkk/action-ftp-upload@v1.0
-        with:
-          user: api@carbonmod.gg
-          password: ${{ secrets.FTP_PWD }}
-          host: ${{ secrets.FTP_IP }}
-          src: 'tools/Server/carbon/results/switches.json'
-          dest: 'meta/carbon/switches.json'
+            echo 'bye'
+          } > "$batch"
+
+          sftp "${options[@]}" "$SFTP_USER@$SFTP_HOST"

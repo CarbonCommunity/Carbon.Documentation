@@ -1,7 +1,7 @@
 ---
 layout: home
 title: Commits Reference
-description: Complete reference for all entities in the game
+description: Every commit across the CarbonCommunity repositories, synced live from GitHub
 ---
 
 <script setup>
