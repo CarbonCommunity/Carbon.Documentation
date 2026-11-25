@@ -58,7 +58,24 @@ jobs:
 
           # OpenSSH refuses private keys other accounts can read
           umask 077
-          printf '%s\n' "$SFTP_KEY" | tr -d '\r' > "$key"
+
+          # Pasted secrets often pick up CRLF endings, indentation, literal '\n' or get flattened
+          # to one line, any of which makes OpenSSH fail with 'error in libcrypto'. Rebuild the
+          # key as one header line, the base64 body and one footer line.
+          key_text="${SFTP_KEY//\\n/$'\n'}"
+          printf '%s\n' "$key_text" \
+            | tr -d '\r' \
+            | sed -E 's/(-----[A-Z0-9 ]+-----)/\n\1\n/g' \
+            | awk '/^[ \t]*-----/ { sub(/^[ \t]+/, ""); sub(/[ \t]+$/, ""); print; next } { gsub(/[ \t]+/, "\n"); print }' \
+            | grep -v '^$' > "$key" || true
+
+          if ! check=$(ssh-keygen -y -P '' -f "$key" 2>&1 >/dev/null); then
+            echo "::error::SFTP_KEY is not a usable private key: ${check:-unknown error}"
+            echo "First line: $(head -n 1 "$key")"
+            echo "Lines: $(wc -l < "$key"), footer present: $(grep -q '^-----END' "$key" && echo yes || echo no)"
+            echo 'The key must be an unencrypted private key (OpenSSH or PEM), pasted whole including the BEGIN/END lines.'
+            exit 1
+          fi
 
           options=(-b "$batch" -i "$key" -P "$SFTP_PORT" -o IdentitiesOnly=yes)
 
