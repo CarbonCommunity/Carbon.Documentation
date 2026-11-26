@@ -19,4 +19,5 @@ docs/.vitepress/cache
 docs/.vitepress/dist
 docs/.vitepress/.temp
 docs/public/rss.xml
+docs/public/data/commits.json
 node_modules

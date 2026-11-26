@@ -1,18 +1,20 @@
 <script setup lang="ts">
 import { useUrlSearchParams } from '@vueuse/core'
-import { Check, ChevronDown, Copy, ExternalLink, GitBranch, GitCommitHorizontal, RefreshCw, X } from 'lucide-vue-next'
+import { Check, Copy, ExternalLink, GitBranch, GitCommitHorizontal, RefreshCw, X } from 'lucide-vue-next'
 import { computed, onMounted, shallowRef, watch } from 'vue'
 import InfinitePageScroll from './common/InfinitePageScroll.vue'
 import SearchBar from './common/SearchBar.vue'
 import { Commit } from './commits/Commits'
+import BranchPicker from './commits/BranchPicker.vue'
 import CommitAvatar from './commits/CommitAvatar.vue'
-import { BranchList, LiveResult, loadBranchCommits, loadBranches, loadLive, loadSnapshot } from './commits/CommitsSource'
+import { CommitData, loadCommitData, loadUpdates, REPOSITORIES, Repository, UpdateResult } from './commits/CommitsSource'
 
 const params = useUrlSearchParams('history', { removeFalsyValues: true })
 
-const snapshot = shallowRef<Commit[]>([])
+const data = shallowRef<CommitData | null>(null)
 const allCommits = shallowRef<Commit[]>([])
-const live = shallowRef<LiveResult | null>(null)
+const repositoryInfo = shallowRef<Map<string, Repository>>(new Map())
+const updates = shallowRef<UpdateResult | null>(null)
 const loading = shallowRef(true)
 const refreshing = shallowRef(false)
 const error = shallowRef<string>('')
@@ -78,6 +80,10 @@ function sortByDate(list: Commit[]) {
   return list.sort((a, b) => (b.Date?.getTime() ?? 0) - (a.Date?.getTime() ?? 0))
 }
 
+function isDefaultBranch(repository: string, branch: string) {
+  return repositoryInfo.value.get(repository)?.defaultBranch == branch
+}
+
 // ---------- filtering ----------
 
 function matchesSearch(commit: Commit, term: string) {
@@ -86,7 +92,7 @@ function matchesSearch(commit: Commit, term: string) {
     commit.Repository.toLowerCase().includes(term) ||
     commit.AuthorName.toLowerCase().includes(term) ||
     commit.Body.toLowerCase().includes(term) ||
-    commit.Branch.toLowerCase().includes(term) ||
+    commit.Branches.some((x) => x.toLowerCase().includes(term)) ||
     commit.SHA.startsWith(term)
   )
 }
@@ -94,9 +100,11 @@ function matchesSearch(commit: Commit, term: string) {
 // Everything except the day filter, so the heatmap keeps showing the whole year.
 const filteredNoDay = computed(() => {
   const term = search.value?.trim().toLowerCase() ?? ''
-  return baseCommits.value.filter(
+  const branch = repoFilter.value ? branchFilter.value : ''
+  return allCommits.value.filter(
     (x) =>
       (!repoFilter.value || x.Repository == repoFilter.value) &&
+      (!branch || x.Branches.includes(branch)) &&
       (!authorFilter.value || x.AuthorName == authorFilter.value) &&
       (!term || matchesSearch(x, term))
   )
@@ -116,52 +124,30 @@ function clearFilters() {
 
 // ---------- branches ----------
 
-const branchList = shallowRef<BranchList | null>(null)
-const branchCommits = shallowRef<Commit[] | null>(null)
-const branchLoading = shallowRef(false)
-const branchError = shallowRef('')
-const branchFetchedAt = shallowRef<Date | null>(null)
+// Branches of the selected repository: default first, then by most recent commit.
+// Branches fully merged into the default branch have no commits of their own and go last.
+const branchOptions = computed(() => {
+  const repo = repositoryInfo.value.get(repoFilter.value)
+  if (!repo) return []
 
-// A branch other than the default one swaps the list for that branch's history from GitHub.
-const isBranchView = computed(() => !!(repoFilter.value && branchFilter.value && branchList.value && branchFilter.value != branchList.value.defaultBranch))
-const baseCommits = computed(() => (isBranchView.value && branchCommits.value) || allCommits.value)
-
-async function syncBranches() {
-  branchList.value = null
-  branchError.value = ''
-  if (!repoFilter.value) return
-  const repo = repoFilter.value
-  try {
-    const list = await loadBranches(repo)
-    if (repoFilter.value == repo) branchList.value = list
-  } catch (e) {
-    branchError.value = (e as Error).message
-  }
-  await syncBranchCommits(false)
-}
-
-async function syncBranchCommits(force: boolean) {
-  if (!isBranchView.value) {
-    branchCommits.value = null
-    return
-  }
-  const repo = repoFilter.value
-  const branch = branchFilter.value
-  branchLoading.value = true
-  branchError.value = ''
-  try {
-    const result = await loadBranchCommits(repo, branch, allCommits.value, force)
-    if (repoFilter.value == repo && branchFilter.value == branch) {
-      branchCommits.value = result.commits
-      branchFetchedAt.value = result.fetchedAt
+  const stats = new Map<string, { count: number; latest: number }>()
+  for (const commit of allCommits.value) {
+    if (commit.Repository != repo.name) continue
+    for (const branch of commit.Branches) {
+      const entry = stats.get(branch) ?? { count: 0, latest: 0 }
+      entry.count++
+      entry.latest = Math.max(entry.latest, commit.Date?.getTime() ?? 0)
+      stats.set(branch, entry)
     }
-  } catch (e) {
-    branchCommits.value = null
-    branchError.value = (e as Error).message
-  } finally {
-    branchLoading.value = false
   }
-}
+
+  return [...repo.branches.keys()]
+    .map((name) => ({ name, count: stats.get(name)?.count ?? 0, latest: stats.get(name)?.latest ?? 0, isDefault: name == repo.defaultBranch }))
+    .sort((a, b) => Number(b.isDefault) - Number(a.isDefault) || b.latest - a.latest || a.name.localeCompare(b.name))
+})
+
+const selectedBranchIsDefault = computed(() => isDefaultBranch(repoFilter.value, branchFilter.value))
+const selectedBranchMerged = computed(() => !!branchFilter.value && branchOptions.value.find((x) => x.name == branchFilter.value)?.count === 0)
 
 function selectRepo(repo: string) {
   if (repoFilter.value == repo) return
@@ -169,18 +155,12 @@ function selectRepo(repo: string) {
   branchFilter.value = ''
 }
 
-function selectBranch(commit: Commit) {
-  selectRepo(commit.Repository)
-  branchFilter.value = commit.Branch == branchList.value?.defaultBranch ? '' : commit.Branch
+function selectBranch(repository: string, branch: string) {
+  selectRepo(repository)
+  branchFilter.value = branch
 }
 
-watch(repoFilter, () => {
-  if (!loading.value) syncBranches()
-})
-watch(branchFilter, () => {
-  dayFilter.value = ''
-  if (!loading.value) syncBranchCommits(false)
-})
+watch(branchFilter, () => (dayFilter.value = ''))
 
 // ---------- message bodies ----------
 
@@ -204,8 +184,12 @@ const contributors = computed(() => {
   for (const commit of allCommits.value) {
     if (repoFilter.value && commit.Repository != repoFilter.value) continue
     const entry = map.get(commit.AuthorName)
-    if (entry) entry.count++
-    else map.set(commit.AuthorName, { name: commit.AuthorName, avatar: commit.AuthorAvatar, url: commit.AuthorUrl, count: 1 })
+    if (entry) {
+      entry.count++
+      if (!entry.avatar && commit.AuthorAvatar) entry.avatar = commit.AuthorAvatar
+    } else {
+      map.set(commit.AuthorName, { name: commit.AuthorName, avatar: commit.AuthorAvatar, url: commit.AuthorUrl, count: 1 })
+    }
   }
   return [...map.values()].sort((a, b) => b.count - a.count)
 })
@@ -213,10 +197,12 @@ const contributors = computed(() => {
 const stats = computed(() => {
   const list = filtered.value
   const authors = new Set(list.map((x) => x.AuthorName)).size
+  const branches = new Set(list.flatMap((x) => x.Branches.map((b) => `${x.Repository}/${b}`))).size
   const now = Date.now()
   const last30 = list.filter((x) => x.Date && now - x.Date.getTime() < 30 * 86400_000).length
   return [
     { label: 'Commits', value: list.length.toLocaleString() },
+    { label: 'Branches', value: branches.toLocaleString() },
     { label: 'Contributors', value: authors.toLocaleString() },
     { label: 'Last 30 days', value: last30.toLocaleString() },
     { label: 'Latest', value: list.length ? timeAgo(list[0].Date) : '—' },
@@ -308,38 +294,43 @@ async function copySha(sha: string) {
 
 // ---------- loading ----------
 
-// Live commits carry GitHub logins; reuse them for older snapshot commits by the same author.
-function applyKnownLogins(live: Commit[], older: Commit[]) {
+// Commits from GitHub carry account logins; reuse them for other commits by the same author.
+function applyKnownLogins(commits: Commit[]) {
   const logins = new Map<string, string>()
-  for (const commit of live) {
-    if (commit.AuthorUrl) logins.set(commit.AuthorName, commit.AuthorUrl.substring('https://github.com/'.length))
+  for (const commit of commits) {
+    if (commit.AuthorUrl && !logins.has(commit.AuthorName)) logins.set(commit.AuthorName, commit.AuthorUrl.substring('https://github.com/'.length))
   }
-  for (const commit of older) {
+  for (const commit of commits) {
     const login = logins.get(commit.AuthorName)
     if (login && !commit.AuthorUrl) commit.setLogin(login)
   }
 }
 
-async function refreshLive(force: boolean) {
+async function refresh(force: boolean) {
+  if (!data.value) return
   refreshing.value = true
   try {
-    live.value = await loadLive(snapshot.value, force)
-    applyKnownLogins(live.value.commits, snapshot.value)
-    allCommits.value = sortByDate([...live.value.commits, ...snapshot.value])
-    if (force) await syncBranchCommits(true)
+    const repoNames = data.value.repositories.size ? [...data.value.repositories.keys()] : REPOSITORIES
+    updates.value = await loadUpdates(data.value, repoNames, force)
+    const merged = [...updates.value.commits, ...data.value.commits]
+    applyKnownLogins(merged)
+    allCommits.value = sortByDate(merged)
+    repositoryInfo.value = new Map(data.value.repositories)
   } finally {
     refreshing.value = false
   }
 }
 
-const liveLabel = computed(() => {
-  if (refreshing.value || branchLoading.value) return 'Syncing with GitHub…'
-  if (isBranchView.value && branchFetchedAt.value) return `${branchFilter.value} from GitHub · synced ${timeAgo(branchFetchedAt.value)}`
-  if (!live.value) return ''
-  const failed = live.value.failedRepositories
-  if (failed.length) return `GitHub unavailable for ${failed.join(', ')} (likely rate limited)`
-  return `Live from GitHub · synced ${timeAgo(live.value.fetchedAt)}`
+const syncLabel = computed(() => {
+  if (refreshing.value) return 'Syncing with GitHub…'
+  if (!updates.value) return ''
+  const { failedRepositories, skippedBranches, fetchedAt } = updates.value
+  if (failedRepositories.length) return `GitHub unavailable for ${failedRepositories.join(', ')} (likely rate limited)`
+  if (skippedBranches) return `${skippedBranches} branch${skippedBranches == 1 ? '' : 'es'} not synced yet (GitHub rate limit)`
+  return `Synced with GitHub ${timeAgo(fetchedAt)}`
 })
+
+const syncHealthy = computed(() => !!updates.value && !updates.value.failedRepositories.length && !updates.value.skippedBranches)
 
 onMounted(async () => {
   // Older links used ?search=
@@ -349,16 +340,16 @@ onMounted(async () => {
   }
 
   try {
-    snapshot.value = await loadSnapshot()
-    allCommits.value = sortByDate([...snapshot.value])
+    data.value = await loadCommitData()
+    allCommits.value = data.value.commits
+    repositoryInfo.value = new Map(data.value.repositories)
   } catch (e) {
     error.value = (e as Error).message
     return
   } finally {
     loading.value = false
   }
-  await refreshLive(false)
-  await syncBranches()
+  await refresh(false)
 })
 </script>
 
@@ -374,26 +365,20 @@ onMounted(async () => {
         <p class="mt-2 max-w-xl text-sm text-zinc-500 dark:text-zinc-400">
           Every change made across the
           <a href="https://github.com/CarbonCommunity" target="_blank">CarbonCommunity</a>
-          repositories, newest first.
+          repositories, on every branch, newest first.
         </p>
       </div>
       <div v-if="!loading && !error" class="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
         <span class="relative flex h-2 w-2">
-          <span
-            v-if="live && !live.failedRepositories.length"
-            class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60"
-          ></span>
-          <span
-            class="relative inline-flex h-2 w-2 rounded-full"
-            :class="refreshing ? 'bg-zinc-400' : live?.failedRepositories.length ? 'bg-amber-500' : 'bg-emerald-500'"
-          ></span>
+          <span v-if="syncHealthy" class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60"></span>
+          <span class="relative inline-flex h-2 w-2 rounded-full" :class="refreshing ? 'bg-zinc-400' : syncHealthy ? 'bg-emerald-500' : 'bg-amber-500'"></span>
         </span>
-        <span>{{ liveLabel }}</span>
+        <span>{{ syncLabel }}</span>
         <button
           class="ml-1 rounded-md p-1.5 transition-colors hover:bg-zinc-200 hover:text-zinc-900 disabled:opacity-40 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
           title="Sync again with GitHub"
           :disabled="refreshing"
-          @click="refreshLive(true)"
+          @click="refresh(true)"
         >
           <RefreshCw :size="14" :class="{ 'animate-spin': refreshing }" />
         </button>
@@ -407,8 +392,8 @@ onMounted(async () => {
 
     <!-- Loading skeleton -->
     <div v-else-if="loading" class="animate-pulse space-y-4">
-      <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div v-for="i in 4" :key="i" class="h-20 rounded-xl bg-zinc-200/60 dark:bg-zinc-800/60"></div>
+      <div class="grid grid-cols-2 gap-3 sm:grid-cols-5">
+        <div v-for="i in 5" :key="i" class="h-20 rounded-xl bg-zinc-200/60 dark:bg-zinc-800/60"></div>
       </div>
       <div class="h-36 rounded-xl bg-zinc-200/60 dark:bg-zinc-800/60"></div>
       <div v-for="i in 6" :key="i" class="h-16 rounded-xl bg-zinc-200/40 dark:bg-zinc-800/40"></div>
@@ -416,7 +401,7 @@ onMounted(async () => {
 
     <template v-else>
       <!-- Stats -->
-      <section class="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <section class="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-5">
         <div v-for="stat in stats" :key="stat.label" class="panel px-4 py-3">
           <div class="text-xs uppercase tracking-wider text-zinc-500">{{ stat.label }}</div>
           <div class="mt-1 text-2xl font-semibold tabular-nums">{{ stat.value }}</div>
@@ -468,26 +453,18 @@ onMounted(async () => {
             {{ repo.name }} <span class="opacity-60">{{ repo.count.toLocaleString() }}</span>
           </button>
 
-          <label v-if="repoFilter" class="branch-select" :class="{ active: isBranchView }" title="Show a branch's history from GitHub">
-            <GitBranch :size="13" class="shrink-0" />
-            <select v-model="branchFilter" :disabled="!branchList">
-              <option v-if="!branchList" value="">{{ branchError ? 'Branches unavailable' : 'Loading branches…' }}</option>
-              <template v-else>
-                <option value="">{{ branchList.defaultBranch }}</option>
-                <option v-for="branch in branchList.branches.slice(1)" :key="branch" :value="branch">{{ branch }}</option>
-              </template>
-            </select>
-            <ChevronDown :size="12" class="pointer-events-none shrink-0 opacity-60" />
-          </label>
+          <BranchPicker v-if="repoFilter && branchOptions.length" v-model="branchFilter" :options="branchOptions" />
         </div>
 
-        <div v-if="isBranchView" class="notice">
+        <div v-if="repoFilter && branchFilter && !selectedBranchIsDefault" class="notice">
           <GitBranch :size="14" class="mt-0.5 shrink-0" />
-          <span v-if="branchLoading">Loading <b>{{ branchFilter }}</b> from GitHub…</span>
-          <span v-else-if="branchError">Couldn't load <b>{{ branchFilter }}</b>: {{ branchError }}. Showing all commits instead.</span>
+          <span v-if="selectedBranchMerged">
+            <b>{{ branchFilter }}</b> is fully merged: all of its commits are already on <b>{{ repositoryInfo.get(repoFilter)?.defaultBranch }}</b>.
+            <button class="font-semibold underline-offset-2 hover:underline" @click="branchFilter = ''">Show all branches</button>
+          </span>
           <span v-else>
-            Showing the latest {{ branchCommits?.length.toLocaleString() }} commits on <b>{{ branchFilter }}</b>, loaded live from GitHub.
-            <button class="font-semibold underline-offset-2 hover:underline" @click="branchFilter = ''">Back to {{ branchList?.defaultBranch }}</button>
+            Showing commits on <b>{{ branchFilter }}</b> that aren't on <b>{{ repositoryInfo.get(repoFilter)?.defaultBranch }}</b>.
+            <button class="font-semibold underline-offset-2 hover:underline" @click="branchFilter = ''">Show all branches</button>
           </span>
         </div>
 
@@ -506,6 +483,7 @@ onMounted(async () => {
 
         <div v-if="hasFilters" class="flex flex-wrap items-center gap-2 text-xs text-zinc-500">
           <span>Showing {{ filtered.length.toLocaleString() }} of {{ allCommits.length.toLocaleString() }}</span>
+          <span v-if="repoFilter && branchFilter" class="tag">branch: {{ branchFilter }}</span>
           <span v-if="authorFilter" class="tag">author: {{ authorFilter }}</span>
           <span v-if="dayFilter" class="tag">day: {{ dayLabel(dayFilter) }}</span>
           <button class="inline-flex items-center gap-1 font-medium hover:text-zinc-900 dark:hover:text-zinc-100" @click="clearFilters">
@@ -515,13 +493,13 @@ onMounted(async () => {
       </section>
 
       <!-- Empty -->
-      <div v-if="filtered.length == 0" class="panel p-10 text-center text-sm text-zinc-500">
+      <div v-if="filtered.length == 0 && !selectedBranchMerged" class="panel p-10 text-center text-sm text-zinc-500">
         No commits match these filters.
         <button class="ml-1 font-semibold text-emerald-600 hover:underline dark:text-emerald-400" @click="clearFilters">Reset</button>
       </div>
 
       <!-- Timeline -->
-      <InfinitePageScroll v-else :list="filtered" :page-size="60" v-slot="{ renderedList }">
+      <InfinitePageScroll v-else-if="filtered.length" :list="filtered" :page-size="60" v-slot="{ renderedList }">
         <section v-for="group in groupByDay(renderedList)" :key="group.key" class="mb-8">
           <h2 class="day-heading">
             <span>{{ dayLabel(group.key) }}</span>
@@ -555,11 +533,18 @@ onMounted(async () => {
                   <span>committed</span>
                   <span :title="commit.Date?.toLocaleString()">{{ timeAgo(commit.Date) }}</span>
                   <span class="opacity-40">·</span>
-                  <button class="repo-tag" @click="repoFilter = commit.Repository">{{ commit.Repository }}</button>
-                  <button v-if="commit.Branch" class="branch-tag" :title="`Show ${commit.Branch}`" @click="selectBranch(commit)">
-                    <GitBranch :size="10" />{{ commit.Branch }}
+                  <button class="repo-tag" @click="selectRepo(commit.Repository)">{{ commit.Repository }}</button>
+                  <button
+                    v-for="branch in commit.Branches.slice(0, 2)"
+                    :key="branch"
+                    class="branch-tag"
+                    :class="{ default: isDefaultBranch(commit.Repository, branch) }"
+                    :title="`Show ${branch}`"
+                    @click="selectBranch(commit.Repository, branch)"
+                  >
+                    <GitBranch :size="10" />{{ branch }}
                   </button>
-                  <span v-if="commit.Live" class="live-tag" title="Loaded live from GitHub">live</span>
+                  <span v-if="commit.Branches.length > 2" class="text-[11px]" :title="commit.Branches.slice(2).join(', ')">+{{ commit.Branches.length - 2 }} more</span>
                 </div>
               </div>
 
@@ -636,18 +621,8 @@ onMounted(async () => {
   @apply inline-flex items-center gap-1 rounded bg-sky-500/10 px-1.5 py-px font-mono text-sky-700 hover:bg-sky-500/20 dark:text-sky-300;
   font-size: 11px;
 }
-
-.branch-select {
-  @apply relative inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-zinc-200 py-1 pl-3 pr-2.5 text-xs font-medium text-zinc-600 transition-colors hover:border-zinc-400 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-zinc-500;
-}
-.branch-select.active {
-  @apply border-sky-500 bg-sky-500/10 text-sky-700 dark:text-sky-300;
-}
-.branch-select select {
-  @apply max-w-[14rem] cursor-pointer appearance-none truncate bg-transparent font-mono outline-none;
-}
-.branch-select select option {
-  @apply bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100;
+.branch-tag.default {
+  @apply bg-zinc-200/70 text-zinc-500 hover:bg-zinc-300 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700;
 }
 
 .notice {
@@ -664,11 +639,6 @@ onMounted(async () => {
 .body {
   @apply mt-2 whitespace-pre-wrap break-words rounded-md border-l-2 border-zinc-300 bg-transparent py-1 pl-3 font-sans text-xs leading-5 text-zinc-600 dark:border-zinc-700 dark:text-zinc-400;
   margin-bottom: 0;
-}
-
-.live-tag {
-  @apply rounded bg-emerald-500/15 px-1.5 py-px font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300;
-  font-size: 10px;
 }
 
 .sha-group {

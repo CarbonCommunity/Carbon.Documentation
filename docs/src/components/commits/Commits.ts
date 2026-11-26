@@ -1,5 +1,3 @@
-import { BinaryReader } from '@/utils/BinaryReader'
-
 export class Commit {
   SHA: string = ''
   Repository: string = ''
@@ -9,50 +7,44 @@ export class Commit {
   AuthorUrl: string = ''
   Message: string = ''
   Body: string = ''
-  Branch: string = ''
   CommitUrl: string = ''
-  Changeset: number = 0
   Date: Date | null = null
-  Live: boolean = false
+  // The default branch when the commit is on it, otherwise every branch that contains it.
+  Branches: string[] = []
 
   get ShortSHA() {
     return this.SHA.substring(0, 7)
   }
 
-  wasToday() {
-    if(this.Date == null) {
-      return false
-    }
-    return this.Date.toDateString() == new Date().toDateString()
+  // From a row of commits.json (see scripts/generate-commits.mjs).
+  static fromData(repository: string, sha: string, time: number, authorName: string, login: string, title: string, body: string, branches: string[]): Commit {
+    const commit = new Commit()
+    commit.Repository = repository
+    commit.SHA = sha
+    commit.Date = new Date(time * 1000)
+    commit.AuthorName = authorName
+    commit.Message = title
+    commit.Body = body
+    commit.Branches = branches
+    commit.setUrls()
+    commit.resolveAuthor(login)
+    return commit
   }
 
-  parse(reader: BinaryReader) : Commit {
-    this.Repository = reader.bstring()
-    this.SHA = reader.bstring()
-    this.Date = new Date(reader.bstring())
-    this.AuthorName = reader.bstring()
-    this.Message = reader.bstring()
-    this.Changeset = reader.int32()
-    this.setUrls()
-    this.resolveAuthor()
-    return this
-  }
-
-  // Builds a commit from an item of GitHub's `GET /repos/{owner}/{repo}/commits` response.
-  fromGitHub(repository: string, item: GitHubCommit, changeset: number, branch: string) : Commit {
-    this.Repository = repository
-    this.SHA = item.sha
-    this.Date = new Date(item.commit.author?.date ?? item.commit.committer?.date ?? 0)
-    this.AuthorName = item.commit.author?.name ?? item.author?.login ?? ''
+  // From an item of GitHub's `GET /repos/{owner}/{repo}/commits` response.
+  static fromGitHub(repository: string, item: GitHubCommit, branch: string): Commit {
     const [title, ...rest] = item.commit.message.trim().split('\n')
-    this.Message = title.trim()
-    this.Body = rest.join('\n').trim()
-    this.Changeset = changeset
-    this.Branch = branch
-    this.Live = true
-    this.setUrls()
-    this.resolveAuthor(item.author?.login)
-    return this
+    const commit = new Commit()
+    commit.Repository = repository
+    commit.SHA = item.sha
+    commit.Date = new Date(item.commit.author?.date ?? item.commit.committer?.date ?? 0)
+    commit.AuthorName = item.commit.author?.name ?? item.author?.login ?? ''
+    commit.Message = title.trim()
+    commit.Body = rest.join('\n').trim()
+    commit.Branches = [branch]
+    commit.setUrls()
+    commit.resolveAuthor(item.author?.login)
+    return commit
   }
 
   private setUrls() {
