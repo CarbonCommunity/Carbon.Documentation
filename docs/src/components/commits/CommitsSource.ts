@@ -183,6 +183,8 @@ export async function loadUpdates(data: CommitData, repositoryNames: string[], f
         }
 
         for (const item of await walkBranch(name, head, known)) {
+          // A cached walk may predate the current data file.
+          if (known.has(item.sha)) continue
           const existing = found.get(item.sha)
           if (!existing) found.set(item.sha, Commit.fromGitHub(name, item, branch))
           else if (existing.Branches[0] != repo.defaultBranch && !existing.Branches.includes(branch)) existing.Branches.push(branch)
